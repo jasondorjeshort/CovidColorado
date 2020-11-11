@@ -88,6 +88,7 @@ public class MyExecutor {
 	}
 
 	public static boolean awaitTermination(long timeout, TimeUnit unit) {
+		shutdown();
 		try {
 			if (codePool.awaitTermination(timeout, unit) && userPool.awaitTermination(timeout, unit)) {
 				System.out.println("Successfully waited out termination.");
