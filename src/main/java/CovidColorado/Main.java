@@ -6,6 +6,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import library.MyExecutor;
 
 public class Main {
 
@@ -24,5 +27,7 @@ public class Main {
 		}
 
 		System.out.println("Opened " + fname + ".");
+
+		MyExecutor.awaitTermination(1, TimeUnit.DAYS);
 	}
 }
