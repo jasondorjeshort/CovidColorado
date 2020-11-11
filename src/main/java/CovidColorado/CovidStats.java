@@ -110,6 +110,18 @@ public class CovidStats {
 		return i;
 	}
 
+	public double getAverageAgeOfNewCases(int dayOfData) {
+		double daySum = 0, casesSum = 0;
+		for (int dayOfOnset = firstDay; dayOfOnset < dayOfData; dayOfOnset++) {
+			double newCases = getCasesByInfectionDay(dayOfData, dayOfOnset)
+					- getCasesByInfectionDay(dayOfData - 1, dayOfOnset);
+			casesSum += newCases;
+			daySum += newCases * dayOfOnset;
+		}
+
+		return dayOfData - daySum / casesSum;
+	}
+
 	public double getCasesByInfectionDay(int dayOfData, int dayOfInfection) {
 
 		return getCasesByOnsetDay(dayOfData, dayOfInfection + 5);

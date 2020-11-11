@@ -97,6 +97,11 @@ public class ChartMaker {
 				false);
 	}
 
+	public String buildCaseAgeTimeseriesChart(CovidStats stats, int dayOfData) {
+		return buildCasesTimeseriesChart(stats, dayOfData, dayOfCases -> stats.getAverageAgeOfNewCases(dayOfCases),
+				"age", false, true, false);
+	}
+
 	public String buildCharts(CovidStats stats) {
 		Future<String> fname = null;
 		for (int dayOfData = stats.getFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
@@ -111,6 +116,8 @@ public class ChartMaker {
 
 			fname = MyExecutor.submitCode(() -> buildReportedDayTimeseriesChart(stats, _dayOfData, true));
 			fname = MyExecutor.submitCode(() -> buildReportedDayTimeseriesChart(stats, _dayOfData, false));
+
+			fname = MyExecutor.submitCode(() -> buildCaseAgeTimeseriesChart(stats, _dayOfData));
 		}
 		if (fname != null) {
 			try {
