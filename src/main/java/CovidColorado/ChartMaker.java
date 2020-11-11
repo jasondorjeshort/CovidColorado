@@ -91,15 +91,26 @@ public class ChartMaker {
 				"today's cases infection", false, false, true);
 	}
 
+	public String buildReportedDayTimeseriesChart(CovidStats stats, int dayOfData, boolean log) {
+		return buildCasesTimeseriesChart(stats, dayOfData,
+				dayOfOnset -> (double) stats.getCasesByReportedDay(dayOfData, dayOfOnset), "reported", log, !log,
+				false);
+	}
+
 	public String buildCharts(CovidStats stats) {
 		Future<String> fname = null;
 		for (int dayOfData = stats.getFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
 			int _dayOfData = dayOfData;
 			fname = MyExecutor.submitCode(() -> buildOnsetDayTimeseriesChart(stats, _dayOfData, false));
-			fname = MyExecutor.submitCode(() -> buildInfectionDayTimeseriesChart(stats, _dayOfData, false));
-			fname = MyExecutor.submitCode(() -> buildNewInfectionDayTimeseriesChart(stats, _dayOfData));
 			fname = MyExecutor.submitCode(() -> buildOnsetDayTimeseriesChart(stats, _dayOfData, true));
+
+			fname = MyExecutor.submitCode(() -> buildInfectionDayTimeseriesChart(stats, _dayOfData, false));
 			fname = MyExecutor.submitCode(() -> buildInfectionDayTimeseriesChart(stats, _dayOfData, true));
+
+			fname = MyExecutor.submitCode(() -> buildNewInfectionDayTimeseriesChart(stats, _dayOfData));
+
+			fname = MyExecutor.submitCode(() -> buildReportedDayTimeseriesChart(stats, _dayOfData, true));
+			fname = MyExecutor.submitCode(() -> buildReportedDayTimeseriesChart(stats, _dayOfData, false));
 		}
 		if (fname != null) {
 			try {

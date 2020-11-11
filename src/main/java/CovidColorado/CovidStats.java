@@ -93,6 +93,23 @@ public class CovidStats {
 		return i;
 	}
 
+	public int getCasesByReportedDay(int dayOfData, int dayOfReporting) {
+		NumbersByDay numbers = numbersByDay.get(dayOfData);
+		ArrayList<Integer> reportedCases = numbers.reportedCases;
+		if (reportedCases == null) {
+			System.out.println("No onset cases for " + dayOfData + " with " + dayOfReporting);
+			return 0;
+		}
+		if (dayOfReporting >= reportedCases.size()) {
+			return 0;
+		}
+		Integer i = reportedCases.get(dayOfReporting);
+		if (i == null) {
+			return 0;
+		}
+		return i;
+	}
+
 	public double getCasesByInfectionDay(int dayOfData, int dayOfInfection) {
 
 		return getCasesByOnsetDay(dayOfData, dayOfInfection + 5);
@@ -158,8 +175,20 @@ public class CovidStats {
 					}
 				}
 
-				if (split[0].contains("reported") || split[0].contains("Reported")) {
+				if (split[0].equalsIgnoreCase("Cases of COVID-19 in Colorado by Date Reported to the State")) {
 
+					if (split[2].equalsIgnoreCase("Cases")) {
+						int theDay = Date.dateToDay(split[1]);
+						while (numbers.reportedCases.size() <= theDay) {
+							numbers.reportedCases.add(null);
+						}
+						int cases = Integer.valueOf(split[3]);
+						numbers.reportedCases.set(theDay, cases);
+					}
+				}
+
+				if (split[0].contains("reported") || split[0].contains("Reported")) {
+					writeSplit(split);
 				}
 			}
 
