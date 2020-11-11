@@ -40,7 +40,8 @@ public class CovidStats {
 	private static final int firstCSV = 77; // 77, 314
 
 	private static String csvFileName(int day) {
-		return String.format("H:\\Downloads\\CSV\\covid19_case_summary_%s.csv", Date.dayToFullDate(day, '-'));
+		return String.format("H:\\Downloads\\CovidColoradoCSV\\covid19_case_summary_%s.csv",
+				Date.dayToFullDate(day, '-'));
 	}
 
 	/*
@@ -139,7 +140,7 @@ public class CovidStats {
 			for (String[] split : csv) {
 				NumbersByDay numbers = numbersByDay.get(day);
 
-				if (split.length != 4) {
+				if (split.length < 4) {
 					System.out.print("Length isn't 4: ");
 					writeSplit(split);
 				}

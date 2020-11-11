@@ -5,6 +5,8 @@ import java.awt.Font;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.function.Function;
 
 import org.jfree.chart.ChartFactory;
@@ -23,14 +25,15 @@ import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
+import library.MyExecutor;
+
 public class ChartMaker {
 
 	public String buildCasesTimeseriesChart(CovidStats stats, int dayOfData, Function<Integer, Double> getCasesForDay,
 			String by, boolean log, boolean showZeroes, boolean showAverage) {
 		TimeSeries series = new TimeSeries("Data");
 		int totalCases = 0, totalDays = 0;
-		for (int d = Math.max(showAverage ? stats.getLastDay() - 30 : 0, stats.getFirstDay()); d <= stats
-				.getLastDay(); d++) {
+		for (int d = Math.max(showAverage ? dayOfData - 30 : 0, stats.getFirstDay()); d <= dayOfData; d++) {
 			double cases = getCasesForDay.apply(d);
 			Day ddd = Date.dayToDay(d);
 			if (showZeroes || cases > 0) {
@@ -61,7 +64,8 @@ public class ChartMaker {
 			plot.setRangeAxis(yAxis);
 		}
 
-		File file = new File(by + "-" + (log ? "log-" : "cart-") + Date.dayToFullDate(dayOfData, '-') + ".png");
+		File file = new File(
+				"png/" + by + "-" + (log ? "log-" : "cart-") + Date.dayToFullDate(dayOfData, '-') + ".png");
 		try {
 			ChartUtils.saveChartAsPNG(file, chart, 1000, 800);
 		} catch (IOException e) {
@@ -69,8 +73,6 @@ public class ChartMaker {
 		}
 		return file.getAbsolutePath();
 	}
-	
-	
 
 	public String buildOnsetDayTimeseriesChart(CovidStats stats, int dayOfData, boolean log) {
 		return buildCasesTimeseriesChart(stats, dayOfData,
@@ -90,15 +92,23 @@ public class ChartMaker {
 	}
 
 	public String buildCharts(CovidStats stats) {
-		String fname = null;
+		Future<String> fname = null;
 		for (int dayOfData = stats.getFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
-			fname = buildOnsetDayTimeseriesChart(stats, dayOfData, false);
-			fname = buildInfectionDayTimeseriesChart(stats, dayOfData, false);
-			fname = buildNewInfectionDayTimeseriesChart(stats, dayOfData);
-			fname = buildOnsetDayTimeseriesChart(stats, dayOfData, true);
-			fname = buildInfectionDayTimeseriesChart(stats, dayOfData, true);
+			int _dayOfData = dayOfData;
+			fname = MyExecutor.submitCode(() -> buildOnsetDayTimeseriesChart(stats, _dayOfData, false));
+			fname = MyExecutor.submitCode(() -> buildInfectionDayTimeseriesChart(stats, _dayOfData, false));
+			fname = MyExecutor.submitCode(() -> buildNewInfectionDayTimeseriesChart(stats, _dayOfData));
+			fname = MyExecutor.submitCode(() -> buildOnsetDayTimeseriesChart(stats, _dayOfData, true));
+			fname = MyExecutor.submitCode(() -> buildInfectionDayTimeseriesChart(stats, _dayOfData, true));
 		}
-		return fname;
+		if (fname != null) {
+			try {
+				return fname.get();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return null;
 
 	}
 }
