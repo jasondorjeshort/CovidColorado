@@ -109,15 +109,15 @@ public class ChartMaker {
 			fname = MyExecutor.submitCode(() -> buildOnsetDayTimeseriesChart(stats, _dayOfData, false));
 			fname = MyExecutor.submitCode(() -> buildOnsetDayTimeseriesChart(stats, _dayOfData, true));
 
-			fname = MyExecutor.submitCode(() -> buildInfectionDayTimeseriesChart(stats, _dayOfData, false));
-			fname = MyExecutor.submitCode(() -> buildInfectionDayTimeseriesChart(stats, _dayOfData, true));
-
 			fname = MyExecutor.submitCode(() -> buildNewInfectionDayTimeseriesChart(stats, _dayOfData));
 
 			fname = MyExecutor.submitCode(() -> buildReportedDayTimeseriesChart(stats, _dayOfData, true));
 			fname = MyExecutor.submitCode(() -> buildReportedDayTimeseriesChart(stats, _dayOfData, false));
 
 			fname = MyExecutor.submitCode(() -> buildCaseAgeTimeseriesChart(stats, _dayOfData));
+
+			fname = MyExecutor.submitCode(() -> buildInfectionDayTimeseriesChart(stats, _dayOfData, false));
+			fname = MyExecutor.submitCode(() -> buildInfectionDayTimeseriesChart(stats, _dayOfData, true));
 		}
 		if (fname != null) {
 			try {
