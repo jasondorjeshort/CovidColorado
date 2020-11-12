@@ -61,9 +61,13 @@ public class CovidStats {
 	private static final String oldOnset = "Case Counts by Onset Date";
 	private static final String newOnset = "Cases of COVID-19 in Colorado by Date of Illness Onset";
 
+	public class IncompleteCases {
+		public final ArrayList<Integer> cases = new ArrayList<>();
+	}
+
 	public class NumbersByDay {
-		public final ArrayList<Integer> onsetCases = new ArrayList<>();
-		public final ArrayList<Integer> reportedCases = new ArrayList<>();
+		public final IncompleteCases onset = new IncompleteCases();
+		public final IncompleteCases reported = new IncompleteCases();
 	}
 
 	private final ArrayList<NumbersByDay> numbersByDay = new ArrayList<>();
@@ -78,7 +82,7 @@ public class CovidStats {
 
 	public int getCasesByOnsetDay(int dayOfData, int dayOfOnset) {
 		NumbersByDay numbers = numbersByDay.get(dayOfData);
-		ArrayList<Integer> onsetCases = numbers.onsetCases;
+		ArrayList<Integer> onsetCases = numbers.onset.cases;
 		if (onsetCases == null) {
 			System.out.println("No onset cases for " + dayOfData + " with " + dayOfOnset);
 			return 0;
@@ -95,7 +99,7 @@ public class CovidStats {
 
 	public int getCasesByReportedDay(int dayOfData, int dayOfReporting) {
 		NumbersByDay numbers = numbersByDay.get(dayOfData);
-		ArrayList<Integer> reportedCases = numbers.reportedCases;
+		ArrayList<Integer> reportedCases = numbers.reported.cases;
 		if (reportedCases == null) {
 			System.out.println("No onset cases for " + dayOfData + " with " + dayOfReporting);
 			return 0;
@@ -134,7 +138,7 @@ public class CovidStats {
 	}
 
 	public int getLastOnsetDay(int dayOfData) {
-		return numbersByDay.get(dayOfData).onsetCases.size() - 1;
+		return numbersByDay.get(dayOfData).onset.cases.size() - 1;
 	}
 
 	private static void writeSplit(String[] split) {
@@ -178,12 +182,12 @@ public class CovidStats {
 					if (split[2].equalsIgnoreCase("Cases")) {
 
 						int theDay = Date.dateToDay(split[1]);
-						while (numbers.onsetCases.size() <= theDay) {
-							numbers.onsetCases.add(null);
+						while (numbers.onset.cases.size() <= theDay) {
+							numbers.onset.cases.add(null);
 						}
 
 						int cases = Integer.valueOf(split[3]);
-						numbers.onsetCases.set(theDay, cases);
+						numbers.onset.cases.set(theDay, cases);
 					}
 				}
 
@@ -191,11 +195,11 @@ public class CovidStats {
 
 					if (split[2].equalsIgnoreCase("Cases")) {
 						int theDay = Date.dateToDay(split[1]);
-						while (numbers.reportedCases.size() <= theDay) {
-							numbers.reportedCases.add(null);
+						while (numbers.reported.cases.size() <= theDay) {
+							numbers.reported.cases.add(null);
 						}
 						int cases = Integer.valueOf(split[3]);
-						numbers.reportedCases.set(theDay, cases);
+						numbers.reported.cases.set(theDay, cases);
 					}
 				}
 
