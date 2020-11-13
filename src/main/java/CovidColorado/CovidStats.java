@@ -50,6 +50,9 @@ public class CovidStats {
 	}
 
 	public int getCasesByOnsetDay(int dayOfData, int dayOfOnset) {
+		if (dayOfData >= numbersByDay.size()) {
+			dayOfData = numbersByDay.size() - 1;
+		}
 		NumbersByDay numbers = numbersByDay.get(dayOfData);
 		ArrayList<Integer> onsetCases = numbers.onset.cases;
 		if (onsetCases == null) {
@@ -67,6 +70,9 @@ public class CovidStats {
 	}
 
 	public int getCasesByReportedDay(int dayOfData, int dayOfReporting) {
+		if (dayOfData >= numbersByDay.size()) {
+			dayOfData = numbersByDay.size() - 1;
+		}
 		NumbersByDay numbers = numbersByDay.get(dayOfData);
 		ArrayList<Integer> reportedCases = numbers.reported.cases;
 		if (reportedCases == null) {
@@ -82,6 +88,15 @@ public class CovidStats {
 			return 0;
 		}
 		return i;
+	}
+
+	public int getNewCasesByOnsetDay(int dayOfData, int dayOfOnset) {
+		return getCasesByOnsetDay(dayOfData, dayOfOnset) - getCasesByOnsetDay(dayOfData - 1, dayOfOnset);
+	}
+
+	public double getNewCasesByInfectionDay(int dayOfData, int dayOfInfection) {
+		return getCasesByInfectionDay(dayOfData, dayOfInfection)
+				- getCasesByInfectionDay(dayOfData - 1, dayOfInfection);
 	}
 
 	public double getAverageAgeOfNewCases(int dayOfData) {

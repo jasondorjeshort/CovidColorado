@@ -14,16 +14,17 @@ public class Main {
 		ChartMaker charts = new ChartMaker();
 		String fname = charts.buildCharts(stats);
 
-		LinkedList<String> process = new LinkedList<>();
-		process.add("C:\\Program Files (x86)\\IrfanView\\i_view32.exe");
-		process.add(fname);
-		try {
-			new ProcessBuilder(process).start();
-		} catch (IOException e) {
-			e.printStackTrace();
+		if (fname != null) {
+			LinkedList<String> process = new LinkedList<>();
+			process.add("C:\\Program Files (x86)\\IrfanView\\i_view32.exe");
+			process.add(fname);
+			try {
+				new ProcessBuilder(process).start();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			System.out.println("Opened " + fname + ".");
 		}
-
-		System.out.println("Opened " + fname + ".");
 
 		MyExecutor.awaitTermination(1, TimeUnit.DAYS);
 
