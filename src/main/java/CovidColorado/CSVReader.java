@@ -25,7 +25,7 @@ public class CSVReader {
 
 			br = new BufferedReader(new FileReader(csvFile));
 
-			System.out.println("Reading CSV: " + csvFile);
+			// System.out.println("Reading CSV: " + csvFile);
 			while ((line = br.readLine()) != null) {
 
 				// use comma as separator

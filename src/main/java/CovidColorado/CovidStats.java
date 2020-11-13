@@ -1,38 +1,7 @@
 package CovidColorado;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Font;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartUtils;
-import org.jfree.chart.JFreeChart;
-import org.jfree.data.statistics.HistogramDataset;
-import org.jfree.data.time.Day;
-import org.jfree.data.time.TimeSeries;
-import org.jfree.data.time.TimeSeriesCollection;
-import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartPanel;
-import org.jfree.chart.JFreeChart;
-import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.data.category.CategoryDataset;
-import org.jfree.data.category.DefaultCategoryDataset;
-
-import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartPanel;
-import org.jfree.chart.JFreeChart;
-import org.jfree.chart.block.BlockBorder;
-import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
-import org.jfree.chart.title.TextTitle;
-import org.jfree.data.xy.XYDataset;
-import org.jfree.data.xy.XYSeries;
-import org.jfree.data.xy.XYSeriesCollection;
 
 public class CovidStats {
 
@@ -101,7 +70,8 @@ public class CovidStats {
 		NumbersByDay numbers = numbersByDay.get(dayOfData);
 		ArrayList<Integer> reportedCases = numbers.reported.cases;
 		if (reportedCases == null) {
-			System.out.println("No onset cases for " + dayOfData + " with " + dayOfReporting);
+			// System.out.println("No onset cases for " + dayOfData + " with " +
+			// dayOfReporting);
 			return 0;
 		}
 		if (dayOfReporting >= reportedCases.size()) {
@@ -167,7 +137,8 @@ public class CovidStats {
 
 			while (numbersByDay.size() <= day) {
 				numbersByDay.add(new NumbersByDay());
-				System.out.println("Size increased to " + numbersByDay.size());
+				// System.out.println("Size increased to " +
+				// numbersByDay.size());
 			}
 
 			for (String[] split : csv) {
@@ -204,7 +175,7 @@ public class CovidStats {
 				}
 
 				if (split[0].contains("reported") || split[0].contains("Reported")) {
-					writeSplit(split);
+					// writeSplit(split);
 				}
 			}
 

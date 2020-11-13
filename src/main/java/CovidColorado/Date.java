@@ -96,6 +96,15 @@ public class Date {
 		return "???";
 	}
 
+	public static java.util.Date dayToJavaDate(int day) {
+		for (Month m : Month.values()) {
+			if (day > m.totalDays && day <= m.totalDays + m.days) {
+				return new java.util.Date(YEAR - 1900, m.ordinal(), day - m.totalDays);
+			}
+		}
+		return null;
+	}
+
 	public static String dayToFullDate(int day, char sep) {
 		for (Month m : Month.values()) {
 			if (day > m.totalDays && day <= m.totalDays + m.days) {
