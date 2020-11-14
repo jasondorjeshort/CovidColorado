@@ -24,12 +24,13 @@ public class ChartMaker {
 
 	int built = 0;
 
-	private static final String directory = "H:\\PNG";
+	private static final String directory = "H:\\CovidColorado";
 
 	private static final double halfLifeRatio = Math.pow(0.5, 1 / 7.0);
 
 	public String buildCasesTimeseriesChart(CovidStats stats, int dayOfData, Function<Integer, Double> getCasesForDay,
-			String by, boolean log, boolean showZeroes, boolean showAverage, int daysToSkip) {
+			String by, boolean log, boolean showZeroes, boolean showAverage, int daysToSkip,
+			boolean showRollingAverage) {
 		DefaultXYDataset dataset = new DefaultXYDataset();
 		TimeSeries series = new TimeSeries("Cases");
 		TimeSeries rolling = new TimeSeries("Rolling");
@@ -60,8 +61,10 @@ public class ChartMaker {
 		// dataset.addSeries("Cases", series);
 
 		double averageAge = dayOfData - (double) totalDays / totalCases;
-		TimeSeriesCollection collection = new TimeSeriesCollection(rolling);
-		collection.addSeries(series);
+		TimeSeriesCollection collection = new TimeSeriesCollection(series);
+		if (showRollingAverage) {
+			collection.addSeries(rolling);
+		}
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(
 				"Colorado cases (" + totalCases + ") by " + by + " date "
 						+ (showAverage ? String.format("(avg age: %.02f) ", averageAge) : "") + "as of "
@@ -99,18 +102,20 @@ public class ChartMaker {
 
 	public String buildOnsetDayTimeseriesChart(CovidStats stats, int dayOfData, boolean log) {
 		return buildCasesTimeseriesChart(stats, dayOfData,
-				dayOfOnset -> (double) stats.getCasesByOnsetDay(dayOfData, dayOfOnset), "onset", log, !log, false, 10);
+				dayOfOnset -> (double) stats.getCasesByOnsetDay(dayOfData, dayOfOnset), "onset", log, !log, false, 10,
+				false);
 	}
 
 	public String buildInfectionDayTimeseriesChart(CovidStats stats, int dayOfData, boolean log) {
 		return buildCasesTimeseriesChart(stats, dayOfData,
-				dayOfOnset -> stats.getCasesByInfectionDay(dayOfData, dayOfOnset), "infection", log, !log, false, 15);
+				dayOfOnset -> stats.getCasesByInfectionDay(dayOfData, dayOfOnset), "infection", log, !log, false, 15,
+				false);
 	}
 
 	public String buildNewInfectionDayTimeseriesChart(CovidStats stats, int dayOfData) {
 		return buildCasesTimeseriesChart(stats, dayOfData,
 				dayOfOnset -> stats.getNewCasesByInfectionDay(dayOfData, dayOfOnset), "today's cases infection", false,
-				false, true, 0);
+				false, true, 0, false);
 	}
 
 	// this completely doesn't work.
@@ -151,12 +156,12 @@ public class ChartMaker {
 	public String buildReportedDayTimeseriesChart(CovidStats stats, int dayOfData, boolean log) {
 		return buildCasesTimeseriesChart(stats, dayOfData,
 				dayOfOnset -> (double) stats.getCasesByReportedDay(dayOfData, dayOfOnset), "reported", log, !log, false,
-				0);
+				0, false);
 	}
 
 	public String buildCaseAgeTimeseriesChart(CovidStats stats, int dayOfData) {
 		return buildCasesTimeseriesChart(stats, dayOfData, dayOfCases -> stats.getAverageAgeOfNewCases(dayOfCases),
-				"age", false, true, false, 0);
+				"age", false, true, false, 0, true);
 	}
 
 	public String buildCharts(CovidStats stats) {
