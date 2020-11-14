@@ -1,5 +1,7 @@
 package CovidColorado;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.Future;
@@ -10,7 +12,10 @@ import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.LogarithmicAxis;
+import org.jfree.chart.plot.IntervalMarker;
+import org.jfree.chart.plot.Marker;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.time.Day;
@@ -29,16 +34,20 @@ public class ChartMaker {
 	private static final double halfLifeRatio = Math.pow(0.5, 1 / 7.0);
 
 	public String buildCasesTimeseriesChart(CovidStats stats, int dayOfData, Function<Integer, Double> getCasesForDay,
-			String by, boolean log, boolean showZeroes, boolean showAverage, int daysToSkip,
-			boolean showRollingAverage) {
+			Function<Integer, Double> getProjectedCasesForDay, String by, boolean log, boolean showZeroes,
+			boolean showAverage, int daysToSkip, boolean showRollingAverage) {
 		DefaultXYDataset dataset = new DefaultXYDataset();
 		TimeSeries series = new TimeSeries("Cases");
-		TimeSeries rolling = new TimeSeries("Rolling");
+		TimeSeries projectedSeries = new TimeSeries("Projected");
 		int totalCases = 0, totalDays = 0;
 		double rollingAverage = 0;
 		for (int d = Math.max(showAverage ? dayOfData - 30 : 0, stats.getFirstDay()); d <= dayOfData
 				- daysToSkip; d++) {
 			double cases = getCasesForDay.apply(d);
+			Double projected = null;
+			if (getProjectedCasesForDay != null) {
+				projected = getProjectedCasesForDay.apply(d);
+			}
 
 			if (!Double.isFinite(cases)) {
 				continue;
@@ -47,9 +56,11 @@ public class ChartMaker {
 			rollingAverage = rollingAverage * halfLifeRatio + cases * (1 - halfLifeRatio);
 
 			Day ddd = Date.dayToDay(d);
-			if (showZeroes || cases > 0) {
+			if (Double.isFinite(cases) && (showZeroes || cases > 0)) {
 				series.add(ddd, cases);
-				rolling.add(ddd, rollingAverage);
+				if (getProjectedCasesForDay != null) {
+					projectedSeries.add(ddd, projected);
+				}
 				totalCases += cases;
 				totalDays += cases * d;
 			}
@@ -62,8 +73,8 @@ public class ChartMaker {
 
 		double averageAge = dayOfData - (double) totalDays / totalCases;
 		TimeSeriesCollection collection = new TimeSeriesCollection(series);
-		if (showRollingAverage) {
-			collection.addSeries(rolling);
+		if (getProjectedCasesForDay != null) {
+			collection.addSeries(projectedSeries);
 		}
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(
 				"Colorado cases (" + totalCases + ") by " + by + " date "
@@ -83,12 +94,16 @@ public class ChartMaker {
 			xAxis.setMaximumDate(new java.util.Date(120, 11, 31));
 			plot.setDomainAxis(xAxis);
 
+			ValueMarker marker = new ValueMarker(Date.dayToJavaDate(dayOfData).getTime());
+			marker.setPaint(Color.black);
+			plot.addDomainMarker(marker);
+
 		}
 
 		File file = new File(
 				directory + "\\" + by + "-" + (log ? "log-" : "cart-") + Date.dayToFullDate(dayOfData, '-') + ".png");
 		try {
-			ChartUtils.saveChartAsPNG(file, chart, 1920, 1080);
+			ChartUtils.saveChartAsPNG(file, chart, 800, 600);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -102,20 +117,23 @@ public class ChartMaker {
 
 	public String buildOnsetDayTimeseriesChart(CovidStats stats, int dayOfData, boolean log) {
 		return buildCasesTimeseriesChart(stats, dayOfData,
-				dayOfOnset -> (double) stats.getCasesByOnsetDay(dayOfData, dayOfOnset), "onset", log, !log, false, 10,
-				false);
+				dayOfOnset -> (double) stats.getCasesByOnsetDay(dayOfData, dayOfOnset),
+				dayOfOnset -> (double) stats.getProjectedCasesByOnsetDay(dayOfData, dayOfOnset),
+
+				"onset", log, !log, false, 0, false);
 	}
 
 	public String buildInfectionDayTimeseriesChart(CovidStats stats, int dayOfData, boolean log) {
 		return buildCasesTimeseriesChart(stats, dayOfData,
-				dayOfOnset -> stats.getCasesByInfectionDay(dayOfData, dayOfOnset), "infection", log, !log, false, 15,
-				false);
+				dayOfOnset -> stats.getCasesByInfectionDay(dayOfData, dayOfOnset),
+				dayOfOnset -> stats.getProjectedCasesByInfectionDay(dayOfData, dayOfOnset), "infection", log, !log,
+				false, 5, false);
 	}
 
 	public String buildNewInfectionDayTimeseriesChart(CovidStats stats, int dayOfData) {
 		return buildCasesTimeseriesChart(stats, dayOfData,
-				dayOfOnset -> stats.getNewCasesByInfectionDay(dayOfData, dayOfOnset), "today's cases infection", false,
-				false, true, 0, false);
+				dayOfOnset -> stats.getNewCasesByInfectionDay(dayOfData, dayOfOnset), null, "today's cases infection",
+				false, false, true, 0, false);
 	}
 
 	// this completely doesn't work.
@@ -155,13 +173,13 @@ public class ChartMaker {
 
 	public String buildReportedDayTimeseriesChart(CovidStats stats, int dayOfData, boolean log) {
 		return buildCasesTimeseriesChart(stats, dayOfData,
-				dayOfOnset -> (double) stats.getCasesByReportedDay(dayOfData, dayOfOnset), "reported", log, !log, false,
-				0, false);
+				dayOfOnset -> (double) stats.getCasesByReportedDay(dayOfData, dayOfOnset), null, "reported", log, !log,
+				false, 0, false);
 	}
 
 	public String buildCaseAgeTimeseriesChart(CovidStats stats, int dayOfData) {
 		return buildCasesTimeseriesChart(stats, dayOfData, dayOfCases -> stats.getAverageAgeOfNewCases(dayOfCases),
-				"age", false, true, false, 0, true);
+				null, "age", false, true, false, 0, true);
 	}
 
 	public String buildCharts(CovidStats stats) {
@@ -170,35 +188,31 @@ public class ChartMaker {
 		for (int dayOfData = stats.getLastDay(); dayOfData >= stats.getFirstDay(); dayOfData--) {
 			int _dayOfData = dayOfData;
 
-			if (true) {
-				MyExecutor.submitCode(() -> buildOnsetDayTimeseriesChart(stats, _dayOfData, false));
-				MyExecutor.submitCode(() -> buildOnsetDayTimeseriesChart(stats, _dayOfData, true));
+			MyExecutor.submitCode(() -> buildOnsetDayTimeseriesChart(stats, _dayOfData, false));
+			MyExecutor.submitCode(() -> buildOnsetDayTimeseriesChart(stats, _dayOfData, true));
 
-				MyExecutor.submitCode(() -> buildNewInfectionDayTimeseriesChart(stats, _dayOfData));
+			MyExecutor.submitCode(() -> buildNewInfectionDayTimeseriesChart(stats, _dayOfData));
 
-				MyExecutor.submitCode(() -> buildReportedDayTimeseriesChart(stats, _dayOfData, true));
-				MyExecutor.submitCode(() -> buildReportedDayTimeseriesChart(stats, _dayOfData, false));
+			MyExecutor.submitCode(() -> buildReportedDayTimeseriesChart(stats, _dayOfData, true));
+			MyExecutor.submitCode(() -> buildReportedDayTimeseriesChart(stats, _dayOfData, false));
 
-				MyExecutor.submitCode(() -> buildInfectionDayTimeseriesChart(stats, _dayOfData, false));
-				Future<String> fname_ = MyExecutor.submitCode(() -> buildInfectionDayTimeseriesChart(stats, _dayOfData, true));
+			MyExecutor.submitCode(() -> buildInfectionDayTimeseriesChart(stats, _dayOfData, false));
+			Future<String> fname_ = MyExecutor
+					.submitCode(() -> buildInfectionDayTimeseriesChart(stats, _dayOfData, true));
 
-				int dayOfOnset = dayOfData; // names...
-				if (stats.getCasesByOnsetDay(stats.getLastDay(), dayOfOnset) > 0) {
-					MyExecutor.submitCode(() -> buildOnsetReportedDayTimeseriesChart(stats, dayOfOnset));
-				}
-				
-
-				if (fname == null) {
-					fname = fname_;
-				}
+			int dayOfOnset = dayOfData; // names...
+			if (stats.getCasesByOnsetDay(stats.getLastDay(), dayOfOnset) > 0) {
+				MyExecutor.submitCode(() -> buildOnsetReportedDayTimeseriesChart(stats, dayOfOnset));
 			}
 
 			MyExecutor.submitCode(() -> buildCaseAgeTimeseriesChart(stats, _dayOfData));
+
+			if (fname == null) {
+				fname = fname_;
+			}
 		}
 
-		if (fname != null)
-
-		{
+		if (fname != null) {
 			try {
 				return fname.get();
 			} catch (Exception e) {
