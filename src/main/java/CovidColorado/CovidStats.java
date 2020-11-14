@@ -96,12 +96,40 @@ public class CovidStats {
 		return i;
 	}
 
+	public double getExactProjectedCasesByReportedDay(int dayOfData, int dayOfReporting) {
+		if (dayOfData >= numbersByDay.size()) {
+			dayOfData = numbersByDay.size() - 1;
+		}
+		NumbersByDay numbers = numbersByDay.get(dayOfData);
+		ArrayList<Double> reportedCases = numbers.reported.projected;
+		if (reportedCases == null) {
+			System.out.println("No onset cases for " + dayOfData + " with " + dayOfReporting);
+			return 0;
+		}
+		if (dayOfReporting >= reportedCases.size()) {
+			return 0;
+		}
+		Double i = reportedCases.get(dayOfReporting);
+		if (i == null) {
+			return 0;
+		}
+		return i;
+	}
+
 	public double getProjectedCasesByOnsetDay(int dayOfData, int dayOfOnset) {
 		return getExactProjectedCasesByOnsetDay(dayOfData, dayOfOnset) * 0.4
 				+ getExactProjectedCasesByOnsetDay(dayOfData, dayOfOnset + 1) * 0.2
 				+ getExactProjectedCasesByOnsetDay(dayOfData, dayOfOnset - 1) * 0.2
 				+ getExactProjectedCasesByOnsetDay(dayOfData, dayOfOnset + 2) * 0.1
 				+ getExactProjectedCasesByOnsetDay(dayOfData, dayOfOnset - 2) * 0.1;
+	}
+
+	public double getProjectedCasesByReportedDay(int dayOfData, int dayOfReporting) {
+		return getExactProjectedCasesByReportedDay(dayOfData, dayOfReporting) * 0.4
+				+ getExactProjectedCasesByReportedDay(dayOfData, dayOfReporting + 1) * 0.2
+				+ getExactProjectedCasesByReportedDay(dayOfData, dayOfReporting - 1) * 0.2
+				+ getExactProjectedCasesByReportedDay(dayOfData, dayOfReporting + 2) * 0.1
+				+ getExactProjectedCasesByReportedDay(dayOfData, dayOfReporting - 2) * 0.1;
 	}
 
 	public int getCasesByReportedDay(int dayOfData, int dayOfReporting) {
@@ -182,7 +210,7 @@ public class CovidStats {
 		return numbers.onset.ratios.get(delay);
 	}
 
-	public void buildIncompletes() {
+	public void buildIncompletesOnset() {
 		/*
 		 * Delay 10 means the difference from day 10 to day 11. This will be in
 		 * the array under incomplete[10].
@@ -236,6 +264,75 @@ public class CovidStats {
 					numbers.onset.projected.add(0.0);
 				}
 				numbers.onset.projected.set(onsetDay, projected);
+			}
+		}
+	}
+	
+
+
+	public Incomplete getReportedIncompletion(int dayOfData, int delay) {
+		NumbersByDay numbers = numbersByDay.get(dayOfData);
+		while (numbers.reported.ratios.size() <= delay) {
+			numbers.reported.ratios.add(new Incomplete());
+		}
+		return numbers.reported.ratios.get(delay);
+	}
+
+
+	public void buildIncompletesReported() {
+		/*
+		 * Delay 10 means the difference from day 10 to day 11. This will be in
+		 * the array under incomplete[10].
+		 */
+		for (int delay = 0; delay < 30; delay++) {
+			for (int reportedDay = getFirstDay(); reportedDay < getLastDay() - delay; reportedDay++) {
+				int dayOfData1 = reportedDay + delay;
+				int dayOfData2 = reportedDay + delay + 1;
+
+				int cases1 = getCasesByReportedDay(dayOfData1, reportedDay);
+				int cases2 = getCasesByReportedDay(dayOfData2, reportedDay);
+				double newRatio = (double) cases2 / cases1;
+
+				if (cases1 <= 0 || cases2 <= 0) {
+					continue;
+				}
+
+				Incomplete incomplete1 = getReportedIncompletion(dayOfData1, delay);
+				Incomplete incomplete2 = getReportedIncompletion(dayOfData2, delay);
+
+				incomplete2.samples = incomplete1.samples + 1;
+				if (incomplete1.samples < 7) {
+					double samplePortion = (double) incomplete1.samples / incomplete2.samples;
+					incomplete2.ratio = Math.pow(incomplete1.ratio, samplePortion)
+							* Math.pow(newRatio, 1 - samplePortion);
+					System.out.println(
+							"Set ratio to " + incomplete2.ratio + " from " + incomplete1.ratio + " and " + newRatio);
+				} else {
+					incomplete2.ratio = Math.pow(incomplete1.ratio, 6.0 / 7.0) * Math.pow(newRatio, 1.0 / 7.0);
+				}
+			}
+		}
+
+		// projections
+		for (int dayOfData = getFirstDay(); dayOfData <= getLastDay(); dayOfData++) {
+			NumbersByDay numbers = numbersByDay.get(dayOfData);
+			for (int reportedDay = getFirstDay(); reportedDay < dayOfData
+					&& reportedDay < numbers.reported.cases.size(); reportedDay++) {
+				Integer p = numbers.reported.cases.get(reportedDay);
+				if (p == null) {
+					continue;
+				}
+				double projected = p;
+				for (int delay = dayOfData - reportedDay; delay < numbers.reported.ratios.size(); delay++) {
+					projected *= numbers.reported.ratios.get(delay).ratio;
+
+					System.out.println("Projected set to " + projected + " based on ratio "
+							+ numbers.reported.ratios.get(delay).ratio);
+				}
+				while (numbers.reported.projected.size() <= reportedDay) {
+					numbers.reported.projected.add(0.0);
+				}
+				numbers.reported.projected.set(reportedDay, projected);
 			}
 		}
 	}
@@ -301,7 +398,8 @@ public class CovidStats {
 
 		}
 
-		buildIncompletes();
+		buildIncompletesOnset();
+		buildIncompletesReported();
 	}
 
 }

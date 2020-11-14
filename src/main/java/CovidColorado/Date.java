@@ -85,6 +85,11 @@ public class Date {
 
 		return -1;
 	}
+	
+	public static long dateToTime(String date) {
+		int day = dateToDay(date);
+		return dayToJavaDate(day).getTime();
+	}
 
 	public static String dayToDate(int day) {
 		for (Month m : Month.values()) {

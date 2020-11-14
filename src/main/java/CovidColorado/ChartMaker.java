@@ -2,6 +2,8 @@ package CovidColorado;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Font;
+import java.awt.Stroke;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.Future;
@@ -25,6 +27,8 @@ import org.jfree.data.xy.DefaultXYDataset;
 
 import library.MyExecutor;
 
+import org.jfree.chart.ui.TextAnchor;
+
 public class ChartMaker {
 
 	int built = 0;
@@ -33,9 +37,25 @@ public class ChartMaker {
 
 	private static final double halfLifeRatio = Math.pow(0.5, 1 / 7.0);
 
+	public static class Event {
+		public final String name;
+		public final long time;
+
+		public Event(String name, String date) {
+			this.name = name;
+			this.time = Date.dateToTime(date);
+		}
+	}
+
+	private final BasicStroke stroke = new BasicStroke(2);
+
+	public Event[] events = new Event[] { new Event("SaH", "3-26-2020"), new Event("Bars", "06-30-2020"),
+			new Event("Masks", "7-16-2020"), new Event("Snow", "9-9-2020"), new Event("CU/DPS", "8-24-2020"), };
+
 	public String buildCasesTimeseriesChart(CovidStats stats, String folder, int dayOfData,
 			Function<Integer, Double> getCasesForDay, Function<Integer, Double> getProjectedCasesForDay, String by,
-			boolean log, boolean showZeroes, boolean showAverage, int daysToSkip, boolean showRollingAverage) {
+			boolean log, boolean showZeroes, boolean showAverage, int daysToSkip, boolean showRollingAverage,
+			boolean showEvents) {
 
 		folder = TOP_FOLDER + "\\" + folder;
 		new File(folder).mkdir();
@@ -89,18 +109,40 @@ public class ChartMaker {
 		if (log) {
 			XYPlot plot = chart.getXYPlot();
 			LogarithmicAxis yAxis = new LogarithmicAxis("Cases");
-			yAxis.setLowerBound(10);
-			yAxis.setUpperBound(100000);
+			// yAxis.setLowerBound(10);
+			// yAxis.setUpperBound(100000);
 			plot.setRangeAxis(yAxis);
 
 			DateAxis xAxis = new DateAxis("Date");
-			xAxis.setMinimumDate(Date.dayToJavaDate(stats.getFirstDay()));
-			xAxis.setMaximumDate(new java.util.Date(120, 11, 31));
+
+			if (showEvents) {
+				xAxis.setMinimumDate(Date.dayToJavaDate(stats.getFirstDay()));
+				xAxis.setMaximumDate(Date.dayToJavaDate(stats.getLastDay() + 14));
+			}
+
 			plot.setDomainAxis(xAxis);
+
+			Font font = new Font("normal", 0, 12);
 
 			ValueMarker marker = new ValueMarker(Date.dayToJavaDate(dayOfData).getTime());
 			marker.setPaint(Color.black);
+			marker.setLabel("Today");
+			marker.setLabelFont(font);
+			marker.setStroke(stroke);
+			marker.setLabelTextAnchor(TextAnchor.TOP_CENTER);
 			plot.addDomainMarker(marker);
+
+			if (showEvents) {
+				for (Event event : events) {
+					marker = new ValueMarker(event.time);
+					marker.setPaint(Color.green);
+					marker.setLabel(event.name);
+					marker.setStroke(stroke);
+					marker.setLabelFont(font);
+					marker.setLabelTextAnchor(TextAnchor.TOP_CENTER);
+					plot.addDomainMarker(marker);
+				}
+			}
 
 		}
 
@@ -124,20 +166,27 @@ public class ChartMaker {
 				dayOfOnset -> (double) stats.getCasesByOnsetDay(dayOfData, dayOfOnset),
 				dayOfOnset -> (double) stats.getProjectedCasesByOnsetDay(dayOfData, dayOfOnset),
 
-				"onset", log, !log, false, 0, false);
+				"onset", log, !log, false, 0, false, false);
 	}
 
 	public String buildInfectionDayTimeseriesChart(CovidStats stats, int dayOfData, boolean log) {
 		return buildCasesTimeseriesChart(stats, "infection-" + (log ? "log" : "cart"), dayOfData,
 				dayOfOnset -> stats.getCasesByInfectionDay(dayOfData, dayOfOnset),
 				dayOfOnset -> stats.getProjectedCasesByInfectionDay(dayOfData, dayOfOnset), "infection", log, !log,
-				false, 5, false);
+				false, 5, false, true);
+	}
+
+	public String buildReportedDayTimeseriesChart(CovidStats stats, int dayOfData, boolean log) {
+		return buildCasesTimeseriesChart(stats, "reported-" + (log ? "log" : "cart"), dayOfData,
+				dayOfReporting -> (double) stats.getCasesByReportedDay(dayOfData, dayOfReporting),
+				dayOfReporting -> (double) stats.getExactProjectedCasesByReportedDay(dayOfData, dayOfReporting),
+				"reported", log, !log, false, 1, false, false);
 	}
 
 	public String buildNewInfectionDayTimeseriesChart(CovidStats stats, int dayOfData) {
 		return buildCasesTimeseriesChart(stats, "new-infection", dayOfData,
 				dayOfOnset -> stats.getNewCasesByInfectionDay(dayOfData, dayOfOnset), null, "today's cases infection",
-				false, false, true, 0, false);
+				false, false, true, 0, false, false);
 	}
 
 	// this completely doesn't work.
@@ -177,15 +226,10 @@ public class ChartMaker {
 		return file.getAbsolutePath();
 	}
 
-	public String buildReportedDayTimeseriesChart(CovidStats stats, int dayOfData, boolean log) {
-		return buildCasesTimeseriesChart(stats, "reported-" + (log ? "log" : "cart"), dayOfData,
-				dayOfOnset -> (double) stats.getCasesByReportedDay(dayOfData, dayOfOnset), null, "reported", log, !log,
-				false, 0, false);
-	}
-
 	public String buildCaseAgeTimeseriesChart(CovidStats stats, int dayOfData) {
 		return buildCasesTimeseriesChart(stats, "case-age", dayOfData,
-				dayOfCases -> stats.getAverageAgeOfNewCases(dayOfCases), null, "age", false, true, false, 0, true);
+				dayOfCases -> stats.getAverageAgeOfNewCases(dayOfCases), null, "age", false, true, false, 0, true,
+				false);
 	}
 
 	public String buildCharts(CovidStats stats) {
