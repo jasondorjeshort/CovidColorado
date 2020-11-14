@@ -3,6 +3,8 @@ package CovidColorado;
 import java.util.ArrayList;
 import java.util.List;
 
+import library.MyExecutor;
+
 public class CovidStats {
 
 	private static final int firstDay = 48; // 2/17/2020, first day of data
@@ -124,6 +126,16 @@ public class CovidStats {
 				+ getExactProjectedCasesByOnsetDay(dayOfData, dayOfOnset - 2) * 0.1;
 	}
 
+	public double getProjectedCasesInLastWeek(int dayOfData, int dayOfOnset) {
+		double sum = 0;
+
+		for (int i = 0; i < 7; i++) {
+			sum += getExactProjectedCasesByInfectionDay(dayOfData, dayOfOnset - i);
+		}
+
+		return sum;
+	}
+
 	public double getProjectedCasesByReportedDay(int dayOfData, int dayOfReporting) {
 		return getExactProjectedCasesByReportedDay(dayOfData, dayOfReporting) * 0.4
 				+ getExactProjectedCasesByReportedDay(dayOfData, dayOfReporting + 1) * 0.2
@@ -189,6 +201,10 @@ public class CovidStats {
 		return getProjectedCasesByOnsetDay(dayOfData, dayOfInfection + 5);
 	}
 
+	public double getExactProjectedCasesByInfectionDay(int dayOfData, int dayOfInfection) {
+		return getExactProjectedCasesByOnsetDay(dayOfData, dayOfInfection + 5);
+	}
+
 	public int getLastOnsetDay(int dayOfData) {
 		return numbersByDay.get(dayOfData).onset.cases.size() - 1;
 	}
@@ -236,8 +252,6 @@ public class CovidStats {
 					double samplePortion = (double) incomplete1.samples / incomplete2.samples;
 					incomplete2.ratio = Math.pow(incomplete1.ratio, samplePortion)
 							* Math.pow(newRatio, 1 - samplePortion);
-					System.out.println(
-							"Set ratio to " + incomplete2.ratio + " from " + incomplete1.ratio + " and " + newRatio);
 				} else {
 					incomplete2.ratio = Math.pow(incomplete1.ratio, 6.0 / 7.0) * Math.pow(newRatio, 1.0 / 7.0);
 				}
@@ -256,9 +270,6 @@ public class CovidStats {
 				double projected = p;
 				for (int delay = dayOfData - onsetDay; delay < numbers.onset.ratios.size(); delay++) {
 					projected *= numbers.onset.ratios.get(delay).ratio;
-
-					System.out.println("Projected set to " + projected + " based on ratio "
-							+ numbers.onset.ratios.get(delay).ratio);
 				}
 				while (numbers.onset.projected.size() <= onsetDay) {
 					numbers.onset.projected.add(0.0);
@@ -267,8 +278,6 @@ public class CovidStats {
 			}
 		}
 	}
-	
-
 
 	public Incomplete getReportedIncompletion(int dayOfData, int delay) {
 		NumbersByDay numbers = numbersByDay.get(dayOfData);
@@ -277,7 +286,6 @@ public class CovidStats {
 		}
 		return numbers.reported.ratios.get(delay);
 	}
-
 
 	public void buildIncompletesReported() {
 		/*
@@ -305,8 +313,6 @@ public class CovidStats {
 					double samplePortion = (double) incomplete1.samples / incomplete2.samples;
 					incomplete2.ratio = Math.pow(incomplete1.ratio, samplePortion)
 							* Math.pow(newRatio, 1 - samplePortion);
-					System.out.println(
-							"Set ratio to " + incomplete2.ratio + " from " + incomplete1.ratio + " and " + newRatio);
 				} else {
 					incomplete2.ratio = Math.pow(incomplete1.ratio, 6.0 / 7.0) * Math.pow(newRatio, 1.0 / 7.0);
 				}
@@ -325,15 +331,24 @@ public class CovidStats {
 				double projected = p;
 				for (int delay = dayOfData - reportedDay; delay < numbers.reported.ratios.size(); delay++) {
 					projected *= numbers.reported.ratios.get(delay).ratio;
-
-					System.out.println("Projected set to " + projected + " based on ratio "
-							+ numbers.reported.ratios.get(delay).ratio);
 				}
 				while (numbers.reported.projected.size() <= reportedDay) {
 					numbers.reported.projected.add(0.0);
 				}
 				numbers.reported.projected.set(reportedDay, projected);
 			}
+		}
+	}
+
+	public void outputInfectionProjections() {
+		int dayOfData = getLastDay();
+
+		for (int dayOfInfection = getFirstDay(); dayOfInfection <= dayOfData; dayOfInfection++) {
+			double cases = getExactProjectedCasesByInfectionDay(dayOfData, dayOfInfection);
+
+			double week = getProjectedCasesInLastWeek(dayOfData, dayOfInfection);
+			System.out
+					.println(Date.dayToDate(dayOfInfection) + " => " + dayOfInfection + " => " + cases + " => " + week);
 		}
 	}
 
@@ -400,6 +415,8 @@ public class CovidStats {
 
 		buildIncompletesOnset();
 		buildIncompletesReported();
+
+		MyExecutor.executeCode(() -> outputInfectionProjections());
 	}
 
 }

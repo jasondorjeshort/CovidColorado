@@ -109,8 +109,10 @@ public class ChartMaker {
 		if (log) {
 			XYPlot plot = chart.getXYPlot();
 			LogarithmicAxis yAxis = new LogarithmicAxis("Cases");
-			// yAxis.setLowerBound(10);
-			// yAxis.setUpperBound(100000);
+			if (showEvents) {
+				yAxis.setLowerBound(1);
+				yAxis.setUpperBound(10000);
+			}
 			plot.setRangeAxis(yAxis);
 
 			DateAxis xAxis = new DateAxis("Date");
@@ -171,9 +173,9 @@ public class ChartMaker {
 
 	public String buildInfectionDayTimeseriesChart(CovidStats stats, int dayOfData, boolean log) {
 		return buildCasesTimeseriesChart(stats, "infection-" + (log ? "log" : "cart"), dayOfData,
-				dayOfOnset -> stats.getCasesByInfectionDay(dayOfData, dayOfOnset),
-				dayOfOnset -> stats.getProjectedCasesByInfectionDay(dayOfData, dayOfOnset), "infection", log, !log,
-				false, 5, false, true);
+				dayOfInfection -> stats.getCasesByInfectionDay(dayOfData, dayOfInfection),
+				dayOfInfection -> stats.getProjectedCasesByInfectionDay(dayOfData, dayOfInfection), "infection", log,
+				!log, false, 5, false, true);
 	}
 
 	public String buildReportedDayTimeseriesChart(CovidStats stats, int dayOfData, boolean log) {
