@@ -29,13 +29,17 @@ public class ChartMaker {
 
 	int built = 0;
 
-	private static final String directory = "H:\\CovidColorado";
+	private static final String TOP_FOLDER = "H:\\CovidColorado";
 
 	private static final double halfLifeRatio = Math.pow(0.5, 1 / 7.0);
 
-	public String buildCasesTimeseriesChart(CovidStats stats, int dayOfData, Function<Integer, Double> getCasesForDay,
-			Function<Integer, Double> getProjectedCasesForDay, String by, boolean log, boolean showZeroes,
-			boolean showAverage, int daysToSkip, boolean showRollingAverage) {
+	public String buildCasesTimeseriesChart(CovidStats stats, String folder, int dayOfData,
+			Function<Integer, Double> getCasesForDay, Function<Integer, Double> getProjectedCasesForDay, String by,
+			boolean log, boolean showZeroes, boolean showAverage, int daysToSkip, boolean showRollingAverage) {
+
+		folder = TOP_FOLDER + "\\" + folder;
+		new File(folder).mkdir();
+
 		DefaultXYDataset dataset = new DefaultXYDataset();
 		TimeSeries series = new TimeSeries("Cases");
 		TimeSeries projectedSeries = new TimeSeries("Projected");
@@ -101,7 +105,7 @@ public class ChartMaker {
 		}
 
 		File file = new File(
-				directory + "\\" + by + "-" + (log ? "log-" : "cart-") + Date.dayToFullDate(dayOfData, '-') + ".png");
+				folder + "\\" + by + "-" + (log ? "log-" : "cart-") + Date.dayToFullDate(dayOfData, '-') + ".png");
 		try {
 			ChartUtils.saveChartAsPNG(file, chart, 800, 600);
 		} catch (IOException e) {
@@ -116,7 +120,7 @@ public class ChartMaker {
 	}
 
 	public String buildOnsetDayTimeseriesChart(CovidStats stats, int dayOfData, boolean log) {
-		return buildCasesTimeseriesChart(stats, dayOfData,
+		return buildCasesTimeseriesChart(stats, "onset-" + (log ? "log" : "cart"), dayOfData,
 				dayOfOnset -> (double) stats.getCasesByOnsetDay(dayOfData, dayOfOnset),
 				dayOfOnset -> (double) stats.getProjectedCasesByOnsetDay(dayOfData, dayOfOnset),
 
@@ -124,14 +128,14 @@ public class ChartMaker {
 	}
 
 	public String buildInfectionDayTimeseriesChart(CovidStats stats, int dayOfData, boolean log) {
-		return buildCasesTimeseriesChart(stats, dayOfData,
+		return buildCasesTimeseriesChart(stats, "infection-" + (log ? "log" : "cart"), dayOfData,
 				dayOfOnset -> stats.getCasesByInfectionDay(dayOfData, dayOfOnset),
 				dayOfOnset -> stats.getProjectedCasesByInfectionDay(dayOfData, dayOfOnset), "infection", log, !log,
 				false, 5, false);
 	}
 
 	public String buildNewInfectionDayTimeseriesChart(CovidStats stats, int dayOfData) {
-		return buildCasesTimeseriesChart(stats, dayOfData,
+		return buildCasesTimeseriesChart(stats, "new-infection", dayOfData,
 				dayOfOnset -> stats.getNewCasesByInfectionDay(dayOfData, dayOfOnset), null, "today's cases infection",
 				false, false, true, 0, false);
 	}
@@ -139,6 +143,9 @@ public class ChartMaker {
 	// this completely doesn't work.
 	public String buildOnsetReportedDayTimeseriesChart(CovidStats stats, int dayOfOnset) {
 		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		String folder = TOP_FOLDER + "\\onset_reported";
+		new File(folder).mkdir();
 
 		int range = 5, fullRange = range * 2 + 1;
 
@@ -161,8 +168,7 @@ public class ChartMaker {
 				"Days from onset (" + Date.dayToFullDate(dayOfOnset, '-') + ") to test reporting", "Days", "Cases",
 				dataset, PlotOrientation.VERTICAL, true, true, false);
 
-		File file = new File(
-				directory + "\\days_from_onset_to_reporting-" + Date.dayToFullDate(dayOfOnset, '-') + ".png");
+		File file = new File(folder + "\\days_from_onset_to_reporting-" + Date.dayToFullDate(dayOfOnset, '-') + ".png");
 		try {
 			ChartUtils.saveChartAsPNG(file, chart, 1920, 1080);
 		} catch (IOException e) {
@@ -172,19 +178,19 @@ public class ChartMaker {
 	}
 
 	public String buildReportedDayTimeseriesChart(CovidStats stats, int dayOfData, boolean log) {
-		return buildCasesTimeseriesChart(stats, dayOfData,
+		return buildCasesTimeseriesChart(stats, "reported-" + (log ? "log" : "cart"), dayOfData,
 				dayOfOnset -> (double) stats.getCasesByReportedDay(dayOfData, dayOfOnset), null, "reported", log, !log,
 				false, 0, false);
 	}
 
 	public String buildCaseAgeTimeseriesChart(CovidStats stats, int dayOfData) {
-		return buildCasesTimeseriesChart(stats, dayOfData, dayOfCases -> stats.getAverageAgeOfNewCases(dayOfCases),
-				null, "age", false, true, false, 0, true);
+		return buildCasesTimeseriesChart(stats, "case-age", dayOfData,
+				dayOfCases -> stats.getAverageAgeOfNewCases(dayOfCases), null, "age", false, true, false, 0, true);
 	}
 
 	public String buildCharts(CovidStats stats) {
 		Future<String> fname = null;
-		new File(directory).mkdir();
+		new File(TOP_FOLDER).mkdir();
 		for (int dayOfData = stats.getLastDay(); dayOfData >= stats.getFirstDay(); dayOfData--) {
 			int _dayOfData = dayOfData;
 
