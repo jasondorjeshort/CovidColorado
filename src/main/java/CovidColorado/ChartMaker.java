@@ -167,7 +167,7 @@ public class ChartMaker {
 	public String buildCharts(CovidStats stats) {
 		Future<String> fname = null;
 		new File(directory).mkdir();
-		for (int dayOfData = stats.getFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
+		for (int dayOfData = stats.getLastDay(); dayOfData >= stats.getFirstDay(); dayOfData--) {
 			int _dayOfData = dayOfData;
 
 			if (true) {
@@ -180,16 +180,22 @@ public class ChartMaker {
 				MyExecutor.submitCode(() -> buildReportedDayTimeseriesChart(stats, _dayOfData, false));
 
 				MyExecutor.submitCode(() -> buildInfectionDayTimeseriesChart(stats, _dayOfData, false));
-				MyExecutor.submitCode(() -> buildInfectionDayTimeseriesChart(stats, _dayOfData, true));
+				Future<String> fname_ = MyExecutor.submitCode(() -> buildInfectionDayTimeseriesChart(stats, _dayOfData, true));
 
 				int dayOfOnset = dayOfData; // names...
 				if (stats.getCasesByOnsetDay(stats.getLastDay(), dayOfOnset) > 0) {
-					fname = MyExecutor.submitCode(() -> buildOnsetReportedDayTimeseriesChart(stats, dayOfOnset));
+					MyExecutor.submitCode(() -> buildOnsetReportedDayTimeseriesChart(stats, dayOfOnset));
+				}
+				
+
+				if (fname == null) {
+					fname = fname_;
 				}
 			}
 
-			fname = MyExecutor.submitCode(() -> buildCaseAgeTimeseriesChart(stats, _dayOfData));
+			MyExecutor.submitCode(() -> buildCaseAgeTimeseriesChart(stats, _dayOfData));
 		}
+
 		if (fname != null)
 
 		{
