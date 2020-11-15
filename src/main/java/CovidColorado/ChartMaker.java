@@ -4,8 +4,14 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Stroke;
+import java.awt.image.BufferedImage;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Function;
 
@@ -14,6 +20,8 @@ import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.LogarithmicAxis;
+import org.jfree.chart.encoders.EncoderUtil;
+import org.jfree.chart.encoders.ImageFormat;
 import org.jfree.chart.plot.IntervalMarker;
 import org.jfree.chart.plot.Marker;
 import org.jfree.chart.plot.PlotOrientation;
@@ -24,6 +32,8 @@ import org.jfree.data.time.Day;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.data.xy.DefaultXYDataset;
+
+import com.madgag.gif.fmsware.AnimatedGifEncoder;
 
 import library.MyExecutor;
 
@@ -52,13 +62,24 @@ public class ChartMaker {
 	public Event[] events = new Event[] { new Event("SaH", "3-26-2020"), new Event("Bars", "06-30-2020"),
 			new Event("Masks", "7-16-2020"), new Event("Snow", "9-9-2020"), new Event("CU/DPS", "8-24-2020"), };
 
-	public String buildCasesTimeseriesChart(CovidStats stats, String folder, int dayOfData,
+	public void saveBufferedImageAsPNG(String folder, String name, BufferedImage bufferedImage) {
+
+		new File(folder).mkdir();
+		File file = new File(folder + "\\" + name + ".png");
+
+		try (OutputStream out = new BufferedOutputStream(new FileOutputStream(file))) {
+			EncoderUtil.writeBufferedImage(bufferedImage, ImageFormat.PNG, out);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public BufferedImage buildCasesTimeseriesChart(CovidStats stats, String folder, int dayOfData,
 			Function<Integer, Double> getCasesForDay, Function<Integer, Double> getProjectedCasesForDay, String by,
 			boolean log, boolean showZeroes, boolean showAverage, int daysToSkip, boolean showRollingAverage,
 			boolean showEvents) {
 
 		folder = TOP_FOLDER + "\\" + folder;
-		new File(folder).mkdir();
 
 		DefaultXYDataset dataset = new DefaultXYDataset();
 		TimeSeries series = new TimeSeries("Cases");
@@ -148,22 +169,13 @@ public class ChartMaker {
 
 		}
 
-		File file = new File(
-				folder + "\\" + by + "-" + (log ? "log-" : "cart-") + Date.dayToFullDate(dayOfData, '-') + ".png");
-		try {
-			ChartUtils.saveChartAsPNG(file, chart, 800, 600);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		/*
-		 * int tot; synchronized (this) { tot = ++built; }
-		 * System.out.println("Built chart " + file.getAbsolutePath() + ", " +
-		 * tot + " total.");
-		 */
-		return file.getAbsolutePath();
+		BufferedImage image = chart.createBufferedImage(WIDTH, HEIGHT);
+		String name = by + "-" + (log ? "log-" : "cart-") + Date.dayToFullDate(dayOfData, '-');
+		saveBufferedImageAsPNG(folder, name, image);
+		return image;
 	}
 
-	public String buildOnsetDayTimeseriesChart(CovidStats stats, int dayOfData, boolean log) {
+	public BufferedImage buildOnsetDayTimeseriesChart(CovidStats stats, int dayOfData, boolean log) {
 		return buildCasesTimeseriesChart(stats, "onset-" + (log ? "log" : "cart"), dayOfData,
 				dayOfOnset -> (double) stats.getCasesByOnsetDay(dayOfData, dayOfOnset),
 				dayOfOnset -> (double) stats.getProjectedCasesByOnsetDay(dayOfData, dayOfOnset),
@@ -171,28 +183,30 @@ public class ChartMaker {
 				"onset", log, !log, false, 0, false, false);
 	}
 
-	public String buildInfectionDayTimeseriesChart(CovidStats stats, int dayOfData, boolean log) {
+	public BufferedImage buildInfectionDayTimeseriesChart(CovidStats stats, int dayOfData, boolean log) {
 		return buildCasesTimeseriesChart(stats, "infection-" + (log ? "log" : "cart"), dayOfData,
 				dayOfInfection -> stats.getCasesByInfectionDay(dayOfData, dayOfInfection),
 				dayOfInfection -> stats.getProjectedCasesByInfectionDay(dayOfData, dayOfInfection), "infection", log,
 				!log, false, 5, false, true);
 	}
 
-	public String buildReportedDayTimeseriesChart(CovidStats stats, int dayOfData, boolean log) {
+	public BufferedImage buildReportedDayTimeseriesChart(CovidStats stats, int dayOfData, boolean log) {
 		return buildCasesTimeseriesChart(stats, "reported-" + (log ? "log" : "cart"), dayOfData,
 				dayOfReporting -> (double) stats.getCasesByReportedDay(dayOfData, dayOfReporting),
 				dayOfReporting -> (double) stats.getExactProjectedCasesByReportedDay(dayOfData, dayOfReporting),
 				"reported", log, !log, false, 1, false, false);
 	}
 
-	public String buildNewInfectionDayTimeseriesChart(CovidStats stats, int dayOfData) {
+	public BufferedImage buildNewInfectionDayTimeseriesChart(CovidStats stats, int dayOfData) {
 		return buildCasesTimeseriesChart(stats, "new-infection", dayOfData,
 				dayOfOnset -> stats.getNewCasesByInfectionDay(dayOfData, dayOfOnset), null, "today's cases infection",
 				false, false, true, 0, false, false);
 	}
 
+	public static final int WIDTH = 800, HEIGHT = 600;
+
 	// this completely doesn't work.
-	public String buildOnsetReportedDayTimeseriesChart(CovidStats stats, int dayOfOnset) {
+	public BufferedImage buildOnsetReportedDayTimeseriesChart(CovidStats stats, int dayOfOnset) {
 		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 
 		String folder = TOP_FOLDER + "\\onset_reported";
@@ -219,25 +233,44 @@ public class ChartMaker {
 				"Days from onset (" + Date.dayToFullDate(dayOfOnset, '-') + ") to test reporting", "Days", "Cases",
 				dataset, PlotOrientation.VERTICAL, true, true, false);
 
-		File file = new File(folder + "\\days_from_onset_to_reporting-" + Date.dayToFullDate(dayOfOnset, '-') + ".png");
-		try {
-			ChartUtils.saveChartAsPNG(file, chart, 1920, 1080);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return file.getAbsolutePath();
+		BufferedImage image = chart.createBufferedImage(WIDTH, HEIGHT);
+		String name = "days_from_onset_to_reporting-";
+		saveBufferedImageAsPNG(folder, name, image);
+		return image;
 	}
 
-	public String buildCaseAgeTimeseriesChart(CovidStats stats, int dayOfData) {
+	public BufferedImage buildCaseAgeTimeseriesChart(CovidStats stats, int dayOfData) {
 		return buildCasesTimeseriesChart(stats, "case-age", dayOfData,
 				dayOfCases -> stats.getAverageAgeOfNewCases(dayOfCases), null, "age", false, true, false, 0, true,
 				false);
 	}
 
+	private ArrayList<Future<BufferedImage>> infectionLog = new ArrayList<>();
+
+	public String buildGIFs() {
+
+		AnimatedGifEncoder gif = new AnimatedGifEncoder();
+		String name = TOP_FOLDER + "\\infection-log.gif";
+		gif.start(name);
+		gif.setDelay(40);
+		for (Future<BufferedImage> fbi : infectionLog) {
+			BufferedImage bufferedImage;
+			try {
+				bufferedImage = fbi.get();
+			} catch (Exception e) {
+				e.printStackTrace();
+				continue;
+			}
+			gif.addFrame(bufferedImage);
+		}
+		gif.finish();
+		System.out.println("Wrote gif!");
+		return name;
+	}
+
 	public String buildCharts(CovidStats stats) {
-		Future<String> fname = null;
 		new File(TOP_FOLDER).mkdir();
-		for (int dayOfData = stats.getLastDay(); dayOfData >= stats.getFirstDay(); dayOfData--) {
+		for (int dayOfData = stats.getFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
 			int _dayOfData = dayOfData;
 
 			MyExecutor.submitCode(() -> buildOnsetDayTimeseriesChart(stats, _dayOfData, false));
@@ -249,8 +282,7 @@ public class ChartMaker {
 			MyExecutor.submitCode(() -> buildReportedDayTimeseriesChart(stats, _dayOfData, false));
 
 			MyExecutor.submitCode(() -> buildInfectionDayTimeseriesChart(stats, _dayOfData, false));
-			Future<String> fname_ = MyExecutor
-					.submitCode(() -> buildInfectionDayTimeseriesChart(stats, _dayOfData, true));
+			infectionLog.add(MyExecutor.submitCode(() -> buildInfectionDayTimeseriesChart(stats, _dayOfData, true)));
 
 			int dayOfOnset = dayOfData; // names...
 			if (stats.getCasesByOnsetDay(stats.getLastDay(), dayOfOnset) > 0) {
@@ -258,20 +290,9 @@ public class ChartMaker {
 			}
 
 			MyExecutor.submitCode(() -> buildCaseAgeTimeseriesChart(stats, _dayOfData));
-
-			if (fname == null) {
-				fname = fname_;
-			}
 		}
 
-		if (fname != null) {
-			try {
-				return fname.get();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-		return null;
+		return buildGIFs();
 
 	}
 }
