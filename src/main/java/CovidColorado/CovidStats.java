@@ -226,6 +226,8 @@ public class CovidStats {
 		return numbers.onset.ratios.get(delay);
 	}
 
+	public double SAMPLE_DAYS = 14;
+
 	public void buildIncompletesOnset() {
 		/*
 		 * Delay 10 means the difference from day 10 to day 11. This will be in
@@ -248,12 +250,13 @@ public class CovidStats {
 				Incomplete incomplete2 = getOnsetIncompletion(dayOfData2, delay);
 
 				incomplete2.samples = incomplete1.samples + 1;
-				if (incomplete1.samples < 7) {
+				if (incomplete1.samples < SAMPLE_DAYS) {
 					double samplePortion = (double) incomplete1.samples / incomplete2.samples;
 					incomplete2.ratio = Math.pow(incomplete1.ratio, samplePortion)
 							* Math.pow(newRatio, 1 - samplePortion);
 				} else {
-					incomplete2.ratio = Math.pow(incomplete1.ratio, 6.0 / 7.0) * Math.pow(newRatio, 1.0 / 7.0);
+					incomplete2.ratio = Math.pow(incomplete1.ratio, (SAMPLE_DAYS - 1) / SAMPLE_DAYS)
+							* Math.pow(newRatio, 1.0 / SAMPLE_DAYS);
 				}
 			}
 		}
