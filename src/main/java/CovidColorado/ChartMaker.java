@@ -35,6 +35,7 @@ import org.jfree.data.xy.DefaultXYDataset;
 
 import com.madgag.gif.fmsware.AnimatedGifEncoder;
 
+import CovidColorado.CovidStats.County;
 import library.MyExecutor;
 
 import org.jfree.chart.ui.TextAnchor;
@@ -117,9 +118,11 @@ public class ChartMaker {
 		// dataset.addSeries("Cases", series);
 
 		double averageAge = dayOfData - (double) totalDays / totalCases;
-		TimeSeriesCollection collection = new TimeSeriesCollection(series);
+		TimeSeriesCollection collection = new TimeSeriesCollection();
 		if (getProjectedCasesForDay != null) {
 			collection.addSeries(projectedSeries);
+		} else {
+			collection.addSeries(series);
 		}
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(
 				"Colorado cases (" + totalCases + ") by " + by + " date "
@@ -268,8 +271,23 @@ public class ChartMaker {
 		return name;
 	}
 
+	public void createCountyStats(CovidStats stats, County county, int dayOfData) {
+		buildCasesTimeseriesChart(stats, "county-stats-14days", dayOfData,
+				dayOfCases -> Double.valueOf(county.getCases(dayOfCases) - county.getCases(dayOfCases - 14)), null,
+				county.name.replaceAll(" ", "_"), false, true, false, 0, true, false);
+		buildCasesTimeseriesChart(stats, "county-stats-14days", dayOfData,
+				dayOfCases -> Double
+						.valueOf(Math.max(county.getCases(dayOfCases) - county.getCases(dayOfCases - 14), 1)),
+				null, county.name.replaceAll(" ", "_"), true, true, false, 0, true, false);
+
+	}
+
 	public String buildCharts(CovidStats stats) {
 		new File(TOP_FOLDER).mkdir();
+
+		stats.getCounties().forEach(
+				(key, value) -> MyExecutor.executeCode(() -> createCountyStats(stats, value, stats.getLastDay())));
+
 		for (int dayOfData = stats.getFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
 			int _dayOfData = dayOfData;
 

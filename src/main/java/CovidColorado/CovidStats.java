@@ -1,7 +1,10 @@
 package CovidColorado;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import library.MyExecutor;
 
@@ -14,6 +17,31 @@ public class CovidStats {
 		return String.format("H:\\Downloads\\CovidColoradoCSV\\covid19_case_summary_%s.csv",
 				Date.dayToFullDate(day, '-'));
 	}
+
+	public class County {
+		// cumulative stats for ONE county
+		final String name;
+		final ArrayList<Integer> cases = new ArrayList<>();
+		final ArrayList<Integer> deaths = new ArrayList<>();
+
+		County(String name) {
+			this.name = name;
+		}
+
+		public int getCases(int day) {
+			if (day < 0 || day >= cases.size()) {
+				return 0;
+			}
+			Integer caseCount = cases.get(day);
+			if (caseCount == null) {
+				return 0;
+			}
+			return caseCount;
+		}
+
+	}
+
+	private final HashMap<String, County> counties = new HashMap<>();
 
 	/*
 	 * Cases of COVID-19 in Colorado by Date Reported to the State | 2020-05-10
@@ -233,7 +261,7 @@ public class CovidStats {
 		 * Delay 10 means the difference from day 10 to day 11. This will be in
 		 * the array under incomplete[10].
 		 */
-		for (int delay = 0; delay < 30; delay++) {
+		for (int delay = 0; delay < 90; delay++) {
 			for (int onsetDay = getFirstDay(); onsetDay < getLastDay() - delay; onsetDay++) {
 				int dayOfData1 = onsetDay + delay;
 				int dayOfData2 = onsetDay + delay + 1;
@@ -355,6 +383,19 @@ public class CovidStats {
 		}
 	}
 
+	public County getCountyStats(String countyName) {
+		County county = counties.get(countyName);
+		if (county == null) {
+			county = new County(countyName);
+			counties.put(countyName, county);
+		}
+		return county;
+	}
+
+	public Map<String, County> getCounties() {
+		return counties;
+	}
+
 	public CovidStats() {
 		/*
 		 * Monolithic code to read all the CSVs into one big spaghetti
@@ -409,7 +450,33 @@ public class CovidStats {
 					}
 				}
 
-				if (split[0].contains("reported") || split[0].contains("Reported")) {
+				if (split[0].equalsIgnoreCase("Colorado Case Counts by County")
+						|| split[0].equalsIgnoreCase("Case Counts by County")) {
+					if (!split[1].equalsIgnoreCase("Note") && split[2].equalsIgnoreCase("Cases")
+							&& !split[1].contains("nknown")) {
+						String countyName = split[1];
+						Integer cases = Integer.valueOf(split[3]);
+
+						if (countyName.endsWith(" County")) {
+							countyName = countyName.substring(0, countyName.length() - 7);
+						}
+						countyName = countyName.trim();
+
+						County county = getCountyStats(countyName);
+						while (county.cases.size() <= day) {
+							county.cases.add(0);
+						}
+
+						if (countyName.equalsIgnoreCase("Saguache")) {
+							System.out.println(countyName + " => " + Date.dayToDate(day) + " => " + cases);
+						}
+
+						county.cases.set(day, cases);
+					}
+				} else if (split[0].equalsIgnoreCase("Colorado Case Counts by County")) {
+
+				} else if (split[0].contains("Saguache") || split[1].contains("Saguache")
+						|| split[2].contains("Saguache") || split[3].contains("Saguache")) {
 					// writeSplit(split);
 				}
 			}
