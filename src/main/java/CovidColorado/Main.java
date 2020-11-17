@@ -11,6 +11,11 @@ public class Main {
 	public static void main(String[] args) {
 		long time = System.currentTimeMillis();
 		CovidStats stats = new CovidStats();
+
+		System.out.println("Read stats in " + (System.currentTimeMillis() - time) + " ms.");
+		
+		
+		
 		ChartMaker charts = new ChartMaker();
 		String fname = charts.buildCharts(stats);
 
@@ -28,7 +33,6 @@ public class Main {
 
 		MyExecutor.awaitTermination(1, TimeUnit.DAYS);
 
-		time = System.currentTimeMillis() - time;
-		System.out.println("Built charts in " + time + " ms.");
+		System.out.println("Built charts in " + (System.currentTimeMillis() - time) + " ms.");
 	}
 }
