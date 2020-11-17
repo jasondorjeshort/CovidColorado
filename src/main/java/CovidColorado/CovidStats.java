@@ -60,22 +60,11 @@ public class CovidStats {
 	private static final String oldOnset = "Case Counts by Onset Date";
 	private static final String newOnset = "Cases of COVID-19 in Colorado by Date of Illness Onset";
 
-	public class Incomplete {
-		int samples = 0;
-		double ratio = 1;
-	}
+	private final IncompleteCases onsetCases = new IncompleteCases();
+	private final IncompleteCases infectionCases = new IncompleteCases();
+	private final IncompleteCases reportedCases = new IncompleteCases();
 
-	public class IncompleteCases {
-		public final ArrayList<Integer> cases = new ArrayList<>();
-		public final ArrayList<Double> projected = new ArrayList<>();
-		public final ArrayList<Incomplete> ratios = new ArrayList<>();
-	}
-
-	private final ArrayList<IncompleteCases> onsetCases = new ArrayList<>();
-	private final ArrayList<IncompleteCases> infectionCases = new ArrayList<>();
-	private final ArrayList<IncompleteCases> reportedCases = new ArrayList<>();
-
-	private ArrayList<IncompleteCases> getCases(CaseType type) {
+	private IncompleteCases getCases(CaseType type) {
 		switch (type) {
 		case ONSET_TESTS:
 			return onsetCases;
@@ -97,33 +86,11 @@ public class CovidStats {
 	}
 
 	public int getCasesByType(CaseType type, int dayOfData, int dayOfType) {
-		ArrayList<IncompleteCases> numbers = getCases(type);
-		if (dayOfData >= numbers.size()) {
-			return 0;
-		}
-		IncompleteCases daily = numbers.get(dayOfData);
-		if (dayOfType >= daily.cases.size()) {
-			return 0;
-		}
-		Integer i = daily.cases.get(dayOfType);
-		if (i == null) {
-			return 0;
-		}
-		return i;
+		return getCases(type).getCases(dayOfData, dayOfType);
 	}
 
 	public double getExactProjectedCasesByType(CaseType type, int dayOfData, int dayOfType) {
-		ArrayList<IncompleteCases> numbers = getCases(type);
-		IncompleteCases daily = numbers.get(dayOfData);
-		ArrayList<Double> cases = daily.projected;
-		if (dayOfType >= cases.size()) {
-			return 0;
-		}
-		Double i = cases.get(dayOfType);
-		if (i == null) {
-			return 0;
-		}
-		return i;
+		return getCases(type).getExactProjectedCases(dayOfData, dayOfType);
 	}
 
 	public double getSmoothedProjectedCasesByType(CaseType type, int dayOfData, int dayOfType) {
@@ -161,7 +128,7 @@ public class CovidStats {
 	}
 
 	public int getLastDayOfType(CaseType type, int dayOfData) {
-		return getCases(type).get(dayOfData).cases.size() - 1;
+		return getCases(type).getLastDay(dayOfData);
 	}
 
 	private static void writeSplit(String[] split) {
@@ -171,71 +138,6 @@ public class CovidStats {
 			System.out.print(split[i]);
 		}
 		System.out.println("");
-	}
-
-	private Incomplete getIncompletion(CaseType type, int dayOfType, int delay) {
-		ArrayList<IncompleteCases> fullNumbers = getCases(type);
-		IncompleteCases numbers = fullNumbers.get(dayOfType);
-		while (numbers.ratios.size() <= delay) {
-			numbers.ratios.add(new Incomplete());
-		}
-		return numbers.ratios.get(delay);
-	}
-
-	public double SAMPLE_DAYS = 14;
-
-	private void buildIncompletes(CaseType type) {
-		ArrayList<IncompleteCases> incompletes = getCases(type);
-		/*
-		 * Delay 10 means the difference from day 10 to day 11. This will be in
-		 * the array under incomplete[10].
-		 */
-		for (int delay = 0; delay < 90; delay++) {
-			for (int typeDay = getFirstDay(); typeDay < getLastDay() - delay; typeDay++) {
-				int dayOfData1 = typeDay + delay;
-				int dayOfData2 = typeDay + delay + 1;
-
-				int cases1 = getCasesByType(type, dayOfData1, typeDay);
-				int cases2 = getCasesByType(type, dayOfData2, typeDay);
-				double newRatio = (double) cases2 / cases1;
-
-				if (cases1 <= 0 || cases2 <= 0) {
-					continue;
-				}
-
-				Incomplete incomplete1 = getIncompletion(type, dayOfData1, delay);
-				Incomplete incomplete2 = getIncompletion(type, dayOfData2, delay);
-
-				incomplete2.samples = incomplete1.samples + 1;
-				if (incomplete1.samples < SAMPLE_DAYS) {
-					double samplePortion = (double) incomplete1.samples / incomplete2.samples;
-					incomplete2.ratio = Math.pow(incomplete1.ratio, samplePortion)
-							* Math.pow(newRatio, 1 - samplePortion);
-				} else {
-					incomplete2.ratio = Math.pow(incomplete1.ratio, (SAMPLE_DAYS - 1) / SAMPLE_DAYS)
-							* Math.pow(newRatio, 1.0 / SAMPLE_DAYS);
-				}
-			}
-		}
-
-		// projections
-		for (int dayOfData = getFirstDay(); dayOfData <= getLastDay(); dayOfData++) {
-			IncompleteCases numbers = incompletes.get(dayOfData);
-			for (int typeDay = getFirstDay(); typeDay < dayOfData && typeDay < numbers.cases.size(); typeDay++) {
-				Integer p = numbers.cases.get(typeDay);
-				if (p == null) {
-					continue;
-				}
-				double projected = p;
-				for (int delay = dayOfData - typeDay; delay < numbers.ratios.size(); delay++) {
-					projected *= numbers.ratios.get(delay).ratio;
-				}
-				while (numbers.projected.size() <= typeDay) {
-					numbers.projected.add(0.0);
-				}
-				numbers.projected.set(typeDay, projected);
-			}
-		}
 	}
 
 	public void outputProjections(CaseType type) {
@@ -266,27 +168,15 @@ public class CovidStats {
 		 * Monolithic code to read all the CSVs into one big spaghetti
 		 * structure.
 		 */
-		for (int day = firstCSV;; day++) {
+		for (int dayOfData = firstCSV;; dayOfData++) {
 
-			List<String[]> csv = CSVReader.read(csvFileName(day));
+			List<String[]> csv = CSVReader.read(csvFileName(dayOfData));
 
 			if (csv == null) {
-				lastDay = day - 1;
+				lastDay = dayOfData - 1;
 				System.out.println("Last day: " + Date.dayToDate(lastDay));
 				break;
 			}
-
-			while (onsetCases.size() <= day) {
-				onsetCases.add(new IncompleteCases());
-			}
-			while (infectionCases.size() <= day) {
-				infectionCases.add(new IncompleteCases());
-			}
-			while (reportedCases.size() <= day) {
-				reportedCases.add(new IncompleteCases());
-			}
-			IncompleteCases onset = onsetCases.get(day), reported = reportedCases.get(day),
-					infection = infectionCases.get(day);
 
 			for (String[] split : csv) {
 
@@ -298,29 +188,20 @@ public class CovidStats {
 				if (split[0].equalsIgnoreCase(oldOnset) || split[0].equalsIgnoreCase(newOnset)) {
 					if (split[2].equalsIgnoreCase("Cases")) {
 
-						int onsetDay = Date.dateToDay(split[1]);
-						int infectionDay = onsetDay - 5;
-						while (onset.cases.size() <= onsetDay) {
-							onset.cases.add(0);
-						}
-						while (infection.cases.size() <= infectionDay) {
-							infection.cases.add(0);
-						}
+						int dayOfOnset = Date.dateToDay(split[1]);
+						int dayOfInfection = dayOfOnset - 5;
 
 						int cases = Integer.valueOf(split[3]);
-						onset.cases.set(onsetDay, cases);
-						infection.cases.set(infectionDay, cases);
+						onsetCases.setCases(dayOfData, dayOfOnset, cases);
+						infectionCases.setCases(dayOfData, dayOfInfection, cases);
 					}
 				}
 
 				if (split[0].equalsIgnoreCase("Cases of COVID-19 in Colorado by Date Reported to the State")) {
 					if (split[2].equalsIgnoreCase("Cases")) {
-						int theDay = Date.dateToDay(split[1]);
-						while (reported.cases.size() <= theDay) {
-							reported.cases.add(null);
-						}
+						int dayOfReporting = Date.dateToDay(split[1]);
 						int cases = Integer.valueOf(split[3]);
-						reported.cases.set(theDay, cases);
+						reportedCases.setCases(dayOfData, dayOfReporting, cases);
 					}
 				}
 
@@ -337,15 +218,15 @@ public class CovidStats {
 						countyName = countyName.trim();
 
 						County county = getCountyStats(countyName);
-						while (county.cases.size() <= day) {
+						while (county.cases.size() <= dayOfData) {
 							county.cases.add(0);
 						}
 
 						if (countyName.equalsIgnoreCase("Saguache")) {
-							System.out.println(countyName + " => " + Date.dayToDate(day) + " => " + cases);
+							System.out.println(countyName + " => " + Date.dayToDate(dayOfData) + " => " + cases);
 						}
 
-						county.cases.set(day, cases);
+						county.cases.set(dayOfData, cases);
 					}
 				} else if (split[0].equalsIgnoreCase("Colorado Case Counts by County")) {
 
@@ -357,9 +238,9 @@ public class CovidStats {
 
 		}
 
-		buildIncompletes(CaseType.ONSET_TESTS);
-		buildIncompletes(CaseType.INFECTION_TESTS);
-		buildIncompletes(CaseType.REPORTED_TESTS);
+		onsetCases.buildIncompletes(this);
+		infectionCases.buildIncompletes(this);
+		reportedCases.buildIncompletes(this);
 
 		MyExecutor.executeCode(() -> outputProjections(CaseType.INFECTION_TESTS));
 	}
