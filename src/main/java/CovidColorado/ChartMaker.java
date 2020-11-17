@@ -61,7 +61,8 @@ public class ChartMaker {
 	private final BasicStroke stroke = new BasicStroke(2);
 
 	public Event[] events = new Event[] { new Event("SaH", "3-26-2020"), new Event("Bars", "06-30-2020"),
-			new Event("Masks", "7-16-2020"), new Event("Snow", "9-9-2020"), new Event("CU/DPS", "8-24-2020"), };
+			new Event("Masks", "7-16-2020"), new Event("Snow", "9-9-2020"), new Event("CU/DPS", "8-24-2020"),
+			new Event("Intervention", "11-05-2020") };
 
 	public void saveBufferedImageAsPNG(String folder, String name, BufferedImage bufferedImage) {
 
@@ -119,10 +120,9 @@ public class ChartMaker {
 
 		double averageAge = dayOfData - (double) totalDays / totalCases;
 		TimeSeriesCollection collection = new TimeSeriesCollection();
+		collection.addSeries(series);
 		if (getProjectedCasesForDay != null) {
 			collection.addSeries(projectedSeries);
-		} else {
-			collection.addSeries(series);
 		}
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(
 				"Colorado cases (" + totalCases + ") by " + by + " date "
