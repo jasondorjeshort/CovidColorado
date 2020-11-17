@@ -59,21 +59,10 @@ public class CovidStats {
 	private static final String oldOnset = "Case Counts by Onset Date";
 	private static final String newOnset = "Cases of COVID-19 in Colorado by Date of Illness Onset";
 
-	private final IncompleteCases onsetCases = new IncompleteCases();
-	private final IncompleteCases infectionCases = new IncompleteCases();
-	private final IncompleteCases reportedCases = new IncompleteCases();
+	private final IncompleteCases[] cases = new IncompleteCases[CaseType.values().length];
 
 	private IncompleteCases getCases(CaseType type) {
-		switch (type) {
-		case ONSET_TESTS:
-			return onsetCases;
-		case INFECTION_TESTS:
-			return infectionCases;
-		case REPORTED_TESTS:
-			return reportedCases;
-		default:
-			return null;
-		}
+		return cases[type.ordinal()];
 	}
 
 	public int getFirstDay() {
@@ -163,6 +152,10 @@ public class CovidStats {
 	}
 
 	public CovidStats() {
+		for (CaseType type : CaseType.values()) {
+			cases[type.ordinal()] = new IncompleteCases();
+		}
+
 		/*
 		 * Monolithic code to read all the CSVs into one big spaghetti
 		 * structure.
@@ -191,8 +184,8 @@ public class CovidStats {
 						int dayOfInfection = dayOfOnset - 5;
 
 						int cases = Integer.valueOf(split[3]);
-						onsetCases.setCases(dayOfData, dayOfOnset, cases);
-						infectionCases.setCases(dayOfData, dayOfInfection, cases);
+						getCases(CaseType.ONSET_TESTS).setCases(dayOfData, dayOfOnset, cases);
+						getCases(CaseType.INFECTION_TESTS).setCases(dayOfData, dayOfInfection, cases);
 					}
 				}
 
@@ -200,7 +193,7 @@ public class CovidStats {
 					if (split[2].equalsIgnoreCase("Cases")) {
 						int dayOfReporting = Date.dateToDay(split[1]);
 						int cases = Integer.valueOf(split[3]);
-						reportedCases.setCases(dayOfData, dayOfReporting, cases);
+						getCases(CaseType.REPORTED_TESTS).setCases(dayOfData, dayOfReporting, cases);
 					}
 				}
 
@@ -237,9 +230,9 @@ public class CovidStats {
 
 		}
 
-		onsetCases.buildIncompletes(this);
-		infectionCases.buildIncompletes(this);
-		reportedCases.buildIncompletes(this);
+		for (IncompleteCases incompletes : cases) {
+			incompletes.buildIncompletes(this);
+		}
 
 		MyExecutor.executeCode(() -> outputProjections(CaseType.INFECTION_TESTS));
 	}
