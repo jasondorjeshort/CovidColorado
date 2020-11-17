@@ -180,30 +180,32 @@ public class ChartMaker {
 
 	public BufferedImage buildOnsetDayTimeseriesChart(CovidStats stats, int dayOfData, boolean log) {
 		return buildCasesTimeseriesChart(stats, "onset-" + (log ? "log" : "cart"), dayOfData,
-				dayOfOnset -> (double) stats.getCasesByOnsetDay(dayOfData, dayOfOnset),
-				dayOfOnset -> (double) stats.getProjectedCasesByOnsetDay(dayOfData, dayOfOnset),
+				dayOfOnset -> (double) stats.getCasesByType(CaseType.ONSET_TESTS, dayOfData, dayOfOnset),
+				dayOfOnset -> stats.getSmoothedProjectedCasesByType(CaseType.ONSET_TESTS, dayOfData, dayOfOnset),
 
 				"onset", log, !log, false, 0, false, false);
 	}
 
 	public BufferedImage buildInfectionDayTimeseriesChart(CovidStats stats, int dayOfData, boolean log) {
 		return buildCasesTimeseriesChart(stats, "infection-" + (log ? "log" : "cart"), dayOfData,
-				dayOfInfection -> stats.getCasesByInfectionDay(dayOfData, dayOfInfection),
-				dayOfInfection -> stats.getProjectedCasesByInfectionDay(dayOfData, dayOfInfection), "infection", log,
-				!log, false, 5, false, true);
+				dayOfInfection -> (double) stats.getCasesByType(CaseType.INFECTION_TESTS, dayOfData, dayOfInfection),
+				dayOfInfection -> stats.getSmoothedProjectedCasesByType(CaseType.INFECTION_TESTS, dayOfData,
+						dayOfInfection),
+				"infection", log, !log, false, 5, false, true);
 	}
 
 	public BufferedImage buildReportedDayTimeseriesChart(CovidStats stats, int dayOfData, boolean log) {
 		return buildCasesTimeseriesChart(stats, "reported-" + (log ? "log" : "cart"), dayOfData,
-				dayOfReporting -> (double) stats.getCasesByReportedDay(dayOfData, dayOfReporting),
-				dayOfReporting -> (double) stats.getExactProjectedCasesByReportedDay(dayOfData, dayOfReporting),
+				dayOfReporting -> (double) stats.getCasesByType(CaseType.REPORTED_TESTS, dayOfData, dayOfReporting),
+				dayOfReporting -> stats.getExactProjectedCasesByType(CaseType.REPORTED_TESTS, dayOfData,
+						dayOfReporting),
 				"reported", log, !log, false, 1, false, false);
 	}
 
 	public BufferedImage buildNewInfectionDayTimeseriesChart(CovidStats stats, int dayOfData) {
 		return buildCasesTimeseriesChart(stats, "new-infection", dayOfData,
-				dayOfOnset -> stats.getNewCasesByInfectionDay(dayOfData, dayOfOnset), null, "today's cases infection",
-				false, false, true, 0, false, false);
+				dayOfOnset -> (double) stats.getNewCasesByType(CaseType.INFECTION_TESTS, dayOfData, dayOfOnset), null,
+				"today's cases infection", false, false, true, 0, false, false);
 	}
 
 	public static final int WIDTH = 800, HEIGHT = 600;
@@ -220,10 +222,10 @@ public class ChartMaker {
 		for (int daysToReporting = 0; daysToReporting < 60; daysToReporting++) {
 			int dayOfData = dayOfOnset + daysToReporting;
 
-			int cases = stats.getNewCasesByOnsetDay(dayOfData, dayOfOnset);
+			int cases = stats.getNewCasesByType(CaseType.ONSET_TESTS, dayOfData, dayOfOnset);
 			double smoothed = 0;
 			for (int i = -range; i <= range; i++) {
-				smoothed += stats.getNewCasesByOnsetDay(dayOfData + i, dayOfOnset);
+				smoothed += stats.getNewCasesByType(CaseType.ONSET_TESTS, dayOfData + i, dayOfOnset);
 			}
 			smoothed /= fullRange;
 
@@ -244,8 +246,8 @@ public class ChartMaker {
 
 	public BufferedImage buildCaseAgeTimeseriesChart(CovidStats stats, int dayOfData) {
 		return buildCasesTimeseriesChart(stats, "case-age", dayOfData,
-				dayOfCases -> stats.getAverageAgeOfNewCases(dayOfCases), null, "age", false, true, false, 0, true,
-				false);
+				dayOfCases -> stats.getAverageAgeOfNewCases(CaseType.INFECTION_TESTS, dayOfCases), null, "age", false,
+				true, false, 0, true, false);
 	}
 
 	private ArrayList<Future<BufferedImage>> infectionLog = new ArrayList<>();
@@ -303,7 +305,7 @@ public class ChartMaker {
 			infectionLog.add(MyExecutor.submitCode(() -> buildInfectionDayTimeseriesChart(stats, _dayOfData, true)));
 
 			int dayOfOnset = dayOfData; // names...
-			if (stats.getCasesByOnsetDay(stats.getLastDay(), dayOfOnset) > 0) {
+			if (stats.getCasesByType(CaseType.ONSET_TESTS, stats.getLastDay(), dayOfOnset) > 0) {
 				MyExecutor.submitCode(() -> buildOnsetReportedDayTimeseriesChart(stats, dayOfOnset));
 			}
 
