@@ -1,4 +1,4 @@
-package CovidColorado;
+package covid;
 
 import java.util.ArrayList;
 
@@ -59,7 +59,7 @@ public class IncompleteCases {
 
 	public double SAMPLE_DAYS = 14;
 
-	public void buildIncompletes(CovidStats stats) {
+	public void buildIncompletes(ColoradoStats stats) {
 		/*
 		 * Delay 10 means the difference from day 10 to day 11. This will be in
 		 * the array under incomplete[10].

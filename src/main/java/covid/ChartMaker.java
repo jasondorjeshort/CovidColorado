@@ -1,4 +1,4 @@
-package CovidColorado;
+package covid;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -31,7 +31,6 @@ import org.jfree.data.xy.DefaultXYDataset;
 
 import com.madgag.gif.fmsware.AnimatedGifEncoder;
 
-import CovidColorado.CovidStats.County;
 import library.MyExecutor;
 
 public class ChartMaker {
@@ -70,7 +69,7 @@ public class ChartMaker {
 		}
 	}
 
-	public BufferedImage buildCasesTimeseriesChart(CovidStats stats, String folder, int dayOfData,
+	public BufferedImage buildCasesTimeseriesChart(ColoradoStats stats, String folder, int dayOfData,
 			Function<Integer, Double> getCasesForDay, Function<Integer, Double> getProjectedCasesForDay, String by,
 			boolean log, boolean showZeroes, boolean showAverage, int daysToSkip, boolean showRollingAverage,
 			boolean showEvents) {
@@ -172,7 +171,7 @@ public class ChartMaker {
 		return image;
 	}
 
-	public BufferedImage buildOnsetDayTimeseriesChart(CovidStats stats, int dayOfData, boolean log) {
+	public BufferedImage buildOnsetDayTimeseriesChart(ColoradoStats stats, int dayOfData, boolean log) {
 		return buildCasesTimeseriesChart(stats, "onset-" + (log ? "log" : "cart"), dayOfData,
 				dayOfOnset -> (double) stats.getCasesByType(CaseType.ONSET_TESTS, dayOfData, dayOfOnset),
 				dayOfOnset -> stats.getSmoothedProjectedCasesByType(CaseType.ONSET_TESTS, dayOfData, dayOfOnset),
@@ -180,7 +179,7 @@ public class ChartMaker {
 				"onset", log, !log, false, 0, false, false);
 	}
 
-	public BufferedImage buildInfectionDayTimeseriesChart(CovidStats stats, int dayOfData, boolean log) {
+	public BufferedImage buildInfectionDayTimeseriesChart(ColoradoStats stats, int dayOfData, boolean log) {
 		return buildCasesTimeseriesChart(stats, "infection-" + (log ? "log" : "cart"), dayOfData,
 				dayOfInfection -> (double) stats.getCasesByType(CaseType.INFECTION_TESTS, dayOfData, dayOfInfection),
 				dayOfInfection -> stats.getSmoothedProjectedCasesByType(CaseType.INFECTION_TESTS, dayOfData,
@@ -188,7 +187,7 @@ public class ChartMaker {
 				"infection", log, !log, false, 5, false, true);
 	}
 
-	public BufferedImage buildReportedDayTimeseriesChart(CovidStats stats, int dayOfData, boolean log) {
+	public BufferedImage buildReportedDayTimeseriesChart(ColoradoStats stats, int dayOfData, boolean log) {
 		return buildCasesTimeseriesChart(stats, "reported-" + (log ? "log" : "cart"), dayOfData,
 				dayOfReporting -> (double) stats.getCasesByType(CaseType.REPORTED_TESTS, dayOfData, dayOfReporting),
 				dayOfReporting -> stats.getExactProjectedCasesByType(CaseType.REPORTED_TESTS, dayOfData,
@@ -196,7 +195,7 @@ public class ChartMaker {
 				"reported", log, !log, false, 1, false, false);
 	}
 
-	public BufferedImage buildNewInfectionDayTimeseriesChart(CovidStats stats, int dayOfData) {
+	public BufferedImage buildNewInfectionDayTimeseriesChart(ColoradoStats stats, int dayOfData) {
 		return buildCasesTimeseriesChart(stats, "new-infection", dayOfData,
 				dayOfOnset -> (double) stats.getNewCasesByType(CaseType.INFECTION_TESTS, dayOfData, dayOfOnset), null,
 				"today's cases infection", false, false, true, 0, false, false);
@@ -205,7 +204,7 @@ public class ChartMaker {
 	public static final int WIDTH = 800, HEIGHT = 600;
 
 	// this completely doesn't work.
-	public BufferedImage buildOnsetReportedDayTimeseriesChart(CovidStats stats, int dayOfOnset) {
+	public BufferedImage buildOnsetReportedDayTimeseriesChart(ColoradoStats stats, int dayOfOnset) {
 		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 
 		String folder = TOP_FOLDER + "\\onset_reported";
@@ -238,7 +237,7 @@ public class ChartMaker {
 		return image;
 	}
 
-	public BufferedImage buildCaseAgeTimeseriesChart(CovidStats stats, int dayOfData) {
+	public BufferedImage buildCaseAgeTimeseriesChart(ColoradoStats stats, int dayOfData) {
 		return buildCasesTimeseriesChart(stats, "case-age", dayOfData,
 				dayOfCases -> stats.getAverageAgeOfNewCases(CaseType.INFECTION_TESTS, dayOfCases), null, "age", false,
 				true, false, 0, true, false);
@@ -267,18 +266,18 @@ public class ChartMaker {
 		return name;
 	}
 
-	public void createCountyStats(CovidStats stats, County county, int dayOfData) {
+	public void createCountyStats(ColoradoStats stats, CountyStats county, int dayOfData) {
 		buildCasesTimeseriesChart(stats, "county-stats-14days", dayOfData,
 				dayOfCases -> Double.valueOf(county.getCases(dayOfCases) - county.getCases(dayOfCases - 14)), null,
-				county.name.replaceAll(" ", "_"), false, true, false, 0, true, false);
+				county.getDisplayName(), false, true, false, 0, true, false);
 		buildCasesTimeseriesChart(stats, "county-stats-14days", dayOfData,
 				dayOfCases -> Double
 						.valueOf(Math.max(county.getCases(dayOfCases) - county.getCases(dayOfCases - 14), 1)),
-				null, county.name.replaceAll(" ", "_"), true, true, false, 0, true, false);
+				null, county.getDisplayName(), true, true, false, 0, true, false);
 
 	}
 
-	public String buildCharts(CovidStats stats) {
+	public String buildCharts(ColoradoStats stats) {
 		new File(TOP_FOLDER).mkdir();
 
 		stats.getCounties().forEach(

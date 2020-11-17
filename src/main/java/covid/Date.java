@@ -1,4 +1,4 @@
-package CovidColorado;
+package covid;
 
 import org.jfree.data.time.Day;
 

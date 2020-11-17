@@ -1,4 +1,4 @@
-package CovidColorado;
+package covid;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -10,7 +10,7 @@ public class Main {
 
 	public static void main(String[] args) {
 		long time = System.currentTimeMillis();
-		CovidStats stats = new CovidStats();
+		ColoradoStats stats = new ColoradoStats();
 
 		System.out.println("Read stats in " + (System.currentTimeMillis() - time) + " ms.");
 

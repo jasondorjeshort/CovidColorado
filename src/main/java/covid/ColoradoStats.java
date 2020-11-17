@@ -1,4 +1,4 @@
-package CovidColorado;
+package covid;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -7,7 +7,7 @@ import java.util.Map;
 
 import library.MyExecutor;
 
-public class CovidStats {
+public class ColoradoStats {
 
 	private static final int firstDay = 48; // 2/17/2020, first day of data
 	private static final int firstCSV = 77; // 77, 314
@@ -17,30 +17,7 @@ public class CovidStats {
 				Date.dayToFullDate(day, '-'));
 	}
 
-	public class County {
-		// cumulative stats for ONE county
-		final String name;
-		final ArrayList<Integer> cases = new ArrayList<>();
-		final ArrayList<Integer> deaths = new ArrayList<>();
-
-		County(String name) {
-			this.name = name;
-		}
-
-		public int getCases(int day) {
-			if (day < 0 || day >= cases.size()) {
-				return 0;
-			}
-			Integer caseCount = cases.get(day);
-			if (caseCount == null) {
-				return 0;
-			}
-			return caseCount;
-		}
-
-	}
-
-	private final HashMap<String, County> counties = new HashMap<>();
+	private final HashMap<String, CountyStats> counties = new HashMap<>();
 
 	/*
 	 * Cases of COVID-19 in Colorado by Date Reported to the State | 2020-05-10
@@ -138,20 +115,20 @@ public class CovidStats {
 		}
 	}
 
-	public County getCountyStats(String countyName) {
-		County county = counties.get(countyName);
+	public CountyStats getCountyStats(String countyName) {
+		CountyStats county = counties.get(countyName);
 		if (county == null) {
-			county = new County(countyName);
+			county = new CountyStats(countyName);
 			counties.put(countyName, county);
 		}
 		return county;
 	}
 
-	public Map<String, County> getCounties() {
+	public Map<String, CountyStats> getCounties() {
 		return counties;
 	}
 
-	public CovidStats() {
+	public ColoradoStats() {
 		for (CaseType type : CaseType.values()) {
 			cases[type.ordinal()] = new IncompleteCases();
 		}
@@ -209,16 +186,13 @@ public class CovidStats {
 						}
 						countyName = countyName.trim();
 
-						County county = getCountyStats(countyName);
-						while (county.cases.size() <= dayOfData) {
-							county.cases.add(0);
-						}
+						CountyStats county = getCountyStats(countyName);
 
 						if (countyName.equalsIgnoreCase("Saguache")) {
 							System.out.println(countyName + " => " + Date.dayToDate(dayOfData) + " => " + cases);
 						}
 
-						county.cases.set(dayOfData, cases);
+						county.setCases(dayOfData, cases);
 					}
 				} else if (split[0].equalsIgnoreCase("Colorado Case Counts by County")) {
 

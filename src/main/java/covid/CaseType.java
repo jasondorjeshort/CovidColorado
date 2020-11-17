@@ -1,4 +1,4 @@
-package CovidColorado;
+package covid;
 
 public enum CaseType {
 	INFECTION_TESTS,
