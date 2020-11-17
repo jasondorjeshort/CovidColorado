@@ -13,9 +13,7 @@ public class Main {
 		CovidStats stats = new CovidStats();
 
 		System.out.println("Read stats in " + (System.currentTimeMillis() - time) + " ms.");
-		
-		
-		
+
 		ChartMaker charts = new ChartMaker();
 		String fname = charts.buildCharts(stats);
 
