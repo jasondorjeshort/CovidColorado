@@ -24,7 +24,7 @@ public class CountyStats {
 	public String getName() {
 		return name;
 	}
-	
+
 	public String getDisplayName() {
 		return displayName;
 	}
