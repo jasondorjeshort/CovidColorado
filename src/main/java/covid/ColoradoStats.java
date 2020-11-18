@@ -37,6 +37,11 @@ public class ColoradoStats {
 
 	private final IncompleteCases[] cases = new IncompleteCases[CaseType.values().length];
 
+	private final FinalCases totalCases = new FinalCases();
+	private final FinalCases totalHospitalizations = new FinalCases();
+	private final FinalCases totalDeaths = new FinalCases();
+	private final FinalCases totalDeathsPUI = new FinalCases();
+
 	private IncompleteCases getCases(CaseType type) {
 		return cases[type.ordinal()];
 	}
@@ -151,6 +156,28 @@ public class ColoradoStats {
 				if (split.length < 4) {
 					System.out.print("Length isn't 4: ");
 					writeSplit(split);
+				}
+
+				int number;
+				try {
+					number = Integer.valueOf(split[3]);
+				} catch (Exception e) {
+					number = 0;
+				}
+
+				if (split[0].equalsIgnoreCase("State Data") && split[1].equalsIgnoreCase("Statewide")) {
+					if (split[2].equalsIgnoreCase("Cases")) {
+						totalCases.setCases(dayOfData, number);
+					} else if (split[2].equalsIgnoreCase("Hospitalizations")) {
+						totalHospitalizations.setCases(dayOfData, number);
+					} else if (split[3].equalsIgnoreCase("Deaths Among Cases")) {
+						totalDeathsPUI.setCases(dayOfData, number);
+					} else if (split[3].equalsIgnoreCase("Deaths Due to COVID")) {
+						totalDeaths.setCases(dayOfData, number);
+					} else {
+						// writeSplit(split);
+					}
+
 				}
 
 				if (split[0].equalsIgnoreCase(oldOnset) || split[0].equalsIgnoreCase(newOnset)) {

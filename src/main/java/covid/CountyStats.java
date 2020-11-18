@@ -13,8 +13,8 @@ public class CountyStats {
 		}
 	}
 
-	public int getCases(int day) {
-		return cases.getCases(day);
+	public FinalCases getCases() {
+		return cases;
 	}
 
 	public void setCases(int day, int numCases) {

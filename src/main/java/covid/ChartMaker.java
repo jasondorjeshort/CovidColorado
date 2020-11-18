@@ -268,12 +268,11 @@ public class ChartMaker {
 
 	public void createCountyStats(ColoradoStats stats, CountyStats county, int dayOfData) {
 		buildCasesTimeseriesChart(stats, "county-stats-14days", dayOfData,
-				dayOfCases -> Double.valueOf(county.getCases(dayOfCases) - county.getCases(dayOfCases - 14)), null,
+				dayOfCases -> Double.valueOf(county.getCases().getCasesInInterval(dayOfCases, 14)), null,
 				county.getDisplayName(), false, true, false, 0, true, false);
 		buildCasesTimeseriesChart(stats, "county-stats-14days", dayOfData,
-				dayOfCases -> Double
-						.valueOf(Math.max(county.getCases(dayOfCases) - county.getCases(dayOfCases - 14), 1)),
-				null, county.getDisplayName(), true, true, false, 0, true, false);
+				dayOfCases -> Double.valueOf(Math.max(county.getCases().getCasesInInterval(dayOfCases, 14), 1)), null,
+				county.getDisplayName(), true, true, false, 0, true, false);
 
 	}
 

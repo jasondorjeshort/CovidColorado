@@ -12,6 +12,14 @@ public class FinalCases {
 
 	private final ArrayList<Integer> cases = new ArrayList<>();
 
+	public int getCasesInInterval(int day, int interval) {
+		return getCases(day) - getCases(day - interval);
+	}
+	
+	public int getDailyCases(int day) {
+		return getCasesInInterval(day, 1);
+	}
+
 	public int getCases(int day) {
 		if (day < 0 || day >= cases.size()) {
 			return 0;
