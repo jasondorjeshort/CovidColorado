@@ -28,7 +28,6 @@ import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
-import org.jfree.data.xy.DefaultXYDataset;
 
 import com.madgag.gif.fmsware.AnimatedGifEncoder;
 
@@ -45,7 +44,7 @@ public class ChartMaker {
 	private final BasicStroke stroke = new BasicStroke(2);
 	private final Font font = new Font("normal", 0, 12);
 
-	public void saveBufferedImageAsPNG(String folder, String name, BufferedImage bufferedImage) {
+	public static void saveBufferedImageAsPNG(String folder, String name, BufferedImage bufferedImage) {
 
 		new File(folder).mkdir();
 		File file = new File(folder + "\\" + name + ".png");
@@ -64,7 +63,6 @@ public class ChartMaker {
 
 		folder = TOP_FOLDER + "\\" + folder;
 
-		DefaultXYDataset dataset = new DefaultXYDataset();
 		TimeSeries series = new TimeSeries("Cases");
 		TimeSeries projectedSeries = new TimeSeries("Projected");
 		int totalCases = 0, totalDays = 0;
@@ -163,9 +161,8 @@ public class ChartMaker {
 				"onset", log, !log, false, 0, false, false);
 	}
 
-	public BufferedImage buildRates(ColoradoStats stats, String fileName, String title, boolean useCFR, boolean useCHR,
-			boolean useHFR, Integer age) {
-		int dayOfData = stats.getLastDay();
+	public BufferedImage buildRates(ColoradoStats stats, int dayOfData, String fileName, String title, boolean useCFR,
+			boolean useCHR, boolean useHFR, Integer age) {
 
 		int INTERVAL = 7;
 
@@ -173,7 +170,8 @@ public class ChartMaker {
 		TimeSeries chr = new TimeSeries("CHR (hospitalizations / cases)");
 		TimeSeries hfr = new TimeSeries("HFR (deaths / hospitalizations)");
 
-		for (int dayOfInfection = (age == null ? 0 : stats.getLastDay() - age); dayOfInfection <= stats.getLastDay(); dayOfInfection++) {
+		for (int dayOfInfection = (age == null ? 0 : stats.getLastDay() - age); dayOfInfection <= stats
+				.getLastDay(); dayOfInfection++) {
 			double cases = stats.getProjectedCasesInInterval(CaseType.INFECTION_TESTS, dayOfData, dayOfInfection,
 					INTERVAL);
 			double hosp = stats.getProjectedCasesInInterval(CaseType.INFECTION_HOSP, dayOfData, dayOfInfection,
@@ -215,7 +213,7 @@ public class ChartMaker {
 		// chart.getXYPlot().setRangeAxis(new LogarithmicAxis("Cases"));
 
 		XYPlot plot = chart.getXYPlot();
-		IntervalMarker marker = new IntervalMarker(Date.dayToTime(stats.getLastDay() - 30),
+		IntervalMarker marker = new IntervalMarker(Date.dayToTime(dayOfData - 30),
 				Date.dayToTime(stats.getLastDay() + 30));
 		marker.setPaint(Color.black);
 		// marker.setLabel("Incomplete");
@@ -227,15 +225,8 @@ public class ChartMaker {
 		plot.addDomainMarker(marker);
 
 		BufferedImage image = chart.createBufferedImage(WIDTH, HEIGHT);
-		saveBufferedImageAsPNG(TOP_FOLDER, fileName, image);
+		saveBufferedImageAsPNG(TOP_FOLDER + "\\rates", fileName, image);
 		return image;
-	}
-
-	public void buildAllRates(ColoradoStats stats) {
-		buildRates(stats, "rates", "Colorado rates by day of infection", true, true, true, null);
-		buildRates(stats, "CFR", "Colorado case fatality rate", true, false, false, 180);
-		buildRates(stats, "CHR", "Colorado case hospitalization rate", false, true, false, 180);
-		buildRates(stats, "HFR", "Colorado hospitalization fatality rate", false, false, true, 180);
 	}
 
 	public BufferedImage buildInfectionDayTimeseriesChart(ColoradoStats stats, int dayOfData, boolean log) {
@@ -343,9 +334,19 @@ public class ChartMaker {
 		MyExecutor.executeCode(
 				() -> stats.getCounties().forEach((key, value) -> createCountyStats(stats, value, stats.getLastDay())));
 
-		MyExecutor.executeCode(() -> buildAllRates(stats));
 		for (int dayOfData = stats.getFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
 			int _dayOfData = dayOfData;
+
+			String day = Date.dayToDate(dayOfData);
+			String full = Date.dayToFullDate(dayOfData, '-');
+			MyExecutor.executeCode(() -> buildRates(stats, _dayOfData, "rates-" + full,
+					"Colorado rates by day of infection, " + day, true, true, true, null));
+			MyExecutor.executeCode(() -> buildRates(stats, _dayOfData, "CFR-" + full,
+					"Colorado case fatality rate, " + day, true, false, false, 180));
+			MyExecutor.executeCode(() -> buildRates(stats, _dayOfData, "CHR-" + full,
+					"Colorado case hospitalization rate, " + day, false, true, false, 180));
+			MyExecutor.executeCode(() -> buildRates(stats, _dayOfData, "HFR-" + full,
+					"Colorado hospitalization fatality rate, " + day, false, false, true, 180));
 
 			MyExecutor.executeCode(() -> buildOnsetDayTimeseriesChart(stats, _dayOfData, false));
 			MyExecutor.executeCode(() -> buildOnsetDayTimeseriesChart(stats, _dayOfData, true));

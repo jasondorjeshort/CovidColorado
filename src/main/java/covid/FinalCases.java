@@ -15,7 +15,7 @@ public class FinalCases {
 	public int getCasesInInterval(int day, int interval) {
 		return getCases(day) - getCases(day - interval);
 	}
-	
+
 	public int getDailyCases(int day) {
 		return getCasesInInterval(day, 1);
 	}
