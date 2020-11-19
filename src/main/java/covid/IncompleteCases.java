@@ -14,7 +14,7 @@ public class IncompleteCases {
 	private boolean isCumulative; // we want daily numbers, but the sheet only
 									// gives cumulative
 
-	private class Daily {
+	protected class Daily {
 		protected final ArrayList<Integer> cases = new ArrayList<>();
 		protected final ArrayList<Double> projected = new ArrayList<>();
 		protected final ArrayList<Incomplete> ratios = new ArrayList<>();
