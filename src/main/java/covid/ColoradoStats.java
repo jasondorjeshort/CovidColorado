@@ -240,6 +240,8 @@ public class ColoradoStats {
 				int dayOfInfection = dayOfOnset - 5;
 				int c = Integer.valueOf(split[3]);
 
+				getCases(CaseType.ONSET_HOSP).setCumulative();
+				getCases(CaseType.INFECTION_HOSP).setCumulative();
 				getCases(CaseType.ONSET_HOSP).setCases(dayOfData, dayOfOnset, c);
 				getCases(CaseType.INFECTION_HOSP).setCases(dayOfData, dayOfInfection, c);
 			} else if (split[0].equalsIgnoreCase("Cumulative Number of Deaths by Onset Date") || split[0]
@@ -248,6 +250,8 @@ public class ColoradoStats {
 				int dayOfInfection = dayOfOnset - 5;
 				int c = Integer.valueOf(split[3]);
 
+				getCases(CaseType.ONSET_DEATH).setCumulative();
+				getCases(CaseType.INFECTION_DEATH).setCumulative();
 				getCases(CaseType.ONSET_DEATH).setCases(dayOfData, dayOfOnset, c);
 				getCases(CaseType.INFECTION_DEATH).setCases(dayOfData, dayOfInfection, c);
 			} else if (split[0]
@@ -269,6 +273,7 @@ public class ColoradoStats {
 				if (split[2].equalsIgnoreCase("Cases")) {
 					int dayOfReporting = Date.dateToDay(split[1]);
 					int c = Integer.valueOf(split[3]);
+					getCases(CaseType.REPORTED_HOSP).setCumulative();
 					getCases(CaseType.REPORTED_HOSP).setCases(dayOfData, dayOfReporting, c);
 				} else {
 					writeSplit(null, split);
@@ -279,6 +284,7 @@ public class ColoradoStats {
 				if (split[2].equalsIgnoreCase("Cases")) {
 					int dayOfReporting = Date.dateToDay(split[1]);
 					int c = Integer.valueOf(split[3]);
+					getCases(CaseType.REPORTED_DEATH).setCumulative();
 					getCases(CaseType.REPORTED_DEATH).setCases(dayOfData, dayOfReporting, c);
 				} else {
 					writeSplit(null, split);

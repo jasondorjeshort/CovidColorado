@@ -15,9 +15,9 @@ public class IncompleteCases {
 									// gives cumulative
 
 	private class Daily {
-		private final ArrayList<Integer> cases = new ArrayList<>();
-		private final ArrayList<Double> projected = new ArrayList<>();
-		private final ArrayList<Incomplete> ratios = new ArrayList<>();
+		protected final ArrayList<Integer> cases = new ArrayList<>();
+		protected final ArrayList<Double> projected = new ArrayList<>();
+		protected final ArrayList<Incomplete> ratios = new ArrayList<>();
 
 		protected double getCases(int day, boolean isProjected) {
 			if (isProjected) {
@@ -73,6 +73,15 @@ public class IncompleteCases {
 
 	public void build(ColoradoStats stats) {
 		if (isCumulative) {
+			for (int dayOfData = 0; dayOfData < numbers.size(); dayOfData++) {
+				int last = 0;
+				Daily daily = numbers.get(dayOfData);
+				for (int dayOfType = 0; dayOfType < dayOfData && dayOfType < daily.cases.size(); dayOfType++) {
+					int newLast = daily.cases.get(dayOfType);
+					daily.cases.set(dayOfType, newLast - last);
+					last = newLast;
+				}
+			}
 
 			isCumulative = false;
 		}
@@ -82,7 +91,7 @@ public class IncompleteCases {
 		 * the array under incomplete[10].
 		 */
 		for (int delay = 0; delay < 90; delay++) {
-			for (int typeDay = stats.getFirstDay(); typeDay < stats.getLastDay() - delay; typeDay++) {
+			for (int typeDay = 0; typeDay < stats.getLastDay() - delay; typeDay++) {
 				int dayOfData1 = typeDay + delay;
 				int dayOfData2 = typeDay + delay + 1;
 
@@ -112,19 +121,19 @@ public class IncompleteCases {
 		// projections
 		for (int dayOfData = 0; dayOfData < numbers.size(); dayOfData++) {
 			Daily daily = numbers.get(dayOfData);
-			for (int typeDay = stats.getFirstDay(); typeDay < dayOfData && typeDay < daily.cases.size(); typeDay++) {
-				Integer p = daily.cases.get(typeDay);
+			for (int dayOfType = 0; dayOfType < dayOfData && dayOfType < daily.cases.size(); dayOfType++) {
+				Integer p = daily.cases.get(dayOfType);
 				if (p == null) {
 					continue;
 				}
 				double projected = p;
-				for (int delay = dayOfData - typeDay; delay < daily.ratios.size(); delay++) {
+				for (int delay = dayOfData - dayOfType; delay < daily.ratios.size(); delay++) {
 					projected *= daily.ratios.get(delay).ratio;
 				}
-				while (daily.projected.size() <= typeDay) {
+				while (daily.projected.size() <= dayOfType) {
 					daily.projected.add(0.0);
 				}
-				daily.projected.set(typeDay, projected);
+				daily.projected.set(dayOfType, projected);
 			}
 		}
 	}
