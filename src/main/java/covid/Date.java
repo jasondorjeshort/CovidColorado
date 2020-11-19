@@ -88,6 +88,10 @@ public class Date {
 
 	public static long dateToTime(String date) {
 		int day = dateToDay(date);
+		return dayToTime(day);
+	}
+
+	public static long dayToTime(int day) {
 		return dayToJavaDate(day).getTime();
 	}
 
