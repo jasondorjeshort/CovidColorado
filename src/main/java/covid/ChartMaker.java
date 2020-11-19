@@ -253,11 +253,13 @@ public class ChartMaker {
 	}
 
 	public void createCountyStats(ColoradoStats stats, CountyStats county, int dayOfData) {
-		buildCasesTimeseriesChart(stats, "county-stats-14days", dayOfData,
-				dayOfCases -> Double.valueOf(county.getCases().getCasesInInterval(dayOfCases, 14)), null,
+		buildCasesTimeseriesChart(stats, "county", dayOfData,
+				dayOfCases -> Double.valueOf(county.getCases().getCasesInInterval(dayOfCases, 14)),
+				dayOfCases -> Double.valueOf(county.getDeaths().getCasesInInterval(dayOfCases, 14)),
 				county.getDisplayName(), false, true, false, 0, true, false);
-		buildCasesTimeseriesChart(stats, "county-stats-14days", dayOfData,
-				dayOfCases -> Double.valueOf(Math.max(county.getCases().getCasesInInterval(dayOfCases, 14), 1)), null,
+		buildCasesTimeseriesChart(stats, "county", dayOfData,
+				dayOfCases -> Double.valueOf(Math.max(county.getCases().getCasesInInterval(dayOfCases, 14), 1)),
+				dayOfCases -> Double.valueOf(Math.max(county.getDeaths().getCasesInInterval(dayOfCases, 14), 1)),
 				county.getDisplayName(), true, true, false, 0, true, false);
 
 	}
@@ -265,8 +267,8 @@ public class ChartMaker {
 	public String buildCharts(ColoradoStats stats) {
 		new File(TOP_FOLDER).mkdir();
 
-		stats.getCounties().forEach(
-				(key, value) -> MyExecutor.executeCode(() -> createCountyStats(stats, value, stats.getLastDay())));
+		MyExecutor.executeCode(
+				() -> stats.getCounties().forEach((key, value) -> createCountyStats(stats, value, stats.getLastDay())));
 
 		for (int dayOfData = stats.getFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
 			int _dayOfData = dayOfData;
