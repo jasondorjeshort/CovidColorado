@@ -19,6 +19,7 @@ import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.LogarithmicAxis;
 import org.jfree.chart.encoders.EncoderUtil;
 import org.jfree.chart.encoders.ImageFormat;
+import org.jfree.chart.plot.IntervalMarker;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
@@ -42,6 +43,7 @@ public class ChartMaker {
 	private static final double halfLifeRatio = Math.pow(0.5, 1 / 7.0);
 
 	private final BasicStroke stroke = new BasicStroke(2);
+	private final Font font = new Font("normal", 0, 12);
 
 	public void saveBufferedImageAsPNG(String folder, String name, BufferedImage bufferedImage) {
 
@@ -103,11 +105,9 @@ public class ChartMaker {
 		if (getProjectedCasesForDay != null) {
 			collection.addSeries(projectedSeries);
 		}
-		JFreeChart chart = ChartFactory.createTimeSeriesChart(
-				"Colorado cases (" + totalCases + ") by " + by + " date "
-						+ (showAverage ? String.format("(avg age: %.02f) ", averageAge) : "") + "as of "
-						+ Date.dayToDate(dayOfData) + (log ? " (logarithmic)" : ""),
-				"Date", "Cases.", collection, false, false, false);
+		JFreeChart chart = ChartFactory.createTimeSeriesChart("Colorado cases (" + totalCases + ") by " + by + " date "
+				+ (showAverage ? String.format("(avg age: %.02f) ", averageAge) : "") + "as of "
+				+ Date.dayToDate(dayOfData) + (log ? " (logarithmic)" : ""), "Date", "Cases.", collection);
 
 		if (log) {
 			XYPlot plot = chart.getXYPlot();
@@ -126,8 +126,6 @@ public class ChartMaker {
 			}
 
 			plot.setDomainAxis(xAxis);
-
-			Font font = new Font("normal", 0, 12);
 
 			ValueMarker marker = new ValueMarker(Date.dayToJavaDate(dayOfData).getTime());
 			marker.setPaint(Color.black);
@@ -165,10 +163,70 @@ public class ChartMaker {
 				"onset", log, !log, false, 0, false, false);
 	}
 
+	public BufferedImage buildRates(ColoradoStats stats) {
+		int dayOfData = stats.getLastDay();
+
+		TimeSeries cfr = new TimeSeries("CFR (deaths / cases)");
+		TimeSeries chr = new TimeSeries("CHR (hospitalizations / cases)");
+		TimeSeries hfr = new TimeSeries("HFR (deaths / hospitalizations)");
+
+		for (int dayOfInfection = stats.getFirstDay(); dayOfInfection <= stats.getLastDay(); dayOfInfection++) {
+			double cases = stats.getSmoothedProjectedCasesByType(CaseType.INFECTION_TESTS, dayOfData, dayOfInfection);
+			double hosp = stats.getSmoothedProjectedCasesByType(CaseType.INFECTION_HOSP, dayOfData, dayOfInfection);
+			double deaths = stats.getSmoothedProjectedCasesByType(CaseType.INFECTION_DEATH, dayOfData, dayOfInfection);
+
+			if (!Double.isFinite(cases) || cases == 0) {
+				continue;
+			}
+
+			Day ddd = Date.dayToDay(dayOfInfection);
+
+			if (Double.isFinite(cases) && cases > 0) {
+				cfr.add(ddd, 100.0 * deaths / cases);
+			}
+			if (Double.isFinite(cases) && cases > 0) {
+				chr.add(ddd, 100.0 * hosp / cases);
+			}
+			if (Double.isFinite(hosp) && hosp > 0) {
+				hfr.add(ddd, 100.0 * deaths / hosp);
+			}
+		}
+
+		TimeSeriesCollection collection = new TimeSeriesCollection();
+		collection.addSeries(cfr);
+		collection.addSeries(hfr);
+		collection.addSeries(chr);
+
+		JFreeChart chart = ChartFactory.createTimeSeriesChart("Colorado rates by day of infection", "Date", "Rate (%)",
+				collection);
+
+		// chart.getXYPlot().setRangeAxis(new LogarithmicAxis("Cases"));
+
+		XYPlot plot = chart.getXYPlot();
+		IntervalMarker marker = new IntervalMarker(Date.dayToTime(stats.getLastDay() - 30),
+				Date.dayToTime(stats.getLastDay() + 30));
+		marker.setPaint(Color.black);
+		// marker.setLabel("Incomplete");
+		// marker.setLabelTextAnchor(TextAnchor.TOP_LEFT);
+		marker.setStroke(stroke);
+		marker.setAlpha(0.25f);
+		System.out.println("Alpha: " + marker.getAlpha());
+		marker.setLabelFont(font);
+		marker.setLabelTextAnchor(TextAnchor.TOP_CENTER);
+		plot.addDomainMarker(marker);
+
+		BufferedImage image = chart.createBufferedImage(WIDTH, HEIGHT);
+		String name = "rates";
+		saveBufferedImageAsPNG(TOP_FOLDER, name, image);
+		return image;
+
+	}
+
 	public BufferedImage buildInfectionDayTimeseriesChart(ColoradoStats stats, int dayOfData, boolean log) {
 		return buildCasesTimeseriesChart(stats, "infection-" + (log ? "log" : "cart"), dayOfData,
 				dayOfInfection -> (double) stats.getCasesByType(CaseType.INFECTION_TESTS, dayOfData, dayOfInfection),
-				dayOfInfection -> (double) stats.getCasesByType(CaseType.INFECTION_HOSP, dayOfData, dayOfInfection),
+				dayOfInfection -> stats.getSmoothedProjectedCasesByType(CaseType.INFECTION_TESTS, dayOfData,
+						dayOfInfection),
 				"infection", log, !log, false, 5, false, true);
 	}
 
@@ -269,6 +327,7 @@ public class ChartMaker {
 		MyExecutor.executeCode(
 				() -> stats.getCounties().forEach((key, value) -> createCountyStats(stats, value, stats.getLastDay())));
 
+		MyExecutor.executeCode(() -> buildRates(stats));
 		for (int dayOfData = stats.getFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
 			int _dayOfData = dayOfData;
 
