@@ -6,7 +6,7 @@ import java.util.Map;
 
 public class ColoradoStats {
 
-	private static final int firstDay = 48; // 2/17/2020, first day of data
+	private final int firstDay = 48; // 2/17/2020, first day of data
 	private static final int firstCSV = 77; // 77, 314
 
 	private static String csvFileName(int day) {
@@ -66,10 +66,10 @@ public class ColoradoStats {
 				+ getExactProjectedCasesByType(type, dayOfData, dayOfType - 2) * 0.1;
 	}
 
-	public double getProjectedCasesInLastWeek(CaseType type, int dayOfData, int dayOfType) {
+	public double getProjectedCasesInInterval(CaseType type, int dayOfData, int dayOfType, int interval) {
 		double sum = 0;
 
-		for (int i = 0; i < 7; i++) {
+		for (int i = 0; i < interval; i++) {
 			sum += getExactProjectedCasesByType(type, dayOfData, dayOfType - i);
 		}
 
@@ -112,9 +112,9 @@ public class ColoradoStats {
 		int dayOfData = getLastDay();
 
 		for (int dayOfType = getFirstDay(); dayOfType <= dayOfData; dayOfType++) {
-			double cases = getExactProjectedCasesByType(type, dayOfData, dayOfType);
-			double week = getProjectedCasesInLastWeek(type, dayOfData, dayOfType);
-			System.out.println(Date.dayToDate(dayOfType) + " => " + dayOfType + " => " + cases + " => " + week);
+			double c = getExactProjectedCasesByType(type, dayOfData, dayOfType);
+			double week = getProjectedCasesInInterval(type, dayOfData, dayOfType, 7);
+			System.out.println(Date.dayToDate(dayOfType) + " => " + dayOfType + " => " + c + " => " + week);
 		}
 	}
 

@@ -47,7 +47,7 @@ public class IncompleteCases {
 	public double getExactProjectedCases(int dayOfData, int dayOfType) {
 		Daily daily = numbers.get(dayOfData);
 		ArrayList<Double> cases = daily.projected;
-		if (dayOfType >= cases.size()) {
+		if (dayOfType >= cases.size() || dayOfType < 0) {
 			return 0;
 		}
 		Double i = cases.get(dayOfType);
