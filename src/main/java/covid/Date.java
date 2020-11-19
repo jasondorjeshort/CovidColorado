@@ -47,7 +47,7 @@ public class Date {
 		String[] split = date.split("[/-]");
 
 		if (split.length != 3) {
-			throw new RuntimeException(".");
+			throw new RuntimeException("Fail date: " + date);
 		}
 
 		if (split[0].length() == 4) {
