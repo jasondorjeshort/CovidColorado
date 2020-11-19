@@ -1,6 +1,7 @@
 package covid;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -167,6 +168,8 @@ public class ColoradoStats {
 		System.out.println("");
 	}
 
+	private HashSet<String> keySet = new HashSet<>();
+
 	public boolean readCSV(int dayOfData) {
 
 		List<String[]> csv = CSVReader.read(csvFileName(dayOfData));
@@ -193,39 +196,38 @@ public class ColoradoStats {
 				number = 0;
 			}
 
-			if (split[1].equals("Note")) {
+			if (split[0].equals("description") || split[1].equals("Note")) {
 				// ignore notes!
-			} else if (split[0].equalsIgnoreCase("State Data") && split[1].equalsIgnoreCase("Statewide")) {
-				if (split[2].equalsIgnoreCase("Cases")) {
+			} else if (split[0].equals("State Data") && split[1].equals("Statewide")) {
+				if (split[2].equals("Cases")) {
 					totalCases.setCases(dayOfData, number);
-				} else if (split[2].equalsIgnoreCase("Hospitalizations")) {
+				} else if (split[2].equals("Hospitalizations")) {
 					totalHospitalizations.setCases(dayOfData, number);
-				} else if (split[2].equalsIgnoreCase("Deaths")) {
+				} else if (split[2].equals("Deaths")) {
 					totalDeathsPUI.setCases(dayOfData, number);
 					totalDeaths.setCases(dayOfData, number);
-				} else if (split[2].equalsIgnoreCase("Deaths Among Cases")) {
+				} else if (split[2].equals("Deaths Among Cases")) {
 					totalDeathsPUI.setCases(dayOfData, number);
-				} else if (split[2].equalsIgnoreCase("Deaths Due to COVID-19")) {
+				} else if (split[2].equals("Deaths Due to COVID-19")) {
 					totalDeaths.setCases(dayOfData, number);
-				} else if (split[2].equalsIgnoreCase("Test Encounters")) {
+				} else if (split[2].equals("Test Encounters")) {
 					testEncounters.setCases(dayOfData, number);
-				} else if (split[2].equalsIgnoreCase("People Tested")) {
+				} else if (split[2].equals("People Tested")) {
 					peopleTested.setCases(dayOfData, number);
 					if (testEncounters.getDailyCases(dayOfData) == 0) {
 						testEncounters.setCases(dayOfData, number);
 					}
-				} else if (split[2].equalsIgnoreCase("Counties")) {
-				} else if (split[2].equalsIgnoreCase("Rate per 100000")
-						|| split[2].equalsIgnoreCase("\"Rate per 100")) {
+				} else if (split[2].equals("Counties")) {
+				} else if (split[2].equals("Rate Per 100000") || split[2].equals("\"Rate per 100")) {
 					// uh, simple bug that the CSV reader ignores " escaping
 					// and so treats 100,000 as a separator
-				} else if (split[2].equalsIgnoreCase("Outbreaks")) {
+				} else if (split[2].equals("Outbreaks")) {
 				} else {
-					writeSplit(Date.dayToDate(dayOfData), split);
+					writeSplit(Date.dayToDate(dayOfData) + "???", split);
 				}
-			} else if (split[0].equalsIgnoreCase("Case Counts by Onset Date")
-					|| split[0].equalsIgnoreCase("Cases of COVID-19 in Colorado by Date of Illness Onset")) {
-				if (split[2].equalsIgnoreCase("Cases")) {
+			} else if (split[0].equals("Case Counts by Onset Date")
+					|| split[0].equals("Cases of COVID-19 in Colorado by Date of Illness Onset")) {
+				if (split[2].equals("Cases")) {
 					int dayOfOnset = Date.dateToDay(split[1]);
 					int dayOfInfection = dayOfOnset - 5;
 					int c = Integer.valueOf(split[3]);
@@ -233,9 +235,9 @@ public class ColoradoStats {
 					getCases(CaseType.ONSET_TESTS).setCases(dayOfData, dayOfOnset, c);
 					getCases(CaseType.INFECTION_TESTS).setCases(dayOfData, dayOfInfection, c);
 				}
-			} else if (split[0].equalsIgnoreCase(
-					"Cumulative Number of Hospitalized Cases of COVID-19 in Colorado by Date of Illness Onset")
-					|| split[0].equalsIgnoreCase("Cumulative Number of Hospitalizations by Onset Date")) {
+			} else if (split[0]
+					.equals("Cumulative Number of Hospitalized Cases of COVID-19 in Colorado by Date of Illness Onset")
+					|| split[0].equals("Cumulative Number of Hospitalizations by Onset Date")) {
 				int dayOfOnset = Date.dateToDay(split[1]);
 				int dayOfInfection = dayOfOnset - 5;
 				int c = Integer.valueOf(split[3]);
@@ -244,8 +246,8 @@ public class ColoradoStats {
 				getCases(CaseType.INFECTION_HOSP).setCumulative();
 				getCases(CaseType.ONSET_HOSP).setCases(dayOfData, dayOfOnset, c);
 				getCases(CaseType.INFECTION_HOSP).setCases(dayOfData, dayOfInfection, c);
-			} else if (split[0].equalsIgnoreCase("Cumulative Number of Deaths by Onset Date") || split[0]
-					.equalsIgnoreCase("Cumulative Number of Deaths From COVID-19 in Colorado by Date of Illness")) {
+			} else if (split[0].equals("Cumulative Number of Deaths by Onset Date")
+					|| split[0].equals("Cumulative Number of Deaths From COVID-19 in Colorado by Date of Illness")) {
 				int dayOfOnset = Date.dateToDay(split[1]);
 				int dayOfInfection = dayOfOnset - 5;
 				int c = Integer.valueOf(split[3]);
@@ -254,23 +256,23 @@ public class ColoradoStats {
 				getCases(CaseType.INFECTION_DEATH).setCumulative();
 				getCases(CaseType.ONSET_DEATH).setCases(dayOfData, dayOfOnset, c);
 				getCases(CaseType.INFECTION_DEATH).setCases(dayOfData, dayOfInfection, c);
-			} else if (split[0]
-					.equalsIgnoreCase("Cumulative Number of Deaths From COVID-19 in Colorado by Date of Death")) {
+			} else if (split[0].equals("Cumulative Number of Deaths From COVID-19 in Colorado by Date of Death")) {
 				// TODO
-			} else if (split[0].equalsIgnoreCase("Cases of COVID-19 in Colorado by Date Reported to the State")) {
-				if (split[2].equalsIgnoreCase("Cases")) {
+			} else if (split[0].equals("Cases of COVID-19 in Colorado by Date Reported to the State")
+					|| split[0].equals("Case Counts by Reported Date")) {
+				if (split[2].equals("Cases")) {
 					int dayOfReporting = Date.dateToDay(split[1]);
 					int c = Integer.valueOf(split[3]);
 					getCases(CaseType.REPORTED_TESTS).setCases(dayOfData, dayOfReporting, c);
-				} else if (split[2].equalsIgnoreCase("Three-Day Moving Average Of Cases")) {
+				} else if (split[2].equals("Three-Day Moving Average Of Cases")) {
 					// redundant
 				} else {
 					writeSplit(null, split);
 				}
-			} else if (split[0].equalsIgnoreCase(
+			} else if (split[0].equals(
 					"Cumulative Number of Hospitalized Cases of COVID-19 in Colorado by Date Reported to the State")
-					|| split[0].equalsIgnoreCase("Cumulative Number of Hospitalizations by Reported Date")) {
-				if (split[2].equalsIgnoreCase("Cases")) {
+					|| split[0].equals("Cumulative Number of Hospitalizations by Reported Date")) {
+				if (split[2].equals("Cases")) {
 					int dayOfReporting = Date.dateToDay(split[1]);
 					int c = Integer.valueOf(split[3]);
 					getCases(CaseType.REPORTED_HOSP).setCumulative();
@@ -278,10 +280,10 @@ public class ColoradoStats {
 				} else {
 					writeSplit(null, split);
 				}
-			} else if (split[0].equalsIgnoreCase(
-					"Cumulative Number of Deaths From COVID-19 in Colorado by Date Reported to the State")
-					|| split[0].equalsIgnoreCase("Cumulative Number of Deaths by Reported Date")) {
-				if (split[2].equalsIgnoreCase("Cases")) {
+			} else if (split[0]
+					.equals("Cumulative Number of Deaths From COVID-19 in Colorado by Date Reported to the State")
+					|| split[0].equals("Cumulative Number of Deaths by Reported Date")) {
+				if (split[2].equals("Cases")) {
 					int dayOfReporting = Date.dateToDay(split[1]);
 					int c = Integer.valueOf(split[3]);
 					getCases(CaseType.REPORTED_DEATH).setCumulative();
@@ -289,42 +291,57 @@ public class ColoradoStats {
 				} else {
 					writeSplit(null, split);
 				}
-			} else if (split[0].equalsIgnoreCase("Colorado Case Counts by County")
-					|| split[0].equalsIgnoreCase("Case Counts by County")) {
-				if (!split[1].equalsIgnoreCase("Note") && split[2].equalsIgnoreCase("Cases")
-						&& !split[1].contains("nknown")) {
+			} else if (split[0].equals("Colorado Case Counts by County") || split[0].equals("Case Counts by County")) {
+				if (!split[1].equals("Note") && split[2].equals("Cases") && !split[1].contains("nknown")) {
 					Integer c = Integer.valueOf(split[3]);
 					CountyStats county = readCounty(split[1]);
 					county.getCases().setCases(dayOfData, c);
 				}
-			} else if (split[0].equalsIgnoreCase("Deaths") || split[0].equalsIgnoreCase("Number of Deaths by County")) {
+			} else if (split[0].equals("Deaths") || split[0].equals("Number of Deaths by County")) {
 				Integer c = Integer.valueOf(split[3]);
 				CountyStats county = readCounty(split[1]);
 				county.getDeaths().setCases(dayOfData, c);
-			} else if (split[0].equalsIgnoreCase("Daily Serology Data From Clinical Laboratories")) {
+			} else if (split[0].equals("Daily Serology Data From Clinical Laboratories")) {
 				// ignored?
-			} else if (split[0].equalsIgnoreCase("Positivity Data from Clinical Laboratories")) {
+			} else if (split[0].equals("Positivity Data from Clinical Laboratories")) {
 				// ignored?
-			} else if (split[0].equalsIgnoreCase("Case Status for Cases & Deaths")) {
+			} else if (split[0].equals("Case Status for Cases & Deaths")) {
 				// ignored?
-			} else if (split[0].equalsIgnoreCase("COVID-19 in Colorado by Sex")) {
+			} else if (split[0].equals("COVID-19 in Colorado by Sex")) {
 				// TODO maybe?
-			} else if (split[0].equalsIgnoreCase("COVID-19 in Colorado by Race & Ethnicity")) {
+			} else if (split[0].equals("COVID-19 in Colorado by Race & Ethnicity")) {
 				// TODO maybe?
-			} else if (split[0].equalsIgnoreCase("COVID-19 in Colorado by Age Group")) {
+			} else if (split[0].equals("COVID-19 in Colorado by Age Group")) {
 				// TODO maybe?
-			} else if (split[0]
-					.equalsIgnoreCase("Number of Deaths From COVID-19 in Colorado by Date of Death - By Day")) {
+			} else if (split[0].equals("Case Counts by Age Group")) {
+				// ignored?
+			} else if (split[0].equals("Transmission Type")) {
+				// ignored?
+			} else if (split[0].equals("Case Counts by Sex")) {
+				// ignored?
+			} else if (split[0].equals("Fatal cases by sex")) {
+				// ignored?
+			} else if (split[0].equals("Cumulative Number of Cases by Onset Date")) {
 				// redundant
-			} else if (split[0].equalsIgnoreCase("\"Cases of COVID-19 Reported in Colorado by Age Group")
-					|| split[0].equalsIgnoreCase("\"Case Counts by Age Group")) {
+			} else if (split[0].equals("Cumulative Number of Cases by Reported Date")) {
+				// redundant
+			} else if (split[0].equals("Cumulative Number of Cases of COVID-19 in Colorado by Date of Illness Onset")) {
+				// redundant
+			} else if (split[0]
+					.equals("Cumulative Number of Cases of COVID-19 in Colorado by Date Reported to the State")) {
+				// redundant
+			} else if (split[0].equals("Total COVID-19 Tests Performed in Colorado by County")) {
+				// TODO
+			} else if (split[0].equals("Number of Deaths From COVID-19 in Colorado by Date of Death - By Day")) {
+				// redundant
+			} else if (split[0].equals("\"Cases of COVID-19 Reported in Colorado by Age Group")
+					|| split[0].equals("\"Case Counts by Age Group") || split[0].equals("\"Case Rates Per 100")
+					|| split[0].equals("\"Total Testing Rate Per 100")) {
 				// ignored? Also buggy use of " ,
-			} else if (split[0].contains("Death") || split[1].contains("Death") || split[2].contains("Death")
-					|| split[3].contains("Death")) {
-				writeSplit(Date.dayToDate(dayOfData), split);
 			} else {
-				if (dayOfData == Date.dateToDay("11-18-2020")) {
-					// writeSplit(Date.dayToDate(dayOfData), split);
+				if (!keySet.contains(split[0])) {
+					keySet.add(split[0]);
+					writeSplit(Date.dayToDate(dayOfData), split);
 				}
 			}
 		}
