@@ -58,8 +58,7 @@ public class ChartMaker {
 
 	public BufferedImage buildCasesTimeseriesChart(ColoradoStats stats, String folder, int dayOfData,
 			Function<Integer, Double> getCasesForDay, Function<Integer, Double> getProjectedCasesForDay, String by,
-			boolean log, boolean showZeroes, boolean showAverage, int daysToSkip, boolean showRollingAverage,
-			boolean showEvents) {
+			boolean log, boolean showZeroes, boolean showAverage, int daysToSkip, boolean showEvents) {
 
 		folder = TOP_FOLDER + "\\" + folder;
 
@@ -158,7 +157,7 @@ public class ChartMaker {
 				dayOfOnset -> (double) stats.getCasesByType(CaseType.ONSET_TESTS, dayOfData, dayOfOnset),
 				dayOfOnset -> stats.getSmoothedProjectedCasesByType(CaseType.ONSET_TESTS, dayOfData, dayOfOnset),
 
-				"onset", log, !log, false, 0, false, false);
+				"onset", log, !log, false, 0, false);
 	}
 
 	public BufferedImage buildRates(ColoradoStats stats, int dayOfData, String fileName, String title, boolean useCFR,
@@ -234,7 +233,7 @@ public class ChartMaker {
 				dayOfInfection -> (double) stats.getCasesByType(CaseType.INFECTION_TESTS, dayOfData, dayOfInfection),
 				dayOfInfection -> stats.getSmoothedProjectedCasesByType(CaseType.INFECTION_TESTS, dayOfData,
 						dayOfInfection),
-				"infection", log, !log, false, 5, false, true);
+				"infection", log, !log, false, 5, true);
 	}
 
 	public BufferedImage buildReportedDayTimeseriesChart(ColoradoStats stats, int dayOfData, boolean log) {
@@ -242,19 +241,19 @@ public class ChartMaker {
 				dayOfReporting -> (double) stats.getCasesByType(CaseType.REPORTED_TESTS, dayOfData, dayOfReporting),
 				dayOfReporting -> stats.getExactProjectedCasesByType(CaseType.REPORTED_TESTS, dayOfData,
 						dayOfReporting),
-				"reported", log, !log, false, 1, false, false);
+				"reported", log, !log, false, 1, false);
 	}
 
 	public BufferedImage buildNewInfectionDayTimeseriesChart(ColoradoStats stats, int dayOfData) {
 		return buildCasesTimeseriesChart(stats, "new-infection", dayOfData,
 				dayOfOnset -> (double) stats.getNewCasesByType(CaseType.INFECTION_TESTS, dayOfData, dayOfOnset), null,
-				"today's cases infection", false, false, true, 0, false, false);
+				"today's cases infection", false, false, true, 0, false);
 	}
 
 	public static final int WIDTH = 800, HEIGHT = 600;
 
 	// this completely doesn't work.
-	public BufferedImage buildOnsetReportedDayTimeseriesChart(ColoradoStats stats, int dayOfOnset) {
+	public static BufferedImage buildOnsetReportedDayTimeseriesChart(ColoradoStats stats, int dayOfOnset) {
 		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 
 		String folder = TOP_FOLDER + "\\onset_reported";
@@ -290,7 +289,7 @@ public class ChartMaker {
 	public BufferedImage buildCaseAgeTimeseriesChart(ColoradoStats stats, int dayOfData) {
 		return buildCasesTimeseriesChart(stats, "case-age", dayOfData,
 				dayOfCases -> stats.getAverageAgeOfNewCases(CaseType.INFECTION_TESTS, dayOfCases), null, "age", false,
-				true, false, 0, true, false);
+				true, false, 0, false);
 	}
 
 	private ArrayList<Future<BufferedImage>> infectionLog = new ArrayList<>();
@@ -320,11 +319,11 @@ public class ChartMaker {
 		buildCasesTimeseriesChart(stats, "county", dayOfData,
 				dayOfCases -> Double.valueOf(county.getCases().getCasesInInterval(dayOfCases, 14)),
 				dayOfCases -> Double.valueOf(county.getDeaths().getCasesInInterval(dayOfCases, 14)),
-				county.getDisplayName(), false, true, false, 0, true, false);
+				county.getDisplayName(), false, true, false, 0, false);
 		buildCasesTimeseriesChart(stats, "county", dayOfData,
 				dayOfCases -> Double.valueOf(Math.max(county.getCases().getCasesInInterval(dayOfCases, 14), 1)),
 				dayOfCases -> Double.valueOf(Math.max(county.getDeaths().getCasesInInterval(dayOfCases, 14), 1)),
-				county.getDisplayName(), true, true, false, 0, true, false);
+				county.getDisplayName(), true, true, false, 0, false);
 
 	}
 
