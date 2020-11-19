@@ -55,7 +55,9 @@ public class ChartMaker {
 
 	public Event[] events = new Event[] { new Event("SaH", "3-26-2020"), new Event("Bars", "06-30-2020"),
 			new Event("Masks", "7-16-2020"), new Event("Snow", "9-9-2020"), new Event("CU/DPS", "8-24-2020"),
-			new Event("Intervention", "11-05-2020") };
+			new Event("ENS", "10-25-2020"),
+			// new Event("Intervention", "11-05-2020")
+	};
 
 	public void saveBufferedImageAsPNG(String folder, String name, BufferedImage bufferedImage) {
 
@@ -244,14 +246,15 @@ public class ChartMaker {
 	}
 
 	private ArrayList<Future<BufferedImage>> infectionLog = new ArrayList<>();
+	private ArrayList<Future<BufferedImage>> infectionLog14 = new ArrayList<>();
 
-	public String buildGIFs() {
+	public static String buildGIF(ArrayList<Future<BufferedImage>> images, String fileName, int delay) {
 
 		AnimatedGifEncoder gif = new AnimatedGifEncoder();
-		String name = TOP_FOLDER + "\\infection-log.gif";
+		String name = TOP_FOLDER + "\\" + fileName + ".gif";
 		gif.start(name);
-		gif.setDelay(40);
-		for (Future<BufferedImage> fbi : infectionLog) {
+		gif.setDelay(delay);
+		for (Future<BufferedImage> fbi : images) {
 			BufferedImage bufferedImage;
 			try {
 				bufferedImage = fbi.get();
@@ -262,7 +265,6 @@ public class ChartMaker {
 			gif.addFrame(bufferedImage);
 		}
 		gif.finish();
-		System.out.println("Wrote gif!");
 		return name;
 	}
 
@@ -285,26 +287,31 @@ public class ChartMaker {
 		for (int dayOfData = stats.getFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
 			int _dayOfData = dayOfData;
 
-			MyExecutor.submitCode(() -> buildOnsetDayTimeseriesChart(stats, _dayOfData, false));
-			MyExecutor.submitCode(() -> buildOnsetDayTimeseriesChart(stats, _dayOfData, true));
+			MyExecutor.executeCode(() -> buildOnsetDayTimeseriesChart(stats, _dayOfData, false));
+			MyExecutor.executeCode(() -> buildOnsetDayTimeseriesChart(stats, _dayOfData, true));
 
-			MyExecutor.submitCode(() -> buildNewInfectionDayTimeseriesChart(stats, _dayOfData));
+			MyExecutor.executeCode(() -> buildNewInfectionDayTimeseriesChart(stats, _dayOfData));
 
-			MyExecutor.submitCode(() -> buildReportedDayTimeseriesChart(stats, _dayOfData, true));
-			MyExecutor.submitCode(() -> buildReportedDayTimeseriesChart(stats, _dayOfData, false));
+			MyExecutor.executeCode(() -> buildReportedDayTimeseriesChart(stats, _dayOfData, true));
+			MyExecutor.executeCode(() -> buildReportedDayTimeseriesChart(stats, _dayOfData, false));
 
-			MyExecutor.submitCode(() -> buildInfectionDayTimeseriesChart(stats, _dayOfData, false));
-			infectionLog.add(MyExecutor.submitCode(() -> buildInfectionDayTimeseriesChart(stats, _dayOfData, true)));
+			MyExecutor.executeCode(() -> buildInfectionDayTimeseriesChart(stats, _dayOfData, false));
+			Future<BufferedImage> fbi = MyExecutor
+					.submitCode(() -> buildInfectionDayTimeseriesChart(stats, _dayOfData, true));
+			infectionLog.add(fbi);
+			if (dayOfData > stats.getLastDay() - 14) {
+				infectionLog14.add(fbi);
+			}
 
 			int dayOfOnset = dayOfData; // names...
 			if (stats.getCasesByType(CaseType.ONSET_TESTS, stats.getLastDay(), dayOfOnset) > 0) {
-				MyExecutor.submitCode(() -> buildOnsetReportedDayTimeseriesChart(stats, dayOfOnset));
+				MyExecutor.executeCode(() -> buildOnsetReportedDayTimeseriesChart(stats, dayOfOnset));
 			}
 
-			MyExecutor.submitCode(() -> buildCaseAgeTimeseriesChart(stats, _dayOfData));
+			MyExecutor.executeCode(() -> buildCaseAgeTimeseriesChart(stats, _dayOfData));
 		}
 
-		return buildGIFs();
-
+		MyExecutor.executeCode(() -> buildGIF(infectionLog, "infection-log", 40));
+		return buildGIF(infectionLog14, "infection-log-14days", 200);
 	}
 }
