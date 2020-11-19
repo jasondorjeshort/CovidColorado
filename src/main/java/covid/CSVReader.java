@@ -16,7 +16,7 @@ public class CSVReader {
 	// fail.
 	public static List<String[]> read(String csvFile) {
 		String line;
-		String cvsSplitBy = ",";
+		String csvSplitBy = ",";
 
 		List<String[]> csv = new LinkedList<>();
 
@@ -26,7 +26,7 @@ public class CSVReader {
 			while ((line = br.readLine()) != null) {
 
 				// use comma as separator
-				String[] split = line.split(cvsSplitBy);
+				String[] split = line.split(csvSplitBy);
 
 				csv.add(split);
 			}
