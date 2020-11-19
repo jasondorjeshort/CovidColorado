@@ -102,7 +102,7 @@ public class IncompleteCases {
 		}
 
 		// projections
-		for (int dayOfData = stats.getFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
+		for (int dayOfData = 0; dayOfData < numbers.size(); dayOfData++) {
 			Daily daily = numbers.get(dayOfData);
 			for (int typeDay = stats.getFirstDay(); typeDay < dayOfData && typeDay < daily.cases.size(); typeDay++) {
 				Integer p = daily.cases.get(typeDay);
