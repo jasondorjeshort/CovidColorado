@@ -15,15 +15,12 @@ public class CSVReader {
 	// Most basic CSV reader. If there's quotes or escapes it will completely
 	// fail.
 	public static List<String[]> read(String csvFile) {
-		BufferedReader br = null;
 		String line;
 		String cvsSplitBy = ",";
 
 		List<String[]> csv = new LinkedList<>();
 
-		try {
-
-			br = new BufferedReader(new FileReader(csvFile));
+		try (FileReader fr = new FileReader(csvFile); BufferedReader br = new BufferedReader(fr)) {
 
 			// System.out.println("Reading CSV: " + csvFile);
 			while ((line = br.readLine()) != null) {
@@ -35,18 +32,11 @@ public class CSVReader {
 			}
 
 		} catch (FileNotFoundException e) {
+			e.printStackTrace();
 			return null;
 		} catch (IOException e) {
+			e.printStackTrace();
 			return null;
-		} finally {
-			if (br != null) {
-				try {
-					br.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-					return null;
-				}
-			}
 		}
 
 		return csv;
