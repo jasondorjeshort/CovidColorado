@@ -2,6 +2,8 @@ package covid;
 
 import java.util.ArrayList;
 
+import org.jfree.data.time.TimeSeries;
+
 public class IncompleteCases {
 
 	public class Incomplete {
@@ -9,10 +11,17 @@ public class IncompleteCases {
 		double ratio = 1;
 	}
 
-	public class Daily {
-		public final ArrayList<Integer> cases = new ArrayList<>();
-		public final ArrayList<Double> projected = new ArrayList<>();
-		public final ArrayList<Incomplete> ratios = new ArrayList<>();
+	private class Daily {
+		private final ArrayList<Integer> cases = new ArrayList<>();
+		private final ArrayList<Double> projected = new ArrayList<>();
+		private final ArrayList<Incomplete> ratios = new ArrayList<>();
+
+		protected double getCases(int day, boolean isProjected) {
+			if (isProjected) {
+				return projected.get(day);
+			}
+			return cases.get(day);
+		}
 	}
 
 	private final ArrayList<Daily> numbers = new ArrayList<>();
@@ -110,6 +119,26 @@ public class IncompleteCases {
 				daily.projected.set(typeDay, projected);
 			}
 		}
+	}
+
+	TimeSeries createTimeSeries(int dayOfData, String name, boolean isProjected) {
+		Daily daily = numbers.get(dayOfData);
+
+		int firstDay = 0;
+		while (daily.getCases(firstDay, isProjected) == 0) {
+			firstDay++;
+		}
+
+		if (name == null) {
+			name = isProjected ? "Projected" : "Cases";
+		}
+
+		TimeSeries series = new TimeSeries(name);
+		for (int day = firstDay; day < numbers.size(); day++) {
+			series.add(Date.dayToDay(day), daily.getCases(day, isProjected));
+		}
+
+		return series;
 	}
 
 	public void setCases(int dayOfData, int dayOfType, int cases) {
