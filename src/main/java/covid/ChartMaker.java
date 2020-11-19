@@ -168,8 +168,7 @@ public class ChartMaker {
 	public BufferedImage buildInfectionDayTimeseriesChart(ColoradoStats stats, int dayOfData, boolean log) {
 		return buildCasesTimeseriesChart(stats, "infection-" + (log ? "log" : "cart"), dayOfData,
 				dayOfInfection -> (double) stats.getCasesByType(CaseType.INFECTION_TESTS, dayOfData, dayOfInfection),
-				dayOfInfection -> stats.getSmoothedProjectedCasesByType(CaseType.INFECTION_TESTS, dayOfData,
-						dayOfInfection),
+				dayOfInfection -> (double) stats.getCasesByType(CaseType.INFECTION_HOSP, dayOfData, dayOfInfection),
 				"infection", log, !log, false, 5, false, true);
 	}
 

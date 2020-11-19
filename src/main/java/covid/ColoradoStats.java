@@ -4,8 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import library.MyExecutor;
-
 public class ColoradoStats {
 
 	private static final int firstDay = 48; // 2/17/2020, first day of data
@@ -31,16 +29,14 @@ public class ColoradoStats {
 
 	int lastDay;
 
-	// onsetString | date | "Cases" | #
-	private static final String oldOnset = "Case Counts by Onset Date";
-	private static final String newOnset = "Cases of COVID-19 in Colorado by Date of Illness Onset";
-
 	private final IncompleteCases[] cases = new IncompleteCases[CaseType.values().length];
 
 	private final FinalCases totalCases = new FinalCases();
 	private final FinalCases totalHospitalizations = new FinalCases();
 	private final FinalCases totalDeaths = new FinalCases();
 	private final FinalCases totalDeathsPUI = new FinalCases();
+	private final FinalCases peopleTested = new FinalCases();
+	private final FinalCases testEncounters = new FinalCases();
 
 	private IncompleteCases getCases(CaseType type) {
 		return cases[type.ordinal()];
@@ -100,7 +96,10 @@ public class ColoradoStats {
 		return getCases(type).getLastDay(dayOfData);
 	}
 
-	private static void writeSplit(String[] split) {
+	private static void writeSplit(String lead, String[] split) {
+		if (lead != null) {
+			System.out.print(lead + " : ");
+		}
 		System.out.print(split[0]);
 		for (int i = 1; i < split.length; i++) {
 			System.out.print(" | ");
@@ -132,6 +131,201 @@ public class ColoradoStats {
 		return counties;
 	}
 
+	private CountyStats readCounty(String countyName) {
+		if (countyName.endsWith(" County")) {
+			countyName = countyName.substring(0, countyName.length() - 7);
+		}
+		countyName = countyName.trim();
+
+		return getCountyStats(countyName);
+	}
+
+	public void outputDailyStats() {
+		int t = lastDay, y = lastDay - 1, w = lastDay - 7;
+		String today = Date.dayToDate(lastDay);
+		String lastWeek = Date.dayToDate(w);
+
+		System.out.println("Update for " + today);
+		System.out.println("Newly reported deaths");
+		System.out.println(String.format("\tT: %,d | Y : %,d | %s : %,d", totalDeathsPUI.getDailyCases(t),
+				totalDeathsPUI.getDailyCases(y), lastWeek, totalDeathsPUI.getDailyCases(w)));
+
+		System.out.println("Newly reported cases");
+		System.out.println(String.format("\tT: %,d | Y : %,d | %s : %,d", totalCases.getDailyCases(t),
+				totalCases.getDailyCases(y), lastWeek, totalCases.getDailyCases(w)));
+
+		System.out.println("New tests");
+		System.out.println(String.format("\tT: %,d | Y : %,d | %s : %,d", testEncounters.getDailyCases(t),
+				testEncounters.getDailyCases(y), lastWeek, testEncounters.getDailyCases(w)));
+
+		System.out.println("Current hospitalizations");
+
+		System.out.println("Hospitalizations PUI");
+
+		System.out.println("Positivity rate");
+
+		System.out.println("");
+	}
+
+	public boolean readCSV(int dayOfData) {
+
+		List<String[]> csv = CSVReader.read(csvFileName(dayOfData));
+
+		if (csv == null) {
+			return false;
+		}
+
+		synchronized (this) {
+			lastDay = Math.max(dayOfData, lastDay);
+		}
+
+		for (String[] split : csv) {
+
+			if (split.length < 4) {
+				System.out.print("Length isn't 4: ");
+				writeSplit("Fail", split);
+			}
+
+			int number;
+			try {
+				number = Integer.valueOf(split[3]);
+			} catch (Exception e) {
+				number = 0;
+			}
+
+			if (split[1].equals("Note")) {
+				// ignore notes!
+			} else if (split[0].equalsIgnoreCase("State Data") && split[1].equalsIgnoreCase("Statewide")) {
+				if (split[2].equalsIgnoreCase("Cases")) {
+					totalCases.setCases(dayOfData, number);
+				} else if (split[2].equalsIgnoreCase("Hospitalizations")) {
+					totalHospitalizations.setCases(dayOfData, number);
+				} else if (split[2].equalsIgnoreCase("Deaths")) {
+					totalDeathsPUI.setCases(dayOfData, number);
+					totalDeaths.setCases(dayOfData, number);
+				} else if (split[2].equalsIgnoreCase("Deaths Among Cases")) {
+					totalDeathsPUI.setCases(dayOfData, number);
+				} else if (split[2].equalsIgnoreCase("Deaths Due to COVID-19")) {
+					totalDeaths.setCases(dayOfData, number);
+				} else if (split[2].equalsIgnoreCase("Test Encounters")) {
+					testEncounters.setCases(dayOfData, number);
+				} else if (split[2].equalsIgnoreCase("People Tested")) {
+					peopleTested.setCases(dayOfData, number);
+					if (testEncounters.getDailyCases(dayOfData) == 0) {
+						testEncounters.setCases(dayOfData, number);
+					}
+				} else if (split[2].equalsIgnoreCase("Counties")) {
+				} else if (split[2].equalsIgnoreCase("Rate per 100000")
+						|| split[2].equalsIgnoreCase("\"Rate per 100")) {
+					// uh, simple bug that the CSV reader ignores " escaping
+					// and so treats 100,000 as a separator
+				} else if (split[2].equalsIgnoreCase("Outbreaks")) {
+				} else {
+					writeSplit(Date.dayToDate(dayOfData), split);
+				}
+			} else if (split[0].equalsIgnoreCase("Case Counts by Onset Date")
+					|| split[0].equalsIgnoreCase("Cases of COVID-19 in Colorado by Date of Illness Onset")) {
+				if (split[2].equalsIgnoreCase("Cases")) {
+					int dayOfOnset = Date.dateToDay(split[1]);
+					int dayOfInfection = dayOfOnset - 5;
+					int c = Integer.valueOf(split[3]);
+
+					getCases(CaseType.ONSET_TESTS).setCases(dayOfData, dayOfOnset, c);
+					getCases(CaseType.INFECTION_TESTS).setCases(dayOfData, dayOfInfection, c);
+				}
+			} else if (split[0].equalsIgnoreCase(
+					"Cumulative Number of Hospitalized Cases of COVID-19 in Colorado by Date of Illness Onset")
+					|| split[0].equalsIgnoreCase("Cumulative Number of Hospitalizations by Onset Date")) {
+				int dayOfOnset = Date.dateToDay(split[1]);
+				int dayOfInfection = dayOfOnset - 5;
+				int c = Integer.valueOf(split[3]);
+
+				getCases(CaseType.ONSET_HOSP).setCases(dayOfData, dayOfOnset, c);
+				getCases(CaseType.INFECTION_HOSP).setCases(dayOfData, dayOfInfection, c);
+			} else if (split[0].equalsIgnoreCase("Cumulative Number of Deaths by Onset Date") || split[0]
+					.equalsIgnoreCase("Cumulative Number of Deaths From COVID-19 in Colorado by Date of Illness")) {
+				int dayOfOnset = Date.dateToDay(split[1]);
+				int dayOfInfection = dayOfOnset - 5;
+				int c = Integer.valueOf(split[3]);
+
+				getCases(CaseType.ONSET_DEATH).setCases(dayOfData, dayOfOnset, c);
+				getCases(CaseType.INFECTION_DEATH).setCases(dayOfData, dayOfInfection, c);
+			} else if (split[0]
+					.equalsIgnoreCase("Cumulative Number of Deaths From COVID-19 in Colorado by Date of Death")) {
+				// TODO
+			} else if (split[0].equalsIgnoreCase("Cases of COVID-19 in Colorado by Date Reported to the State")) {
+				if (split[2].equalsIgnoreCase("Cases")) {
+					int dayOfReporting = Date.dateToDay(split[1]);
+					int c = Integer.valueOf(split[3]);
+					getCases(CaseType.REPORTED_TESTS).setCases(dayOfData, dayOfReporting, c);
+				} else if (split[2].equalsIgnoreCase("Three-Day Moving Average Of Cases")) {
+					// redundant
+				} else {
+					writeSplit(null, split);
+				}
+			} else if (split[0].equalsIgnoreCase(
+					"Cumulative Number of Hospitalized Cases of COVID-19 in Colorado by Date Reported to the State")
+					|| split[0].equalsIgnoreCase("Cumulative Number of Hospitalizations by Reported Date")) {
+				if (split[2].equalsIgnoreCase("Cases")) {
+					int dayOfReporting = Date.dateToDay(split[1]);
+					int c = Integer.valueOf(split[3]);
+					getCases(CaseType.REPORTED_HOSP).setCases(dayOfData, dayOfReporting, c);
+				} else {
+					writeSplit(null, split);
+				}
+			} else if (split[0].equalsIgnoreCase(
+					"Cumulative Number of Deaths From COVID-19 in Colorado by Date Reported to the State")
+					|| split[0].equalsIgnoreCase("Cumulative Number of Deaths by Reported Date")) {
+				if (split[2].equalsIgnoreCase("Cases")) {
+					int dayOfReporting = Date.dateToDay(split[1]);
+					int c = Integer.valueOf(split[3]);
+					getCases(CaseType.REPORTED_DEATH).setCases(dayOfData, dayOfReporting, c);
+				} else {
+					writeSplit(null, split);
+				}
+			} else if (split[0].equalsIgnoreCase("Colorado Case Counts by County")
+					|| split[0].equalsIgnoreCase("Case Counts by County")) {
+				if (!split[1].equalsIgnoreCase("Note") && split[2].equalsIgnoreCase("Cases")
+						&& !split[1].contains("nknown")) {
+					Integer c = Integer.valueOf(split[3]);
+					CountyStats county = readCounty(split[1]);
+					county.getCases().setCases(dayOfData, c);
+				}
+			} else if (split[0].equalsIgnoreCase("Deaths") || split[0].equalsIgnoreCase("Number of Deaths by County")) {
+				Integer c = Integer.valueOf(split[3]);
+				CountyStats county = readCounty(split[1]);
+				county.getDeaths().setCases(dayOfData, c);
+			} else if (split[0].equalsIgnoreCase("Daily Serology Data From Clinical Laboratories")) {
+				// ignored?
+			} else if (split[0].equalsIgnoreCase("Positivity Data from Clinical Laboratories")) {
+				// ignored?
+			} else if (split[0].equalsIgnoreCase("Case Status for Cases & Deaths")) {
+				// ignored?
+			} else if (split[0].equalsIgnoreCase("COVID-19 in Colorado by Sex")) {
+				// TODO maybe?
+			} else if (split[0].equalsIgnoreCase("COVID-19 in Colorado by Race & Ethnicity")) {
+				// TODO maybe?
+			} else if (split[0].equalsIgnoreCase("COVID-19 in Colorado by Age Group")) {
+				// TODO maybe?
+			} else if (split[0]
+					.equalsIgnoreCase("Number of Deaths From COVID-19 in Colorado by Date of Death - By Day")) {
+				// redundant
+			} else if (split[0].equalsIgnoreCase("\"Cases of COVID-19 Reported in Colorado by Age Group")
+					|| split[0].equalsIgnoreCase("\"Case Counts by Age Group")) {
+				// ignored? Also buggy use of " ,
+			} else if (split[0].contains("Death") || split[1].contains("Death") || split[2].contains("Death")
+					|| split[3].contains("Death")) {
+				writeSplit(Date.dayToDate(dayOfData), split);
+			} else {
+				if (dayOfData == Date.dateToDay("11-18-2020")) {
+					// writeSplit(Date.dayToDate(dayOfData), split);
+				}
+			}
+		}
+
+		return true;
+	}
+
 	public ColoradoStats() {
 		for (CaseType type : CaseType.values()) {
 			cases[type.ordinal()] = new IncompleteCases();
@@ -142,94 +336,19 @@ public class ColoradoStats {
 		 * structure.
 		 */
 		for (int dayOfData = firstCSV;; dayOfData++) {
-
-			List<String[]> csv = CSVReader.read(csvFileName(dayOfData));
-
-			if (csv == null) {
-				lastDay = dayOfData - 1;
-				System.out.println("Last day: " + Date.dayToDate(lastDay));
+			if (!readCSV(dayOfData)) {
 				break;
 			}
-
-			for (String[] split : csv) {
-
-				if (split.length < 4) {
-					System.out.print("Length isn't 4: ");
-					writeSplit(split);
-				}
-
-				int number;
-				try {
-					number = Integer.valueOf(split[3]);
-				} catch (Exception e) {
-					number = 0;
-				}
-
-				if (split[0].equalsIgnoreCase("State Data") && split[1].equalsIgnoreCase("Statewide")) {
-					if (split[2].equalsIgnoreCase("Cases")) {
-						totalCases.setCases(dayOfData, number);
-					} else if (split[2].equalsIgnoreCase("Hospitalizations")) {
-						totalHospitalizations.setCases(dayOfData, number);
-					} else if (split[3].equalsIgnoreCase("Deaths Among Cases")) {
-						totalDeathsPUI.setCases(dayOfData, number);
-					} else if (split[3].equalsIgnoreCase("Deaths Due to COVID")) {
-						totalDeaths.setCases(dayOfData, number);
-					} else {
-						// writeSplit(split);
-					}
-
-				}
-
-				if (split[0].equalsIgnoreCase(oldOnset) || split[0].equalsIgnoreCase(newOnset)) {
-					if (split[2].equalsIgnoreCase("Cases")) {
-
-						int dayOfOnset = Date.dateToDay(split[1]);
-						int dayOfInfection = dayOfOnset - 5;
-
-						int cases = Integer.valueOf(split[3]);
-						getCases(CaseType.ONSET_TESTS).setCases(dayOfData, dayOfOnset, cases);
-						getCases(CaseType.INFECTION_TESTS).setCases(dayOfData, dayOfInfection, cases);
-					}
-				}
-
-				if (split[0].equalsIgnoreCase("Cases of COVID-19 in Colorado by Date Reported to the State")) {
-					if (split[2].equalsIgnoreCase("Cases")) {
-						int dayOfReporting = Date.dateToDay(split[1]);
-						int cases = Integer.valueOf(split[3]);
-						getCases(CaseType.REPORTED_TESTS).setCases(dayOfData, dayOfReporting, cases);
-					}
-				}
-
-				if (split[0].equalsIgnoreCase("Colorado Case Counts by County")
-						|| split[0].equalsIgnoreCase("Case Counts by County")) {
-					if (!split[1].equalsIgnoreCase("Note") && split[2].equalsIgnoreCase("Cases")
-							&& !split[1].contains("nknown")) {
-						String countyName = split[1];
-						Integer cases = Integer.valueOf(split[3]);
-
-						if (countyName.endsWith(" County")) {
-							countyName = countyName.substring(0, countyName.length() - 7);
-						}
-						countyName = countyName.trim();
-
-						CountyStats county = getCountyStats(countyName);
-
-						county.setCases(dayOfData, cases);
-					}
-				} else if (split[0].contains("Denver") || split[1].contains("Denver") || split[2].contains("Denver")
-						|| split[3].contains("Denver")) {
-					// writeSplit(split);
-				}
-			}
-
 		}
 
 		for (IncompleteCases incompletes : cases) {
-			incompletes.buildIncompletes(this);
+			incompletes.build(this);
 		}
-		System.out.println("Today cases: " + totalCases.getDailyCases(getLastDay()));
 
-		MyExecutor.executeCode(() -> outputProjections(CaseType.INFECTION_TESTS));
+		outputDailyStats();
+		// outputProjections(CaseType.INFECTION_TESTS);
+
+		// System.exit(0);
 	}
 
 }

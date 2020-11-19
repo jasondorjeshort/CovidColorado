@@ -4,6 +4,7 @@ public class CountyStats {
 	// cumulative stats for ONE county
 	private final String name, displayName;
 	private final FinalCases cases = new FinalCases();
+	private final FinalCases deaths = new FinalCases();
 
 	CountyStats(String name) {
 		this.name = name;
@@ -17,8 +18,8 @@ public class CountyStats {
 		return cases;
 	}
 
-	public void setCases(int day, int numCases) {
-		cases.setCases(day, numCases);
+	public FinalCases getDeaths() {
+		return deaths;
 	}
 
 	public String getName() {

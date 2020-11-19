@@ -11,6 +11,9 @@ public class IncompleteCases {
 		double ratio = 1;
 	}
 
+	private boolean isCumulative; // we want daily numbers, but the sheet only
+									// gives cumulative
+
 	private class Daily {
 		private final ArrayList<Integer> cases = new ArrayList<>();
 		private final ArrayList<Double> projected = new ArrayList<>();
@@ -68,7 +71,12 @@ public class IncompleteCases {
 
 	public double SAMPLE_DAYS = 14;
 
-	public void buildIncompletes(ColoradoStats stats) {
+	public void build(ColoradoStats stats) {
+		if (isCumulative) {
+
+			isCumulative = false;
+		}
+
 		/*
 		 * Delay 10 means the difference from day 10 to day 11. This will be in
 		 * the array under incomplete[10].
@@ -150,5 +158,9 @@ public class IncompleteCases {
 			daily.cases.add(0);
 		}
 		daily.cases.set(dayOfType, cases);
+	}
+
+	public void setCumulative() {
+		isCumulative = true;
 	}
 }
