@@ -41,23 +41,7 @@ public class ChartMaker {
 
 	private static final double halfLifeRatio = Math.pow(0.5, 1 / 7.0);
 
-	public static class Event {
-		public final String name;
-		public final long time;
-
-		public Event(String name, String date) {
-			this.name = name;
-			this.time = Date.dateToTime(date);
-		}
-	}
-
 	private final BasicStroke stroke = new BasicStroke(2);
-
-	public Event[] events = new Event[] { new Event("SaH", "3-26-2020"), new Event("Bars", "06-30-2020"),
-			new Event("Masks", "7-16-2020"), new Event("Snow", "9-9-2020"), new Event("CU/DPS", "8-24-2020"),
-			new Event("ENS", "10-25-2020"),
-			// new Event("Intervention", "11-05-2020")
-	};
 
 	public void saveBufferedImageAsPNG(String folder, String name, BufferedImage bufferedImage) {
 
@@ -154,7 +138,7 @@ public class ChartMaker {
 			plot.addDomainMarker(marker);
 
 			if (showEvents) {
-				for (Event event : events) {
+				for (Event event : Event.events) {
 					marker = new ValueMarker(event.time);
 					marker.setPaint(Color.green);
 					marker.setLabel(event.name);
