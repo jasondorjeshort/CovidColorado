@@ -214,16 +214,10 @@ public class ColoradoStats {
 
 						CountyStats county = getCountyStats(countyName);
 
-						if (countyName.equalsIgnoreCase("Saguache")) {
-							System.out.println(countyName + " => " + Date.dayToDate(dayOfData) + " => " + cases);
-						}
-
 						county.setCases(dayOfData, cases);
 					}
-				} else if (split[0].equalsIgnoreCase("Colorado Case Counts by County")) {
-
-				} else if (split[0].contains("Saguache") || split[1].contains("Saguache")
-						|| split[2].contains("Saguache") || split[3].contains("Saguache")) {
+				} else if (split[0].contains("Denver") || split[1].contains("Denver") || split[2].contains("Denver")
+						|| split[3].contains("Denver")) {
 					// writeSplit(split);
 				}
 			}
@@ -233,6 +227,7 @@ public class ColoradoStats {
 		for (IncompleteCases incompletes : cases) {
 			incompletes.buildIncompletes(this);
 		}
+		System.out.println("Today cases: " + totalCases.getDailyCases(getLastDay()));
 
 		MyExecutor.executeCode(() -> outputProjections(CaseType.INFECTION_TESTS));
 	}
