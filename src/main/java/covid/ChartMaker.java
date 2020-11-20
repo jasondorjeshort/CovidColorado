@@ -165,7 +165,7 @@ public class ChartMaker {
 	}
 
 	public BufferedImage buildTimeseriesChart(NumbersType type, NumbersTiming timing, int dayOfData, boolean log) {
-		String by = type.name().toLowerCase() + "-" + timing.name().toLowerCase() + (log ? "-log" : "-cart");
+		String by = type.lowerName + "-" + timing.lowerName + (log ? "-log" : "-cart");
 		return buildCasesTimeseriesChart(by, dayOfData,
 				dayOfOnset -> (double) stats.getCasesByType(type, timing, dayOfData, dayOfOnset),
 				dayOfOnset -> stats.getSmoothedProjectedCasesByType(type, timing, dayOfData, dayOfOnset), by, log,
@@ -173,14 +173,14 @@ public class ChartMaker {
 	}
 
 	public BufferedImage buildNewTimeseriesChart(NumbersType type, NumbersTiming timing, int dayOfData) {
-		String by = "new-" + type.name().toLowerCase() + "-" + timing.name().toLowerCase();
+		String by = "new-" + type.lowerName + "-" + timing.lowerName;
 		return buildCasesTimeseriesChart(by, dayOfData,
 				dayOfOnset -> (double) stats.getNewCasesByType(type, timing, dayOfData, dayOfOnset), null, by, false,
 				true, 0, false);
 	}
 
 	public BufferedImage buildAgeTimeseriesChart(NumbersType type, NumbersTiming timing, int dayOfData) {
-		String by = "age-" + type.name().toLowerCase() + "-" + timing.name().toLowerCase();
+		String by = "age-" + type.lowerName + "-" + timing.lowerName;
 		return buildCasesTimeseriesChart(by, dayOfData,
 				dayOfCases -> stats.getAverageAgeOfNewCases(type, timing, dayOfCases), null, by, false, false, 0,
 				false);
