@@ -192,7 +192,9 @@ public class ChartMaker {
 				buildTimeseriesChart(type, timing, dayOfData, true);
 				buildTimeseriesChart(type, timing, dayOfData, false);
 				buildNewTimeseriesChart(type, timing, dayOfData);
-				buildAgeTimeseriesChart(type, timing, dayOfData);
+				if (dayOfData == stats.getLastDay()) {
+					buildAgeTimeseriesChart(type, timing, dayOfData);
+				}
 			}
 		}
 	}
