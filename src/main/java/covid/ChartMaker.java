@@ -37,7 +37,7 @@ public class ChartMaker {
 
 	int built = 0;
 
-	private static final String TOP_FOLDER = "C:\\Users\\jdorj\\Dropbox\\Public\\CovidColorado";
+	private static final String TOP_FOLDER = "H:\\CovidColorado";
 
 	private final BasicStroke stroke = new BasicStroke(2);
 	private final Font font = new Font("normal", 0, 12);
@@ -183,19 +183,6 @@ public class ChartMaker {
 		return buildCasesTimeseriesChart(by, dayOfData,
 				dayOfCases -> stats.getAverageAgeOfNewCases(type, timing, dayOfCases), null, by, false, false, 0,
 				false);
-	}
-
-	public void buildIncompleteTimeseriesCharts(int dayOfData) {
-		for (NumbersType type : NumbersType.values()) {
-			for (NumbersTiming timing : NumbersTiming.values()) {
-				buildTimeseriesChart(type, timing, dayOfData, true);
-				buildTimeseriesChart(type, timing, dayOfData, false);
-				buildNewTimeseriesChart(type, timing, dayOfData);
-				if (dayOfData == stats.getLastDay()) {
-					buildAgeTimeseriesChart(type, timing, dayOfData);
-				}
-			}
-		}
 	}
 
 	public BufferedImage buildRates(int dayOfData, String fileName, String title, boolean useCFR, boolean useCHR,
@@ -350,19 +337,25 @@ public class ChartMaker {
 				dayOfCases -> (double) stats.testEncounters.getCases(dayOfCases), null, "testEncounters", false, false,
 				0, false);
 
+		for (NumbersType type : NumbersType.values()) {
+			for (NumbersTiming timing : NumbersTiming.values()) {
+				buildAgeTimeseriesChart(type, timing, stats.getLastDay());
+			}
+		}
+
 	}
 
 	public String buildCharts() {
 		new File(TOP_FOLDER).mkdir();
 
+		MyExecutor.executeCode(() -> createCumulativeStats());
 		stats.getCounties()
 				.forEach((key, value) -> MyExecutor.executeCode(() -> createCountyStats(value, stats.getLastDay())));
-		Future<BufferedImage> fbi;
 
 		MyExecutor.executeCode(() -> buildRates(stats.getLastDay(), "Positivity",
 				"Colorado positivity, " + Date.dayToDate(stats.getLastDay()), false, false, false, true, 180, 20));
 
-		MyExecutor.executeCode(() -> createCumulativeStats());
+		Future<BufferedImage> fbi;
 
 		for (int dayOfData = stats.getFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
 			int _dayOfData = dayOfData;
@@ -385,7 +378,13 @@ public class ChartMaker {
 					"Colorado hospitalization fatality rate, " + day, false, false, true, false, 180, 50));
 			hfrGif.addFrameIf(dayOfData > stats.getLastDay() - 90, fbi);
 
-			MyExecutor.executeCode(() -> buildIncompleteTimeseriesCharts(_dayOfData));
+			for (NumbersType type : NumbersType.values()) {
+				for (NumbersTiming timing : NumbersTiming.values()) {
+					fbi = MyExecutor.submitCode(() -> buildTimeseriesChart(type, timing, _dayOfData, true));
+					MyExecutor.executeCode(() -> buildTimeseriesChart(type, timing, _dayOfData, false));
+					MyExecutor.executeCode(() -> buildNewTimeseriesChart(type, timing, _dayOfData));
+				}
+			}
 		}
 
 		MyExecutor.executeCode(() -> cfrGif.build());
