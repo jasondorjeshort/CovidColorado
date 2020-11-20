@@ -23,11 +23,9 @@ import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.encoders.EncoderUtil;
 import org.jfree.chart.encoders.ImageFormat;
 import org.jfree.chart.plot.IntervalMarker;
-import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.ui.TextAnchor;
-import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
@@ -41,8 +39,6 @@ public class ChartMaker {
 	int built = 0;
 
 	private static final String TOP_FOLDER = "H:\\CovidColorado";
-
-	private static final double halfLifeRatio = Math.pow(0.5, 1 / 7.0);
 
 	private final BasicStroke stroke = new BasicStroke(2);
 	private final Font font = new Font("normal", 0, 12);
@@ -88,7 +84,7 @@ public class ChartMaker {
 
 	public BufferedImage buildCasesTimeseriesChart(String folder, int dayOfData,
 			Function<Integer, Double> getCasesForDay, Function<Integer, Double> getProjectedCasesForDay, String by,
-			boolean log, boolean showZeroes, boolean showAverage, int daysToSkip, boolean showEvents) {
+			boolean log, boolean showAverage, int daysToSkip, boolean showEvents) {
 
 		folder = TOP_FOLDER + "\\" + folder;
 
@@ -99,27 +95,28 @@ public class ChartMaker {
 				- daysToSkip; d++) {
 			Day ddd = Date.dayToDay(d);
 
-			double cases = getCasesForDay.apply(d);
-			if (!Double.isFinite(cases)) {
-				continue;
+			double cases = 0;
+			for (int i = -3; i <= 3; i++) {
+				cases += getCasesForDay.apply(d + i);
 			}
+			cases /= 7.0;
 
-			if (Double.isFinite(cases) && (showZeroes || cases > 0)) {
+			if (Double.isFinite(cases)) {
 				if (!log || cases > 0) {
 					series.add(ddd, cases);
 				}
-				if (getProjectedCasesForDay != null) {
-					Double projected = getProjectedCasesForDay.apply(d);
+			}
+
+			if (getProjectedCasesForDay != null) {
+				Double projected = getProjectedCasesForDay.apply(d);
+				if (Double.isFinite(projected)) {
 					if (!log || projected > 0) {
 						projectedSeries.add(ddd, projected);
 					}
 				}
-				totalCases += cases;
-				totalDays += cases * d;
 			}
-			if (!log && !showZeroes) {
-				// System.out.println("Cases " + cases + " on day " + ddd);
-			}
+			totalCases += cases;
+			totalDays += cases * d;
 		}
 
 		// dataset.addSeries("Cases", series);
@@ -171,7 +168,7 @@ public class ChartMaker {
 		String by = type.name().toLowerCase() + "-" + timing.name().toLowerCase() + (log ? "-log" : "-cart");
 		return buildCasesTimeseriesChart(by, dayOfData,
 				dayOfOnset -> (double) stats.getCasesByType(type, timing, dayOfData, dayOfOnset),
-				dayOfOnset -> stats.getSmoothedProjectedCasesByType(type, timing, dayOfData, dayOfOnset), by, log, !log,
+				dayOfOnset -> stats.getSmoothedProjectedCasesByType(type, timing, dayOfData, dayOfOnset), by, log,
 				false, 0, false);
 	}
 
@@ -179,13 +176,13 @@ public class ChartMaker {
 		String by = "new-" + type.name().toLowerCase() + "-" + timing.name().toLowerCase();
 		return buildCasesTimeseriesChart(by, dayOfData,
 				dayOfOnset -> (double) stats.getNewCasesByType(type, timing, dayOfData, dayOfOnset), null, by, false,
-				false, true, 0, false);
+				true, 0, false);
 	}
 
 	public BufferedImage buildAgeTimeseriesChart(NumbersType type, NumbersTiming timing, int dayOfData) {
 		String by = "age-" + type.name().toLowerCase() + "-" + timing.name().toLowerCase();
 		return buildCasesTimeseriesChart(by, dayOfData,
-				dayOfCases -> stats.getAverageAgeOfNewCases(type, timing, dayOfCases), null, by, false, true, false, 0,
+				dayOfCases -> stats.getAverageAgeOfNewCases(type, timing, dayOfCases), null, by, false, false, 0,
 				false);
 	}
 
@@ -328,32 +325,31 @@ public class ChartMaker {
 		buildCasesTimeseriesChart("county", dayOfData,
 				dayOfCases -> Double.valueOf(county.getCases().getCasesInInterval(dayOfCases, 14)),
 				dayOfCases -> Double.valueOf(county.getDeaths().getCasesInInterval(dayOfCases, 14)),
-				county.getDisplayName(), false, true, false, 0, false);
+				county.getDisplayName(), false, false, 0, false);
 		buildCasesTimeseriesChart("county", dayOfData,
 				dayOfCases -> Double.valueOf(Math.max(county.getCases().getCasesInInterval(dayOfCases, 14), 1)),
 				dayOfCases -> Double.valueOf(Math.max(county.getDeaths().getCasesInInterval(dayOfCases, 14), 1)),
-				county.getDisplayName(), true, true, false, 0, false);
+				county.getDisplayName(), true, false, 0, false);
 	}
 
 	public void createCumulativeStats() {
 		buildCasesTimeseriesChart("cumulative", stats.getLastDay(),
-				dayOfCases -> (double) stats.totalCases.getCases(dayOfCases), null, "cases", false, true, false, 0,
-				false);
+				dayOfCases -> (double) stats.totalCases.getCases(dayOfCases), null, "cases", false, false, 0, false);
 		buildCasesTimeseriesChart("cumulative", stats.getLastDay(),
 				dayOfCases -> (double) stats.totalHospitalizations.getCases(dayOfCases), null, "hospitalizations",
-				false, true, false, 0, false);
+				false, false, 0, false);
 		buildCasesTimeseriesChart("cumulative", stats.getLastDay(),
-				dayOfCases -> (double) stats.totalDeaths.getCases(dayOfCases), null, "deathsLB", false, true, false, 0,
+				dayOfCases -> (double) stats.totalDeaths.getCases(dayOfCases), null, "deathsLB", false, false, 0,
 				false);
 		buildCasesTimeseriesChart("cumulative", stats.getLastDay(),
-				dayOfCases -> (double) stats.totalDeathsPUI.getCases(dayOfCases), null, "deathsUB", false, true, false,
+				dayOfCases -> (double) stats.totalDeathsPUI.getCases(dayOfCases), null, "deathsUB", false, false, 0,
+				false);
+		buildCasesTimeseriesChart("cumulative", stats.getLastDay(),
+				dayOfCases -> (double) stats.peopleTested.getCases(dayOfCases), null, "peopleTested", false, false, 0,
+				false);
+		buildCasesTimeseriesChart("cumulative", stats.getLastDay(),
+				dayOfCases -> (double) stats.testEncounters.getCases(dayOfCases), null, "testEncounters", false, false,
 				0, false);
-		buildCasesTimeseriesChart("cumulative", stats.getLastDay(),
-				dayOfCases -> (double) stats.peopleTested.getCases(dayOfCases), null, "peopleTested", false, true,
-				false, 0, false);
-		buildCasesTimeseriesChart("cumulative", stats.getLastDay(),
-				dayOfCases -> (double) stats.testEncounters.getCases(dayOfCases), null, "testEncounters", false, true,
-				false, 0, false);
 
 	}
 
