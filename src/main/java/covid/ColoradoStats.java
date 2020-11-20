@@ -39,6 +39,19 @@ public class ColoradoStats {
 	private final FinalCases peopleTested = new FinalCases();
 	private final FinalCases testEncounters = new FinalCases();
 
+	public double getPositivity(int day) {
+		double c = totalCases.getCases(day);
+		double t = testEncounters.getCases(day);
+		if (t == 0) {
+			return 0;
+		}
+
+		System.out.println(
+				"On " + Date.dayToDate(day) + " positivity is " + c + " / " + t + " = " + (100 * c / t) + "%.");
+
+		return c / t;
+	}
+
 	private IncompleteCases getCases(CaseType type) {
 		return cases[type.ordinal()];
 	}

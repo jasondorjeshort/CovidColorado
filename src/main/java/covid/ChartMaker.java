@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -177,16 +178,17 @@ public class ChartMaker {
 	}
 
 	public BufferedImage buildRates(int dayOfData, String fileName, String title, boolean useCFR, boolean useCHR,
-			boolean useHFR, Integer age, boolean fixedDates) {
+			boolean useHFR, boolean usePositivity, Integer age, Integer fixedHeight) {
 
 		int INTERVAL = 7;
 
 		TimeSeries cfr = new TimeSeries("CFR (deaths / cases)");
 		TimeSeries chr = new TimeSeries("CHR (hospitalizations / cases)");
 		TimeSeries hfr = new TimeSeries("HFR (deaths / hospitalizations)");
+		TimeSeries pos = new TimeSeries("Positivity (daily numbers, not by infection date)");
 
-		for (int dayOfInfection = (age == null || fixedDates ? 0 : stats.getLastDay() - age); dayOfInfection <= stats
-				.getLastDay(); dayOfInfection++) {
+		for (int dayOfInfection = (age == null || fixedHeight != null ? 0
+				: stats.getLastDay() - age); dayOfInfection <= stats.getLastDay(); dayOfInfection++) {
 			double cases = stats.getCasesInInterval(CaseType.INFECTION_TESTS, dayOfData, dayOfInfection, INTERVAL);
 			double hosp = stats.getCasesInInterval(CaseType.INFECTION_HOSP, dayOfData, dayOfInfection, INTERVAL);
 			double deaths = stats.getCasesInInterval(CaseType.INFECTION_DEATH, dayOfData, dayOfInfection, INTERVAL);
@@ -206,6 +208,9 @@ public class ChartMaker {
 			if (Double.isFinite(hosp) && hosp > 0) {
 				hfr.add(ddd, 100.0 * deaths / hosp);
 			}
+
+			int dayOfNumbers = dayOfInfection;
+			pos.add(ddd, 100 * stats.getPositivity(dayOfNumbers));
 		}
 
 		TimeSeriesCollection collection = new TimeSeriesCollection();
@@ -217,6 +222,9 @@ public class ChartMaker {
 		}
 		if (useCHR) {
 			collection.addSeries(chr);
+		}
+		if (usePositivity) {
+			collection.addSeries(pos);
 		}
 
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title + "\n(" + INTERVAL + "-day running average)",
@@ -236,14 +244,14 @@ public class ChartMaker {
 		marker.setLabelTextAnchor(TextAnchor.TOP_CENTER);
 		plot.addDomainMarker(marker);
 
-		if (fixedDates) {
+		if (fixedHeight != null) {
 			DateAxis xAxis = (DateAxis) plot.getDomainAxis();
 			xAxis.setMinimumDate(Date.dayToJavaDate(stats.getFirstDay()));
 			xAxis.setMaximumDate(Date.dayToJavaDate(stats.getLastDay()));
 
 			ValueAxis yAxis = plot.getRangeAxis();
 			yAxis.setLowerBound(0);
-			yAxis.setUpperBound(10);
+			yAxis.setUpperBound(fixedHeight);
 
 			plot.addDomainMarker(getTodayMarker(dayOfData));
 
@@ -322,6 +330,9 @@ public class ChartMaker {
 	private LinkedList<Future<BufferedImage>> infectionLog = new LinkedList<>();
 	private LinkedList<Future<BufferedImage>> infectionLog14 = new LinkedList<>();
 	private LinkedList<Future<BufferedImage>> cfrBI = new LinkedList<>();
+	private LinkedList<Future<BufferedImage>> chrBI = new LinkedList<>();
+	private LinkedList<Future<BufferedImage>> hfrBI = new LinkedList<>();
+	private LinkedList<Future<BufferedImage>> rates = new LinkedList<>();
 
 	public static String buildGIF(List<Future<BufferedImage>> images, String fileName, int delay) {
 
@@ -329,7 +340,13 @@ public class ChartMaker {
 		String name = TOP_FOLDER + "\\" + fileName + ".gif";
 		gif.start(name);
 		gif.setDelay(delay);
-		for (Future<BufferedImage> fbi : images) {
+
+		for (Iterator<Future<BufferedImage>> it = images.iterator(); it.hasNext();) {
+			Future<BufferedImage> fbi = it.next();
+			if (!it.hasNext()) {
+				delay *= 20;
+				gif.setDelay(delay);
+			}
 			BufferedImage bufferedImage;
 			try {
 				bufferedImage = fbi.get();
@@ -358,26 +375,38 @@ public class ChartMaker {
 	public String buildCharts() {
 		new File(TOP_FOLDER).mkdir();
 
-		MyExecutor.executeCode(
-				() -> stats.getCounties().forEach((key, value) -> createCountyStats(value, stats.getLastDay())));
+		stats.getCounties()
+				.forEach((key, value) -> MyExecutor.executeCode(() -> createCountyStats(value, stats.getLastDay())));
 		Future<BufferedImage> fbi;
+
+		MyExecutor.executeCode(() -> buildRates(stats.getLastDay(), "Positivity",
+				"Colorado positivity, " + Date.dayToDate(stats.getLastDay()), false, false, false, true, 180, 20));
 
 		for (int dayOfData = stats.getFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
 			int _dayOfData = dayOfData;
 
 			String day = Date.dayToDate(dayOfData);
 			String full = Date.dayToFullDate(dayOfData, '-');
-			MyExecutor.executeCode(() -> buildRates(_dayOfData, "rates-" + full,
-					"Colorado rates by day of infection, " + day, true, true, true, null, false));
+			fbi = MyExecutor.submitCode(() -> buildRates(_dayOfData, "rates-" + full,
+					"Colorado rates by day of infection, " + day, true, true, true, true, null, 50));
+			if (dayOfData > stats.getLastDay() - 60) {
+				rates.add(fbi);
+			}
 			fbi = MyExecutor.submitCode(() -> buildRates(_dayOfData, "CFR-" + full,
-					"Colorado case fatality rate, " + day, true, false, false, 180, true));
+					"Colorado case fatality rate, " + day, true, false, false, false, 180, 10));
 			if (dayOfData > stats.getLastDay() - 60) {
 				cfrBI.add(fbi);
 			}
-			MyExecutor.executeCode(() -> buildRates(_dayOfData, "CHR-" + full,
-					"Colorado case hospitalization rate, " + day, false, true, false, 180, false));
-			MyExecutor.executeCode(() -> buildRates(_dayOfData, "HFR-" + full,
-					"Colorado hospitalization fatality rate, " + day, false, false, true, 180, false));
+			fbi = MyExecutor.submitCode(() -> buildRates(_dayOfData, "CHR-" + full,
+					"Colorado case hospitalization rate, " + day, false, true, false, false, 180, 50));
+			if (dayOfData > stats.getLastDay() - 60) {
+				chrBI.add(fbi);
+			}
+			fbi = MyExecutor.submitCode(() -> buildRates(_dayOfData, "HFR-" + full,
+					"Colorado hospitalization fatality rate, " + day, false, false, true, false, 180, 50));
+			if (dayOfData > stats.getLastDay() - 60) {
+				hfrBI.add(fbi);
+			}
 
 			MyExecutor.executeCode(() -> buildOnsetDayTimeseriesChart(_dayOfData, false));
 			MyExecutor.executeCode(() -> buildOnsetDayTimeseriesChart(_dayOfData, true));
@@ -404,6 +433,9 @@ public class ChartMaker {
 
 		MyExecutor.executeCode(() -> buildGIF(infectionLog, "infection-log", 40));
 		MyExecutor.executeCode(() -> buildGIF(infectionLog14, "infection-log-14days", 200));
+		MyExecutor.executeCode(() -> buildGIF(rates, "rates", 200));
+		MyExecutor.executeCode(() -> buildGIF(hfrBI, "hfr", 200));
+		MyExecutor.executeCode(() -> buildGIF(chrBI, "chr", 200));
 		return buildGIF(cfrBI, "cfr", 200);
 	}
 }
