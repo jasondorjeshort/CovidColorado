@@ -77,6 +77,16 @@ public class ColoradoStats {
 		return sum;
 	}
 
+	public double getCasesInInterval(CaseType type, int dayOfData, int dayOfType, int interval) {
+		double sum = 0;
+
+		for (int i = 0; i < interval; i++) {
+			sum += getCasesByType(type, dayOfData, dayOfType - i);
+		}
+
+		return sum;
+	}
+
 	public int getNewCasesByType(CaseType type, int dayOfData, int dayOfType) {
 		return getCasesByType(type, dayOfData, dayOfType) - getCasesByType(type, dayOfData - 1, dayOfType);
 	}

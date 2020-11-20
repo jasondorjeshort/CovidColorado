@@ -59,6 +59,28 @@ public class ChartMaker {
 		}
 	}
 
+	private ValueMarker getTodayMarker(int dayOfData) {
+		ValueMarker marker = new ValueMarker(Date.dayToJavaDate(dayOfData).getTime());
+		marker.setPaint(Color.black);
+		marker.setLabel("Today");
+		marker.setLabelFont(font);
+		marker.setStroke(stroke);
+		marker.setLabelTextAnchor(TextAnchor.TOP_CENTER);
+		return marker;
+	}
+
+	public void addEvents(XYPlot plot) {
+		for (Event event : Event.events) {
+			ValueMarker marker = new ValueMarker(event.time);
+			marker.setPaint(Color.green);
+			marker.setLabel(event.name);
+			marker.setStroke(stroke);
+			marker.setLabelFont(font);
+			marker.setLabelTextAnchor(TextAnchor.TOP_CENTER);
+			plot.addDomainMarker(marker);
+		}
+	}
+
 	public BufferedImage buildCasesTimeseriesChart(ColoradoStats stats, String folder, int dayOfData,
 			Function<Integer, Double> getCasesForDay, Function<Integer, Double> getProjectedCasesForDay, String by,
 			boolean log, boolean showZeroes, boolean showAverage, int daysToSkip, boolean showEvents) {
@@ -127,24 +149,11 @@ public class ChartMaker {
 
 			plot.setDomainAxis(xAxis);
 
-			ValueMarker marker = new ValueMarker(Date.dayToJavaDate(dayOfData).getTime());
-			marker.setPaint(Color.black);
-			marker.setLabel("Today");
-			marker.setLabelFont(font);
-			marker.setStroke(stroke);
-			marker.setLabelTextAnchor(TextAnchor.TOP_CENTER);
+			ValueMarker marker = getTodayMarker(dayOfData);
 			plot.addDomainMarker(marker);
 
 			if (showEvents) {
-				for (Event event : Event.events) {
-					marker = new ValueMarker(event.time);
-					marker.setPaint(Color.green);
-					marker.setLabel(event.name);
-					marker.setStroke(stroke);
-					marker.setLabelFont(font);
-					marker.setLabelTextAnchor(TextAnchor.TOP_CENTER);
-					plot.addDomainMarker(marker);
-				}
+				addEvents(plot);
 			}
 
 		}
@@ -172,14 +181,11 @@ public class ChartMaker {
 		TimeSeries chr = new TimeSeries("CHR (hospitalizations / cases)");
 		TimeSeries hfr = new TimeSeries("HFR (deaths / hospitalizations)");
 
-		for (int dayOfInfection = (age == null ? 0 : stats.getLastDay() - age); dayOfInfection <= stats
+		for (int dayOfInfection = (age == null || fixedDates ? 0 : stats.getLastDay() - age); dayOfInfection <= stats
 				.getLastDay(); dayOfInfection++) {
-			double cases = stats.getProjectedCasesInInterval(CaseType.INFECTION_TESTS, dayOfData, dayOfInfection,
-					INTERVAL);
-			double hosp = stats.getProjectedCasesInInterval(CaseType.INFECTION_HOSP, dayOfData, dayOfInfection,
-					INTERVAL);
-			double deaths = stats.getProjectedCasesInInterval(CaseType.INFECTION_DEATH, dayOfData, dayOfInfection,
-					INTERVAL);
+			double cases = stats.getCasesInInterval(CaseType.INFECTION_TESTS, dayOfData, dayOfInfection, INTERVAL);
+			double hosp = stats.getCasesInInterval(CaseType.INFECTION_HOSP, dayOfData, dayOfInfection, INTERVAL);
+			double deaths = stats.getCasesInInterval(CaseType.INFECTION_DEATH, dayOfData, dayOfInfection, INTERVAL);
 
 			if (!Double.isFinite(cases) || cases == 0) {
 				continue;
@@ -215,7 +221,7 @@ public class ChartMaker {
 		// chart.getXYPlot().setRangeAxis(new LogarithmicAxis("Cases"));
 
 		XYPlot plot = chart.getXYPlot();
-		IntervalMarker marker = new IntervalMarker(Date.dayToTime(dayOfData - 30),
+		IntervalMarker marker = new IntervalMarker(Date.dayToTime(dayOfData - 35),
 				Date.dayToTime(stats.getLastDay() + 30));
 		marker.setPaint(Color.black);
 		// marker.setLabel("Incomplete");
@@ -234,6 +240,10 @@ public class ChartMaker {
 			ValueAxis yAxis = plot.getRangeAxis();
 			yAxis.setLowerBound(0);
 			yAxis.setUpperBound(10);
+
+			plot.addDomainMarker(getTodayMarker(dayOfData));
+
+			addEvents(plot);
 		}
 
 		BufferedImage image = chart.createBufferedImage(WIDTH, HEIGHT);
