@@ -171,8 +171,8 @@ public class ChartMaker {
 
 	public BufferedImage buildOnsetDayTimeseriesChart(int dayOfData, boolean log) {
 		return buildCasesTimeseriesChart("onset-" + (log ? "log" : "cart"), dayOfData,
-				dayOfOnset -> (double) stats.getCasesByType(CaseType.ONSET_TESTS, dayOfData, dayOfOnset),
-				dayOfOnset -> stats.getSmoothedProjectedCasesByType(CaseType.ONSET_TESTS, dayOfData, dayOfOnset),
+				dayOfOnset -> (double) stats.getCasesByType(CaseType.ONSET_CASES, dayOfData, dayOfOnset),
+				dayOfOnset -> stats.getSmoothedProjectedCasesByType(CaseType.ONSET_CASES, dayOfData, dayOfOnset),
 
 				"onset", log, !log, false, 0, false);
 	}
@@ -189,7 +189,7 @@ public class ChartMaker {
 
 		for (int dayOfInfection = (age == null || fixedHeight != null ? 0
 				: stats.getLastDay() - age); dayOfInfection <= stats.getLastDay(); dayOfInfection++) {
-			double cases = stats.getCasesInInterval(CaseType.INFECTION_TESTS, dayOfData, dayOfInfection, INTERVAL);
+			double cases = stats.getCasesInInterval(CaseType.INFECTION_CASES, dayOfData, dayOfInfection, INTERVAL);
 			double hosp = stats.getCasesInInterval(CaseType.INFECTION_HOSP, dayOfData, dayOfInfection, INTERVAL);
 			double deaths = stats.getCasesInInterval(CaseType.INFECTION_DEATH, dayOfData, dayOfInfection, INTERVAL);
 
@@ -265,23 +265,23 @@ public class ChartMaker {
 
 	public BufferedImage buildInfectionDayTimeseriesChart(int dayOfData, boolean log) {
 		return buildCasesTimeseriesChart("infection-" + (log ? "log" : "cart"), dayOfData,
-				dayOfInfection -> (double) stats.getCasesByType(CaseType.INFECTION_TESTS, dayOfData, dayOfInfection),
-				dayOfInfection -> stats.getSmoothedProjectedCasesByType(CaseType.INFECTION_TESTS, dayOfData,
+				dayOfInfection -> (double) stats.getCasesByType(CaseType.INFECTION_CASES, dayOfData, dayOfInfection),
+				dayOfInfection -> stats.getSmoothedProjectedCasesByType(CaseType.INFECTION_CASES, dayOfData,
 						dayOfInfection),
 				"infection", log, !log, false, 5, true);
 	}
 
 	public BufferedImage buildReportedDayTimeseriesChart(int dayOfData, boolean log) {
 		return buildCasesTimeseriesChart("reported-" + (log ? "log" : "cart"), dayOfData,
-				dayOfReporting -> (double) stats.getCasesByType(CaseType.REPORTED_TESTS, dayOfData, dayOfReporting),
-				dayOfReporting -> stats.getExactProjectedCasesByType(CaseType.REPORTED_TESTS, dayOfData,
+				dayOfReporting -> (double) stats.getCasesByType(CaseType.REPORTED_CASES, dayOfData, dayOfReporting),
+				dayOfReporting -> stats.getExactProjectedCasesByType(CaseType.REPORTED_CASES, dayOfData,
 						dayOfReporting),
 				"reported", log, !log, false, 1, false);
 	}
 
 	public BufferedImage buildNewInfectionDayTimeseriesChart(int dayOfData) {
 		return buildCasesTimeseriesChart("new-infection", dayOfData,
-				dayOfOnset -> (double) stats.getNewCasesByType(CaseType.INFECTION_TESTS, dayOfData, dayOfOnset), null,
+				dayOfOnset -> (double) stats.getNewCasesByType(CaseType.INFECTION_CASES, dayOfData, dayOfOnset), null,
 				"today's cases infection", false, false, true, 0, false);
 	}
 
@@ -299,10 +299,10 @@ public class ChartMaker {
 		for (int daysToReporting = 0; daysToReporting < 60; daysToReporting++) {
 			int dayOfData = dayOfOnset + daysToReporting;
 
-			int cases = stats.getNewCasesByType(CaseType.ONSET_TESTS, dayOfData, dayOfOnset);
+			int cases = stats.getNewCasesByType(CaseType.ONSET_CASES, dayOfData, dayOfOnset);
 			double smoothed = 0;
 			for (int i = -range; i <= range; i++) {
-				smoothed += stats.getNewCasesByType(CaseType.ONSET_TESTS, dayOfData + i, dayOfOnset);
+				smoothed += stats.getNewCasesByType(CaseType.ONSET_CASES, dayOfData + i, dayOfOnset);
 			}
 			smoothed /= fullRange;
 
@@ -323,7 +323,7 @@ public class ChartMaker {
 
 	public BufferedImage buildCaseAgeTimeseriesChart(int dayOfData) {
 		return buildCasesTimeseriesChart("case-age", dayOfData,
-				dayOfCases -> stats.getAverageAgeOfNewCases(CaseType.INFECTION_TESTS, dayOfCases), null, "age", false,
+				dayOfCases -> stats.getAverageAgeOfNewCases(CaseType.INFECTION_CASES, dayOfCases), null, "age", false,
 				true, false, 0, false);
 	}
 
@@ -447,7 +447,7 @@ public class ChartMaker {
 			}
 
 			int dayOfOnset = dayOfData; // names...
-			if (stats.getCasesByType(CaseType.ONSET_TESTS, stats.getLastDay(), dayOfOnset) > 0) {
+			if (stats.getCasesByType(CaseType.ONSET_CASES, stats.getLastDay(), dayOfOnset) > 0) {
 				MyExecutor.executeCode(() -> buildOnsetReportedDayTimeseriesChart(stats, dayOfOnset));
 			}
 

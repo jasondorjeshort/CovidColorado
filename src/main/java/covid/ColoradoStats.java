@@ -268,8 +268,8 @@ public class ColoradoStats {
 					int dayOfInfection = dayOfOnset - 5;
 					int c = Integer.valueOf(split[3]);
 
-					getCases(CaseType.ONSET_TESTS).setCases(dayOfData, dayOfOnset, c);
-					getCases(CaseType.INFECTION_TESTS).setCases(dayOfData, dayOfInfection, c);
+					getCases(CaseType.ONSET_CASES).setCases(dayOfData, dayOfOnset, c);
+					getCases(CaseType.INFECTION_CASES).setCases(dayOfData, dayOfInfection, c);
 				}
 			} else if (split[0]
 					.equals("Cumulative Number of Hospitalized Cases of COVID-19 in Colorado by Date of Illness Onset")
@@ -299,7 +299,7 @@ public class ColoradoStats {
 				if (split[2].equals("Cases")) {
 					int dayOfReporting = Date.dateToDay(split[1]);
 					int c = Integer.valueOf(split[3]);
-					getCases(CaseType.REPORTED_TESTS).setCases(dayOfData, dayOfReporting, c);
+					getCases(CaseType.REPORTED_CASES).setCases(dayOfData, dayOfReporting, c);
 				} else if (split[2].equals("Three-Day Moving Average Of Cases")) {
 					// redundant
 				} else {
