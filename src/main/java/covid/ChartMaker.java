@@ -93,7 +93,7 @@ public class ChartMaker {
 		folder = TOP_FOLDER + "\\" + folder;
 
 		TimeSeries series = new TimeSeries("Cases");
-		TimeSeries projectedSeries = new TimeSeries("Projected");
+		TimeSeries projectedSeries = new TimeSeries("Projected/Smoothed");
 		int totalCases = 0, totalDays = 0;
 		for (int d = Math.max(showAverage ? dayOfData - 30 : 0, stats.getFirstDay()); d <= dayOfData
 				- daysToSkip; d++) {
