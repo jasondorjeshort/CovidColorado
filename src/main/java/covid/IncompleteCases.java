@@ -34,7 +34,7 @@ public class IncompleteCases {
 			return 0;
 		}
 		Daily daily = numbers.get(dayOfData);
-		if (dayOfType >= daily.cases.size()) {
+		if (dayOfType >= daily.cases.size() || dayOfType < 0) {
 			return 0;
 		}
 		Integer i = daily.cases.get(dayOfType);
@@ -90,7 +90,7 @@ public class IncompleteCases {
 		 * Delay 10 means the difference from day 10 to day 11. This will be in
 		 * the array under incomplete[10].
 		 */
-		for (int delay = 0; delay < 90; delay++) {
+		for (int delay = 0; delay < 900; delay++) {
 			for (int typeDay = 0; typeDay < stats.getLastDay() - delay; typeDay++) {
 				int dayOfData1 = typeDay + delay;
 				int dayOfData2 = typeDay + delay + 1;
