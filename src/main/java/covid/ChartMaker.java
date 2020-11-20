@@ -210,7 +210,7 @@ public class ChartMaker {
 			}
 
 			int dayOfNumbers = dayOfInfection;
-			pos.add(ddd, 100 * stats.getPositivity(dayOfNumbers, INTERVAL));
+			pos.add(ddd, 100 * stats.getPositivity(dayOfNumbers, 1));
 		}
 
 		TimeSeriesCollection collection = new TimeSeriesCollection();
@@ -456,9 +456,9 @@ public class ChartMaker {
 
 		MyExecutor.executeCode(() -> buildGIF(infectionLog, "infection-log", 40));
 		MyExecutor.executeCode(() -> buildGIF(infectionLog14, "infection-log-14days", 200));
-		MyExecutor.executeCode(() -> buildGIF(rates, "rates", 200));
 		MyExecutor.executeCode(() -> buildGIF(hfrBI, "hfr", 200));
 		MyExecutor.executeCode(() -> buildGIF(chrBI, "chr", 200));
-		return buildGIF(cfrBI, "cfr", 200);
+		MyExecutor.executeCode(() -> buildGIF(cfrBI, "cfr", 200));
+		return buildGIF(rates, "rates", 200);
 	}
 }
