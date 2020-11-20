@@ -234,6 +234,9 @@ public class ColoradoStats {
 				} else if (split[2].equals("Hospitalizations")) {
 					totalHospitalizations.setCases(dayOfData, number);
 				} else if (split[2].equals("Deaths")) {
+					// this was split up into deaths among cases (PUI) and
+					// deaths due to covid (confirmed). Before it was just
+					// deaths for both.
 					totalDeathsPUI.setCases(dayOfData, number);
 					totalDeaths.setCases(dayOfData, number);
 				} else if (split[2].equals("Deaths Among Cases")) {
