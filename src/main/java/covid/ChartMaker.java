@@ -210,7 +210,7 @@ public class ChartMaker {
 			}
 
 			int dayOfNumbers = dayOfInfection;
-			pos.add(ddd, 100 * stats.getPositivity(dayOfNumbers));
+			pos.add(ddd, 100 * stats.getPositivity(dayOfNumbers, INTERVAL));
 		}
 
 		TimeSeriesCollection collection = new TimeSeriesCollection();
@@ -369,6 +369,27 @@ public class ChartMaker {
 				dayOfCases -> Double.valueOf(Math.max(county.getCases().getCasesInInterval(dayOfCases, 14), 1)),
 				dayOfCases -> Double.valueOf(Math.max(county.getDeaths().getCasesInInterval(dayOfCases, 14), 1)),
 				county.getDisplayName(), true, true, false, 0, false);
+	}
+
+	public void createCumulativeStats() {
+		buildCasesTimeseriesChart("cumulative", stats.getLastDay(),
+				dayOfCases -> (double) stats.totalCases.getCases(dayOfCases), null, "cases", false, true, false, 0,
+				false);
+		buildCasesTimeseriesChart("cumulative", stats.getLastDay(),
+				dayOfCases -> (double) stats.totalHospitalizations.getCases(dayOfCases), null, "hospitalizations",
+				false, true, false, 0, false);
+		buildCasesTimeseriesChart("cumulative", stats.getLastDay(),
+				dayOfCases -> (double) stats.totalDeaths.getCases(dayOfCases), null, "deathsLB", false, true, false, 0,
+				false);
+		buildCasesTimeseriesChart("cumulative", stats.getLastDay(),
+				dayOfCases -> (double) stats.totalDeathsPUI.getCases(dayOfCases), null, "deathsUB", false, true, false,
+				0, false);
+		buildCasesTimeseriesChart("cumulative", stats.getLastDay(),
+				dayOfCases -> (double) stats.peopleTested.getCases(dayOfCases), null, "peopleTested", false, true,
+				false, 0, false);
+		buildCasesTimeseriesChart("cumulative", stats.getLastDay(),
+				dayOfCases -> (double) stats.testEncounters.getCases(dayOfCases), null, "testEncounters", false, true,
+				false, 0, false);
 
 	}
 
@@ -381,6 +402,8 @@ public class ChartMaker {
 
 		MyExecutor.executeCode(() -> buildRates(stats.getLastDay(), "Positivity",
 				"Colorado positivity, " + Date.dayToDate(stats.getLastDay()), false, false, false, true, 180, 20));
+
+		MyExecutor.executeCode(() -> createCumulativeStats());
 
 		for (int dayOfData = stats.getFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
 			int _dayOfData = dayOfData;

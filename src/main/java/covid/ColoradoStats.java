@@ -32,22 +32,23 @@ public class ColoradoStats {
 
 	private final IncompleteCases[] cases = new IncompleteCases[CaseType.values().length];
 
-	private final FinalCases totalCases = new FinalCases();
-	private final FinalCases totalHospitalizations = new FinalCases();
-	private final FinalCases totalDeaths = new FinalCases();
-	private final FinalCases totalDeathsPUI = new FinalCases();
-	private final FinalCases peopleTested = new FinalCases();
-	private final FinalCases testEncounters = new FinalCases();
+	public final FinalCases totalCases = new FinalCases();
+	public final FinalCases totalHospitalizations = new FinalCases();
+	public final FinalCases totalDeaths = new FinalCases();
+	public final FinalCases totalDeathsPUI = new FinalCases();
+	public final FinalCases peopleTested = new FinalCases();
+	public final FinalCases testEncounters = new FinalCases();
 
-	public double getPositivity(int day) {
-		double c = totalCases.getCases(day);
-		double t = testEncounters.getCases(day);
+	public double getPositivity(int day, int interval) {
+		double c = totalCases.getCasesInInterval(day, interval);
+		double t = testEncounters.getCasesInInterval(day, interval);
 		if (t == 0) {
 			return 0;
 		}
 
-		System.out.println(
-				"On " + Date.dayToDate(day) + " positivity is " + c + " / " + t + " = " + (100 * c / t) + "%.");
+		// System.out.println(
+		// "On " + Date.dayToDate(day) + " positivity is " + c + " / " + t + " =
+		// " + (100 * c / t) + "%.");
 
 		return c / t;
 	}
@@ -170,15 +171,15 @@ public class ColoradoStats {
 		String lastWeek = Date.dayToDate(w);
 
 		System.out.println("Update for " + today);
-		System.out.println("Newly reported deaths");
+		System.out.println("Newly released deaths");
 		System.out.println(String.format("\tT: %,d | Y : %,d | %s : %,d", totalDeathsPUI.getDailyCases(t),
 				totalDeathsPUI.getDailyCases(y), lastWeek, totalDeathsPUI.getDailyCases(w)));
 
-		System.out.println("Newly reported cases");
+		System.out.println("Newly released cases");
 		System.out.println(String.format("\tT: %,d | Y : %,d | %s : %,d", totalCases.getDailyCases(t),
 				totalCases.getDailyCases(y), lastWeek, totalCases.getDailyCases(w)));
 
-		System.out.println("New tests");
+		System.out.println("New test encounters");
 		System.out.println(String.format("\tT: %,d | Y : %,d | %s : %,d", testEncounters.getDailyCases(t),
 				testEncounters.getDailyCases(y), lastWeek, testEncounters.getDailyCases(w)));
 
@@ -192,6 +193,12 @@ public class ColoradoStats {
 	}
 
 	private HashSet<String> keySet = new HashSet<>();
+
+	/*
+	 * The "test encounters" metric only began on this day. Before that it's
+	 * just "people tested".
+	 */
+	private static final int TEST_ENCOUNTERS_STARTED = 205;
 
 	public boolean readCSV(int dayOfData) {
 
@@ -234,10 +241,13 @@ public class ColoradoStats {
 				} else if (split[2].equals("Deaths Due to COVID-19")) {
 					totalDeaths.setCases(dayOfData, number);
 				} else if (split[2].equals("Test Encounters")) {
+					if (dayOfData < TEST_ENCOUNTERS_STARTED) {
+						new Exception("SHOULD NOT BE HERE???").printStackTrace();
+					}
 					testEncounters.setCases(dayOfData, number);
 				} else if (split[2].equals("People Tested")) {
 					peopleTested.setCases(dayOfData, number);
-					if (testEncounters.getDailyCases(dayOfData) == 0) {
+					if (dayOfData < TEST_ENCOUNTERS_STARTED) {
 						testEncounters.setCases(dayOfData, number);
 					}
 				} else if (split[2].equals("Counties")) {
@@ -385,6 +395,12 @@ public class ColoradoStats {
 			if (!readCSV(dayOfData)) {
 				break;
 			}
+		}
+
+		System.out.println();
+		for (int day = getFirstDay(); day < getLastDay(); day++) {
+			int number = testEncounters.getCases(day);
+			System.out.println("Day " + Date.dayToDate(day) + " test encounters = " + number);
 		}
 
 		for (IncompleteCases incompletes : cases) {

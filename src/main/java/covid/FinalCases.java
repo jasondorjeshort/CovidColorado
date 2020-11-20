@@ -5,6 +5,9 @@ import java.util.ArrayList;
 /**
  * Final and cumulative numbers.
  * 
+ * Important to note each number here is a cumulative total, so you have to
+ * subtract to get daily (or interval) numbers.
+ * 
  * @author jdorje@gmail.com
  *
  */
