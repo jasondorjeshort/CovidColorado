@@ -10,7 +10,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.function.Function;
@@ -38,7 +37,7 @@ public class ChartMaker {
 
 	int built = 0;
 
-	private static final String TOP_FOLDER = "H:\\CovidColorado";
+	private static final String TOP_FOLDER = "C:\\Users\\jdorj\\Dropbox\\Public\\CovidColorado";
 
 	private final BasicStroke stroke = new BasicStroke(2);
 	private final Font font = new Font("normal", 0, 12);
@@ -290,12 +289,10 @@ public class ChartMaker {
 
 	public static final int WIDTH = 800, HEIGHT = 600;
 
-	private LinkedList<Future<BufferedImage>> infectionLog = new LinkedList<>();
-	private LinkedList<Future<BufferedImage>> infectionLog14 = new LinkedList<>();
-	private LinkedList<Future<BufferedImage>> cfrBI = new LinkedList<>();
-	private LinkedList<Future<BufferedImage>> chrBI = new LinkedList<>();
-	private LinkedList<Future<BufferedImage>> hfrBI = new LinkedList<>();
-	private LinkedList<Future<BufferedImage>> rates = new LinkedList<>();
+	private final GifMaker cfr = new GifMaker(TOP_FOLDER, "cfr", 200, 5000);
+	private final GifMaker chr = new GifMaker(TOP_FOLDER, "chr", 200, 5000);
+	private final GifMaker hfr = new GifMaker(TOP_FOLDER, "hfr", 200, 5000);
+	private final GifMaker rates = new GifMaker(TOP_FOLDER, "rates", 200, 5000);
 
 	public static String buildGIF(List<Future<BufferedImage>> images, String fileName, int delay) {
 
@@ -375,32 +372,30 @@ public class ChartMaker {
 			fbi = MyExecutor.submitCode(() -> buildRates(_dayOfData, "rates-" + full,
 					"Colorado rates by day of infection, " + day, true, true, true, true, null, 50));
 			if (dayOfData > stats.getLastDay() - 60) {
-				rates.add(fbi);
+				rates.addFrame(fbi);
 			}
 			fbi = MyExecutor.submitCode(() -> buildRates(_dayOfData, "CFR-" + full,
 					"Colorado case fatality rate, " + day, true, false, false, false, 180, 10));
 			if (dayOfData > stats.getLastDay() - 60) {
-				cfrBI.add(fbi);
+				cfr.addFrame(fbi);
 			}
 			fbi = MyExecutor.submitCode(() -> buildRates(_dayOfData, "CHR-" + full,
 					"Colorado case hospitalization rate, " + day, false, true, false, false, 180, 50));
 			if (dayOfData > stats.getLastDay() - 60) {
-				chrBI.add(fbi);
+				chr.addFrame(fbi);
 			}
 			fbi = MyExecutor.submitCode(() -> buildRates(_dayOfData, "HFR-" + full,
 					"Colorado hospitalization fatality rate, " + day, false, false, true, false, 180, 50));
 			if (dayOfData > stats.getLastDay() - 60) {
-				hfrBI.add(fbi);
+				hfr.addFrame(fbi);
 			}
 
 			MyExecutor.executeCode(() -> buildIncompleteTimeseriesCharts(_dayOfData));
 		}
 
-		MyExecutor.executeCode(() -> buildGIF(infectionLog, "infection-log", 40));
-		MyExecutor.executeCode(() -> buildGIF(infectionLog14, "infection-log-14days", 200));
-		MyExecutor.executeCode(() -> buildGIF(hfrBI, "hfr", 200));
-		MyExecutor.executeCode(() -> buildGIF(chrBI, "chr", 200));
-		MyExecutor.executeCode(() -> buildGIF(cfrBI, "cfr", 200));
-		return buildGIF(rates, "rates", 200);
+		MyExecutor.executeCode(() -> cfr.build());
+		MyExecutor.executeCode(() -> chr.build());
+		MyExecutor.executeCode(() -> hfr.build());
+		return rates.build();
 	}
 }
