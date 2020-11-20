@@ -11,7 +11,7 @@ import java.util.ArrayList;
  * @author jdorje@gmail.com
  *
  */
-public class FinalCases {
+public class FinalNumbers {
 
 	private final ArrayList<Integer> cases = new ArrayList<>();
 

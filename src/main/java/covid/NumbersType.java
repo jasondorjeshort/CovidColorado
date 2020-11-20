@@ -1,6 +1,6 @@
 package covid;
 
-public enum CaseType {
+public enum NumbersType {
 	INFECTION_CASES,
 	ONSET_CASES,
 	REPORTED_CASES,

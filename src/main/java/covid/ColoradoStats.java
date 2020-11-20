@@ -30,14 +30,14 @@ public class ColoradoStats {
 
 	int lastDay;
 
-	private final IncompleteCases[] cases = new IncompleteCases[CaseType.values().length];
+	private final IncompleteNumbers[] cases = new IncompleteNumbers[NumbersType.values().length];
 
-	public final FinalCases totalCases = new FinalCases();
-	public final FinalCases totalHospitalizations = new FinalCases();
-	public final FinalCases totalDeaths = new FinalCases();
-	public final FinalCases totalDeathsPUI = new FinalCases();
-	public final FinalCases peopleTested = new FinalCases();
-	public final FinalCases testEncounters = new FinalCases();
+	public final FinalNumbers totalCases = new FinalNumbers();
+	public final FinalNumbers totalHospitalizations = new FinalNumbers();
+	public final FinalNumbers totalDeaths = new FinalNumbers();
+	public final FinalNumbers totalDeathsPUI = new FinalNumbers();
+	public final FinalNumbers peopleTested = new FinalNumbers();
+	public final FinalNumbers testEncounters = new FinalNumbers();
 
 	public double getPositivity(int day, int interval) {
 		double c = totalCases.getCasesInInterval(day, interval);
@@ -53,7 +53,7 @@ public class ColoradoStats {
 		return c / t;
 	}
 
-	private IncompleteCases getCases(CaseType type) {
+	private IncompleteNumbers getCases(NumbersType type) {
 		return cases[type.ordinal()];
 	}
 
@@ -65,15 +65,15 @@ public class ColoradoStats {
 		return lastDay;
 	}
 
-	public int getCasesByType(CaseType type, int dayOfData, int dayOfType) {
+	public int getCasesByType(NumbersType type, int dayOfData, int dayOfType) {
 		return getCases(type).getCases(dayOfData, dayOfType);
 	}
 
-	public double getExactProjectedCasesByType(CaseType type, int dayOfData, int dayOfType) {
+	public double getExactProjectedCasesByType(NumbersType type, int dayOfData, int dayOfType) {
 		return getCases(type).getExactProjectedCases(dayOfData, dayOfType);
 	}
 
-	public double getSmoothedProjectedCasesByType(CaseType type, int dayOfData, int dayOfType) {
+	public double getSmoothedProjectedCasesByType(NumbersType type, int dayOfData, int dayOfType) {
 		return getExactProjectedCasesByType(type, dayOfData, dayOfType) * 0.4
 				+ getExactProjectedCasesByType(type, dayOfData, dayOfType + 1) * 0.2
 				+ getExactProjectedCasesByType(type, dayOfData, dayOfType - 1) * 0.2
@@ -81,7 +81,7 @@ public class ColoradoStats {
 				+ getExactProjectedCasesByType(type, dayOfData, dayOfType - 2) * 0.1;
 	}
 
-	public double getProjectedCasesInInterval(CaseType type, int dayOfData, int dayOfType, int interval) {
+	public double getProjectedCasesInInterval(NumbersType type, int dayOfData, int dayOfType, int interval) {
 		double sum = 0;
 
 		for (int i = 0; i < interval; i++) {
@@ -91,7 +91,7 @@ public class ColoradoStats {
 		return sum;
 	}
 
-	public double getCasesInInterval(CaseType type, int dayOfData, int dayOfType, int interval) {
+	public double getCasesInInterval(NumbersType type, int dayOfData, int dayOfType, int interval) {
 		double sum = 0;
 
 		for (int i = 0; i < interval; i++) {
@@ -101,11 +101,11 @@ public class ColoradoStats {
 		return sum;
 	}
 
-	public int getNewCasesByType(CaseType type, int dayOfData, int dayOfType) {
+	public int getNewCasesByType(NumbersType type, int dayOfData, int dayOfType) {
 		return getCasesByType(type, dayOfData, dayOfType) - getCasesByType(type, dayOfData - 1, dayOfType);
 	}
 
-	public double getAverageAgeOfNewCases(CaseType type, int dayOfType) {
+	public double getAverageAgeOfNewCases(NumbersType type, int dayOfType) {
 		double daySum = 0, casesSum = 0;
 		for (int dayOfOnset = firstDay; dayOfOnset < dayOfType; dayOfOnset++) {
 			double newCases = getCasesByType(type, dayOfType, dayOfOnset)
@@ -117,7 +117,7 @@ public class ColoradoStats {
 		return dayOfType - daySum / casesSum;
 	}
 
-	public int getLastDayOfType(CaseType type, int dayOfData) {
+	public int getLastDayOfType(NumbersType type, int dayOfData) {
 		return getCases(type).getLastDay(dayOfData);
 	}
 
@@ -133,7 +133,7 @@ public class ColoradoStats {
 		System.out.println("");
 	}
 
-	public void outputProjections(CaseType type) {
+	public void outputProjections(NumbersType type) {
 		int dayOfData = getLastDay();
 
 		for (int dayOfType = getFirstDay(); dayOfType <= dayOfData; dayOfType++) {
@@ -268,8 +268,8 @@ public class ColoradoStats {
 					int dayOfInfection = dayOfOnset - 5;
 					int c = Integer.valueOf(split[3]);
 
-					getCases(CaseType.ONSET_CASES).setCases(dayOfData, dayOfOnset, c);
-					getCases(CaseType.INFECTION_CASES).setCases(dayOfData, dayOfInfection, c);
+					getCases(NumbersType.ONSET_CASES).setCases(dayOfData, dayOfOnset, c);
+					getCases(NumbersType.INFECTION_CASES).setCases(dayOfData, dayOfInfection, c);
 				}
 			} else if (split[0]
 					.equals("Cumulative Number of Hospitalized Cases of COVID-19 in Colorado by Date of Illness Onset")
@@ -278,20 +278,20 @@ public class ColoradoStats {
 				int dayOfInfection = dayOfOnset - 5;
 				int c = Integer.valueOf(split[3]);
 
-				getCases(CaseType.ONSET_HOSP).setCumulative();
-				getCases(CaseType.INFECTION_HOSP).setCumulative();
-				getCases(CaseType.ONSET_HOSP).setCases(dayOfData, dayOfOnset, c);
-				getCases(CaseType.INFECTION_HOSP).setCases(dayOfData, dayOfInfection, c);
+				getCases(NumbersType.ONSET_HOSP).setCumulative();
+				getCases(NumbersType.INFECTION_HOSP).setCumulative();
+				getCases(NumbersType.ONSET_HOSP).setCases(dayOfData, dayOfOnset, c);
+				getCases(NumbersType.INFECTION_HOSP).setCases(dayOfData, dayOfInfection, c);
 			} else if (split[0].equals("Cumulative Number of Deaths by Onset Date")
 					|| split[0].equals("Cumulative Number of Deaths From COVID-19 in Colorado by Date of Illness")) {
 				int dayOfOnset = Date.dateToDay(split[1]);
 				int dayOfInfection = dayOfOnset - 5;
 				int c = Integer.valueOf(split[3]);
 
-				getCases(CaseType.ONSET_DEATH).setCumulative();
-				getCases(CaseType.INFECTION_DEATH).setCumulative();
-				getCases(CaseType.ONSET_DEATH).setCases(dayOfData, dayOfOnset, c);
-				getCases(CaseType.INFECTION_DEATH).setCases(dayOfData, dayOfInfection, c);
+				getCases(NumbersType.ONSET_DEATH).setCumulative();
+				getCases(NumbersType.INFECTION_DEATH).setCumulative();
+				getCases(NumbersType.ONSET_DEATH).setCases(dayOfData, dayOfOnset, c);
+				getCases(NumbersType.INFECTION_DEATH).setCases(dayOfData, dayOfInfection, c);
 			} else if (split[0].equals("Cumulative Number of Deaths From COVID-19 in Colorado by Date of Death")) {
 				// TODO
 			} else if (split[0].equals("Cases of COVID-19 in Colorado by Date Reported to the State")
@@ -299,7 +299,7 @@ public class ColoradoStats {
 				if (split[2].equals("Cases")) {
 					int dayOfReporting = Date.dateToDay(split[1]);
 					int c = Integer.valueOf(split[3]);
-					getCases(CaseType.REPORTED_CASES).setCases(dayOfData, dayOfReporting, c);
+					getCases(NumbersType.REPORTED_CASES).setCases(dayOfData, dayOfReporting, c);
 				} else if (split[2].equals("Three-Day Moving Average Of Cases")) {
 					// redundant
 				} else {
@@ -311,8 +311,8 @@ public class ColoradoStats {
 				if (split[2].equals("Cases")) {
 					int dayOfReporting = Date.dateToDay(split[1]);
 					int c = Integer.valueOf(split[3]);
-					getCases(CaseType.REPORTED_HOSP).setCumulative();
-					getCases(CaseType.REPORTED_HOSP).setCases(dayOfData, dayOfReporting, c);
+					getCases(NumbersType.REPORTED_HOSP).setCumulative();
+					getCases(NumbersType.REPORTED_HOSP).setCases(dayOfData, dayOfReporting, c);
 				} else {
 					writeSplit(null, split);
 				}
@@ -322,8 +322,8 @@ public class ColoradoStats {
 				if (split[2].equals("Cases")) {
 					int dayOfReporting = Date.dateToDay(split[1]);
 					int c = Integer.valueOf(split[3]);
-					getCases(CaseType.REPORTED_DEATH).setCumulative();
-					getCases(CaseType.REPORTED_DEATH).setCases(dayOfData, dayOfReporting, c);
+					getCases(NumbersType.REPORTED_DEATH).setCumulative();
+					getCases(NumbersType.REPORTED_DEATH).setCases(dayOfData, dayOfReporting, c);
 				} else {
 					writeSplit(null, split);
 				}
@@ -386,8 +386,8 @@ public class ColoradoStats {
 	}
 
 	public ColoradoStats() {
-		for (CaseType type : CaseType.values()) {
-			cases[type.ordinal()] = new IncompleteCases();
+		for (NumbersType type : NumbersType.values()) {
+			cases[type.ordinal()] = new IncompleteNumbers();
 		}
 
 		/*
@@ -406,7 +406,7 @@ public class ColoradoStats {
 			System.out.println("Day " + Date.dayToDate(day) + " test encounters = " + number);
 		}
 
-		for (IncompleteCases incompletes : cases) {
+		for (IncompleteNumbers incompletes : cases) {
 			incompletes.build(this);
 		}
 

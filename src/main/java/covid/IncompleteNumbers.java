@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 import org.jfree.data.time.TimeSeries;
 
-public class IncompleteCases {
+public class IncompleteNumbers {
 
 	public class Incomplete {
 		int samples = 0;
