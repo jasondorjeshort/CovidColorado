@@ -289,10 +289,10 @@ public class ChartMaker {
 
 	public static final int WIDTH = 800, HEIGHT = 600;
 
-	private final GifMaker cfr = new GifMaker(TOP_FOLDER, "cfr", 200, 5000);
-	private final GifMaker chr = new GifMaker(TOP_FOLDER, "chr", 200, 5000);
-	private final GifMaker hfr = new GifMaker(TOP_FOLDER, "hfr", 200, 5000);
-	private final GifMaker rates = new GifMaker(TOP_FOLDER, "rates", 200, 5000);
+	private final GifMaker cfrGif = new GifMaker(TOP_FOLDER, "cfr", 200, 5000);
+	private final GifMaker chrGif = new GifMaker(TOP_FOLDER, "chr", 200, 5000);
+	private final GifMaker hfrGif = new GifMaker(TOP_FOLDER, "hfr", 200, 5000);
+	private final GifMaker ratesGif = new GifMaker(TOP_FOLDER, "rates", 200, 5000);
 
 	public static String buildGIF(List<Future<BufferedImage>> images, String fileName, int delay) {
 
@@ -371,31 +371,26 @@ public class ChartMaker {
 			String full = Date.dayToFullDate(dayOfData, '-');
 			fbi = MyExecutor.submitCode(() -> buildRates(_dayOfData, "rates-" + full,
 					"Colorado rates by day of infection, " + day, true, true, true, true, null, 50));
-			if (dayOfData > stats.getLastDay() - 60) {
-				rates.addFrame(fbi);
-			}
+			ratesGif.addFrameIf(dayOfData > stats.getLastDay() - 90, fbi);
+
 			fbi = MyExecutor.submitCode(() -> buildRates(_dayOfData, "CFR-" + full,
 					"Colorado case fatality rate, " + day, true, false, false, false, 180, 10));
-			if (dayOfData > stats.getLastDay() - 60) {
-				cfr.addFrame(fbi);
-			}
+			cfrGif.addFrameIf(dayOfData > stats.getLastDay() - 90, fbi);
+
 			fbi = MyExecutor.submitCode(() -> buildRates(_dayOfData, "CHR-" + full,
 					"Colorado case hospitalization rate, " + day, false, true, false, false, 180, 50));
-			if (dayOfData > stats.getLastDay() - 60) {
-				chr.addFrame(fbi);
-			}
+			chrGif.addFrameIf(dayOfData > stats.getLastDay() - 90, fbi);
+
 			fbi = MyExecutor.submitCode(() -> buildRates(_dayOfData, "HFR-" + full,
 					"Colorado hospitalization fatality rate, " + day, false, false, true, false, 180, 50));
-			if (dayOfData > stats.getLastDay() - 60) {
-				hfr.addFrame(fbi);
-			}
+			hfrGif.addFrameIf(dayOfData > stats.getLastDay() - 90, fbi);
 
 			MyExecutor.executeCode(() -> buildIncompleteTimeseriesCharts(_dayOfData));
 		}
 
-		MyExecutor.executeCode(() -> cfr.build());
-		MyExecutor.executeCode(() -> chr.build());
-		MyExecutor.executeCode(() -> hfr.build());
-		return rates.build();
+		MyExecutor.executeCode(() -> cfrGif.build());
+		MyExecutor.executeCode(() -> chrGif.build());
+		MyExecutor.executeCode(() -> hfrGif.build());
+		return ratesGif.build();
 	}
 }

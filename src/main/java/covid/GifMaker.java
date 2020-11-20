@@ -57,4 +57,10 @@ public class GifMaker {
 	public void addFrame(Future<BufferedImage> frame) {
 		frames.add(frame);
 	}
+	
+	public void addFrameIf(boolean ifClause, Future<BufferedImage> frame) {
+		if (ifClause) {
+			addFrame(frame);
+		}
+	}
 }
