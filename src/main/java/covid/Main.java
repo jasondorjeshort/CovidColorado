@@ -14,8 +14,8 @@ public class Main {
 
 		System.out.println("Read stats in " + (System.currentTimeMillis() - time) + " ms.");
 
-		ChartMaker charts = new ChartMaker();
-		String fname = charts.buildCharts(stats);
+		ChartMaker charts = new ChartMaker(stats);
+		String fname = charts.buildCharts();
 
 		if (fname != null) {
 			LinkedList<String> process = new LinkedList<>();
