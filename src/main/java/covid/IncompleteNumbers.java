@@ -29,6 +29,19 @@ public class IncompleteNumbers {
 
 	private final ArrayList<Daily> allNumbers = new ArrayList<>();
 
+	public double getNumbers(int dayOfData, int dayOfType, boolean projected, boolean smoothed) {
+		double numbers = 0;
+		int range = smoothed ? 3 : 0;
+		for (int d = -range; d <= range; d++) {
+			if (projected) {
+				numbers += getNumbers(dayOfData, dayOfType + d);
+			} else {
+				numbers += getProjectedNumbers(dayOfData, dayOfType + d);
+			}
+		}
+		return numbers / (2 * range + 1);
+	}
+
 	public int getNumbers(int dayOfData, int dayOfType) {
 		if (dayOfData >= allNumbers.size()) {
 			return 0;
@@ -90,7 +103,7 @@ public class IncompleteNumbers {
 		 * Delay 10 means the difference from day 10 to day 11. This will be in
 		 * the array under incomplete[10].
 		 */
-		for (int delay = 0; delay < 900; delay++) {
+		for (int delay = 0; delay < stats.getLastDay(); delay++) {
 			for (int typeDay = 0; typeDay < stats.getLastDay() - delay; typeDay++) {
 				int dayOfData1 = typeDay + delay;
 				int dayOfData2 = typeDay + delay + 1;
@@ -129,7 +142,12 @@ public class IncompleteNumbers {
 				}
 				double projected = p;
 				for (int delay = dayOfData - dayOfType; delay < daily.ratios.size(); delay++) {
-					projected *= daily.ratios.get(delay).ratio;
+					Incomplete ratio = daily.ratios.get(delay);
+					if (delay > 30 && ratio.samples < 60) {
+						// two months of samples before we consider adjusting
+						break;
+					}
+					projected *= ratio.ratio;
 				}
 				while (daily.projected.size() <= dayOfType) {
 					daily.projected.add(0.0);

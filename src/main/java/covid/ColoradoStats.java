@@ -54,7 +54,7 @@ public class ColoradoStats {
 		return c / t;
 	}
 
-	private IncompleteNumbers getNumbers(NumbersType type, NumbersTiming timing) {
+	public IncompleteNumbers getNumbers(NumbersType type, NumbersTiming timing) {
 		return cases[type.ordinal() * NumbersTiming.values().length + timing.ordinal()];
 	}
 

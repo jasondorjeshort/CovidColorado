@@ -79,25 +79,19 @@ public class ChartMaker {
 		}
 	}
 
-	public BufferedImage buildCasesTimeseriesChart(String folder, int dayOfData,
-			Function<Integer, Double> getCasesForDay, Function<Integer, Double> getProjectedCasesForDay, String by,
-			boolean log, boolean showAverage, int daysToSkip, boolean showEvents) {
+	public BufferedImage buildCasesTimeseriesChart(String folder, String fileName, int dayOfData,
+			Function<Integer, Double> getCasesForDay, Function<Integer, Double> getProjectedCasesForDay, String title,
+			String verticalAxis, boolean log, boolean showAverage, int daysToSkip, boolean showEvents) {
 
 		folder = TOP_FOLDER + "\\" + folder;
 
 		TimeSeries series = new TimeSeries("Cases");
-		TimeSeries projectedSeries = new TimeSeries("Projected/Smoothed");
-		int totalCases = 0, totalDays = 0;
+		TimeSeries projectedSeries = new TimeSeries("Projected");
 		for (int d = Math.max(showAverage ? dayOfData - 30 : 0, stats.getFirstDay()); d <= dayOfData
 				- daysToSkip; d++) {
 			Day ddd = Date.dayToDay(d);
 
-			final int INTERVAL = 0;
-			double cases = 0;
-			for (int i = -INTERVAL; i <= INTERVAL; i++) {
-				cases += getCasesForDay.apply(d + i);
-			}
-			cases /= 2 * INTERVAL + 1;
+			double cases = getCasesForDay.apply(d);
 
 			if (Double.isFinite(cases)) {
 				if (!log || cases > 0) {
@@ -106,32 +100,28 @@ public class ChartMaker {
 			}
 
 			if (getProjectedCasesForDay != null) {
-				Double projected = getProjectedCasesForDay.apply(d);
+
+				double projected = getProjectedCasesForDay.apply(d);
 				if (Double.isFinite(projected)) {
 					if (!log || projected > 0) {
 						projectedSeries.add(ddd, projected);
 					}
 				}
 			}
-			totalCases += cases;
-			totalDays += cases * d;
 		}
 
 		// dataset.addSeries("Cases", series);
 
-		double averageAge = dayOfData - (double) totalDays / totalCases;
 		TimeSeriesCollection collection = new TimeSeriesCollection();
 		collection.addSeries(series);
 		if (getProjectedCasesForDay != null) {
 			collection.addSeries(projectedSeries);
 		}
-		JFreeChart chart = ChartFactory.createTimeSeriesChart("Colorado cases (" + totalCases + ") by " + by + " date "
-				+ (showAverage ? String.format("(avg age: %.02f) ", averageAge) : "") + "as of "
-				+ Date.dayToDate(dayOfData) + (log ? " (logarithmic)" : ""), "Date", "Cases.", collection);
+		JFreeChart chart = ChartFactory.createTimeSeriesChart(title, "Date", verticalAxis, collection);
 
 		if (log) {
 			XYPlot plot = chart.getXYPlot();
-			LogarithmicAxis yAxis = new LogarithmicAxis("Cases");
+			LogarithmicAxis yAxis = new LogarithmicAxis(verticalAxis);
 			yAxis.setLowerBound(1);
 			yAxis.setUpperBound(10000);
 			plot.setRangeAxis(yAxis);
@@ -153,17 +143,20 @@ public class ChartMaker {
 		}
 
 		BufferedImage image = chart.createBufferedImage(WIDTH, HEIGHT);
-		String name = by + "-" + (log ? "log-" : "cart-") + Date.dayToFullDate(dayOfData, '-');
-		saveBufferedImageAsPNG(folder, name, image);
+		saveBufferedImageAsPNG(folder, fileName, image);
 		return image;
 	}
 
 	public BufferedImage buildTimeseriesChart(NumbersType type, NumbersTiming timing, int dayOfData, boolean log) {
-		String by = type.lowerName + "-" + timing.lowerName + (log ? "-log" : "-cart");
-		return buildCasesTimeseriesChart(by, dayOfData,
-				dayOfOnset -> (double) stats.getCasesByType(type, timing, dayOfData, dayOfOnset),
-				dayOfOnset -> stats.getExactProjectedCasesByType(type, timing, dayOfData, dayOfOnset), by, log, false,
-				0, log && timing == NumbersTiming.INFECTION);
+		String title = String.format("Colorado %s by %s date as of %s%s", type.lowerName, timing.lowerName,
+				Date.dayToDate(dayOfData),
+				log ? "\n(7-day symmetric average, logarithmic)" : "(7-day symmetric average)");
+
+		String fileName = type.lowerName + "-" + timing.lowerName + (log ? "-log" : "-cart");
+		return buildCasesTimeseriesChart(fileName, Date.dayToFullDate(dayOfData), dayOfData,
+				dayOfOnset -> stats.getNumbers(type, timing).getNumbers(dayOfData, dayOfOnset, false, true),
+				dayOfOnset -> stats.getNumbers(type, timing).getNumbers(dayOfData, dayOfOnset, true, true), title,
+				type.capName, log, false, 0, log && timing == NumbersTiming.INFECTION);
 	}
 
 	public String buildTimeseriesCharts(NumbersType type, NumbersTiming timing, boolean log) {
@@ -171,9 +164,14 @@ public class ChartMaker {
 		String fileName = type.lowerName + "-" + timing.lowerName + (log ? "-log" : "-cart");
 		String name = TOP_FOLDER + "\\" + fileName + ".gif";
 		gif.start(name);
-		gif.setDelay(20);
+		gif.setDelay(50);
 		for (int dayOfData = stats.getFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
 			BufferedImage bi = buildTimeseriesChart(type, timing, dayOfData, log);
+			if (dayOfData == stats.getLastDay()) {
+				gif.setDelay(5000);
+			} else if (dayOfData + 10 >= stats.getLastDay()) {
+				gif.setDelay(500);
+			}
 			gif.addFrame(bi);
 		}
 		gif.finish();
@@ -182,9 +180,9 @@ public class ChartMaker {
 
 	public BufferedImage buildNewTimeseriesChart(NumbersType type, NumbersTiming timing, int dayOfData) {
 		String by = "new-" + type.lowerName + "-" + timing.lowerName;
-		return buildCasesTimeseriesChart(by, dayOfData,
-				dayOfOnset -> (double) stats.getNewCasesByType(type, timing, dayOfData, dayOfOnset), null, by, false,
-				true, 0, false);
+		return buildCasesTimeseriesChart(by, Date.dayToFullDate(dayOfData), dayOfData,
+				dayOfOnset -> (double) stats.getNewCasesByType(type, timing, dayOfData, dayOfOnset), null, by, "?",
+				false, true, 0, false);
 	}
 
 	public void buildNewTimeseriesCharts(NumbersType type, NumbersTiming timing) {
@@ -195,8 +193,8 @@ public class ChartMaker {
 
 	public BufferedImage buildAgeTimeseriesChart(NumbersType type, NumbersTiming timing, int dayOfData) {
 		String by = "age-" + type.lowerName + "-" + timing.lowerName;
-		return buildCasesTimeseriesChart(by, dayOfData,
-				dayOfCases -> stats.getAverageAgeOfNewCases(type, timing, dayOfCases), null, by, false, false, 0,
+		return buildCasesTimeseriesChart(by, Date.dayToFullDate(dayOfData), dayOfData,
+				dayOfCases -> stats.getAverageAgeOfNewCases(type, timing, dayOfCases), null, by, "?", false, false, 0,
 				false);
 	}
 
@@ -206,8 +204,11 @@ public class ChartMaker {
 		int INTERVAL = 7;
 
 		TimeSeries cfr = new TimeSeries("CFR (deaths / cases)");
+		TimeSeries cfrProjected = new TimeSeries("CFR (projected)");
 		TimeSeries chr = new TimeSeries("CHR (hospitalizations / cases)");
+		TimeSeries chrProjected = new TimeSeries("CHR (projected)");
 		TimeSeries hfr = new TimeSeries("HFR (deaths / hospitalizations)");
+		TimeSeries hfrProjected = new TimeSeries("HFR (projected)");
 		TimeSeries pos = new TimeSeries("Positivity (daily numbers, not by infection date)");
 
 		for (int dayOfInfection = (age == null || fixedHeight != null ? 0
@@ -218,6 +219,12 @@ public class ChartMaker {
 					dayOfInfection, INTERVAL);
 			double deaths = stats.getCasesInInterval(NumbersType.DEATHS, NumbersTiming.INFECTION, dayOfData,
 					dayOfInfection, INTERVAL);
+			double casesProjected = stats.getProjectedCasesInInterval(NumbersType.CASES, NumbersTiming.INFECTION,
+					dayOfData, dayOfInfection, INTERVAL);
+			double hospProjected = stats.getProjectedCasesInInterval(NumbersType.HOSPITALIZATIONS,
+					NumbersTiming.INFECTION, dayOfData, dayOfInfection, INTERVAL);
+			double deathsProjected = stats.getProjectedCasesInInterval(NumbersType.DEATHS, NumbersTiming.INFECTION,
+					dayOfData, dayOfInfection, INTERVAL);
 
 			if (!Double.isFinite(cases) || cases == 0) {
 				continue;
@@ -228,11 +235,20 @@ public class ChartMaker {
 			if (Double.isFinite(cases) && cases > 0) {
 				cfr.add(ddd, 100.0 * deaths / cases);
 			}
+			if (Double.isFinite(casesProjected) && casesProjected > 0) {
+				cfrProjected.add(ddd, 100.0 * deathsProjected / casesProjected);
+			}
 			if (Double.isFinite(cases) && cases > 0) {
 				chr.add(ddd, 100.0 * hosp / cases);
 			}
+			if (Double.isFinite(casesProjected) && casesProjected > 0) {
+				chrProjected.add(ddd, 100.0 * hospProjected / casesProjected);
+			}
 			if (Double.isFinite(hosp) && hosp > 0) {
 				hfr.add(ddd, 100.0 * deaths / hosp);
+			}
+			if (Double.isFinite(hospProjected) && hospProjected > 0) {
+				hfrProjected.add(ddd, 100.0 * deathsProjected / hospProjected);
 			}
 
 			int dayOfNumbers = dayOfInfection;
@@ -242,12 +258,21 @@ public class ChartMaker {
 		TimeSeriesCollection collection = new TimeSeriesCollection();
 		if (useCFR) {
 			collection.addSeries(cfr);
+			if (!usePositivity) {
+				collection.addSeries(cfrProjected);
+			}
 		}
 		if (useHFR) {
 			collection.addSeries(hfr);
+			if (!usePositivity) {
+				collection.addSeries(hfrProjected);
+			}
 		}
 		if (useCHR) {
 			collection.addSeries(chr);
+			if (!usePositivity) {
+				collection.addSeries(chrProjected);
+			}
 		}
 		if (usePositivity) {
 			collection.addSeries(pos);
@@ -297,34 +322,36 @@ public class ChartMaker {
 	private final GifMaker ratesGif = new GifMaker(TOP_FOLDER, "rates", 200, 5000);
 
 	public void createCountyStats(CountyStats county, int dayOfData) {
-		buildCasesTimeseriesChart("county", dayOfData,
+		buildCasesTimeseriesChart("county", Date.dayToFullDate(dayOfData), dayOfData,
 				dayOfCases -> Double.valueOf(county.getCases().getNumbersInInterval(dayOfCases, 14)),
 				dayOfCases -> Double.valueOf(county.getDeaths().getNumbersInInterval(dayOfCases, 14)),
-				county.getDisplayName(), false, false, 0, false);
-		buildCasesTimeseriesChart("county", dayOfData,
+				county.getDisplayName(), "Count", false, false, 0, false);
+		buildCasesTimeseriesChart("county", Date.dayToFullDate(dayOfData), dayOfData,
 				dayOfCases -> Double.valueOf(Math.max(county.getCases().getNumbersInInterval(dayOfCases, 14), 1)),
 				dayOfCases -> Double.valueOf(Math.max(county.getDeaths().getNumbersInInterval(dayOfCases, 14), 1)),
-				county.getDisplayName(), true, false, 0, false);
+				county.getDisplayName(), "count", true, false, 0, false);
 	}
 
 	public void createCumulativeStats() {
-		buildCasesTimeseriesChart("cumulative", stats.getLastDay(),
-				dayOfCases -> (double) stats.totalCases.getCumulativeNumbers(dayOfCases), null, "cases", false, false, 0, false);
-		buildCasesTimeseriesChart("cumulative", stats.getLastDay(),
-				dayOfCases -> (double) stats.totalHospitalizations.getCumulativeNumbers(dayOfCases), null, "hospitalizations",
+		String date = Date.dayToFullDate(stats.getLastDay());
+		buildCasesTimeseriesChart("cumulative", date, stats.getLastDay(),
+				dayOfCases -> (double) stats.totalCases.getCumulativeNumbers(dayOfCases), null, "cases", "count", false,
+				false, 0, false);
+		buildCasesTimeseriesChart("cumulative", date, stats.getLastDay(),
+				dayOfCases -> (double) stats.totalHospitalizations.getCumulativeNumbers(dayOfCases), null,
+				"hospitalizations", "count", false, false, 0, false);
+		buildCasesTimeseriesChart("cumulative", date, stats.getLastDay(),
+				dayOfCases -> (double) stats.totalDeaths.getCumulativeNumbers(dayOfCases), null, "deathsLB", "count",
 				false, false, 0, false);
-		buildCasesTimeseriesChart("cumulative", stats.getLastDay(),
-				dayOfCases -> (double) stats.totalDeaths.getCumulativeNumbers(dayOfCases), null, "deathsLB", false, false, 0,
-				false);
-		buildCasesTimeseriesChart("cumulative", stats.getLastDay(),
-				dayOfCases -> (double) stats.totalDeathsPUI.getCumulativeNumbers(dayOfCases), null, "deathsUB", false, false, 0,
-				false);
-		buildCasesTimeseriesChart("cumulative", stats.getLastDay(),
-				dayOfCases -> (double) stats.peopleTested.getCumulativeNumbers(dayOfCases), null, "peopleTested", false, false, 0,
-				false);
-		buildCasesTimeseriesChart("cumulative", stats.getLastDay(),
-				dayOfCases -> (double) stats.testEncounters.getCumulativeNumbers(dayOfCases), null, "testEncounters", false, false,
-				0, false);
+		buildCasesTimeseriesChart("cumulative", date, stats.getLastDay(),
+				dayOfCases -> (double) stats.totalDeathsPUI.getCumulativeNumbers(dayOfCases), null, "deathsUB", "count",
+				false, false, 0, false);
+		buildCasesTimeseriesChart("cumulative", date, stats.getLastDay(),
+				dayOfCases -> (double) stats.peopleTested.getCumulativeNumbers(dayOfCases), null, "peopleTested",
+				"count", false, false, 0, false);
+		buildCasesTimeseriesChart("cumulative", date, stats.getLastDay(),
+				dayOfCases -> (double) stats.testEncounters.getCumulativeNumbers(dayOfCases), null, "testEncounters",
+				"count", false, false, 0, false);
 
 		for (NumbersType type : NumbersType.values()) {
 			for (NumbersTiming timing : NumbersTiming.values()) {
@@ -337,48 +364,53 @@ public class ChartMaker {
 	public String buildCharts() {
 		new File(TOP_FOLDER).mkdir();
 
-		MyExecutor.executeCode(() -> createCumulativeStats());
-		stats.getCounties()
-				.forEach((key, value) -> MyExecutor.executeCode(() -> createCountyStats(value, stats.getLastDay())));
+		if (true) {
+			MyExecutor.executeCode(() -> createCumulativeStats());
+			stats.getCounties().forEach(
+					(key, value) -> MyExecutor.executeCode(() -> createCountyStats(value, stats.getLastDay())));
 
-		MyExecutor.executeCode(() -> buildRates(stats.getLastDay(), "Positivity",
-				"Colorado positivity, " + Date.dayToDate(stats.getLastDay()), false, false, false, true, 180, 20));
+			MyExecutor.executeCode(() -> buildRates(stats.getLastDay(), "Positivity",
+					"Colorado positivity, " + Date.dayToDate(stats.getLastDay()), false, false, false, true, 180, 20));
 
-		Future<BufferedImage> fbi;
-		for (NumbersType type : NumbersType.values()) {
-			for (NumbersTiming timing : NumbersTiming.values()) {
-				MyExecutor.executeCode(() -> buildTimeseriesCharts(type, timing, true));
-				MyExecutor.executeCode(() -> buildTimeseriesCharts(type, timing, false));
-				MyExecutor.executeCode(() -> buildNewTimeseriesCharts(type, timing));
+			Future<BufferedImage> fbi;
+			for (NumbersType type : NumbersType.values()) {
+				for (NumbersTiming timing : NumbersTiming.values()) {
+					MyExecutor.executeCode(() -> buildTimeseriesCharts(type, timing, true));
+					MyExecutor.executeCode(() -> buildTimeseriesCharts(type, timing, false));
+					MyExecutor.executeCode(() -> buildNewTimeseriesCharts(type, timing));
+				}
 			}
+
+			for (int dayOfData = stats.getFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
+				int _dayOfData = dayOfData;
+
+				String day = Date.dayToDate(dayOfData);
+				String full = Date.dayToFullDate(dayOfData, '-');
+				fbi = MyExecutor.submitCode(() -> buildRates(_dayOfData, "rates-" + full,
+						"Colorado rates by day of infection, " + day, true, true, true, true, null, 50));
+				ratesGif.addFrameIf(dayOfData > stats.getLastDay() - 90, fbi);
+
+				fbi = MyExecutor.submitCode(() -> buildRates(_dayOfData, "CFR-" + full,
+						"Colorado case fatality rate, " + day, true, false, false, false, 180, 10));
+				cfrGif.addFrameIf(dayOfData > stats.getLastDay() - 90, fbi);
+
+				fbi = MyExecutor.submitCode(() -> buildRates(_dayOfData, "CHR-" + full,
+						"Colorado case hospitalization rate, " + day, false, true, false, false, 180, 50));
+				chrGif.addFrameIf(dayOfData > stats.getLastDay() - 90, fbi);
+
+				fbi = MyExecutor.submitCode(() -> buildRates(_dayOfData, "HFR-" + full,
+						"Colorado hospitalization fatality rate, " + day, false, false, true, false, 180, 50));
+				hfrGif.addFrameIf(dayOfData > stats.getLastDay() - 90, fbi);
+
+			}
+
+			MyExecutor.executeCode(() -> cfrGif.build());
+			MyExecutor.executeCode(() -> chrGif.build());
+			MyExecutor.executeCode(() -> hfrGif.build());
+
+			return ratesGif.build();
 		}
 
-		for (int dayOfData = stats.getFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
-			int _dayOfData = dayOfData;
-
-			String day = Date.dayToDate(dayOfData);
-			String full = Date.dayToFullDate(dayOfData, '-');
-			fbi = MyExecutor.submitCode(() -> buildRates(_dayOfData, "rates-" + full,
-					"Colorado rates by day of infection, " + day, true, true, true, true, null, 50));
-			ratesGif.addFrameIf(dayOfData > stats.getLastDay() - 90, fbi);
-
-			fbi = MyExecutor.submitCode(() -> buildRates(_dayOfData, "CFR-" + full,
-					"Colorado case fatality rate, " + day, true, false, false, false, 180, 10));
-			cfrGif.addFrameIf(dayOfData > stats.getLastDay() - 90, fbi);
-
-			fbi = MyExecutor.submitCode(() -> buildRates(_dayOfData, "CHR-" + full,
-					"Colorado case hospitalization rate, " + day, false, true, false, false, 180, 50));
-			chrGif.addFrameIf(dayOfData > stats.getLastDay() - 90, fbi);
-
-			fbi = MyExecutor.submitCode(() -> buildRates(_dayOfData, "HFR-" + full,
-					"Colorado hospitalization fatality rate, " + day, false, false, true, false, 180, 50));
-			hfrGif.addFrameIf(dayOfData > stats.getLastDay() - 90, fbi);
-
-		}
-
-		MyExecutor.executeCode(() -> cfrGif.build());
-		MyExecutor.executeCode(() -> chrGif.build());
-		MyExecutor.executeCode(() -> hfrGif.build());
-		return ratesGif.build();
+		return buildTimeseriesCharts(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION, true);
 	}
 }

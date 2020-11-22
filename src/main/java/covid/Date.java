@@ -123,6 +123,10 @@ public class Date {
 
 		return "???";
 	}
+	
+	public static String dayToFullDate(int day) {
+		return dayToFullDate(day, '-');
+	}
 
 	public static Day dayToDay(int day) {
 		for (Month m : Month.values()) {
