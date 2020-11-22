@@ -3,7 +3,8 @@ package covid;
 public enum NumbersType {
 	CASES,
 	HOSPITALIZATIONS,
-	DEATHS;
+	DEATHS,
+	TESTS;
 
 	public final String lowerName = name().toLowerCase();
 	public final String capName = name().substring(0, 1) + name().substring(1).toLowerCase().replaceAll("_", " ");

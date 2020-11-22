@@ -15,7 +15,7 @@ public class IncompleteNumbers {
 									// gives cumulative
 
 	protected class Daily {
-		protected final ArrayList<Integer> numbers = new ArrayList<>();
+		protected final ArrayList<Double> numbers = new ArrayList<>();
 		protected final ArrayList<Double> projected = new ArrayList<>();
 		protected final ArrayList<Incomplete> ratios = new ArrayList<>();
 
@@ -42,7 +42,7 @@ public class IncompleteNumbers {
 		return Math.pow(numbers, 1.0 / (2.0 * range + 1.0));
 	}
 
-	public int getNumbers(int dayOfData, int dayOfType) {
+	public double getNumbers(int dayOfData, int dayOfType) {
 		if (dayOfData >= allNumbers.size()) {
 			return 0;
 		}
@@ -50,7 +50,7 @@ public class IncompleteNumbers {
 		if (dayOfType >= daily.numbers.size() || dayOfType < 0) {
 			return 0;
 		}
-		Integer i = daily.numbers.get(dayOfType);
+		Double i = daily.numbers.get(dayOfType);
 		if (i == null) {
 			return 0;
 		}
@@ -87,10 +87,10 @@ public class IncompleteNumbers {
 	public void build(ColoradoStats stats) {
 		if (isCumulative) {
 			for (int dayOfData = 0; dayOfData < allNumbers.size(); dayOfData++) {
-				int last = 0;
+				double last = 0;
 				Daily daily = allNumbers.get(dayOfData);
 				for (int dayOfType = 0; dayOfType < dayOfData && dayOfType < daily.numbers.size(); dayOfType++) {
-					int newLast = daily.numbers.get(dayOfType);
+					double newLast = daily.numbers.get(dayOfType);
 					daily.numbers.set(dayOfType, newLast - last);
 					last = newLast;
 				}
@@ -108,8 +108,8 @@ public class IncompleteNumbers {
 				int dayOfData1 = typeDay + delay;
 				int dayOfData2 = typeDay + delay + 1;
 
-				int numbers1 = getNumbers(dayOfData1, typeDay);
-				int numbers2 = getNumbers(dayOfData2, typeDay);
+				double numbers1 = getNumbers(dayOfData1, typeDay);
+				double numbers2 = getNumbers(dayOfData2, typeDay);
 				double newRatio = (double) numbers2 / numbers1;
 
 				if (numbers1 <= 0 || numbers2 <= 0) {
@@ -136,7 +136,7 @@ public class IncompleteNumbers {
 		for (int dayOfData = 0; dayOfData < allNumbers.size(); dayOfData++) {
 			Daily daily = allNumbers.get(dayOfData);
 			for (int dayOfType = 0; dayOfType < dayOfData && dayOfType < daily.numbers.size(); dayOfType++) {
-				Integer p = daily.numbers.get(dayOfType);
+				Double p = daily.numbers.get(dayOfType);
 				if (p == null) {
 					continue;
 				}
@@ -180,13 +180,13 @@ public class IncompleteNumbers {
 	/**
 	 * Sets numbers for the given days.
 	 */
-	public void setNumbers(int dayOfData, int dayOfType, int numbers) {
+	public void setNumbers(int dayOfData, int dayOfType, double numbers) {
 		while (allNumbers.size() <= dayOfData) {
 			allNumbers.add(new Daily());
 		}
 		Daily daily = allNumbers.get(dayOfData);
 		while (daily.numbers.size() <= dayOfType) {
-			daily.numbers.add(0);
+			daily.numbers.add(0.0);
 		}
 		daily.numbers.set(dayOfType, numbers);
 	}
@@ -194,13 +194,13 @@ public class IncompleteNumbers {
 	/**
 	 * Adds more numbers for the given days.
 	 */
-	public void addNumbers(int dayOfData, int dayOfType, int numbers) {
+	public void addNumbers(int dayOfData, int dayOfType, double numbers) {
 		while (allNumbers.size() <= dayOfData) {
 			allNumbers.add(new Daily());
 		}
 		Daily daily = allNumbers.get(dayOfData);
 		while (daily.numbers.size() <= dayOfType) {
-			daily.numbers.add(0);
+			daily.numbers.add(0.0);
 		}
 		numbers += daily.numbers.get(dayOfType);
 		daily.numbers.set(dayOfType, numbers);

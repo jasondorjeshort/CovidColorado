@@ -123,7 +123,7 @@ public class ChartMaker {
 			XYPlot plot = chart.getXYPlot();
 			LogarithmicAxis yAxis = new LogarithmicAxis(verticalAxis);
 			yAxis.setLowerBound(1);
-			yAxis.setUpperBound(10000);
+			yAxis.setUpperBound(100000);
 			plot.setRangeAxis(yAxis);
 
 			DateAxis xAxis = new DateAxis("Date");
@@ -208,7 +208,8 @@ public class ChartMaker {
 		TimeSeries chrProjected = new TimeSeries("CHR (projected)");
 		TimeSeries hfr = new TimeSeries("HFR (deaths / hospitalizations)");
 		TimeSeries hfrProjected = new TimeSeries("HFR (projected)");
-		TimeSeries pos = new TimeSeries("Positivity (daily numbers, not by infection date)");
+		TimeSeries pos = new TimeSeries("Positivity");
+		TimeSeries posProjected = new TimeSeries("Positivity (projected)");
 
 		for (int dayOfInfection = (age == null || fixedHeight != null ? 0
 				: stats.getLastDay() - age); dayOfInfection <= stats.getLastDay(); dayOfInfection++) {
@@ -224,6 +225,10 @@ public class ChartMaker {
 					NumbersTiming.INFECTION, dayOfData, dayOfInfection, INTERVAL);
 			double deathsProjected = stats.getProjectedCasesInInterval(NumbersType.DEATHS, NumbersTiming.INFECTION,
 					dayOfData, dayOfInfection, INTERVAL);
+			double tests = stats.getCasesInInterval(NumbersType.TESTS, NumbersTiming.INFECTION, dayOfData,
+					dayOfInfection, INTERVAL);
+			double testsProjected = stats.getCasesInInterval(NumbersType.TESTS, NumbersTiming.INFECTION, dayOfData,
+					dayOfInfection, INTERVAL);
 
 			if (!Double.isFinite(cases) || cases == 0) {
 				continue;
@@ -250,8 +255,12 @@ public class ChartMaker {
 				hfrProjected.add(ddd, 100.0 * deathsProjected / hospProjected);
 			}
 
-			int dayOfNumbers = dayOfInfection;
-			pos.add(ddd, 100 * stats.getPositivity(dayOfNumbers, 1));
+			if (Double.isFinite(tests) && tests > 0) {
+				pos.add(ddd, 100.0 * cases / tests);
+			}
+			if (Double.isFinite(testsProjected) && testsProjected > 0) {
+				posProjected.add(ddd, 100.0 * casesProjected / testsProjected);
+			}
 		}
 
 		TimeSeriesCollection collection = new TimeSeriesCollection();
@@ -275,6 +284,9 @@ public class ChartMaker {
 		}
 		if (usePositivity) {
 			collection.addSeries(pos);
+			if (!useCFR) {
+				collection.addSeries(posProjected);
+			}
 		}
 
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title + "\n(" + INTERVAL + "-day running average)",
@@ -318,6 +330,7 @@ public class ChartMaker {
 	private final GifMaker cfrGif = new GifMaker(TOP_FOLDER, "cfr", 200, 5000);
 	private final GifMaker chrGif = new GifMaker(TOP_FOLDER, "chr", 200, 5000);
 	private final GifMaker hfrGif = new GifMaker(TOP_FOLDER, "hfr", 200, 5000);
+	private final GifMaker posGif = new GifMaker(TOP_FOLDER, "pos", 200, 5000);
 	private final GifMaker ratesGif = new GifMaker(TOP_FOLDER, "rates", 200, 5000);
 
 	public void createCountyStats(CountyStats county, int dayOfData) {
@@ -364,19 +377,16 @@ public class ChartMaker {
 		new File(TOP_FOLDER).mkdir();
 
 		if (false) {
-			return buildTimeseriesCharts(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION, true);
+			return buildTimeseriesCharts(NumbersType.TESTS, NumbersTiming.INFECTION, true);
 		}
 
 		MyExecutor.executeCode(() -> createCumulativeStats());
 		stats.getCounties()
 				.forEach((key, value) -> MyExecutor.executeCode(() -> createCountyStats(value, stats.getLastDay())));
 
-		MyExecutor.executeCode(() -> buildRates(stats.getLastDay(), "Positivity",
-				"Colorado positivity, " + Date.dayToDate(stats.getLastDay()), false, false, false, true, 180, 20));
-
 		Future<BufferedImage> fbi;
-		for (NumbersType type : NumbersType.values()) {
-			for (NumbersTiming timing : NumbersTiming.values()) {
+		for (NumbersTiming timing : NumbersTiming.values()) {
+			for (NumbersType type : NumbersType.values()) {
 				MyExecutor.executeCode(() -> buildTimeseriesCharts(type, timing, true));
 				MyExecutor.executeCode(() -> buildTimeseriesCharts(type, timing, false));
 				MyExecutor.executeCode(() -> buildNewTimeseriesCharts(type, timing));
@@ -390,26 +400,29 @@ public class ChartMaker {
 			String full = Date.dayToFullDate(dayOfData, '-');
 			fbi = MyExecutor.submitCode(() -> buildRates(_dayOfData, "rates-" + full,
 					"Colorado rates by day of infection, " + day, true, true, true, true, null, 50));
-			ratesGif.addFrameIf(dayOfData > stats.getLastDay() - 90, fbi);
+			ratesGif.addFrameIf(dayOfData > stats.getLastDay() - 180, fbi);
 
 			fbi = MyExecutor.submitCode(() -> buildRates(_dayOfData, "CFR-" + full,
 					"Colorado case fatality rate, " + day, true, false, false, false, 180, 10));
-			cfrGif.addFrameIf(dayOfData > stats.getLastDay() - 90, fbi);
+			cfrGif.addFrameIf(dayOfData > stats.getLastDay() - 180, fbi);
 
 			fbi = MyExecutor.submitCode(() -> buildRates(_dayOfData, "CHR-" + full,
 					"Colorado case hospitalization rate, " + day, false, true, false, false, 180, 50));
-			chrGif.addFrameIf(dayOfData > stats.getLastDay() - 90, fbi);
+			chrGif.addFrameIf(dayOfData > stats.getLastDay() - 180, fbi);
 
 			fbi = MyExecutor.submitCode(() -> buildRates(_dayOfData, "HFR-" + full,
 					"Colorado hospitalization fatality rate, " + day, false, false, true, false, 180, 50));
-			hfrGif.addFrameIf(dayOfData > stats.getLastDay() - 90, fbi);
+			hfrGif.addFrameIf(dayOfData > stats.getLastDay() - 180, fbi);
 
+			fbi = MyExecutor.submitCode(() -> buildRates(_dayOfData, "Pos-" + full, "Colorado positivity, " + day,
+					false, false, false, true, 180, 50));
+			posGif.addFrameIf(dayOfData > stats.getLastDay() - 180, fbi);
 		}
 
 		MyExecutor.executeCode(() -> cfrGif.build());
 		MyExecutor.executeCode(() -> chrGif.build());
 		MyExecutor.executeCode(() -> hfrGif.build());
-
-		return ratesGif.build();
+		MyExecutor.executeCode(() -> ratesGif.build());
+		return posGif.build();
 	}
 }

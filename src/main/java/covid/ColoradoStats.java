@@ -105,7 +105,7 @@ public class ColoradoStats {
 		return lastDay;
 	}
 
-	public int getCasesByType(NumbersType type, NumbersTiming timing, int dayOfData, int dayOfType) {
+	public double getCasesByType(NumbersType type, NumbersTiming timing, int dayOfData, int dayOfType) {
 		return getNumbers(type, timing).getNumbers(dayOfData, dayOfType);
 	}
 
@@ -153,7 +153,7 @@ public class ColoradoStats {
 		return sum;
 	}
 
-	public int getNewCasesByType(NumbersType type, NumbersTiming timing, int dayOfData, int dayOfType) {
+	public double getNewCasesByType(NumbersType type, NumbersTiming timing, int dayOfData, int dayOfType) {
 		return getCasesByType(type, timing, dayOfData, dayOfType)
 				- getCasesByType(type, timing, dayOfData - 1, dayOfType);
 	}
@@ -471,12 +471,48 @@ public class ColoradoStats {
 			System.out.println("Day " + Date.dayToDate(day) + " test encounters = " + number);
 		}
 
+		/*
+		 * So the challenge is that a negative test isn't associated with a
+		 * reported/onset/infection day. It is therefore "impossible" to have a
+		 * positivity rate for a given infection date. Sad!
+		 * 
+		 * This code splits up new tests (on this day of data) evenly among the
+		 * cases from this day of data. So if we have 1000 new tests today and
+		 * 100 new cases (10% positivity) evenly distributed over 10 days of
+		 * onset, we'll assign 100 tests (10 cases / 10% positivity) to each of
+		 * those 10 onset days.
+		 * 
+		 * Imperfect, but it's clearly the "correct" way to approximate it.
+		 */
+		for (int dayOfData = getFirstDay(); dayOfData <= getLastDay(); dayOfData++) {
+			double casesOnDay = getNumbers(NumbersType.CASES).getDailyNumbers(dayOfData);
+			double testsOnDay = testEncounters.getDailyNumbers(dayOfData);
+			double positivity = casesOnDay / testsOnDay;
+			System.out.println(String.format("%s : %.0f/%.0f = %.2f", Date.dayToDate(dayOfData), casesOnDay, testsOnDay,
+					positivity * 100));
+			for (NumbersTiming timing : NumbersTiming.values()) {
+				IncompleteNumbers cases = getNumbers(NumbersType.CASES, timing);
+				IncompleteNumbers tests = getNumbers(NumbersType.TESTS, timing);
+
+				for (int dayOfTiming = 0; dayOfTiming <= dayOfData; dayOfTiming++) {
+					double newCasesOnDay = cases.getNumbers(dayOfData, dayOfTiming)
+							- cases.getNumbers(dayOfData - 1, dayOfTiming);
+					double newTestsOnDay = newCasesOnDay / positivity;
+
+					tests.addNumbers(dayOfData, dayOfTiming, tests.getNumbers(dayOfData - 1, dayOfTiming));
+					tests.addNumbers(dayOfData, dayOfTiming, newTestsOnDay);
+				}
+			}
+		}
+
 		for (IncompleteNumbers incompletes : incompleteNumbers) {
 			incompletes.build(this);
 		}
 
-		outputProjections(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION);
-		outputDailyStats();
+		if (false) {
+			outputProjections(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION);
+			outputDailyStats();
+		}
 
 		// System.exit(0);
 	}

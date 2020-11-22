@@ -123,7 +123,7 @@ public class Date {
 
 		return "???";
 	}
-	
+
 	public static String dayToFullDate(int day) {
 		return dayToFullDate(day, '-');
 	}
