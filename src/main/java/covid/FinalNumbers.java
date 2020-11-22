@@ -13,31 +13,31 @@ import java.util.ArrayList;
  */
 public class FinalNumbers {
 
-	private final ArrayList<Integer> cases = new ArrayList<>();
+	private final ArrayList<Integer> numbers = new ArrayList<>();
 
-	public int getCasesInInterval(int day, int interval) {
-		return getCases(day) - getCases(day - interval);
+	public int getNumbersInInterval(int day, int interval) {
+		return getCumulativeNumbers(day) - getCumulativeNumbers(day - interval);
 	}
 
-	public int getDailyCases(int day) {
-		return getCasesInInterval(day, 1);
+	public int getDailyNumbers(int day) {
+		return getNumbersInInterval(day, 1);
 	}
 
-	public int getCases(int day) {
-		if (day < 0 || day >= cases.size()) {
+	public int getCumulativeNumbers(int day) {
+		if (day < 0 || day >= numbers.size()) {
 			return 0;
 		}
-		Integer caseCount = cases.get(day);
-		if (caseCount == null) {
+		Integer numbersForDay = numbers.get(day);
+		if (numbersForDay == null) {
 			return 0;
 		}
-		return caseCount;
+		return numbersForDay;
 	}
 
-	public void setCases(int day, int numCases) {
-		while (cases.size() <= day) {
-			cases.add(0);
+	public void setCumulativeNumbers(int day, int numbersForDay) {
+		while (numbers.size() <= day) {
+			numbers.add(0);
 		}
-		cases.set(day, numCases);
+		numbers.set(day, numbersForDay);
 	}
 }

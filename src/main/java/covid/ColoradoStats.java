@@ -41,8 +41,8 @@ public class ColoradoStats {
 	public final FinalNumbers testEncounters = new FinalNumbers();
 
 	public double getPositivity(int day, int interval) {
-		double c = totalCases.getCasesInInterval(day, interval);
-		double t = testEncounters.getCasesInInterval(day, interval);
+		double c = totalCases.getNumbersInInterval(day, interval);
+		double t = testEncounters.getNumbersInInterval(day, interval);
 		if (t == 0) {
 			return 0;
 		}
@@ -186,16 +186,16 @@ public class ColoradoStats {
 
 		System.out.println("Update for " + today);
 		System.out.println("Newly released deaths");
-		System.out.println(String.format("\tT: %,d | Y : %,d | %s : %,d", totalDeathsPUI.getDailyCases(t),
-				totalDeathsPUI.getDailyCases(y), lastWeek, totalDeathsPUI.getDailyCases(w)));
+		System.out.println(String.format("\tT: %,d | Y : %,d | %s : %,d", totalDeathsPUI.getDailyNumbers(t),
+				totalDeathsPUI.getDailyNumbers(y), lastWeek, totalDeathsPUI.getDailyNumbers(w)));
 
 		System.out.println("Newly released cases");
-		System.out.println(String.format("\tT: %,d | Y : %,d | %s : %,d", totalCases.getDailyCases(t),
-				totalCases.getDailyCases(y), lastWeek, totalCases.getDailyCases(w)));
+		System.out.println(String.format("\tT: %,d | Y : %,d | %s : %,d", totalCases.getDailyNumbers(t),
+				totalCases.getDailyNumbers(y), lastWeek, totalCases.getDailyNumbers(w)));
 
 		System.out.println("New test encounters");
-		System.out.println(String.format("\tT: %,d | Y : %,d | %s : %,d", testEncounters.getDailyCases(t),
-				testEncounters.getDailyCases(y), lastWeek, testEncounters.getDailyCases(w)));
+		System.out.println(String.format("\tT: %,d | Y : %,d | %s : %,d", testEncounters.getDailyNumbers(t),
+				testEncounters.getDailyNumbers(y), lastWeek, testEncounters.getDailyNumbers(w)));
 
 		System.out.println("Current hospitalizations");
 
@@ -244,28 +244,28 @@ public class ColoradoStats {
 				// ignore notes!
 			} else if (split[0].equals("State Data") && split[1].equals("Statewide")) {
 				if (split[2].equals("Cases")) {
-					totalCases.setCases(dayOfData, number);
+					totalCases.setCumulativeNumbers(dayOfData, number);
 				} else if (split[2].equals("Hospitalizations")) {
-					totalHospitalizations.setCases(dayOfData, number);
+					totalHospitalizations.setCumulativeNumbers(dayOfData, number);
 				} else if (split[2].equals("Deaths")) {
 					// this was split up into deaths among cases (PUI) and
 					// deaths due to covid (confirmed). Before it was just
 					// deaths for both.
-					totalDeathsPUI.setCases(dayOfData, number);
-					totalDeaths.setCases(dayOfData, number);
+					totalDeathsPUI.setCumulativeNumbers(dayOfData, number);
+					totalDeaths.setCumulativeNumbers(dayOfData, number);
 				} else if (split[2].equals("Deaths Among Cases")) {
-					totalDeathsPUI.setCases(dayOfData, number);
+					totalDeathsPUI.setCumulativeNumbers(dayOfData, number);
 				} else if (split[2].equals("Deaths Due to COVID-19")) {
-					totalDeaths.setCases(dayOfData, number);
+					totalDeaths.setCumulativeNumbers(dayOfData, number);
 				} else if (split[2].equals("Test Encounters")) {
 					if (dayOfData < TEST_ENCOUNTERS_STARTED) {
 						new Exception("SHOULD NOT BE HERE???").printStackTrace();
 					}
-					testEncounters.setCases(dayOfData, number);
+					testEncounters.setCumulativeNumbers(dayOfData, number);
 				} else if (split[2].equals("People Tested")) {
-					peopleTested.setCases(dayOfData, number);
+					peopleTested.setCumulativeNumbers(dayOfData, number);
 					if (dayOfData < TEST_ENCOUNTERS_STARTED) {
-						testEncounters.setCases(dayOfData, number);
+						testEncounters.setCumulativeNumbers(dayOfData, number);
 					}
 				} else if (split[2].equals("Counties")) {
 				} else if (split[2].equals("Rate Per 100000") || split[2].equals("\"Rate per 100")) {
@@ -347,12 +347,12 @@ public class ColoradoStats {
 				if (!split[1].equals("Note") && split[2].equals("Cases") && !split[1].contains("nknown")) {
 					Integer c = Integer.valueOf(split[3]);
 					CountyStats county = readCounty(split[1]);
-					county.getCases().setCases(dayOfData, c);
+					county.getCases().setCumulativeNumbers(dayOfData, c);
 				}
 			} else if (split[0].equals("Deaths") || split[0].equals("Number of Deaths by County")) {
 				Integer c = Integer.valueOf(split[3]);
 				CountyStats county = readCounty(split[1]);
-				county.getDeaths().setCases(dayOfData, c);
+				county.getDeaths().setCumulativeNumbers(dayOfData, c);
 			} else if (split[0].equals("Daily Serology Data From Clinical Laboratories")) {
 				// ignored?
 			} else if (split[0].equals("Positivity Data from Clinical Laboratories")) {
@@ -418,7 +418,7 @@ public class ColoradoStats {
 
 		System.out.println();
 		for (int day = getFirstDay(); day < getLastDay(); day++) {
-			int number = testEncounters.getCases(day);
+			int number = testEncounters.getCumulativeNumbers(day);
 			System.out.println("Day " + Date.dayToDate(day) + " test encounters = " + number);
 		}
 

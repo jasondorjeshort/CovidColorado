@@ -298,32 +298,32 @@ public class ChartMaker {
 
 	public void createCountyStats(CountyStats county, int dayOfData) {
 		buildCasesTimeseriesChart("county", dayOfData,
-				dayOfCases -> Double.valueOf(county.getCases().getCasesInInterval(dayOfCases, 14)),
-				dayOfCases -> Double.valueOf(county.getDeaths().getCasesInInterval(dayOfCases, 14)),
+				dayOfCases -> Double.valueOf(county.getCases().getNumbersInInterval(dayOfCases, 14)),
+				dayOfCases -> Double.valueOf(county.getDeaths().getNumbersInInterval(dayOfCases, 14)),
 				county.getDisplayName(), false, false, 0, false);
 		buildCasesTimeseriesChart("county", dayOfData,
-				dayOfCases -> Double.valueOf(Math.max(county.getCases().getCasesInInterval(dayOfCases, 14), 1)),
-				dayOfCases -> Double.valueOf(Math.max(county.getDeaths().getCasesInInterval(dayOfCases, 14), 1)),
+				dayOfCases -> Double.valueOf(Math.max(county.getCases().getNumbersInInterval(dayOfCases, 14), 1)),
+				dayOfCases -> Double.valueOf(Math.max(county.getDeaths().getNumbersInInterval(dayOfCases, 14), 1)),
 				county.getDisplayName(), true, false, 0, false);
 	}
 
 	public void createCumulativeStats() {
 		buildCasesTimeseriesChart("cumulative", stats.getLastDay(),
-				dayOfCases -> (double) stats.totalCases.getCases(dayOfCases), null, "cases", false, false, 0, false);
+				dayOfCases -> (double) stats.totalCases.getCumulativeNumbers(dayOfCases), null, "cases", false, false, 0, false);
 		buildCasesTimeseriesChart("cumulative", stats.getLastDay(),
-				dayOfCases -> (double) stats.totalHospitalizations.getCases(dayOfCases), null, "hospitalizations",
+				dayOfCases -> (double) stats.totalHospitalizations.getCumulativeNumbers(dayOfCases), null, "hospitalizations",
 				false, false, 0, false);
 		buildCasesTimeseriesChart("cumulative", stats.getLastDay(),
-				dayOfCases -> (double) stats.totalDeaths.getCases(dayOfCases), null, "deathsLB", false, false, 0,
+				dayOfCases -> (double) stats.totalDeaths.getCumulativeNumbers(dayOfCases), null, "deathsLB", false, false, 0,
 				false);
 		buildCasesTimeseriesChart("cumulative", stats.getLastDay(),
-				dayOfCases -> (double) stats.totalDeathsPUI.getCases(dayOfCases), null, "deathsUB", false, false, 0,
+				dayOfCases -> (double) stats.totalDeathsPUI.getCumulativeNumbers(dayOfCases), null, "deathsUB", false, false, 0,
 				false);
 		buildCasesTimeseriesChart("cumulative", stats.getLastDay(),
-				dayOfCases -> (double) stats.peopleTested.getCases(dayOfCases), null, "peopleTested", false, false, 0,
+				dayOfCases -> (double) stats.peopleTested.getCumulativeNumbers(dayOfCases), null, "peopleTested", false, false, 0,
 				false);
 		buildCasesTimeseriesChart("cumulative", stats.getLastDay(),
-				dayOfCases -> (double) stats.testEncounters.getCases(dayOfCases), null, "testEncounters", false, false,
+				dayOfCases -> (double) stats.testEncounters.getCumulativeNumbers(dayOfCases), null, "testEncounters", false, false,
 				0, false);
 
 		for (NumbersType type : NumbersType.values()) {
