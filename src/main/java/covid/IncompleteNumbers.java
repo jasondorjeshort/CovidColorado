@@ -15,42 +15,42 @@ public class IncompleteNumbers {
 									// gives cumulative
 
 	protected class Daily {
-		protected final ArrayList<Integer> cases = new ArrayList<>();
+		protected final ArrayList<Integer> numbers = new ArrayList<>();
 		protected final ArrayList<Double> projected = new ArrayList<>();
 		protected final ArrayList<Incomplete> ratios = new ArrayList<>();
 
-		protected double getCases(int day, boolean isProjected) {
+		protected double getNumbers(int day, boolean isProjected) {
 			if (isProjected) {
 				return projected.get(day);
 			}
-			return cases.get(day);
+			return numbers.get(day);
 		}
 	}
 
-	private final ArrayList<Daily> numbers = new ArrayList<>();
+	private final ArrayList<Daily> allNumbers = new ArrayList<>();
 
-	public int getCases(int dayOfData, int dayOfType) {
-		if (dayOfData >= numbers.size()) {
+	public int getNumbers(int dayOfData, int dayOfType) {
+		if (dayOfData >= allNumbers.size()) {
 			return 0;
 		}
-		Daily daily = numbers.get(dayOfData);
-		if (dayOfType >= daily.cases.size() || dayOfType < 0) {
+		Daily daily = allNumbers.get(dayOfData);
+		if (dayOfType >= daily.numbers.size() || dayOfType < 0) {
 			return 0;
 		}
-		Integer i = daily.cases.get(dayOfType);
+		Integer i = daily.numbers.get(dayOfType);
 		if (i == null) {
 			return 0;
 		}
 		return i;
 	}
 
-	public double getExactProjectedCases(int dayOfData, int dayOfType) {
-		Daily daily = numbers.get(dayOfData);
-		ArrayList<Double> cases = daily.projected;
-		if (dayOfType >= cases.size() || dayOfType < 0) {
+	public double getProjectedNumbers(int dayOfData, int dayOfType) {
+		Daily daily = allNumbers.get(dayOfData);
+		ArrayList<Double> projected = daily.projected;
+		if (dayOfType >= projected.size() || dayOfType < 0) {
 			return 0;
 		}
-		Double i = cases.get(dayOfType);
+		Double i = projected.get(dayOfType);
 		if (i == null) {
 			return 0;
 		}
@@ -58,11 +58,11 @@ public class IncompleteNumbers {
 	}
 
 	public int getLastDay(int dayOfData) {
-		return numbers.get(dayOfData).cases.size() - 1;
+		return allNumbers.get(dayOfData).numbers.size() - 1;
 	}
 
 	private Incomplete getIncompletion(int dayOfType, int delay) {
-		Daily daily = numbers.get(dayOfType);
+		Daily daily = allNumbers.get(dayOfType);
 		while (daily.ratios.size() <= delay) {
 			daily.ratios.add(new Incomplete());
 		}
@@ -73,12 +73,12 @@ public class IncompleteNumbers {
 
 	public void build(ColoradoStats stats) {
 		if (isCumulative) {
-			for (int dayOfData = 0; dayOfData < numbers.size(); dayOfData++) {
+			for (int dayOfData = 0; dayOfData < allNumbers.size(); dayOfData++) {
 				int last = 0;
-				Daily daily = numbers.get(dayOfData);
-				for (int dayOfType = 0; dayOfType < dayOfData && dayOfType < daily.cases.size(); dayOfType++) {
-					int newLast = daily.cases.get(dayOfType);
-					daily.cases.set(dayOfType, newLast - last);
+				Daily daily = allNumbers.get(dayOfData);
+				for (int dayOfType = 0; dayOfType < dayOfData && dayOfType < daily.numbers.size(); dayOfType++) {
+					int newLast = daily.numbers.get(dayOfType);
+					daily.numbers.set(dayOfType, newLast - last);
 					last = newLast;
 				}
 			}
@@ -95,11 +95,11 @@ public class IncompleteNumbers {
 				int dayOfData1 = typeDay + delay;
 				int dayOfData2 = typeDay + delay + 1;
 
-				int cases1 = getCases(dayOfData1, typeDay);
-				int cases2 = getCases(dayOfData2, typeDay);
-				double newRatio = (double) cases2 / cases1;
+				int numbers1 = getNumbers(dayOfData1, typeDay);
+				int numbers2 = getNumbers(dayOfData2, typeDay);
+				double newRatio = (double) numbers2 / numbers1;
 
-				if (cases1 <= 0 || cases2 <= 0) {
+				if (numbers1 <= 0 || numbers2 <= 0) {
 					continue;
 				}
 
@@ -107,22 +107,23 @@ public class IncompleteNumbers {
 				Incomplete incomplete2 = getIncompletion(dayOfData2, delay);
 
 				incomplete2.samples = incomplete1.samples + 1;
-				if (incomplete1.samples < SAMPLE_DAYS) {
+				double sampleDays = SAMPLE_DAYS + delay;
+				if (incomplete1.samples < sampleDays) {
 					double samplePortion = (double) incomplete1.samples / incomplete2.samples;
 					incomplete2.ratio = Math.pow(incomplete1.ratio, samplePortion)
 							* Math.pow(newRatio, 1 - samplePortion);
 				} else {
-					incomplete2.ratio = Math.pow(incomplete1.ratio, (SAMPLE_DAYS - 1) / SAMPLE_DAYS)
-							* Math.pow(newRatio, 1.0 / SAMPLE_DAYS);
+					incomplete2.ratio = Math.pow(incomplete1.ratio, (sampleDays - 1) / sampleDays)
+							* Math.pow(newRatio, 1.0 / sampleDays);
 				}
 			}
 		}
 
 		// projections
-		for (int dayOfData = 0; dayOfData < numbers.size(); dayOfData++) {
-			Daily daily = numbers.get(dayOfData);
-			for (int dayOfType = 0; dayOfType < dayOfData && dayOfType < daily.cases.size(); dayOfType++) {
-				Integer p = daily.cases.get(dayOfType);
+		for (int dayOfData = 0; dayOfData < allNumbers.size(); dayOfData++) {
+			Daily daily = allNumbers.get(dayOfData);
+			for (int dayOfType = 0; dayOfType < dayOfData && dayOfType < daily.numbers.size(); dayOfType++) {
+				Integer p = daily.numbers.get(dayOfType);
 				if (p == null) {
 					continue;
 				}
@@ -139,10 +140,10 @@ public class IncompleteNumbers {
 	}
 
 	TimeSeries createTimeSeries(int dayOfData, String name, boolean isProjected) {
-		Daily daily = numbers.get(dayOfData);
+		Daily daily = allNumbers.get(dayOfData);
 
 		int firstDay = 0;
-		while (daily.getCases(firstDay, isProjected) == 0) {
+		while (daily.getNumbers(firstDay, isProjected) == 0) {
 			firstDay++;
 		}
 
@@ -151,22 +152,22 @@ public class IncompleteNumbers {
 		}
 
 		TimeSeries series = new TimeSeries(name);
-		for (int day = firstDay; day < numbers.size(); day++) {
-			series.add(Date.dayToDay(day), daily.getCases(day, isProjected));
+		for (int day = firstDay; day < allNumbers.size(); day++) {
+			series.add(Date.dayToDay(day), daily.getNumbers(day, isProjected));
 		}
 
 		return series;
 	}
 
-	public void setCases(int dayOfData, int dayOfType, int cases) {
-		while (numbers.size() <= dayOfData) {
-			numbers.add(new Daily());
+	public void setNumbers(int dayOfData, int dayOfType, int numbers) {
+		while (allNumbers.size() <= dayOfData) {
+			allNumbers.add(new Daily());
 		}
-		Daily daily = numbers.get(dayOfData);
-		while (daily.cases.size() <= dayOfType) {
-			daily.cases.add(0);
+		Daily daily = allNumbers.get(dayOfData);
+		while (daily.numbers.size() <= dayOfType) {
+			daily.numbers.add(0);
 		}
-		daily.cases.set(dayOfType, cases);
+		daily.numbers.set(dayOfType, numbers);
 	}
 
 	public void setCumulative() {

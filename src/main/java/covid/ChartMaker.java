@@ -92,7 +92,7 @@ public class ChartMaker {
 				- daysToSkip; d++) {
 			Day ddd = Date.dayToDay(d);
 
-			final int INTERVAL = 3;
+			final int INTERVAL = 0;
 			double cases = 0;
 			for (int i = -INTERVAL; i <= INTERVAL; i++) {
 				cases += getCasesForDay.apply(d + i);

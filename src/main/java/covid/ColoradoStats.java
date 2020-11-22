@@ -67,11 +67,11 @@ public class ColoradoStats {
 	}
 
 	public int getCasesByType(NumbersType type, NumbersTiming timing, int dayOfData, int dayOfType) {
-		return getNumbers(type, timing).getCases(dayOfData, dayOfType);
+		return getNumbers(type, timing).getNumbers(dayOfData, dayOfType);
 	}
 
 	public double getExactProjectedCasesByType(NumbersType type, NumbersTiming timing, int dayOfData, int dayOfType) {
-		return getNumbers(type, timing).getExactProjectedCases(dayOfData, dayOfType);
+		return getNumbers(type, timing).getProjectedNumbers(dayOfData, dayOfType);
 	}
 
 	public double getSmoothedProjectedCasesByType(NumbersType type, NumbersTiming timing, int dayOfData,
@@ -282,8 +282,8 @@ public class ColoradoStats {
 					int dayOfInfection = dayOfOnset - 5;
 					int c = Integer.valueOf(split[3]);
 
-					getNumbers(NumbersType.CASES, NumbersTiming.ONSET).setCases(dayOfData, dayOfOnset, c);
-					getNumbers(NumbersType.CASES, NumbersTiming.INFECTION).setCases(dayOfData, dayOfInfection, c);
+					getNumbers(NumbersType.CASES, NumbersTiming.ONSET).setNumbers(dayOfData, dayOfOnset, c);
+					getNumbers(NumbersType.CASES, NumbersTiming.INFECTION).setNumbers(dayOfData, dayOfInfection, c);
 				}
 			} else if (split[0]
 					.equals("Cumulative Number of Hospitalized Cases of COVID-19 in Colorado by Date of Illness Onset")
@@ -294,8 +294,8 @@ public class ColoradoStats {
 
 				getNumbers(NumbersType.HOSPITALIZATIONS, NumbersTiming.ONSET).setCumulative();
 				getNumbers(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION).setCumulative();
-				getNumbers(NumbersType.HOSPITALIZATIONS, NumbersTiming.ONSET).setCases(dayOfData, dayOfOnset, c);
-				getNumbers(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION).setCases(dayOfData, dayOfInfection,
+				getNumbers(NumbersType.HOSPITALIZATIONS, NumbersTiming.ONSET).setNumbers(dayOfData, dayOfOnset, c);
+				getNumbers(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION).setNumbers(dayOfData, dayOfInfection,
 						c);
 			} else if (split[0].equals("Cumulative Number of Deaths by Onset Date")
 					|| split[0].equals("Cumulative Number of Deaths From COVID-19 in Colorado by Date of Illness")) {
@@ -305,8 +305,8 @@ public class ColoradoStats {
 
 				getNumbers(NumbersType.DEATHS, NumbersTiming.ONSET).setCumulative();
 				getNumbers(NumbersType.DEATHS, NumbersTiming.INFECTION).setCumulative();
-				getNumbers(NumbersType.DEATHS, NumbersTiming.ONSET).setCases(dayOfData, dayOfOnset, c);
-				getNumbers(NumbersType.DEATHS, NumbersTiming.INFECTION).setCases(dayOfData, dayOfInfection, c);
+				getNumbers(NumbersType.DEATHS, NumbersTiming.ONSET).setNumbers(dayOfData, dayOfOnset, c);
+				getNumbers(NumbersType.DEATHS, NumbersTiming.INFECTION).setNumbers(dayOfData, dayOfInfection, c);
 			} else if (split[0].equals("Cumulative Number of Deaths From COVID-19 in Colorado by Date of Death")) {
 				// TODO
 			} else if (split[0].equals("Cases of COVID-19 in Colorado by Date Reported to the State")
@@ -314,7 +314,7 @@ public class ColoradoStats {
 				if (split[2].equals("Cases")) {
 					int dayOfReporting = Date.dateToDay(split[1]);
 					int c = Integer.valueOf(split[3]);
-					getNumbers(NumbersType.CASES, NumbersTiming.REPORTED).setCases(dayOfData, dayOfReporting, c);
+					getNumbers(NumbersType.CASES, NumbersTiming.REPORTED).setNumbers(dayOfData, dayOfReporting, c);
 				} else if (split[2].equals("Three-Day Moving Average Of Cases")) {
 					// redundant
 				} else {
@@ -327,7 +327,7 @@ public class ColoradoStats {
 					int dayOfReporting = Date.dateToDay(split[1]);
 					int c = Integer.valueOf(split[3]);
 					getNumbers(NumbersType.HOSPITALIZATIONS, NumbersTiming.REPORTED).setCumulative();
-					getNumbers(NumbersType.HOSPITALIZATIONS, NumbersTiming.REPORTED).setCases(dayOfData, dayOfReporting,
+					getNumbers(NumbersType.HOSPITALIZATIONS, NumbersTiming.REPORTED).setNumbers(dayOfData, dayOfReporting,
 							c);
 				} else {
 					writeSplit(null, split);
@@ -339,7 +339,7 @@ public class ColoradoStats {
 					int dayOfReporting = Date.dateToDay(split[1]);
 					int c = Integer.valueOf(split[3]);
 					getNumbers(NumbersType.DEATHS, NumbersTiming.REPORTED).setCumulative();
-					getNumbers(NumbersType.DEATHS, NumbersTiming.REPORTED).setCases(dayOfData, dayOfReporting, c);
+					getNumbers(NumbersType.DEATHS, NumbersTiming.REPORTED).setNumbers(dayOfData, dayOfReporting, c);
 				} else {
 					writeSplit(null, split);
 				}
