@@ -177,6 +177,9 @@ public class IncompleteNumbers {
 		return series;
 	}
 
+	/**
+	 * Sets numbers for the given days.
+	 */
 	public void setNumbers(int dayOfData, int dayOfType, int numbers) {
 		while (allNumbers.size() <= dayOfData) {
 			allNumbers.add(new Daily());
@@ -188,6 +191,26 @@ public class IncompleteNumbers {
 		daily.numbers.set(dayOfType, numbers);
 	}
 
+	/**
+	 * Adds more numbers for the given days.
+	 */
+	public void addNumbers(int dayOfData, int dayOfType, int numbers) {
+		while (allNumbers.size() <= dayOfData) {
+			allNumbers.add(new Daily());
+		}
+		Daily daily = allNumbers.get(dayOfData);
+		while (daily.numbers.size() <= dayOfType) {
+			daily.numbers.add(0);
+		}
+		numbers += daily.numbers.get(dayOfType);
+		daily.numbers.set(dayOfType, numbers);
+	}
+
+	/**
+	 * Marks this numbers as a cumulative type. This later will mean some extra
+	 * handling in finalize to separate it into daily numbers. Some of the
+	 * fields in the CSV files are just cumulative.
+	 */
 	public void setCumulative() {
 		isCumulative = true;
 	}
