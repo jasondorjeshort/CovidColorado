@@ -9,7 +9,7 @@ import com.madgag.gif.fmsware.AnimatedGifEncoder;
 
 public class GifMaker {
 
-	private final LinkedList<Future<BufferedImage>> frames = new LinkedList<>();
+	private final LinkedList<Object> frames = new LinkedList<>();
 	private final String folder, fileName;
 	private final int delay, finalDelay;
 
@@ -36,17 +36,21 @@ public class GifMaker {
 		gif.start(name);
 		gif.setDelay(delay);
 
-		for (Iterator<Future<BufferedImage>> it = frames.iterator(); it.hasNext();) {
-			Future<BufferedImage> fbi = it.next();
+		for (Iterator<Object> it = frames.iterator(); it.hasNext();) {
+			Object frame = it.next();
 			if (!it.hasNext()) {
 				gif.setDelay(finalDelay);
 			}
 			BufferedImage bufferedImage;
-			try {
-				bufferedImage = fbi.get();
-			} catch (Exception e) {
-				e.printStackTrace();
-				continue;
+			if (frame instanceof Future) {
+				try {
+					bufferedImage = ((Future<BufferedImage>) frame).get();
+				} catch (Exception e) {
+					e.printStackTrace();
+					continue;
+				}
+			} else {
+				bufferedImage = (BufferedImage) frame;
 			}
 			gif.addFrame(bufferedImage);
 		}
@@ -57,7 +61,11 @@ public class GifMaker {
 	public void addFrame(Future<BufferedImage> frame) {
 		frames.add(frame);
 	}
-	
+
+	public void addFrame(BufferedImage frame) {
+		frames.add(frame);
+	}
+
 	public void addFrameIf(boolean ifClause, Future<BufferedImage> frame) {
 		if (ifClause) {
 			addFrame(frame);

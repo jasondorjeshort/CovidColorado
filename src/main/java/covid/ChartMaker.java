@@ -9,8 +9,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Iterator;
-import java.util.List;
 import java.util.concurrent.Future;
 import java.util.function.Function;
 
@@ -28,8 +26,6 @@ import org.jfree.chart.ui.TextAnchor;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
-
-import com.madgag.gif.fmsware.AnimatedGifEncoder;
 
 import library.MyExecutor;
 
@@ -94,11 +90,12 @@ public class ChartMaker {
 				- daysToSkip; d++) {
 			Day ddd = Date.dayToDay(d);
 
+			final int INTERVAL = 0;
 			double cases = 0;
-			for (int i = -3; i <= 3; i++) {
+			for (int i = -INTERVAL; i <= INTERVAL; i++) {
 				cases += getCasesForDay.apply(d + i);
 			}
-			cases /= 7.0;
+			cases /= 2 * INTERVAL + 1;
 
 			if (Double.isFinite(cases)) {
 				if (!log || cases > 0) {
@@ -133,18 +130,14 @@ public class ChartMaker {
 		if (log) {
 			XYPlot plot = chart.getXYPlot();
 			LogarithmicAxis yAxis = new LogarithmicAxis("Cases");
-			if (showEvents) {
-				yAxis.setLowerBound(1);
-				yAxis.setUpperBound(10000);
-			}
+			yAxis.setLowerBound(1);
+			yAxis.setUpperBound(10000);
 			plot.setRangeAxis(yAxis);
 
 			DateAxis xAxis = new DateAxis("Date");
 
-			if (showEvents) {
-				xAxis.setMinimumDate(Date.dayToJavaDate(stats.getFirstDay()));
-				xAxis.setMaximumDate(Date.dayToJavaDate(stats.getLastDay() + 14));
-			}
+			xAxis.setMinimumDate(Date.dayToJavaDate(stats.getFirstDay()));
+			xAxis.setMaximumDate(Date.dayToJavaDate(stats.getLastDay() + 14));
 
 			plot.setDomainAxis(xAxis);
 
@@ -167,8 +160,18 @@ public class ChartMaker {
 		String by = type.lowerName + "-" + timing.lowerName + (log ? "-log" : "-cart");
 		return buildCasesTimeseriesChart(by, dayOfData,
 				dayOfOnset -> (double) stats.getCasesByType(type, timing, dayOfData, dayOfOnset),
-				dayOfOnset -> stats.getSmoothedProjectedCasesByType(type, timing, dayOfData, dayOfOnset), by, log,
-				false, 0, false);
+				dayOfOnset -> stats.getExactProjectedCasesByType(type, timing, dayOfData, dayOfOnset), by, log, false,
+				0, log && timing == NumbersTiming.INFECTION);
+	}
+
+	public String buildTimeseriesCharts(NumbersType type, NumbersTiming timing, boolean log) {
+		GifMaker gif = new GifMaker(TOP_FOLDER, type.lowerName + "-" + timing.lowerName + (log ? "-log" : "-cart"), 20,
+				5000);
+		for (int dayOfData = stats.getFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
+			BufferedImage bi = buildTimeseriesChart(type, timing, dayOfData, log);
+			gif.addFrame(bi);
+		}
+		return gif.build();
 	}
 
 	public BufferedImage buildNewTimeseriesChart(NumbersType type, NumbersTiming timing, int dayOfData) {
@@ -176,6 +179,12 @@ public class ChartMaker {
 		return buildCasesTimeseriesChart(by, dayOfData,
 				dayOfOnset -> (double) stats.getNewCasesByType(type, timing, dayOfData, dayOfOnset), null, by, false,
 				true, 0, false);
+	}
+
+	public void buildNewTimeseriesCharts(NumbersType type, NumbersTiming timing) {
+		for (int dayOfData = stats.getFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
+			buildNewTimeseriesChart(type, timing, dayOfData);
+		}
 	}
 
 	public BufferedImage buildAgeTimeseriesChart(NumbersType type, NumbersTiming timing, int dayOfData) {
@@ -281,32 +290,6 @@ public class ChartMaker {
 	private final GifMaker hfrGif = new GifMaker(TOP_FOLDER, "hfr", 200, 5000);
 	private final GifMaker ratesGif = new GifMaker(TOP_FOLDER, "rates", 200, 5000);
 
-	public static String buildGIF(List<Future<BufferedImage>> images, String fileName, int delay) {
-
-		AnimatedGifEncoder gif = new AnimatedGifEncoder();
-		String name = TOP_FOLDER + "\\" + fileName + ".gif";
-		gif.start(name);
-		gif.setDelay(delay);
-
-		for (Iterator<Future<BufferedImage>> it = images.iterator(); it.hasNext();) {
-			Future<BufferedImage> fbi = it.next();
-			if (!it.hasNext()) {
-				delay *= 20;
-				gif.setDelay(delay);
-			}
-			BufferedImage bufferedImage;
-			try {
-				bufferedImage = fbi.get();
-			} catch (Exception e) {
-				e.printStackTrace();
-				continue;
-			}
-			gif.addFrame(bufferedImage);
-		}
-		gif.finish();
-		return name;
-	}
-
 	public void createCountyStats(CountyStats county, int dayOfData) {
 		buildCasesTimeseriesChart("county", dayOfData,
 				dayOfCases -> Double.valueOf(county.getCases().getCasesInInterval(dayOfCases, 14)),
@@ -356,6 +339,13 @@ public class ChartMaker {
 				"Colorado positivity, " + Date.dayToDate(stats.getLastDay()), false, false, false, true, 180, 20));
 
 		Future<BufferedImage> fbi;
+		for (NumbersType type : NumbersType.values()) {
+			for (NumbersTiming timing : NumbersTiming.values()) {
+				MyExecutor.executeCode(() -> buildTimeseriesCharts(type, timing, true));
+				MyExecutor.executeCode(() -> buildTimeseriesCharts(type, timing, false));
+				MyExecutor.executeCode(() -> buildNewTimeseriesCharts(type, timing));
+			}
+		}
 
 		for (int dayOfData = stats.getFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
 			int _dayOfData = dayOfData;
@@ -378,13 +368,6 @@ public class ChartMaker {
 					"Colorado hospitalization fatality rate, " + day, false, false, true, false, 180, 50));
 			hfrGif.addFrameIf(dayOfData > stats.getLastDay() - 90, fbi);
 
-			for (NumbersType type : NumbersType.values()) {
-				for (NumbersTiming timing : NumbersTiming.values()) {
-					fbi = MyExecutor.submitCode(() -> buildTimeseriesChart(type, timing, _dayOfData, true));
-					MyExecutor.executeCode(() -> buildTimeseriesChart(type, timing, _dayOfData, false));
-					MyExecutor.executeCode(() -> buildNewTimeseriesChart(type, timing, _dayOfData));
-				}
-			}
 		}
 
 		MyExecutor.executeCode(() -> cfrGif.build());
