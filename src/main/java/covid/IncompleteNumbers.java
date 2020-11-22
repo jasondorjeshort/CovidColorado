@@ -30,16 +30,16 @@ public class IncompleteNumbers {
 	private final ArrayList<Daily> allNumbers = new ArrayList<>();
 
 	public double getNumbers(int dayOfData, int dayOfType, boolean projected, boolean smoothed) {
-		double numbers = 0;
+		double numbers = 1;
 		int range = smoothed ? 3 : 0;
 		for (int d = -range; d <= range; d++) {
 			if (projected) {
-				numbers += getNumbers(dayOfData, dayOfType + d);
+				numbers *= getNumbers(dayOfData, dayOfType + d);
 			} else {
-				numbers += getProjectedNumbers(dayOfData, dayOfType + d);
+				numbers *= getProjectedNumbers(dayOfData, dayOfType + d);
 			}
 		}
-		return numbers / (2 * range + 1);
+		return Math.pow(numbers, 1.0 / (2.0 * range + 1.0));
 	}
 
 	public int getNumbers(int dayOfData, int dayOfType) {

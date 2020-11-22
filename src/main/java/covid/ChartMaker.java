@@ -148,9 +148,8 @@ public class ChartMaker {
 	}
 
 	public BufferedImage buildTimeseriesChart(NumbersType type, NumbersTiming timing, int dayOfData, boolean log) {
-		String title = String.format("Colorado %s by %s date as of %s%s", type.lowerName, timing.lowerName,
-				Date.dayToDate(dayOfData),
-				log ? "\n(7-day symmetric average, logarithmic)" : "(7-day symmetric average)");
+		String title = String.format("Colorado %s by %s date as of %s\n(7-day sym-geo average%s)", type.lowerName,
+				timing.lowerName, Date.dayToDate(dayOfData), log ? "logarithmic" : "");
 
 		String fileName = type.lowerName + "-" + timing.lowerName + (log ? "-log" : "-cart");
 		return buildCasesTimeseriesChart(fileName, Date.dayToFullDate(dayOfData), dayOfData,
