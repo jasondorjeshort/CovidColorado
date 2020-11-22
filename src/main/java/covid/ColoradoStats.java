@@ -30,18 +30,53 @@ public class ColoradoStats {
 
 	int lastDay;
 
-	private final IncompleteNumbers[] cases = new IncompleteNumbers[NumbersType.values().length
+	private final IncompleteNumbers[] incompleteNumbers = new IncompleteNumbers[NumbersType.values().length
 			* NumbersTiming.values().length];
+	private final FinalNumbers[] finalNumbers = new FinalNumbers[NumbersType.values().length];
 
-	public final FinalNumbers totalCases = new FinalNumbers();
-	public final FinalNumbers totalHospitalizations = new FinalNumbers();
-	public final FinalNumbers totalDeaths = new FinalNumbers();
-	public final FinalNumbers totalDeathsPUI = new FinalNumbers();
+	/*
+	 * Colorado has two death numbers.
+	 * 
+	 * "Deaths with COVID"
+	 * 
+	 * "Deaths due to COVID"
+	 * 
+	 * Once someone dies with a COVID diagnosis they immediately join the first
+	 * number. Later, they'll either be removed from that number (in theory this
+	 * should happen 1/2000 or so of the time at random, but it seems to be far
+	 * less) OR be added to the second number (most common). Most sources use
+	 * the first number, presumably because it updates much faster. Since I just
+	 * want "cases" "hospitalizations" "deaths" enumerated, I'm counting the
+	 * first number as "deaths" and the second number is in the
+	 * "confirmed deaths" structure below.
+	 * 
+	 * As an addendum, these numbers were only split off partway through the
+	 * pandemic, so there's some special case handling to fill both values with
+	 * the same number in early data.
+	 */
+	public final FinalNumbers confirmedDeaths = new FinalNumbers();
+
+	/*
+	 * Colorado has two testing numbers.
+	 * 
+	 * "People testing" is the number of people tested.
+	 * 
+	 * "Test encounters" is the number of times a person has been tested.
+	 * 
+	 * Since people are often tested multiple times, the second value is the one
+	 * used for positivity. The first value doesn't really seem to have much
+	 * use. It is worth noting, though, that there's probably no single correct
+	 * definition of tests done or positivity.
+	 * 
+	 * As an addendum, these numbers were only split off partway through the
+	 * pandemic, so there's some special case handling to fill both values with
+	 * the same number in early data.
+	 */
 	public final FinalNumbers peopleTested = new FinalNumbers();
 	public final FinalNumbers testEncounters = new FinalNumbers();
 
 	public double getPositivity(int day, int interval) {
-		double c = totalCases.getNumbersInInterval(day, interval);
+		double c = getNumbers(NumbersType.CASES).getNumbersInInterval(day, interval);
 		double t = testEncounters.getNumbersInInterval(day, interval);
 		if (t == 0) {
 			return 0;
@@ -55,7 +90,11 @@ public class ColoradoStats {
 	}
 
 	public IncompleteNumbers getNumbers(NumbersType type, NumbersTiming timing) {
-		return cases[type.ordinal() * NumbersTiming.values().length + timing.ordinal()];
+		return incompleteNumbers[type.ordinal() * NumbersTiming.values().length + timing.ordinal()];
+	}
+
+	public FinalNumbers getNumbers(NumbersType type) {
+		return finalNumbers[type.ordinal()];
 	}
 
 	public int getFirstDay() {
@@ -191,12 +230,14 @@ public class ColoradoStats {
 
 		System.out.println("Update for " + today);
 		System.out.println("Newly released deaths");
-		System.out.println(String.format("\tT: %,d | Y : %,d | %s : %,d", totalDeathsPUI.getDailyNumbers(t),
-				totalDeathsPUI.getDailyNumbers(y), lastWeek, totalDeathsPUI.getDailyNumbers(w)));
+		System.out.println(String.format("\tT: %,d | Y : %,d | %s : %,d",
+				getNumbers(NumbersType.DEATHS).getDailyNumbers(t), getNumbers(NumbersType.DEATHS).getDailyNumbers(y),
+				lastWeek, getNumbers(NumbersType.DEATHS).getDailyNumbers(w)));
 
+		FinalNumbers cases = getNumbers(NumbersType.CASES);
 		System.out.println("Newly released cases");
-		System.out.println(String.format("\tT: %,d | Y : %,d | %s : %,d", totalCases.getDailyNumbers(t),
-				totalCases.getDailyNumbers(y), lastWeek, totalCases.getDailyNumbers(w)));
+		System.out.println(String.format("\tT: %,d | Y : %,d | %s : %,d", cases.getDailyNumbers(t),
+				cases.getDailyNumbers(y), lastWeek, cases.getDailyNumbers(w)));
 
 		System.out.println("New test encounters");
 		System.out.println(String.format("\tT: %,d | Y : %,d | %s : %,d", testEncounters.getDailyNumbers(t),
@@ -249,19 +290,19 @@ public class ColoradoStats {
 				// ignore notes!
 			} else if (split[0].equals("State Data") && split[1].equals("Statewide")) {
 				if (split[2].equals("Cases")) {
-					totalCases.setCumulativeNumbers(dayOfData, number);
+					getNumbers(NumbersType.CASES).setCumulativeNumbers(dayOfData, number);
 				} else if (split[2].equals("Hospitalizations")) {
-					totalHospitalizations.setCumulativeNumbers(dayOfData, number);
+					getNumbers(NumbersType.HOSPITALIZATIONS).setCumulativeNumbers(dayOfData, number);
 				} else if (split[2].equals("Deaths")) {
 					// this was split up into deaths among cases (PUI) and
 					// deaths due to covid (confirmed). Before it was just
 					// deaths for both.
-					totalDeathsPUI.setCumulativeNumbers(dayOfData, number);
-					totalDeaths.setCumulativeNumbers(dayOfData, number);
+					getNumbers(NumbersType.DEATHS).setCumulativeNumbers(dayOfData, number);
+					confirmedDeaths.setCumulativeNumbers(dayOfData, number);
 				} else if (split[2].equals("Deaths Among Cases")) {
-					totalDeathsPUI.setCumulativeNumbers(dayOfData, number);
+					getNumbers(NumbersType.DEATHS).setCumulativeNumbers(dayOfData, number);
 				} else if (split[2].equals("Deaths Due to COVID-19")) {
-					totalDeaths.setCumulativeNumbers(dayOfData, number);
+					confirmedDeaths.setCumulativeNumbers(dayOfData, number);
 				} else if (split[2].equals("Test Encounters")) {
 					if (dayOfData < TEST_ENCOUNTERS_STARTED) {
 						new Exception("SHOULD NOT BE HERE???").printStackTrace();
@@ -407,8 +448,11 @@ public class ColoradoStats {
 	}
 
 	public ColoradoStats() {
-		for (int i = 0; i < cases.length; i++) {
-			cases[i] = new IncompleteNumbers();
+		for (int i = 0; i < incompleteNumbers.length; i++) {
+			incompleteNumbers[i] = new IncompleteNumbers();
+		}
+		for (int i = 0; i < finalNumbers.length; i++) {
+			finalNumbers[i] = new FinalNumbers();
 		}
 
 		/*
@@ -427,7 +471,7 @@ public class ColoradoStats {
 			System.out.println("Day " + Date.dayToDate(day) + " test encounters = " + number);
 		}
 
-		for (IncompleteNumbers incompletes : cases) {
+		for (IncompleteNumbers incompletes : incompleteNumbers) {
 			incompletes.build(this);
 		}
 
