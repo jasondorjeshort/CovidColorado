@@ -149,11 +149,16 @@ public class ColoradoStats {
 
 	public void outputProjections(NumbersType type, NumbersTiming timing) {
 		int dayOfData = getLastDay();
+		int DAYS = 14;
 
-		for (int dayOfType = getFirstDay(); dayOfType <= dayOfData; dayOfType++) {
+		for (int dayOfType = getLastDay() - 60; dayOfType <= dayOfData; dayOfType++) {
+			// IncompleteNumbers numbers = getNumbers(type, timing);
 			double c = getExactProjectedCasesByType(type, timing, dayOfData, dayOfType);
-			double week = getProjectedCasesInInterval(type, timing, dayOfData, dayOfType, 7);
-			System.out.println(Date.dayToDate(dayOfType) + " => " + dayOfType + " => " + c + " => " + week);
+			double week = getProjectedCasesInInterval(type, timing, dayOfData, dayOfType, DAYS);
+			double lastWeek = getProjectedCasesInInterval(type, timing, dayOfData, dayOfType - DAYS, DAYS);
+			double growth = 100 * Math.pow(week / lastWeek, 1.0 / DAYS) - 100;
+			System.out.println(Date.dayToDate(dayOfType) + " => " + dayOfType + " => " + c + " => " + week + " => "
+					+ growth + "%");
 		}
 	}
 
@@ -327,8 +332,8 @@ public class ColoradoStats {
 					int dayOfReporting = Date.dateToDay(split[1]);
 					int c = Integer.valueOf(split[3]);
 					getNumbers(NumbersType.HOSPITALIZATIONS, NumbersTiming.REPORTED).setCumulative();
-					getNumbers(NumbersType.HOSPITALIZATIONS, NumbersTiming.REPORTED).setNumbers(dayOfData, dayOfReporting,
-							c);
+					getNumbers(NumbersType.HOSPITALIZATIONS, NumbersTiming.REPORTED).setNumbers(dayOfData,
+							dayOfReporting, c);
 				} else {
 					writeSplit(null, split);
 				}
@@ -426,8 +431,8 @@ public class ColoradoStats {
 			incompletes.build(this);
 		}
 
+		outputProjections(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION);
 		outputDailyStats();
-		// outputProjections(CaseType.INFECTION_TESTS);
 
 		// System.exit(0);
 	}
