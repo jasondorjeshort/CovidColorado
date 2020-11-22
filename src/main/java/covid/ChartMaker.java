@@ -27,6 +27,8 @@ import org.jfree.data.time.Day;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 
+import com.madgag.gif.fmsware.AnimatedGifEncoder;
+
 import library.MyExecutor;
 
 public class ChartMaker {
@@ -90,7 +92,7 @@ public class ChartMaker {
 				- daysToSkip; d++) {
 			Day ddd = Date.dayToDay(d);
 
-			final int INTERVAL = 0;
+			final int INTERVAL = 3;
 			double cases = 0;
 			for (int i = -INTERVAL; i <= INTERVAL; i++) {
 				cases += getCasesForDay.apply(d + i);
@@ -165,13 +167,17 @@ public class ChartMaker {
 	}
 
 	public String buildTimeseriesCharts(NumbersType type, NumbersTiming timing, boolean log) {
-		GifMaker gif = new GifMaker(TOP_FOLDER, type.lowerName + "-" + timing.lowerName + (log ? "-log" : "-cart"), 20,
-				5000);
+		AnimatedGifEncoder gif = new AnimatedGifEncoder();
+		String fileName = type.lowerName + "-" + timing.lowerName + (log ? "-log" : "-cart");
+		String name = TOP_FOLDER + "\\" + fileName + ".gif";
+		gif.start(name);
+		gif.setDelay(20);
 		for (int dayOfData = stats.getFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
 			BufferedImage bi = buildTimeseriesChart(type, timing, dayOfData, log);
 			gif.addFrame(bi);
 		}
-		return gif.build();
+		gif.finish();
+		return name;
 	}
 
 	public BufferedImage buildNewTimeseriesChart(NumbersType type, NumbersTiming timing, int dayOfData) {
