@@ -362,8 +362,8 @@ public class ChartMaker {
 				dayOfCases -> (double) stats.peopleTested.getCumulativeNumbers(dayOfCases), null, "peopleTested",
 				"count", false, false, 0, false);
 		buildCasesTimeseriesChart("cumulative", date, stats.getLastDay(),
-				dayOfCases -> (double) stats.testEncounters.getCumulativeNumbers(dayOfCases), null, "testEncounters",
-				"count", false, false, 0, false);
+				dayOfCases -> (double) stats.getNumbers(NumbersType.TESTS).getCumulativeNumbers(dayOfCases), null,
+				"testEncounters", "count", false, false, 0, false);
 
 		for (NumbersType type : NumbersType.values()) {
 			for (NumbersTiming timing : NumbersTiming.values()) {

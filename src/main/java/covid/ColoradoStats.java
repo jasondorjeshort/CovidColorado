@@ -73,11 +73,10 @@ public class ColoradoStats {
 	 * the same number in early data.
 	 */
 	public final FinalNumbers peopleTested = new FinalNumbers();
-	public final FinalNumbers testEncounters = new FinalNumbers();
 
 	public double getPositivity(int day, int interval) {
 		double c = getNumbers(NumbersType.CASES).getNumbersInInterval(day, interval);
-		double t = testEncounters.getNumbersInInterval(day, interval);
+		double t = getNumbers(NumbersType.TESTS).getNumbersInInterval(day, interval);
 		if (t == 0) {
 			return 0;
 		}
@@ -187,17 +186,24 @@ public class ColoradoStats {
 	}
 
 	public void outputProjections(NumbersType type, NumbersTiming timing) {
-		int dayOfData = getLastDay();
-		int DAYS = 14;
 
-		for (int dayOfType = getLastDay() - 60; dayOfType <= dayOfData; dayOfType++) {
+		for (int dayOfType = getLastDay() - 60; dayOfType <= getLastDay(); dayOfType++) {
+			double c = getCasesByType(type, timing, dayOfType, dayOfType);
+			double week = getCasesInInterval(type, timing, dayOfType, dayOfType, 7);
+			System.out.println(type.capName + "," + timing.capName + "," + Date.dayToDate(dayOfType) + " => "
+					+ dayOfType + " => " + c + " => " + week);
+
 			// IncompleteNumbers numbers = getNumbers(type, timing);
-			double c = getExactProjectedCasesByType(type, timing, dayOfData, dayOfType);
-			double week = getProjectedCasesInInterval(type, timing, dayOfData, dayOfType, DAYS);
-			double lastWeek = getProjectedCasesInInterval(type, timing, dayOfData, dayOfType - DAYS, DAYS);
-			double growth = 100 * Math.pow(week / lastWeek, 1.0 / DAYS) - 100;
-			System.out.println(Date.dayToDate(dayOfType) + " => " + dayOfType + " => " + c + " => " + week + " => "
-					+ growth + "%");
+			/*
+			 * double c = getExactProjectedCasesByType(type, timing, dayOfData,
+			 * dayOfType); double week = getProjectedCasesInInterval(type,
+			 * timing, dayOfData, dayOfType, DAYS); double lastWeek =
+			 * getProjectedCasesInInterval(type, timing, dayOfData, dayOfType -
+			 * DAYS, DAYS); double growth = 100 * Math.pow(week / lastWeek, 1.0
+			 * / DAYS) - 100; System.out.println(type.capName + "," +
+			 * timing.capName + "," + Date.dayToDate(dayOfType) + " => " +
+			 * dayOfType + " => " + c + " => " + week + " => " + growth + "%");
+			 */
 		}
 	}
 
@@ -240,8 +246,9 @@ public class ColoradoStats {
 				cases.getDailyNumbers(y), lastWeek, cases.getDailyNumbers(w)));
 
 		System.out.println("New test encounters");
-		System.out.println(String.format("\tT: %,d | Y : %,d | %s : %,d", testEncounters.getDailyNumbers(t),
-				testEncounters.getDailyNumbers(y), lastWeek, testEncounters.getDailyNumbers(w)));
+		System.out.println(String.format("\tT: %,d | Y : %,d | %s : %,d",
+				getNumbers(NumbersType.TESTS).getDailyNumbers(t), getNumbers(NumbersType.TESTS).getDailyNumbers(y),
+				lastWeek, getNumbers(NumbersType.TESTS).getDailyNumbers(w)));
 
 		System.out.println("Current hospitalizations");
 
@@ -307,11 +314,11 @@ public class ColoradoStats {
 					if (dayOfData < TEST_ENCOUNTERS_STARTED) {
 						new Exception("SHOULD NOT BE HERE???").printStackTrace();
 					}
-					testEncounters.setCumulativeNumbers(dayOfData, number);
+					getNumbers(NumbersType.TESTS).setCumulativeNumbers(dayOfData, number);
 				} else if (split[2].equals("People Tested")) {
 					peopleTested.setCumulativeNumbers(dayOfData, number);
 					if (dayOfData < TEST_ENCOUNTERS_STARTED) {
-						testEncounters.setCumulativeNumbers(dayOfData, number);
+						getNumbers(NumbersType.TESTS).setCumulativeNumbers(dayOfData, number);
 					}
 				} else if (split[2].equals("Counties")) {
 				} else if (split[2].equals("Rate Per 100000") || split[2].equals("\"Rate per 100")) {
@@ -467,7 +474,7 @@ public class ColoradoStats {
 
 		System.out.println();
 		for (int day = getFirstDay(); day < getLastDay(); day++) {
-			int number = testEncounters.getCumulativeNumbers(day);
+			int number = getNumbers(NumbersType.TESTS).getCumulativeNumbers(day);
 			System.out.println("Day " + Date.dayToDate(day) + " test encounters = " + number);
 		}
 
@@ -486,7 +493,7 @@ public class ColoradoStats {
 		 */
 		for (int dayOfData = getFirstDay(); dayOfData <= getLastDay(); dayOfData++) {
 			double casesOnDay = getNumbers(NumbersType.CASES).getDailyNumbers(dayOfData);
-			double testsOnDay = testEncounters.getDailyNumbers(dayOfData);
+			double testsOnDay = getNumbers(NumbersType.TESTS).getDailyNumbers(dayOfData);
 			double positivity = casesOnDay / testsOnDay;
 			System.out.println(String.format("%s : %.0f/%.0f = %.2f", Date.dayToDate(dayOfData), casesOnDay, testsOnDay,
 					positivity * 100));
@@ -509,8 +516,8 @@ public class ColoradoStats {
 			incompletes.build(this);
 		}
 
-		if (false) {
-			outputProjections(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION);
+		if (true) {
+			outputProjections(NumbersType.CASES, NumbersTiming.REPORTED);
 			outputDailyStats();
 		}
 
