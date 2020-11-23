@@ -192,24 +192,26 @@ public class ColoradoStats {
 	}
 
 	public void outputProjections(NumbersType type, NumbersTiming timing) {
-
+		int dayOfData = getLastDay();
+		int DAYS = 7;
 		for (int dayOfType = getLastDay() - 60; dayOfType <= getLastDay(); dayOfType++) {
-			double c = getCasesByType(type, timing, dayOfType, dayOfType);
-			double week = getCasesInInterval(type, timing, dayOfType, dayOfType, 7);
-			System.out.println(type.capName + "," + timing.capName + "," + Date.dayToDate(dayOfType) + " => "
-					+ dayOfType + " => " + c + " => " + week);
+			/*
+			 * double c = getCasesByType(type, timing, dayOfType, dayOfType);
+			 * double week = getCasesInInterval(type, timing, dayOfType,
+			 * dayOfType, 7); System.out.println(type.capName + "," +
+			 * timing.capName + "," + Date.dayToDate(dayOfType) + " => " +
+			 * dayOfType + " => " + c + " => " + week);
+			 */
 
 			// IncompleteNumbers numbers = getNumbers(type, timing);
-			/*
-			 * double c = getExactProjectedCasesByType(type, timing, dayOfData,
-			 * dayOfType); double week = getProjectedCasesInInterval(type,
-			 * timing, dayOfData, dayOfType, DAYS); double lastWeek =
-			 * getProjectedCasesInInterval(type, timing, dayOfData, dayOfType -
-			 * DAYS, DAYS); double growth = 100 * Math.pow(week / lastWeek, 1.0
-			 * / DAYS) - 100; System.out.println(type.capName + "," +
-			 * timing.capName + "," + Date.dayToDate(dayOfType) + " => " +
-			 * dayOfType + " => " + c + " => " + week + " => " + growth + "%");
-			 */
+
+			double c = getExactProjectedCasesByType(type, timing, dayOfData, dayOfType);
+			double week = getProjectedCasesInInterval(type, timing, dayOfData, dayOfType, DAYS);
+			double lastWeek = getProjectedCasesInInterval(type, timing, dayOfData, dayOfType - DAYS, DAYS);
+			double growth = 100 * Math.pow(week / lastWeek, 1.0 / DAYS) - 100;
+			System.out.println(type.capName + "," + timing.capName + "," + Date.dayToDate(dayOfType) + " => "
+					+ dayOfType + " => " + c + " => " + week + " => " + growth + "%");
+
 		}
 	}
 
@@ -480,12 +482,6 @@ public class ColoradoStats {
 			}
 		}
 
-		System.out.println();
-		for (int day = getFirstDay(); day < getLastDay(); day++) {
-			int number = getNumbers(NumbersType.TESTS).getCumulativeNumbers(day);
-			System.out.println("Day " + Date.dayToDate(day) + " test encounters = " + number);
-		}
-
 		/*
 		 * So the challenge is that a negative test isn't associated with a
 		 * reported/onset/infection day. It is therefore "impossible" to have a
@@ -503,8 +499,9 @@ public class ColoradoStats {
 			double casesOnDay = getNumbers(NumbersType.CASES).getDailyNumbers(dayOfData);
 			double testsOnDay = getNumbers(NumbersType.TESTS).getDailyNumbers(dayOfData);
 			double positivity = casesOnDay / testsOnDay;
-			System.out.println(String.format("%s : %.0f/%.0f = %.2f", Date.dayToDate(dayOfData), casesOnDay, testsOnDay,
-					positivity * 100));
+			// System.out.println(String.format("%s : %.0f/%.0f = %.2f",
+			// Date.dayToDate(dayOfData), casesOnDay, testsOnDay,
+			// positivity * 100));
 			for (NumbersTiming timing : NumbersTiming.values()) {
 				IncompleteNumbers cases = getNumbers(NumbersType.CASES, timing);
 				IncompleteNumbers tests = getNumbers(NumbersType.TESTS, timing);
@@ -525,7 +522,7 @@ public class ColoradoStats {
 		}
 
 		if (true) {
-			outputProjections(NumbersType.CASES, NumbersTiming.REPORTED);
+			outputProjections(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION);
 			outputDailyStats();
 		}
 

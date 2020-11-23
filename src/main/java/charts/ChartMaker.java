@@ -104,14 +104,14 @@ public class ChartMaker {
 	}
 
 	public BufferedImage buildTimeseriesChart(NumbersType type, NumbersTiming timing, int dayOfData, boolean log) {
-		String title = String.format("Colorado %s by %s date as of %s\n(7-day sym-geo average%s)", type.lowerName,
-				timing.lowerName, Date.dayToDate(dayOfData), log ? "logarithmic" : "");
+		String title = String.format("Colorado %s by %s date as of %s\n(%s%s)", type.lowerName, timing.lowerName,
+				Date.dayToDate(dayOfData), type.smoothing.description, log ? ", logarithmic" : "");
 
 		String fileName = type.lowerName + "-" + timing.lowerName + (log ? "-log" : "-cart");
 		return buildCasesTimeseriesChart(fileName, Date.dayToFullDate(dayOfData), dayOfData,
-				dayOfOnset -> stats.getNumbers(type, timing).getNumbers(dayOfData, dayOfOnset, false, true),
-				dayOfOnset -> stats.getNumbers(type, timing).getNumbers(dayOfData, dayOfOnset, true, true), title,
-				type.capName, log, false, 0, log && timing == NumbersTiming.INFECTION);
+				dayOfOnset -> stats.getNumbers(type, timing).getNumbers(dayOfData, dayOfOnset, false, type.smoothing),
+				dayOfOnset -> stats.getNumbers(type, timing).getNumbers(dayOfData, dayOfOnset, true, type.smoothing),
+				title, type.capName, log, false, 0, log && timing == NumbersTiming.INFECTION);
 	}
 
 	public String buildTimeseriesCharts(NumbersType type, NumbersTiming timing, boolean log) {

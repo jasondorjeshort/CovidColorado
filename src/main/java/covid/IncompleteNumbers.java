@@ -29,17 +29,33 @@ public class IncompleteNumbers {
 
 	private final ArrayList<Daily> allNumbers = new ArrayList<>();
 
-	public double getNumbers(int dayOfData, int dayOfType, boolean projected, boolean smoothed) {
-		double numbers = 1;
-		int range = smoothed ? 3 : 0;
-		for (int d = -range; d <= range; d++) {
-			if (projected) {
-				numbers *= getNumbers(dayOfData, dayOfType + d);
-			} else {
-				numbers *= getProjectedNumbers(dayOfData, dayOfType + d);
-			}
+	public double getNumbers(int dayOfData, int dayOfType, boolean projected) {
+		if (projected) {
+			return getNumbers(dayOfData, dayOfType);
 		}
-		return Math.pow(numbers, 1.0 / (2.0 * range + 1.0));
+		return getProjectedNumbers(dayOfData, dayOfType);
+	}
+
+	public double getNumbers(int dayOfData, int dayOfType, boolean projected, Smoothing smoothing) {
+		double numbers;
+		switch (smoothing) {
+		case ALGEBRAIC_SYMMETRIC_WEEKLY:
+			numbers = 0;
+			for (int d = -3; d <= 3; d++) {
+				numbers += getNumbers(dayOfData, dayOfType + d, projected);
+			}
+			return numbers / 7.0;
+		case GEOMETRIC_SYMMETRIC_WEEKLY:
+			numbers = 1;
+			for (int d = -3; d <= 3; d++) {
+				numbers *= getNumbers(dayOfData, dayOfType + d, projected);
+			}
+			return Math.pow(numbers, 1.0 / 7.0);
+		case NONE:
+			return getNumbers(dayOfData, dayOfType, projected);
+		default:
+			throw new RuntimeException("...");
+		}
 	}
 
 	public double getNumbers(int dayOfData, int dayOfType) {
