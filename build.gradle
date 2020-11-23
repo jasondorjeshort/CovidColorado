@@ -30,4 +30,6 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     
     implementation 'com.madgag:animated-gif-lib:1.4'
+    
+    implementation 'org.apache.commons:commons-csv:1.4'
 }
