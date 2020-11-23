@@ -1,5 +1,13 @@
 package covid;
 
+import java.awt.Color;
+
+import org.jfree.chart.plot.ValueMarker;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.ui.TextAnchor;
+
+import charts.Charts;
+
 public class Event {
 	public final String name;
 	public final long time;
@@ -13,6 +21,18 @@ public class Event {
 	public Event(String name, String date) {
 		this.name = name;
 		this.time = Date.dateToTime(date);
+	}
+
+	public static void addEvents(XYPlot plot) {
+		for (Event event : Event.events) {
+			ValueMarker marker = new ValueMarker(event.time);
+			marker.setPaint(Color.green);
+			marker.setLabel(event.name);
+			marker.setStroke(Charts.stroke);
+			marker.setLabelFont(Charts.font);
+			marker.setLabelTextAnchor(TextAnchor.TOP_CENTER);
+			plot.addDomainMarker(marker);
+		}
 	}
 
 }

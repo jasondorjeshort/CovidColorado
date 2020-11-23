@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 
+import charts.ChartMaker;
 import library.MyExecutor;
 
 public class Main {
