@@ -24,9 +24,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class MyExecutor {
 
-	private static final ExecutorService userPool = Executors.newCachedThreadPool();
 	private static final ExecutorService codePool = Executors.newWorkStealingPool();
-	private static final ScheduledExecutorService schedule = Executors.newSingleThreadScheduledExecutor();
 
 	static Runnable catchWrapper(Runnable command) {
 		return new Runnable() {
@@ -55,10 +53,6 @@ public class MyExecutor {
 		};
 	}
 
-	public static void executeUser(Runnable command) {
-		userPool.execute(catchWrapper(command));
-	}
-
 	public static void executeCode(Runnable command) {
 		codePool.execute(catchWrapper(command));
 	}
@@ -67,36 +61,19 @@ public class MyExecutor {
 		return codePool.submit(catchWrapper(task));
 	}
 
-	public static <T> Future<T> submitUser(Callable<T> task) {
-		return userPool.submit(catchWrapper(task));
-	}
-
-	public static void scheduleUser(Runnable command, long delay, TimeUnit unit) {
-		schedule.schedule(catchWrapper(command), delay, unit);
-	}
-
-	public static ScheduledFuture<?> scheduleUserWithFixedDelay(Runnable command, long initialDelay, long delay,
-			TimeUnit unit) {
-		return schedule.scheduleWithFixedDelay(() -> userPool.execute(catchWrapper(command)), initialDelay, delay,
-				unit);
-	}
-
 	public static void shutdown() {
-		userPool.shutdown();
 		codePool.shutdown();
-		schedule.shutdown();
 	}
 
 	public static boolean awaitTermination(long timeout, TimeUnit unit) {
 		shutdown();
 		try {
-			if (codePool.awaitTermination(timeout, unit) && userPool.awaitTermination(timeout, unit)) {
+			if (codePool.awaitTermination(timeout, unit)) {
 				System.out.println("Successfully waited out termination.");
 				return true;
 			}
-			userPool.shutdownNow();
 			codePool.shutdownNow();
-			if (codePool.awaitTermination(timeout, unit) && userPool.awaitTermination(timeout, unit)) {
+			if (codePool.awaitTermination(timeout, unit)) {
 				System.out.println("Successfully forced termination.");
 				return true;
 			}
