@@ -103,31 +103,6 @@ public class ChartMaker {
 		return image;
 	}
 
-	public BufferedImage buildTimeseriesChart(NumbersType type, NumbersTiming timing, int dayOfData, boolean log) {
-		String title = String.format("Colorado %s by %s date as of %s\n(%s%s)", type.lowerName, timing.lowerName,
-				Date.dayToDate(dayOfData), type.smoothing.description, log ? ", logarithmic" : "");
-
-		String fileName = type.lowerName + "-" + timing.lowerName + (log ? "-log" : "-cart");
-		return buildCasesTimeseriesChart(fileName, Date.dayToFullDate(dayOfData), dayOfData,
-				dayOfOnset -> stats.getNumbers(type, timing).getNumbers(dayOfData, dayOfOnset, false, type.smoothing),
-				dayOfOnset -> stats.getNumbers(type, timing).getNumbers(dayOfData, dayOfOnset, true, type.smoothing),
-				title, type.capName, log, false, 0, log && timing == NumbersTiming.INFECTION);
-	}
-
-	public String buildTimeseriesCharts(NumbersType type, NumbersTiming timing, boolean log) {
-		AnimatedGifEncoder gif = new AnimatedGifEncoder();
-		String fileName = type.lowerName + "-" + timing.lowerName + (log ? "-log" : "-cart");
-		String name = Charts.TOP_FOLDER + "\\" + fileName + ".gif";
-		gif.start(name);
-		for (int dayOfData = stats.getFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
-			BufferedImage bi = buildTimeseriesChart(type, timing, dayOfData, log);
-			Charts.setDelay(stats, dayOfData, gif);
-			gif.addFrame(bi);
-		}
-		gif.finish();
-		return name;
-	}
-
 	public BufferedImage buildNewTimeseriesChart(NumbersType type, NumbersTiming timing, int dayOfData) {
 		String by = "new-" + type.lowerName + "-" + timing.lowerName;
 		return buildCasesTimeseriesChart(by, Date.dayToFullDate(dayOfData), dayOfData,
@@ -192,18 +167,21 @@ public class ChartMaker {
 		new File(Charts.TOP_FOLDER).mkdir();
 
 		if (false) {
-			return buildTimeseriesCharts(NumbersType.TESTS, NumbersTiming.INFECTION, true);
+			stats.getCounties().forEach(
+					(key, value) -> MyExecutor.executeCode(() -> createCountyStats(value, stats.getLastDay())));
+			return null;
 		}
 
+		MyExecutor.executeCode(
+				() -> stats.getCounties().forEach((key, value) -> createCountyStats(value, stats.getLastDay())));
 		MyExecutor.executeCode(() -> createCumulativeStats());
-		stats.getCounties()
-				.forEach((key, value) -> MyExecutor.executeCode(() -> createCountyStats(value, stats.getLastDay())));
 
 		Future<BufferedImage> fbi;
+		ChartIncompletes incompletes = new ChartIncompletes(stats);
 		for (NumbersTiming timing : NumbersTiming.values()) {
 			for (NumbersType type : NumbersType.values()) {
-				MyExecutor.executeCode(() -> buildTimeseriesCharts(type, timing, true));
-				MyExecutor.executeCode(() -> buildTimeseriesCharts(type, timing, false));
+				MyExecutor.executeCode(() -> incompletes.buildTimeseriesCharts(type, timing, true));
+				MyExecutor.executeCode(() -> incompletes.buildTimeseriesCharts(type, timing, false));
 				MyExecutor.executeCode(() -> buildNewTimeseriesCharts(type, timing));
 			}
 		}
