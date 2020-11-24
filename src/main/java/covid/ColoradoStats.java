@@ -259,26 +259,30 @@ public class ColoradoStats {
 		String lastWeek = Date.dayToDate(w);
 
 		System.out.println("Update for " + today);
-		System.out.println("Newly released deaths");
+		System.out.println("Newly released deaths:");
 		System.out.println(String.format("\tT: %,d | Y : %,d | %s : %,d",
 				getNumbers(NumbersType.DEATHS).getDailyNumbers(t), getNumbers(NumbersType.DEATHS).getDailyNumbers(y),
 				lastWeek, getNumbers(NumbersType.DEATHS).getDailyNumbers(w)));
 
 		FinalNumbers cases = getNumbers(NumbersType.CASES);
-		System.out.println("Newly released cases");
+		System.out.println("Newly released cases:");
 		System.out.println(String.format("\tT: %,d | Y : %,d | %s : %,d", cases.getDailyNumbers(t),
 				cases.getDailyNumbers(y), lastWeek, cases.getDailyNumbers(w)));
 
-		System.out.println("New test encounters");
+		System.out.println("New test encounters:");
 		System.out.println(String.format("\tT: %,d | Y : %,d | %s : %,d",
 				getNumbers(NumbersType.TESTS).getDailyNumbers(t), getNumbers(NumbersType.TESTS).getDailyNumbers(y),
 				lastWeek, getNumbers(NumbersType.TESTS).getDailyNumbers(w)));
 
-		System.out.println("Current hospitalizations");
+		System.out.println("New hospitalizations:");
+		System.out.println(String.format("\tT: %,d | Y : %,d | %s : %,d",
+				getNumbers(NumbersType.HOSPITALIZATIONS).getDailyNumbers(t),
+				getNumbers(NumbersType.HOSPITALIZATIONS).getDailyNumbers(y), lastWeek,
+				getNumbers(NumbersType.HOSPITALIZATIONS).getDailyNumbers(w)));
 
-		System.out.println("Hospitalizations PUI");
-
-		System.out.println("Positivity rate");
+		System.out.println("Daily positivity:");
+		System.out.println(String.format("\tT: %.2f%% | Y : %.2f%% | %s : %.2f%%", 100 * getPositivity(t, 1),
+				100 * getPositivity(y, 1), lastWeek, 100 * getPositivity(w, 1)));
 
 		System.out.println("");
 	}
