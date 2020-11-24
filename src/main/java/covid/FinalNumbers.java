@@ -23,6 +23,19 @@ public class FinalNumbers {
 		return getNumbersInInterval(day, 1);
 	}
 
+	public double getNumbers(int day, Smoothing smoothing) {
+		switch (smoothing) {
+		case ALGEBRAIC_SYMMETRIC_WEEKLY:
+			return getNumbersInInterval(day + 3, 7) / 7.0;
+		case NONE:
+			return getDailyNumbers(day);
+		case TOTAL_14_DAY:
+			return getNumbersInInterval(day, 14);
+		default:
+		}
+		throw new RuntimeException("FAIL");
+	}
+
 	public int getCumulativeNumbers(int day) {
 		if (day < 0 || day >= numbers.size()) {
 			return 0;

@@ -25,8 +25,9 @@ public class ChartIncompletes {
 	public ChartIncompletes(ColoradoStats stats) {
 		this.stats = stats;
 	}
-	
+
 	private final ColoradoStats stats;
+
 	private BufferedImage buildCasesTimeseriesChart(String folder, String fileName, int dayOfData,
 			Function<Integer, Double> getCasesForDay, Function<Integer, Double> getProjectedCasesForDay, String title,
 			String verticalAxis, boolean log, boolean showAverage, int daysToSkip, boolean showEvents) {
@@ -95,8 +96,6 @@ public class ChartIncompletes {
 		return image;
 	}
 
-
-
 	private BufferedImage buildTimeseriesChart(NumbersType type, NumbersTiming timing, int dayOfData, boolean log) {
 		String title = String.format("Colorado %s by %s date as of %s\n(%s%s)", type.lowerName, timing.lowerName,
 				Date.dayToDate(dayOfData), type.smoothing.description, log ? ", logarithmic" : "");
@@ -121,5 +120,5 @@ public class ChartIncompletes {
 		gif.finish();
 		return name;
 	}
-	
+
 }

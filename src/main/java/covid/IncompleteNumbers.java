@@ -53,9 +53,15 @@ public class IncompleteNumbers {
 			return Math.pow(numbers, 1.0 / 7.0);
 		case NONE:
 			return getNumbers(dayOfData, dayOfType, projected);
+		case TOTAL_14_DAY:
+			numbers = 0;
+			for (int d = -13; d <= 0; d++) {
+				numbers += getNumbers(dayOfData, dayOfType + d, projected);
+			}
+			return numbers;
 		default:
-			throw new RuntimeException("...");
 		}
+		throw new RuntimeException("...");
 	}
 
 	public double getNumbers(int dayOfData, int dayOfType) {

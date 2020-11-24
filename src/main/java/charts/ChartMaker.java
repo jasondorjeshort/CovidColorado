@@ -2,7 +2,6 @@ package charts;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.concurrent.Future;
 import java.util.function.Function;
 
 import org.jfree.chart.ChartFactory;
@@ -15,10 +14,7 @@ import org.jfree.data.time.Day;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 
-import com.madgag.gif.fmsware.AnimatedGifEncoder;
-
 import covid.ColoradoStats;
-import covid.CountyStats;
 import covid.Date;
 import covid.Event;
 import covid.NumbersTiming;
@@ -123,17 +119,6 @@ public class ChartMaker {
 				false);
 	}
 
-	public void createCountyStats(CountyStats county, int dayOfData) {
-		buildCasesTimeseriesChart("county", Date.dayToFullDate(dayOfData), dayOfData,
-				dayOfCases -> Double.valueOf(county.getCases().getNumbersInInterval(dayOfCases, 14)),
-				dayOfCases -> Double.valueOf(county.getDeaths().getNumbersInInterval(dayOfCases, 14)),
-				county.getDisplayName(), "Count", false, false, 0, false);
-		buildCasesTimeseriesChart("county", Date.dayToFullDate(dayOfData), dayOfData,
-				dayOfCases -> Double.valueOf(Math.max(county.getCases().getNumbersInInterval(dayOfCases, 14), 1)),
-				dayOfCases -> Double.valueOf(Math.max(county.getDeaths().getNumbersInInterval(dayOfCases, 14), 1)),
-				county.getDisplayName(), "count", true, false, 0, false);
-	}
-
 	public void createCumulativeStats() {
 		String date = Date.dayToFullDate(stats.getLastDay());
 		buildCasesTimeseriesChart("cumulative", date, stats.getLastDay(),
@@ -165,19 +150,16 @@ public class ChartMaker {
 
 	public String buildCharts() {
 		new File(Charts.TOP_FOLDER).mkdir();
+		ChartCounty county = new ChartCounty(stats);
+		ChartIncompletes incompletes = new ChartIncompletes(stats);
 
 		if (false) {
-			stats.getCounties().forEach(
-					(key, value) -> MyExecutor.executeCode(() -> createCountyStats(value, stats.getLastDay())));
+			stats.getCounties().forEach((key, value) -> MyExecutor.executeCode(() -> county.createCountyStats(value)));
 			return null;
 		}
 
-		MyExecutor.executeCode(
-				() -> stats.getCounties().forEach((key, value) -> createCountyStats(value, stats.getLastDay())));
 		MyExecutor.executeCode(() -> createCumulativeStats());
 
-		Future<BufferedImage> fbi;
-		ChartIncompletes incompletes = new ChartIncompletes(stats);
 		for (NumbersTiming timing : NumbersTiming.values()) {
 			for (NumbersType type : NumbersType.values()) {
 				MyExecutor.executeCode(() -> incompletes.buildTimeseriesCharts(type, timing, true));
@@ -196,6 +178,8 @@ public class ChartMaker {
 				false, true, false));
 		MyExecutor.executeCode(() -> ChartRates.buildRates(stats, "Positivity", "Colorado rates by day of infection, ",
 				false, false, false, true));
+
+		stats.getCounties().forEach((key, value) -> MyExecutor.executeCode(() -> county.createCountyStats(value)));
 
 		return null;
 	}
