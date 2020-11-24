@@ -27,6 +27,8 @@ public class Charts {
 	public static final int WIDTH = 800, HEIGHT = 600;
 
 	public static final String TOP_FOLDER = "H:\\CovidCoCharts";
+	// public static final String TOP_FOLDER =
+	// "C:\\Users\\jdorj\\Dropbox\\Public\\CovidCoCharts";
 
 	public static ValueMarker getTodayMarker(int dayOfData) {
 		ValueMarker marker = new ValueMarker(Date.dayToJavaDate(dayOfData).getTime());
