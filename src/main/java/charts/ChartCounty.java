@@ -77,7 +77,6 @@ public class ChartCounty {
 	}
 
 	public void createCountyStats(CountyStats county) {
-		System.out.println("Creating stats for " + county.getName());
 		String folder = Charts.TOP_FOLDER + "\\county";
 		new File(folder).mkdir();
 		buildCountyTimeseriesChart(county, folder, false);
