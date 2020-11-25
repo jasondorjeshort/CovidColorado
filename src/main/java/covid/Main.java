@@ -25,15 +25,7 @@ import library.MyExecutor;
  */
 public class Main {
 
-	public static void main(String[] args) {
-		long time = System.currentTimeMillis();
-		ColoradoStats stats = new ColoradoStats();
-
-		System.out.println("Read stats in " + (System.currentTimeMillis() - time) + " ms.");
-
-		ChartMaker charts = new ChartMaker(stats);
-		String fname = charts.buildCharts();
-
+	public static void openImage(String fname) {
 		if (fname != null) {
 			LinkedList<String> process = new LinkedList<>();
 			process.add("C:\\Program Files (x86)\\IrfanView\\i_view32.exe");
@@ -45,6 +37,16 @@ public class Main {
 			}
 			System.out.println("Opened " + fname + ".");
 		}
+	}
+
+	public static void main(String[] args) {
+		long time = System.currentTimeMillis();
+		ColoradoStats stats = new ColoradoStats();
+
+		System.out.println("Read stats in " + (System.currentTimeMillis() - time) + " ms.");
+
+		ChartMaker charts = new ChartMaker(stats);
+		openImage(charts.buildCharts());
 
 		MyExecutor.awaitTermination(1, TimeUnit.DAYS);
 
