@@ -47,9 +47,9 @@ public class IncompleteNumbers {
 
 	public double getNumbers(int dayOfData, int dayOfType, boolean projected) {
 		if (projected) {
-			return getNumbers(dayOfData, dayOfType);
+			return getProjectedNumbers(dayOfData, dayOfType);
 		}
-		return getProjectedNumbers(dayOfData, dayOfType);
+		return getNumbers(dayOfData, dayOfType);
 	}
 
 	public double getNumbers(int dayOfData, int dayOfType, boolean projected, Smoothing smoothing) {
