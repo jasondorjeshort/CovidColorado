@@ -252,4 +252,16 @@ public class IncompleteNumbers {
 	public void setCumulative() {
 		isCumulative = true;
 	}
+
+	public double getAverageAgeOfNewNumbers(int dayOfData) {
+		double daySum = 0, numbersSum = 0;
+		for (int dayOfType = 0; dayOfType < dayOfData; dayOfType++) {
+			double newNumbers = getNumbers(dayOfData, dayOfType) - getNumbers(dayOfData - 1, dayOfType);
+			numbersSum += newNumbers;
+			daySum += newNumbers * dayOfType;
+		}
+
+		return dayOfData - daySum / numbersSum;
+	}
+
 }

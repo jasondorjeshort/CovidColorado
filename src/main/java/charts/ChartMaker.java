@@ -17,6 +17,7 @@ import org.jfree.data.time.TimeSeriesCollection;
 import covid.ColoradoStats;
 import covid.Date;
 import covid.Event;
+import covid.IncompleteNumbers;
 import covid.NumbersTiming;
 import covid.NumbersType;
 import library.MyExecutor;
@@ -128,11 +129,11 @@ public class ChartMaker {
 		}
 	}
 
-	public BufferedImage buildAgeTimeseriesChart(NumbersType type, NumbersTiming timing, int dayOfData) {
+	public BufferedImage buildAgeTimeseriesChart(NumbersType type, NumbersTiming timing, int finalDay) {
 		String by = "age-" + type.lowerName + "-" + timing.lowerName;
-		return buildCasesTimeseriesChart(by, Date.dayToFullDate(dayOfData), dayOfData,
-				dayOfCases -> stats.getAverageAgeOfNewCases(type, timing, dayOfCases), null, by, "?", false, false, 0,
-				false);
+		IncompleteNumbers numbers = stats.getNumbers(type, timing);
+		return buildCasesTimeseriesChart(by, Date.dayToFullDate(finalDay), finalDay,
+				dayOfData -> numbers.getAverageAgeOfNewNumbers(dayOfData), null, by, "?", false, false, 0, false);
 	}
 
 	public void createCumulativeStats() {
@@ -156,12 +157,6 @@ public class ChartMaker {
 				dayOfCases -> (double) stats.getNumbers(NumbersType.TESTS).getCumulativeNumbers(dayOfCases), null,
 				"testEncounters", "count", false, false, 0, false);
 
-		for (NumbersType type : NumbersType.values()) {
-			for (NumbersTiming timing : NumbersTiming.values()) {
-				buildAgeTimeseriesChart(type, timing, stats.getLastDay());
-			}
-		}
-
 	}
 
 	public String buildCharts() {
@@ -170,7 +165,11 @@ public class ChartMaker {
 		ChartIncompletes incompletes = new ChartIncompletes(stats);
 
 		if (false) {
-			stats.getCounties().forEach((key, value) -> MyExecutor.executeCode(() -> county.createCountyStats(value)));
+			for (NumbersTiming timing : NumbersTiming.values()) {
+				for (NumbersType type : NumbersType.values()) {
+					MyExecutor.executeCode(() -> buildAgeTimeseriesChart(type, timing, stats.getLastDay()));
+				}
+			}
 			return null;
 		}
 
@@ -181,6 +180,7 @@ public class ChartMaker {
 				MyExecutor.executeCode(() -> incompletes.buildTimeseriesCharts(type, timing, true));
 				MyExecutor.executeCode(() -> incompletes.buildTimeseriesCharts(type, timing, false));
 				MyExecutor.executeCode(() -> buildNewTimeseriesCharts(type, timing));
+				MyExecutor.executeCode(() -> buildAgeTimeseriesChart(type, timing, stats.getLastDay()));
 			}
 		}
 

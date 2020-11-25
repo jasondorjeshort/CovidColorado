@@ -178,19 +178,6 @@ public class ColoradoStats {
 		return getCasesByType(type, timing, dayOfData, dayOfType)
 				- getCasesByType(type, timing, dayOfData - 1, dayOfType);
 	}
-
-	public double getAverageAgeOfNewCases(NumbersType type, NumbersTiming timing, int dayOfType) {
-		double daySum = 0, casesSum = 0;
-		for (int dayOfOnset = firstDay; dayOfOnset < dayOfType; dayOfOnset++) {
-			double newCases = getCasesByType(type, timing, dayOfType, dayOfOnset)
-					- getCasesByType(type, timing, dayOfType - 1, dayOfOnset);
-			casesSum += newCases;
-			daySum += newCases * dayOfOnset;
-		}
-
-		return dayOfType - daySum / casesSum;
-	}
-
 	public int getLastDayOfType(NumbersType type, NumbersTiming timing, int dayOfData) {
 		return getNumbers(type, timing).getLastDay(dayOfData);
 	}
