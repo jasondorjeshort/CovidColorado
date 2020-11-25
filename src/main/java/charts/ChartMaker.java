@@ -20,6 +20,7 @@ import covid.Event;
 import covid.IncompleteNumbers;
 import covid.NumbersTiming;
 import covid.NumbersType;
+import covid.Smoothing;
 import library.MyExecutor;
 
 /**
@@ -133,7 +134,8 @@ public class ChartMaker {
 		String by = "age-" + type.lowerName + "-" + timing.lowerName;
 		IncompleteNumbers numbers = stats.getNumbers(type, timing);
 		return buildCasesTimeseriesChart(by, Date.dayToFullDate(finalDay), finalDay,
-				dayOfData -> numbers.getAverageAgeOfNewNumbers(dayOfData), null, by, "?", false, false, 0, false);
+				dayOfData -> numbers.getAverageAgeOfNewNumbers(dayOfData, Smoothing.TOTAL_14_DAY), null, by, "?", false,
+				false, 0, false);
 	}
 
 	public void createCumulativeStats() {

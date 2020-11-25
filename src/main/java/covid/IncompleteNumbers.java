@@ -253,15 +253,40 @@ public class IncompleteNumbers {
 		isCumulative = true;
 	}
 
-	public double getAverageAgeOfNewNumbers(int dayOfData) {
+	public double getAverageAgeOfNewNumbers(int baseDayOfData, Smoothing smoothing) {
 		double daySum = 0, numbersSum = 0;
-		for (int dayOfType = 0; dayOfType < dayOfData; dayOfType++) {
-			double newNumbers = getNumbers(dayOfData, dayOfType) - getNumbers(dayOfData - 1, dayOfType);
-			numbersSum += newNumbers;
-			daySum += newNumbers * dayOfType;
+		int dayMinimum = baseDayOfData, dayMaximum = baseDayOfData;
+
+		switch (smoothing) {
+		case ALGEBRAIC_SYMMETRIC_WEEKLY:
+			dayMinimum = baseDayOfData - 3;
+			dayMaximum = baseDayOfData + 3;
+			break;
+		case NONE:
+			break;
+		case TOTAL_14_DAY:
+			dayMinimum = baseDayOfData - 13;
+			break;
+		case TOTAL_7_DAY:
+			dayMinimum = baseDayOfData - 6;
+			break;
+		default:
+			throw new RuntimeException("Not implemented.");
 		}
 
-		return dayOfData - daySum / numbersSum;
+		for (int dayOfData = dayMinimum; dayOfData <= dayMaximum; dayOfData++) {
+			for (int dayOfType = 0; dayOfType < dayOfData; dayOfType++) {
+				double newNumbers = getNumbers(dayOfData, dayOfType) - getNumbers(dayOfData - 1, dayOfType);
+				numbersSum += newNumbers;
+				daySum += newNumbers * (dayOfData - dayOfType);
+			}
+		}
+
+		return daySum / numbersSum;
+	}
+
+	public double getAverageAgeOfNewNumbers(int dayOfData) {
+		return getAverageAgeOfNewNumbers(dayOfData, Smoothing.TOTAL_14_DAY);
 	}
 
 }

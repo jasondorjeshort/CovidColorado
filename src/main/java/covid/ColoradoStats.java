@@ -178,6 +178,7 @@ public class ColoradoStats {
 		return getCasesByType(type, timing, dayOfData, dayOfType)
 				- getCasesByType(type, timing, dayOfData - 1, dayOfType);
 	}
+
 	public int getLastDayOfType(NumbersType type, NumbersTiming timing, int dayOfData) {
 		return getNumbers(type, timing).getLastDay(dayOfData);
 	}
@@ -270,6 +271,21 @@ public class ColoradoStats {
 		System.out.println("Daily positivity:");
 		System.out.println(String.format("\tT: %.2f%% | Y : %.2f%% | %s : %.2f%%", 100 * getPositivity(t, 1),
 				100 * getPositivity(y, 1), lastWeek, 100 * getPositivity(w, 1)));
+
+		System.out.println("Data age (14-day totals):");
+		System.out.println(String.format("\tCases: %.1f | Y : %.1f | %s : %.1f",
+				getNumbers(NumbersType.CASES, NumbersTiming.INFECTION).getAverageAgeOfNewNumbers(t),
+				getNumbers(NumbersType.CASES, NumbersTiming.INFECTION).getAverageAgeOfNewNumbers(y), lastWeek,
+				getNumbers(NumbersType.CASES, NumbersTiming.INFECTION).getAverageAgeOfNewNumbers(w)));
+		System.out.println(String.format("\tHospitalizations: %.1f | Y : %.1f | %s : %.1f",
+				getNumbers(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION).getAverageAgeOfNewNumbers(t),
+				getNumbers(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION).getAverageAgeOfNewNumbers(y),
+				lastWeek,
+				getNumbers(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION).getAverageAgeOfNewNumbers(w)));
+		System.out.println(String.format("\tDeaths: %.1f | Y : %.1f | %s : %.1f",
+				getNumbers(NumbersType.DEATHS, NumbersTiming.INFECTION).getAverageAgeOfNewNumbers(t),
+				getNumbers(NumbersType.DEATHS, NumbersTiming.INFECTION).getAverageAgeOfNewNumbers(y), lastWeek,
+				getNumbers(NumbersType.DEATHS, NumbersTiming.INFECTION).getAverageAgeOfNewNumbers(w)));
 
 		System.out.println("");
 	}
