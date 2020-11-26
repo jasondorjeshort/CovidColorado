@@ -52,24 +52,28 @@ public class ChartIncompletes {
 
 		TimeSeries series = new TimeSeries("Cases");
 		TimeSeries projectedSeries = new TimeSeries("Projected");
+		Integer incomplete = null;
 		for (int d = Math.max(showAverage ? dayOfData - 30 : 0, stats.getFirstDay()); d <= dayOfData
 				- daysToSkip; d++) {
 			Day ddd = Date.dayToDay(d);
 
 			double cases = getCasesForDay.apply(d);
 
-			if (Double.isFinite(cases)) {
-				if (!log || cases > 0) {
-					series.add(ddd, cases);
-				}
+			if (!log || cases > 0) {
+				series.add(ddd, cases);
 			}
 
 			if (getProjectedCasesForDay != null) {
-
 				double projected = getProjectedCasesForDay.apply(d);
-				if (Double.isFinite(projected)) {
-					if (!log || projected > 0) {
-						projectedSeries.add(ddd, projected);
+				if (!log || projected > 0) {
+					projectedSeries.add(ddd, projected);
+				}
+
+				if (incomplete == null && cases > 0) {
+					// 10% inaccuracy is huge, but anything less seems to go WAY
+					// back due to changes in really old data
+					if (projected / cases > 1.1) {
+						incomplete = d;
 					}
 				}
 			}
@@ -84,8 +88,8 @@ public class ChartIncompletes {
 		}
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title, "Date", verticalAxis, collection);
 
+		XYPlot plot = chart.getXYPlot();
 		if (log) {
-			XYPlot plot = chart.getXYPlot();
 			LogarithmicAxis yAxis = new LogarithmicAxis(verticalAxis);
 			yAxis.setLowerBound(1);
 			yAxis.setUpperBound(100000);
@@ -104,7 +108,10 @@ public class ChartIncompletes {
 			if (showEvents) {
 				Event.addEvents(plot);
 			}
+		}
 
+		if (incomplete != null) {
+			plot.addDomainMarker(Charts.getIncompleteMarker(incomplete));
 		}
 
 		BufferedImage image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT);

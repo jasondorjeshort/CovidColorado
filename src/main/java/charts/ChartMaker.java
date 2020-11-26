@@ -168,16 +168,15 @@ public class ChartMaker {
 
 		if (false) {
 			Charts.TOP_FOLDER = "H:\\CovidCoCharts";
-			MyExecutor.executeCode(() -> ChartRates.buildRates(stats, "rates", "Colorado rates by day of infection, ",
-					true, true, true, true));
-			MyExecutor.executeCode(() -> ChartRates.buildRates(stats, "CFR", "Colorado rates by day of infection, ",
-					true, false, false, false));
-			MyExecutor.executeCode(() -> ChartRates.buildRates(stats, "CHR", "Colorado rates by day of infection, ",
-					false, true, false, false));
-			MyExecutor.executeCode(() -> ChartRates.buildRates(stats, "HFR", "Colorado rates by day of infection, ",
-					false, false, true, false));
-			MyExecutor.executeCode(() -> ChartRates.buildRates(stats, "Positivity",
-					"Colorado rates by day of infection, ", false, false, false, true));
+			new File(Charts.TOP_FOLDER).mkdir();
+			// incompletes.buildTimeseriesCharts(NumbersType.CASES,
+			// NumbersTiming.INFECTION, false);
+			for (NumbersTiming timing : NumbersTiming.values()) {
+				for (NumbersType type : NumbersType.values()) {
+					MyExecutor.executeCode(() -> incompletes.buildTimeseriesCharts(type, timing, true));
+					MyExecutor.executeCode(() -> incompletes.buildTimeseriesCharts(type, timing, false));
+				}
+			}
 			return null;
 		}
 

@@ -139,16 +139,7 @@ public class ChartRates {
 		// chart.getXYPlot().setRangeAxis(new LogarithmicAxis("Cases"));
 
 		XYPlot plot = chart.getXYPlot();
-		IntervalMarker marker = new IntervalMarker(Date.dayToTime(dayOfData - 35),
-				Date.dayToTime(stats.getLastDay() + 30));
-		marker.setPaint(Color.black);
-		// marker.setLabel("Incomplete");
-		// marker.setLabelTextAnchor(TextAnchor.TOP_LEFT);
-		marker.setStroke(Charts.stroke);
-		marker.setAlpha(0.25f);
-		marker.setLabelFont(Charts.font);
-		marker.setLabelTextAnchor(TextAnchor.TOP_CENTER);
-		plot.addDomainMarker(marker);
+		plot.addDomainMarker(Charts.getIncompleteMarker(dayOfData-35));
 
 		if (fixedHeight != null) {
 			DateAxis xAxis = (DateAxis) plot.getDomainAxis();

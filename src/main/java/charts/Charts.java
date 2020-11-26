@@ -12,6 +12,7 @@ import java.io.OutputStream;
 
 import org.jfree.chart.encoders.EncoderUtil;
 import org.jfree.chart.encoders.ImageFormat;
+import org.jfree.chart.plot.IntervalMarker;
 import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.ui.TextAnchor;
 
@@ -64,6 +65,18 @@ public class Charts {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	public static IntervalMarker getIncompleteMarker(int incompleteDay) {
+		IntervalMarker marker = new IntervalMarker(Date.dayToTime(incompleteDay), Double.MAX_VALUE);
+		marker.setPaint(Color.black);
+		// marker.setLabel("Incomplete");
+		// marker.setLabelTextAnchor(TextAnchor.TOP_LEFT);
+		marker.setStroke(Charts.stroke);
+		marker.setAlpha(0.25f);
+		marker.setLabelFont(Charts.font);
+		marker.setLabelTextAnchor(TextAnchor.TOP_CENTER);
+		return marker;
 	}
 
 	public static void setDelay(ColoradoStats stats, int dayOfData, AnimatedGifEncoder gif) {
