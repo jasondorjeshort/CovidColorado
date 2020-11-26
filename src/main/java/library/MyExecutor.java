@@ -67,15 +67,14 @@ public class MyExecutor {
 		shutdown();
 		try {
 			if (codePool.awaitTermination(timeout, unit)) {
-				System.out.println("Successfully waited out termination.");
 				return true;
 			}
 			codePool.shutdownNow();
 			if (codePool.awaitTermination(timeout, unit)) {
-				System.out.println("Successfully forced termination.");
+				System.out.println("Forced thread pool termination.");
 				return true;
 			}
-			System.out.println("Pool forced down.");
+			System.out.println("Forced thread pool termination.");
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 			return false;
