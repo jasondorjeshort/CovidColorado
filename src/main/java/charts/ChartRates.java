@@ -182,8 +182,23 @@ public class ChartRates {
 
 			String day = Date.dayToDate(dayOfData);
 			String full = Date.dayToFullDate(dayOfData, '-');
+			int fixedHeight = 0;
+
+			if (useCFR) {
+				fixedHeight = Math.max(fixedHeight, 10);
+			}
+			if (useCHR) {
+				fixedHeight = Math.max(fixedHeight, 40);
+			}
+			if (useHFR) {
+				fixedHeight = Math.max(fixedHeight, 50);
+			}
+			if (usePositivity) {
+				fixedHeight = Math.max(fixedHeight, 25);
+			}
+
 			BufferedImage bi = buildRates(stats, dayOfData, prefix + "-" + full, title + day, useCFR, useCHR, useHFR,
-					usePositivity, null, 50);
+					usePositivity, null, fixedHeight);
 			Charts.setDelay(stats, dayOfData, gif);
 			gif.addFrame(bi);
 		}
