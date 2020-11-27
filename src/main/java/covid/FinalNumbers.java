@@ -46,6 +46,8 @@ public class FinalNumbers {
 			return getDailyNumbers(day);
 		case TOTAL_14_DAY:
 			return getNumbersInInterval(day, 14);
+		case TOTAL_7_DAY:
+			return getNumbersInInterval(day, 7);
 		default:
 		}
 		throw new RuntimeException("FAIL");

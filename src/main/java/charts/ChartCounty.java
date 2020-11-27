@@ -40,15 +40,16 @@ public class ChartCounty {
 
 	private final ColoradoStats stats;
 
-	public BufferedImage buildCountyTimeseriesChart(CountyStats c, final String folder, boolean log) {
+	public BufferedImage buildCountyTimeseriesChart(CountyStats c, final String folder, boolean log,
+			Smoothing smoothing) {
 
 		TimeSeries cSeries = new TimeSeries("Cases");
 		TimeSeries dSeries = new TimeSeries("Deaths");
 		for (int day = stats.getFirstDay(); day <= stats.getLastDay(); day++) {
 			Day ddd = Date.dayToDay(day);
 
-			double cases = c.getCases().getNumbers(day, Smoothing.TOTAL_14_DAY);
-			double deaths = c.getDeaths().getNumbers(day, Smoothing.TOTAL_14_DAY);
+			double cases = c.getCases().getNumbers(day, smoothing);
+			double deaths = c.getDeaths().getNumbers(day, smoothing);
 
 			if (!Double.isFinite(cases)) {
 				throw new RuntimeException("Uh oh.");
@@ -70,8 +71,8 @@ public class ChartCounty {
 		TimeSeriesCollection collection = new TimeSeriesCollection();
 		collection.addSeries(cSeries);
 		collection.addSeries(dSeries);
-		String title = c.getName() + " County, " + Date.dayToDate(stats.getLastDay()) + "\n(14-day totals"
-				+ (log ? ", logarithmic" : "") + ")";
+		String title = String.format("%s County, %s\n(%s%s)", c.getName(), Date.dayToDate(stats.getLastDay()),
+				smoothing.description, (log ? ", logarithmic" : ""));
 		String verticalAxis = "14-day totals";
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title, "Date", verticalAxis, collection);
 
@@ -95,8 +96,8 @@ public class ChartCounty {
 	public void createCountyStats(CountyStats county) {
 		String folder = Charts.TOP_FOLDER + "\\county";
 		new File(folder).mkdir();
-		buildCountyTimeseriesChart(county, folder, false);
-		buildCountyTimeseriesChart(county, folder, true);
+		buildCountyTimeseriesChart(county, folder, false, Smoothing.TOTAL_14_DAY);
+		buildCountyTimeseriesChart(county, folder, true, Smoothing.TOTAL_14_DAY);
 	}
 
 }
