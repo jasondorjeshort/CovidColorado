@@ -22,7 +22,10 @@ import java.util.concurrent.TimeUnit;
  */
 public class MyExecutor {
 
-	private static final ExecutorService codePool = Executors.newWorkStealingPool();
+	private static final int processors = Runtime.getRuntime().availableProcessors();
+	private static final int threads = Math.max(processors / 2, 1);
+
+	private static final ExecutorService codePool = Executors.newFixedThreadPool(threads);
 
 	static Runnable catchWrapper(Runnable command) {
 		return new Runnable() {
