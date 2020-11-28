@@ -19,8 +19,8 @@ package covid;
 public class CountyStats {
 	// cumulative stats for ONE county
 	private final String name, displayName;
-	private final FinalNumbers cases = new FinalNumbers();
-	private final FinalNumbers deaths = new FinalNumbers();
+	private final FinalNumbers cases = new FinalNumbers(NumbersType.CASES);
+	private final FinalNumbers deaths = new FinalNumbers(NumbersType.DEATHS);
 
 	CountyStats(String name) {
 		this.name = name;

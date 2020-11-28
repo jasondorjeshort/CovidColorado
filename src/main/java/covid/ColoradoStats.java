@@ -76,7 +76,7 @@ public class ColoradoStats {
 	 * pandemic, so there's some special case handling to fill both values with
 	 * the same number in early data.
 	 */
-	public final FinalNumbers confirmedDeaths = new FinalNumbers();
+	public final FinalNumbers confirmedDeaths = new FinalNumbers(null);
 
 	/*
 	 * Colorado has two testing numbers.
@@ -94,7 +94,7 @@ public class ColoradoStats {
 	 * pandemic, so there's some special case handling to fill both values with
 	 * the same number in early data.
 	 */
-	public final FinalNumbers peopleTested = new FinalNumbers();
+	public final FinalNumbers peopleTested = new FinalNumbers(null);
 
 	public double getPositivity(int day, int interval) {
 		double c = getNumbers(NumbersType.CASES).getNumbersInInterval(day, interval);
@@ -116,6 +116,10 @@ public class ColoradoStats {
 
 	public IncompleteNumbers getNumbers(NumbersType type, NumbersTiming timing) {
 		return incompleteNumbers[type.ordinal() * NumbersTiming.values().length + timing.ordinal()];
+	}
+
+	private void setNumbers(NumbersType type, FinalNumbers numbers) {
+		finalNumbers[type.ordinal()] = numbers;
 	}
 
 	public FinalNumbers getNumbers(NumbersType type) {
@@ -492,13 +496,11 @@ public class ColoradoStats {
 	}
 
 	public ColoradoStats() {
-		for (NumbersTiming timing : NumbersTiming.values()) {
-			for (NumbersType type : NumbersType.values()) {
+		for (NumbersType type : NumbersType.values()) {
+			setNumbers(type, new FinalNumbers(type));
+			for (NumbersTiming timing : NumbersTiming.values()) {
 				setNumbers(type, timing, new IncompleteNumbers(type, timing));
 			}
-		}
-		for (int i = 0; i < finalNumbers.length; i++) {
-			finalNumbers[i] = new FinalNumbers();
 		}
 
 		/*

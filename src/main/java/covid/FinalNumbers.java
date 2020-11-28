@@ -29,6 +29,11 @@ import java.util.ArrayList;
 public class FinalNumbers {
 
 	private final ArrayList<Integer> numbers = new ArrayList<>();
+	public final NumbersType type;
+	
+	public FinalNumbers(NumbersType type) {
+		this.type = type;
+	}
 
 	public int getNumbersInInterval(int day, int interval) {
 		return getCumulativeNumbers(day) - getCumulativeNumbers(day - interval);
