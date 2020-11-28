@@ -30,7 +30,7 @@ public class FinalNumbers {
 
 	private final ArrayList<Integer> numbers = new ArrayList<>();
 	public final NumbersType type;
-	
+
 	public FinalNumbers(NumbersType type) {
 		this.type = type;
 	}
@@ -74,5 +74,17 @@ public class FinalNumbers {
 			numbers.add(0);
 		}
 		numbers.set(day, numbersForDay);
+	}
+
+	public void build() {
+		int max = Integer.MAX_VALUE;
+		for (int day = numbers.size() - 1; day >= 0; day--) {
+			int number = numbers.get(day);
+			if (number > max) {
+				numbers.set(day, max);
+			} else {
+				max = number;
+			}
+		}
 	}
 }

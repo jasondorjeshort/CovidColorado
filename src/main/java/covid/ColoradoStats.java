@@ -551,11 +551,16 @@ public class ColoradoStats {
 		for (IncompleteNumbers incompletes : incompleteNumbers) {
 			incompletes.build(this);
 		}
+		for (FinalNumbers finals : finalNumbers) {
+			finals.build();
+		}
 
 		if (true) {
 			outputProjections(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION);
 			outputDailyStats();
 		}
+
+		counties.forEach((name, county) -> county.build());
 
 		// System.exit(0);
 	}
