@@ -1,6 +1,5 @@
 package charts;
 
-import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 
@@ -8,9 +7,7 @@ import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.ValueAxis;
-import org.jfree.chart.plot.IntervalMarker;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.ui.TextAnchor;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
@@ -139,7 +136,7 @@ public class ChartRates {
 		// chart.getXYPlot().setRangeAxis(new LogarithmicAxis("Cases"));
 
 		XYPlot plot = chart.getXYPlot();
-		plot.addDomainMarker(Charts.getIncompleteMarker(dayOfData-35));
+		plot.addDomainMarker(Charts.getIncompleteMarker(dayOfData - 35));
 
 		if (fixedHeight != null) {
 			DateAxis xAxis = (DateAxis) plot.getDomainAxis();
