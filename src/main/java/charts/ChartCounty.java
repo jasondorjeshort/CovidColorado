@@ -73,7 +73,7 @@ public class ChartCounty {
 		collection.addSeries(dSeries);
 		String title = String.format("%s County, %s\n(%s%s)", c.getName(), Date.dayToDate(stats.getLastDay()),
 				smoothing.description, (log ? ", logarithmic" : ""));
-		String verticalAxis = "14-day totals";
+		String verticalAxis = smoothing.description;
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title, "Date", verticalAxis, collection);
 
 		if (log) {
@@ -96,8 +96,8 @@ public class ChartCounty {
 	public void createCountyStats(CountyStats county) {
 		String folder = Charts.TOP_FOLDER + "\\county";
 		new File(folder).mkdir();
-		buildCountyTimeseriesChart(county, folder, false, Smoothing.TOTAL_14_DAY);
-		buildCountyTimeseriesChart(county, folder, true, Smoothing.TOTAL_14_DAY);
+		buildCountyTimeseriesChart(county, folder, false, Smoothing.TOTAL_7_DAY);
+		buildCountyTimeseriesChart(county, folder, true, Smoothing.TOTAL_7_DAY);
 	}
 
 }
