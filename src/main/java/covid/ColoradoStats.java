@@ -549,7 +549,7 @@ public class ColoradoStats {
 		}
 
 		for (IncompleteNumbers incompletes : incompleteNumbers) {
-			incompletes.build(this);
+			incompletes.build();
 		}
 		for (FinalNumbers finals : finalNumbers) {
 			finals.build();

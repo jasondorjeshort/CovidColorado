@@ -130,8 +130,9 @@ public class IncompleteNumbers {
 
 	public double SAMPLE_DAYS = 14;
 
-	public void build(ColoradoStats stats) {
+	public void build() {
 		if (isCumulative) {
+			// TODO: should avoid negatives first
 			for (int dayOfData = 0; dayOfData < allNumbers.size(); dayOfData++) {
 				double last = 0;
 				Daily daily = allNumbers.get(dayOfData);
@@ -149,16 +150,16 @@ public class IncompleteNumbers {
 		 * Delay 10 means the difference from day 10 to day 11. This will be in
 		 * the array under incomplete[10].
 		 */
-		for (int delay = 0; delay < stats.getLastDay(); delay++) {
-			for (int typeDay = 0; typeDay < stats.getLastDay() - delay; typeDay++) {
+		for (int delay = 0; delay < allNumbers.size(); delay++) {
+			for (int typeDay = 0; typeDay < allNumbers.size() - delay; typeDay++) {
 				int dayOfData1 = typeDay + delay;
 				int dayOfData2 = typeDay + delay + 1;
 
 				double numbers1 = getNumbers(dayOfData1, typeDay);
 				double numbers2 = getNumbers(dayOfData2, typeDay);
-				double newRatio = (double) numbers2 / numbers1;
+				double newRatio = numbers2 / numbers1;
 
-				if (numbers1 <= 0 || numbers2 <= 0) {
+				if (numbers1 <= 0 || numbers2 <= 0 || !Double.isFinite(numbers1) || !Double.isFinite(numbers2)) {
 					continue;
 				}
 
