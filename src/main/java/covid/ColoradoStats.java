@@ -528,6 +528,9 @@ public class ColoradoStats {
 		 */
 		for (int dayOfData = getFirstDay(); dayOfData <= getLastDay(); dayOfData++) {
 			double casesOnDay = getNumbers(NumbersType.CASES).getDailyNumbers(dayOfData);
+			if (casesOnDay == 0) {
+				continue;
+			}
 			double testsOnDay = getNumbers(NumbersType.TESTS).getDailyNumbers(dayOfData);
 			double positivity = casesOnDay / testsOnDay;
 			// System.out.println(String.format("%s : %.0f/%.0f = %.2f",
