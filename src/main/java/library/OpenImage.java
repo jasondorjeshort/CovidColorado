@@ -1,11 +1,7 @@
-package covid;
+package library;
 
 import java.io.IOException;
 import java.util.LinkedList;
-import java.util.concurrent.TimeUnit;
-
-import charts.ChartMaker;
-import library.MyExecutor;
 
 /**
  * This program is free software: you can redistribute it and/or modify it under
@@ -23,18 +19,26 @@ import library.MyExecutor;
  * 
  * @author jdorje@gmail.com
  */
-public class Main {
+public class OpenImage {
 
-	public static void main(String[] args) {
-		long time = System.currentTimeMillis();
-		ColoradoStats stats = new ColoradoStats();
-
-		System.out.println("Read stats in " + (System.currentTimeMillis() - time) + " ms.");
-
-		ChartMaker charts = new ChartMaker(stats);
-		charts.buildCharts();
-
-		MyExecutor.awaitTermination(1, TimeUnit.DAYS);
-		System.out.println("Built charts in " + (System.currentTimeMillis() - time) + " ms.");
+	/**
+	 * This just opens the given file name (with extension) in irfanview.
+	 * Irfanview must be installed at the location hard-coded here.
+	 * 
+	 * @param fileName
+	 *            File name
+	 */
+	public static void openImage(String fileName) {
+		if (fileName != null) {
+			LinkedList<String> process = new LinkedList<>();
+			process.add("C:\\Program Files (x86)\\IrfanView\\i_view32.exe");
+			process.add(fileName);
+			try {
+				new ProcessBuilder(process).start();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			System.out.println("Opened " + fileName + ".");
+		}
 	}
 }

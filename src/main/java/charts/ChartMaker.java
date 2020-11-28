@@ -2,6 +2,7 @@ package charts;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import org.jfree.chart.ChartFactory;
@@ -161,7 +162,7 @@ public class ChartMaker {
 
 	}
 
-	public String buildCharts() {
+	public void buildCharts() {
 		new File(Charts.TOP_FOLDER).mkdir();
 		ChartCounty county = new ChartCounty(stats);
 		ChartIncompletes incompletes = new ChartIncompletes(stats);
@@ -177,7 +178,9 @@ public class ChartMaker {
 					MyExecutor.executeCode(() -> incompletes.buildTimeseriesCharts(type, timing, false));
 				}
 			}
-			return null;
+
+			MyExecutor.awaitTermination(1, TimeUnit.DAYS);
+			System.exit(0);
 		}
 
 		MyExecutor.executeCode(() -> createCumulativeStats());
@@ -203,7 +206,5 @@ public class ChartMaker {
 				false, false, false, true));
 
 		stats.getCounties().forEach((key, value) -> MyExecutor.executeCode(() -> county.createCountyStats(value)));
-
-		return null;
 	}
 }
