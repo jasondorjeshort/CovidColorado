@@ -110,6 +110,10 @@ public class ColoradoStats {
 		return c / t;
 	}
 
+	private void setNumbers(NumbersType type, NumbersTiming timing, IncompleteNumbers numbers) {
+		incompleteNumbers[type.ordinal() * NumbersTiming.values().length + timing.ordinal()] = numbers;
+	}
+
 	public IncompleteNumbers getNumbers(NumbersType type, NumbersTiming timing) {
 		return incompleteNumbers[type.ordinal() * NumbersTiming.values().length + timing.ordinal()];
 	}
@@ -488,8 +492,10 @@ public class ColoradoStats {
 	}
 
 	public ColoradoStats() {
-		for (int i = 0; i < incompleteNumbers.length; i++) {
-			incompleteNumbers[i] = new IncompleteNumbers();
+		for (NumbersTiming timing : NumbersTiming.values()) {
+			for (NumbersType type : NumbersType.values()) {
+				setNumbers(type, timing, new IncompleteNumbers(type, timing));
+			}
 		}
 		for (int i = 0; i < finalNumbers.length; i++) {
 			finalNumbers[i] = new FinalNumbers();

@@ -45,6 +45,14 @@ public class IncompleteNumbers {
 
 	private final ArrayList<Daily> allNumbers = new ArrayList<>();
 
+	public final NumbersType type;
+	public final NumbersTiming timing;
+
+	public IncompleteNumbers(NumbersType type, NumbersTiming timing) {
+		this.type = type;
+		this.timing = timing;
+	}
+
 	public double getNumbers(int dayOfData, int dayOfType, boolean projected) {
 		if (projected) {
 			return getProjectedNumbers(dayOfData, dayOfType);
