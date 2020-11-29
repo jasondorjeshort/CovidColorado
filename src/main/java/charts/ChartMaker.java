@@ -2,6 +2,9 @@ package charts;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.LinkedList;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -125,18 +128,20 @@ public class ChartMaker {
 				false, true, 0, false);
 	}
 
-	public void buildNewTimeseriesCharts(NumbersType type, NumbersTiming timing) {
+	public String buildNewTimeseriesCharts(NumbersType type, NumbersTiming timing) {
 		for (int dayOfData = stats.getFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
 			buildNewTimeseriesChart(type, timing, dayOfData);
 		}
+		return null;
 	}
 
-	public BufferedImage buildAgeTimeseriesChart(NumbersType type, NumbersTiming timing, int finalDay) {
+	public String buildAgeTimeseriesChart(NumbersType type, NumbersTiming timing, int finalDay) {
 		String by = "age-" + type.lowerName + "-" + timing.lowerName;
 		IncompleteNumbers numbers = stats.getNumbers(type, timing);
-		return buildCasesTimeseriesChart(by, Date.dayToFullDate(finalDay), finalDay,
+		buildCasesTimeseriesChart(by, Date.dayToFullDate(finalDay), finalDay,
 				dayOfData -> numbers.getAverageAgeOfNewNumbers(dayOfData, Smoothing.TOTAL_14_DAY), null, by, "?", false,
 				false, 0, false);
+		return null;
 	}
 
 	public void createCumulativeStats() {
@@ -162,10 +167,35 @@ public class ChartMaker {
 
 	}
 
+	private long buildStarted;
+	private final LinkedList<Future<String>> background = new LinkedList<>();
+
+	private void build(Callable<String> run) {
+		background.add(MyExecutor.submitCode(run));
+	}
+
+	private void awaitBuild() {
+		MyExecutor.executeWeb(new Runnable() {
+			@Override
+			public void run() {
+				while (background.size() > 0) {
+					try {
+						background.pop().get();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+				System.out.println("Built charts in " + (System.currentTimeMillis() - buildStarted) + " ms.");
+			}
+		});
+	}
+
 	public void buildCharts() {
 		new File(Charts.TOP_FOLDER).mkdir();
 		ChartCounty county = new ChartCounty(stats);
 		ChartIncompletes incompletes = new ChartIncompletes(stats);
+
+		buildStarted = System.currentTimeMillis();
 
 		if (false) {
 			Charts.TOP_FOLDER = "H:\\CovidCoCharts";
@@ -174,11 +204,12 @@ public class ChartMaker {
 			// NumbersTiming.INFECTION, false);
 			for (NumbersTiming timing : NumbersTiming.values()) {
 				for (NumbersType type : NumbersType.values()) {
-					MyExecutor.executeCode(() -> incompletes.buildTimeseriesCharts(type, timing, true));
-					MyExecutor.executeCode(() -> incompletes.buildTimeseriesCharts(type, timing, false));
+					build(() -> incompletes.buildTimeseriesCharts(type, timing, true));
+					build(() -> incompletes.buildTimeseriesCharts(type, timing, false));
 				}
 			}
 
+			awaitBuild();
 			MyExecutor.awaitTermination(1, TimeUnit.DAYS);
 			System.exit(0);
 		}
@@ -187,24 +218,26 @@ public class ChartMaker {
 
 		for (NumbersTiming timing : NumbersTiming.values()) {
 			for (NumbersType type : NumbersType.values()) {
-				MyExecutor.executeCode(() -> incompletes.buildTimeseriesCharts(type, timing, true));
-				MyExecutor.executeCode(() -> incompletes.buildTimeseriesCharts(type, timing, false));
-				MyExecutor.executeCode(() -> buildNewTimeseriesCharts(type, timing));
-				MyExecutor.executeCode(() -> buildAgeTimeseriesChart(type, timing, stats.getLastDay()));
+				build(() -> incompletes.buildTimeseriesCharts(type, timing, true));
+				build(() -> incompletes.buildTimeseriesCharts(type, timing, false));
+				build(() -> buildNewTimeseriesCharts(type, timing));
+				build(() -> buildAgeTimeseriesChart(type, timing, stats.getLastDay()));
 			}
 		}
 
-		MyExecutor.executeCode(() -> ChartRates.buildRates(stats, "rates", "Colorado rates by day of infection, ", true,
-				true, true, true));
-		MyExecutor.executeCode(() -> ChartRates.buildRates(stats, "CFR", "Colorado rates by day of infection, ", true,
-				false, false, false));
-		MyExecutor.executeCode(() -> ChartRates.buildRates(stats, "CHR", "Colorado rates by day of infection, ", false,
-				true, false, false));
-		MyExecutor.executeCode(() -> ChartRates.buildRates(stats, "HFR", "Colorado rates by day of infection, ", false,
-				false, true, false));
-		MyExecutor.executeCode(() -> ChartRates.buildRates(stats, "Positivity", "Colorado rates by day of infection, ",
-				false, false, false, true));
+		build(() -> ChartRates.buildRates(stats, "rates", "Colorado rates by day of infection, ", true, true, true,
+				true));
+		build(() -> ChartRates.buildRates(stats, "CFR", "Colorado rates by day of infection, ", true, false, false,
+				false));
+		build(() -> ChartRates.buildRates(stats, "CHR", "Colorado rates by day of infection, ", false, true, false,
+				false));
+		build(() -> ChartRates.buildRates(stats, "HFR", "Colorado rates by day of infection, ", false, false, true,
+				false));
+		build(() -> ChartRates.buildRates(stats, "Positivity", "Colorado rates by day of infection, ", false, false,
+				false, true));
 
-		stats.getCounties().forEach((key, value) -> MyExecutor.executeCode(() -> county.createCountyStats(value)));
+		stats.getCounties().forEach((key, value) -> build(() -> county.createCountyStats(value)));
+
+		awaitBuild();
 	}
 }

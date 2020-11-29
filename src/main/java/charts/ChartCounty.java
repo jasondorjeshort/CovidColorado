@@ -93,11 +93,12 @@ public class ChartCounty {
 		return image;
 	}
 
-	public void createCountyStats(CountyStats county) {
+	public String createCountyStats(CountyStats county) {
 		String folder = Charts.TOP_FOLDER + "\\county";
 		new File(folder).mkdir();
 		buildCountyTimeseriesChart(county, folder, false, Smoothing.TOTAL_7_DAY);
 		buildCountyTimeseriesChart(county, folder, true, Smoothing.TOTAL_7_DAY);
+		return null;
 	}
 
 }

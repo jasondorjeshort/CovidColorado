@@ -1,12 +1,12 @@
 package main;
 
 import java.io.IOException;
-import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 
 import charts.ChartMaker;
 import covid.ColoradoStats;
 import library.MyExecutor;
+import web.WebServer;
 
 /**
  * This program is free software: you can redistribute it and/or modify it under
@@ -35,7 +35,16 @@ public class Main {
 		ChartMaker charts = new ChartMaker(stats);
 		charts.buildCharts();
 
+		if (false) {
+			try {
+				new WebServer().start();
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.exit(0);
+			}
+		}
+
 		MyExecutor.awaitTermination(1, TimeUnit.DAYS);
-		System.out.println("Built charts in " + (System.currentTimeMillis() - time) + " ms.");
+		System.out.println("Exiting in " + (System.currentTimeMillis() - time) + " ms.");
 	}
 }
