@@ -21,6 +21,8 @@ import java.util.LinkedList;
  */
 public class OpenImage {
 
+	private static int opened = 0;
+
 	/**
 	 * This just opens the given file name (with extension) in irfanview.
 	 * Irfanview must be installed at the location hard-coded here.
@@ -28,8 +30,12 @@ public class OpenImage {
 	 * @param fileName
 	 *            File name
 	 */
-	public static void openImage(String fileName) {
+	public static synchronized void openImage(String fileName) {
 		if (fileName == null) {
+			return;
+		}
+		if (opened > 4) {
+			new Exception("Cannot open that many " + fileName).printStackTrace();
 			return;
 		}
 		try {
@@ -42,6 +48,7 @@ public class OpenImage {
 				e.printStackTrace();
 			}
 			System.out.println("Opened " + fileName + ".");
+			opened++;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
