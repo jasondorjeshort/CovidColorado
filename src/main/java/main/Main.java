@@ -45,6 +45,8 @@ public class Main {
 				MyExecutor.awaitTermination(1, TimeUnit.DAYS);
 				System.exit(0);
 			}
+		} else {
+			MyExecutor.awaitTermination(1, TimeUnit.DAYS);
 		}
 
 		System.out.println("Exiting in " + (System.currentTimeMillis() - time) + " ms.");
