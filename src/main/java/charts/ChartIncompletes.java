@@ -124,10 +124,17 @@ public class ChartIncompletes {
 				Date.dayToDate(dayOfData), type.smoothing.description, log ? ", logarithmic" : "");
 
 		String fileName = type.lowerName + "-" + timing.lowerName + (log ? "-log" : "-cart");
-		return buildCasesTimeseriesChart(fileName, Date.dayToFullDate(dayOfData), dayOfData,
+		BufferedImage bi = buildCasesTimeseriesChart(fileName, Date.dayToFullDate(dayOfData), dayOfData,
 				dayOfOnset -> stats.getNumbers(type, timing).getNumbers(dayOfData, dayOfOnset, false, type.smoothing),
 				dayOfOnset -> stats.getNumbers(type, timing).getNumbers(dayOfData, dayOfOnset, true, type.smoothing),
 				title, type.capName, log, false, 0, log && timing == NumbersTiming.INFECTION);
+
+		if (timing == NumbersTiming.INFECTION && log && dayOfData == stats.getLastDay()) {
+			// hack on name here
+			library.OpenImage
+					.openImage(Charts.TOP_FOLDER + "\\" + fileName + "\\" + Date.dayToFullDate(dayOfData) + ".png");
+		}
+		return bi;
 	}
 
 	public String buildTimeseriesCharts(NumbersType type, NumbersTiming timing, boolean log) {
