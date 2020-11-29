@@ -1,5 +1,8 @@
 package covid;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -24,6 +27,40 @@ public enum NumbersType {
 
 	NumbersType(Smoothing smoothing) {
 		this.smoothing = smoothing;
+	}
+
+	public static String name(NumbersType type) {
+		if (type == null) {
+			return "full";
+		}
+		return type.lowerName;
+	}
+
+	public static Set<NumbersType> getSet(NumbersType type) {
+		Set<NumbersType> types = new HashSet<>();
+		if (type == null) {
+			for (NumbersType t : NumbersType.values()) {
+				types.add(t);
+			}
+		} else {
+			types.add(type);
+		}
+		return types;
+	}
+
+	public static String name(Set<NumbersType> types, String sep) {
+		String name = null;
+		for (NumbersType type : NumbersType.values()) {
+			if (!types.contains(type)) {
+				continue;
+			}
+			if (name == null) {
+				name = type.lowerName;
+			} else {
+				name = name + sep + type.lowerName;
+			}
+		}
+		return name;
 	}
 
 	public final String lowerName = name().toLowerCase();

@@ -3,6 +3,7 @@ package charts;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.LinkedList;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -169,9 +170,11 @@ public class ChartMaker {
 
 	private long buildStarted = System.currentTimeMillis();
 	private final LinkedList<Future<String>> background = new LinkedList<>();
+	private int runs = 0;
 
 	private void build(Callable<String> run) {
 		background.add(MyExecutor.submitCode(run));
+		runs++;
 	}
 
 	private void awaitBuild() {
@@ -185,7 +188,8 @@ public class ChartMaker {
 						e.printStackTrace();
 					}
 				}
-				System.out.println("Built charts in " + (System.currentTimeMillis() - buildStarted) + " ms.");
+				System.out.println("Built charts in " + (System.currentTimeMillis() - buildStarted) + " ms with " + runs
+						+ " executions.");
 			}
 		});
 	}
@@ -197,16 +201,13 @@ public class ChartMaker {
 
 		buildStarted = System.currentTimeMillis();
 
+		Charts.TOP_FOLDER = "H:\\CovidCoCharts";
 		if (false) {
-			Charts.TOP_FOLDER = "H:\\CovidCoCharts";
 			new File(Charts.TOP_FOLDER).mkdir();
-			// incompletes.buildTimeseriesCharts(NumbersType.CASES,
-			// NumbersTiming.INFECTION, false);
+
+			Set<NumbersType> fullTypes = NumbersType.getSet(null);
 			for (NumbersTiming timing : NumbersTiming.values()) {
-				for (NumbersType type : NumbersType.values()) {
-					build(() -> incompletes.buildTimeseriesCharts(type, timing, true));
-					build(() -> incompletes.buildTimeseriesCharts(type, timing, false));
-				}
+				build(() -> incompletes.buildCharts(fullTypes, timing, true, true));
 			}
 
 			awaitBuild();
@@ -215,10 +216,16 @@ public class ChartMaker {
 
 		MyExecutor.executeCode(() -> createCumulativeStats());
 
+		Set<NumbersType> fullTypes = NumbersType.getSet(null);
 		for (NumbersTiming timing : NumbersTiming.values()) {
-			for (NumbersType type : NumbersType.values()) {
-				build(() -> incompletes.buildTimeseriesCharts(type, timing, true));
-				build(() -> incompletes.buildTimeseriesCharts(type, timing, false));
+			build(() -> incompletes.buildCharts(fullTypes, timing, true, true));
+		}
+
+		for (NumbersType type : NumbersType.values()) {
+			Set<NumbersType> types = NumbersType.getSet(type);
+			for (NumbersTiming timing : NumbersTiming.values()) {
+				build(() -> incompletes.buildCharts(types, timing, true, true));
+				build(() -> incompletes.buildCharts(types, timing, true, false));
 				build(() -> buildNewTimeseriesCharts(type, timing));
 				build(() -> buildAgeTimeseriesChart(type, timing, stats.getLastDay()));
 			}

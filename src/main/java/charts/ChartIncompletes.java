@@ -1,7 +1,7 @@
 package charts;
 
-import java.awt.image.BufferedImage;
-import java.util.function.Function;
+import java.io.File;
+import java.util.Set;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
@@ -18,6 +18,7 @@ import com.madgag.gif.fmsware.AnimatedGifEncoder;
 import covid.ColoradoStats;
 import covid.Date;
 import covid.Event;
+import covid.IncompleteNumbers;
 import covid.NumbersTiming;
 import covid.NumbersType;
 
@@ -44,52 +45,90 @@ public class ChartIncompletes {
 
 	private final ColoradoStats stats;
 
-	private BufferedImage buildCasesTimeseriesChart(String folder, String fileName, int dayOfData,
-			Function<Integer, Double> getCasesForDay, Function<Integer, Double> getProjectedCasesForDay, String title,
-			String verticalAxis, boolean log, boolean showAverage, int daysToSkip, boolean showEvents) {
+	private Chart buildChart(String baseName, int dayOfData, Set<NumbersType> types, NumbersTiming timing,
+			boolean projections, boolean logarithmic) {
+		TimeSeriesCollection collection = new TimeSeriesCollection();
+		int incomplete = Integer.MAX_VALUE;
+		String verticalAxis = null;
+		StringBuilder title = new StringBuilder();
+		boolean multi = (types.size() > 1);
 
-		folder = Charts.TOP_FOLDER + "\\" + folder;
+		title.append("Colorado ");
+		if (multi) {
+			title.append("COVID numbers");
+		} else {
+			for (NumbersType type : types) {
+				title.append(type.lowerName);
+			}
+		}
+		title.append(" by ");
+		title.append(timing.lowerName);
+		title.append(" date as of ");
+		title.append(Date.dayToDate(dayOfData));
+		if (logarithmic || !multi) {
+			title.append("\n(");
+			if (logarithmic) {
+				title.append("logarithmic ");
+			}
+			if (types.size() == 1) {
+				for (NumbersType type : types) {
+					title.append(type.lowerName + " ");
+				}
+			}
+			title.delete(title.length() - 1, title.length());
+			title.append(")");
+		}
 
-		TimeSeries series = new TimeSeries("Cases");
-		TimeSeries projectedSeries = new TimeSeries("Projected");
-		Integer incomplete = null;
-		for (int d = Math.max(showAverage ? dayOfData - 30 : 0, stats.getFirstDay()); d <= dayOfData
-				- daysToSkip; d++) {
-			Day ddd = Date.dayToDay(d);
+		for (NumbersType type : NumbersType.values()) {
+			if (!types.contains(type)) {
+				continue;
+			}
+			String desc;
+			if (multi) {
+				desc = type.capName + " (" + type.smoothing.description + ")";
+			} else {
+				desc = type.capName;
+			}
+			TimeSeries series = new TimeSeries(desc);
+			TimeSeries pSeries = new TimeSeries(type.capName + " (projected)");
+			IncompleteNumbers numbers = stats.getNumbers(type, timing);
 
-			double cases = getCasesForDay.apply(d);
+			for (int d = stats.getFirstDay(); d <= dayOfData; d++) {
+				Day ddd = Date.dayToDay(d);
 
-			if (!log || cases > 0) {
-				series.add(ddd, cases);
+				double cases = numbers.getNumbers(dayOfData, d, false, type.smoothing);
+
+				if (!logarithmic || cases > 0) {
+					series.add(ddd, cases);
+				}
+
+				double projected = numbers.getNumbers(dayOfData, d, true, type.smoothing);
+				if (projections && (!logarithmic || projected > 0)) {
+					pSeries.add(ddd, projected);
+				}
+				if (cases > 0 && projected / cases > 1.1) {
+					incomplete = Math.min(incomplete, d);
+				}
 			}
 
-			if (getProjectedCasesForDay != null) {
-				double projected = getProjectedCasesForDay.apply(d);
-				if (!log || projected > 0) {
-					projectedSeries.add(ddd, projected);
-				}
+			collection.addSeries(series);
+			if (projections) {
+				collection.addSeries(pSeries);
+			}
 
-				if (incomplete == null && cases > 0) {
-					// 10% inaccuracy is huge, but anything less seems to go WAY
-					// back due to changes in really old data
-					if (projected / cases > 1.1) {
-						incomplete = d;
-					}
-				}
+			if (verticalAxis == null) {
+				verticalAxis = type.capName;
+			} else {
+				verticalAxis = verticalAxis + " / " + type.capName;
 			}
 		}
 
 		// dataset.addSeries("Cases", series);
 
-		TimeSeriesCollection collection = new TimeSeriesCollection();
-		collection.addSeries(series);
-		if (getProjectedCasesForDay != null) {
-			collection.addSeries(projectedSeries);
-		}
-		JFreeChart chart = ChartFactory.createTimeSeriesChart(title, "Date", verticalAxis, collection);
+		JFreeChart chart = ChartFactory.createTimeSeriesChart(title.toString(), "Date", verticalAxis, collection);
 
 		XYPlot plot = chart.getXYPlot();
-		if (log) {
+		if (logarithmic) {
 			LogarithmicAxis yAxis = new LogarithmicAxis(verticalAxis);
 			yAxis.setLowerBound(1);
 			yAxis.setUpperBound(100000);
@@ -104,51 +143,40 @@ public class ChartIncompletes {
 
 			ValueMarker marker = Charts.getTodayMarker(dayOfData);
 			plot.addDomainMarker(marker);
-
-			if (showEvents) {
-				Event.addEvents(plot);
-			}
 		}
 
-		if (incomplete != null) {
+		if (timing == NumbersTiming.INFECTION) {
+			Event.addEvents(plot);
+		}
+
+		if (incomplete >= stats.getFirstDay() && incomplete <= stats.getLastDay()) {
 			plot.addDomainMarker(Charts.getIncompleteMarker(incomplete));
 		}
 
-		BufferedImage image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT);
-		Charts.saveBufferedImageAsPNG(folder, fileName, image);
-		return image;
-	}
-
-	private BufferedImage buildTimeseriesChart(NumbersType type, NumbersTiming timing, int dayOfData, boolean log) {
-		String title = String.format("Colorado %s by %s date as of %s\n(%s%s)", type.lowerName, timing.lowerName,
-				Date.dayToDate(dayOfData), type.smoothing.description, log ? ", logarithmic" : "");
-
-		String fileName = type.lowerName + "-" + timing.lowerName + (log ? "-log" : "-cart");
-		BufferedImage bi = buildCasesTimeseriesChart(fileName, Date.dayToFullDate(dayOfData), dayOfData,
-				dayOfOnset -> stats.getNumbers(type, timing).getNumbers(dayOfData, dayOfOnset, false, type.smoothing),
-				dayOfOnset -> stats.getNumbers(type, timing).getNumbers(dayOfData, dayOfOnset, true, type.smoothing),
-				title, type.capName, log, false, 0, log && timing == NumbersTiming.INFECTION);
-
-		if (timing == NumbersTiming.INFECTION && log && dayOfData == stats.getLastDay()) {
-			// hack on name here
-			library.OpenImage
-					.openImage(Charts.TOP_FOLDER + "\\" + fileName + "\\" + Date.dayToFullDate(dayOfData) + ".png");
+		Chart c = new Chart();
+		c.image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT);
+		c.fileName = Charts.TOP_FOLDER + "\\" + baseName + "\\" + Date.dayToFullDate(dayOfData, '-') + ".png";
+		c.saveAsPNG();
+		if (timing == NumbersTiming.INFECTION && types.size() >= 4 && logarithmic && dayOfData == stats.getLastDay()) {
+			c.open();
 		}
-		return bi;
+		return c;
 	}
 
-	public String buildTimeseriesCharts(NumbersType type, NumbersTiming timing, boolean log) {
+	public String buildCharts(Set<NumbersType> types, NumbersTiming timing, boolean projections, boolean logarithmic) {
 		AnimatedGifEncoder gif = new AnimatedGifEncoder();
-		String fileName = type.lowerName + "-" + timing.lowerName + (log ? "-log" : "-cart");
-		String name = Charts.TOP_FOLDER + "\\" + fileName + ".gif";
-		gif.start(name);
+		String baseName = NumbersType.name(types, "-") + "-" + timing.lowerName + (logarithmic ? "-log" : "-cart")
+				+ (projections ? "-p" : "-c");
+		String gifName = Charts.TOP_FOLDER + "\\" + baseName + ".gif";
+		new File(Charts.TOP_FOLDER + "\\" + baseName).mkdir();
+		gif.start(gifName);
 		for (int dayOfData = stats.getFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
-			BufferedImage bi = buildTimeseriesChart(type, timing, dayOfData, log);
+			Chart c = buildChart(baseName, dayOfData, types, timing, projections, logarithmic);
 			Charts.setDelay(stats, dayOfData, gif);
-			gif.addFrame(bi);
+			gif.addFrame(c.image);
 		}
 		gif.finish();
-		return name;
+		return gifName;
 	}
 
 }

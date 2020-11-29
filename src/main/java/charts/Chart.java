@@ -1,6 +1,14 @@
 package charts;
 
 import java.awt.image.BufferedImage;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+
+import org.jfree.chart.encoders.EncoderUtil;
+import org.jfree.chart.encoders.ImageFormat;
 
 /**
  * This program is free software: you can redistribute it and/or modify it under
@@ -25,5 +33,23 @@ public class Chart {
 	public Chart(String fileName, BufferedImage image) {
 		this.fileName = fileName;
 		this.image = image;
+	}
+
+	public Chart() {
+		this.fileName = null;
+		this.image = null;
+	}
+
+	public void saveAsPNG() {
+		File file = new File(fileName);
+		try (OutputStream out = new BufferedOutputStream(new FileOutputStream(file))) {
+			EncoderUtil.writeBufferedImage(image, ImageFormat.PNG, out);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void open() {
+		library.OpenImage.openImage(fileName);
 	}
 }
