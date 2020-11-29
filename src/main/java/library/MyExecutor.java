@@ -92,7 +92,6 @@ public class MyExecutor {
 		shutdown();
 		try {
 			if (codePool.awaitTermination(timeout, unit) && webPool.awaitTermination(timeout, unit)) {
-				System.out.println("Successfully waited out termination.");
 				return true;
 			}
 			webPool.shutdownNow();
