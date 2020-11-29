@@ -167,7 +167,7 @@ public class ChartMaker {
 
 	}
 
-	private long buildStarted;
+	private long buildStarted = System.currentTimeMillis();
 	private final LinkedList<Future<String>> background = new LinkedList<>();
 
 	private void build(Callable<String> run) {
@@ -210,8 +210,7 @@ public class ChartMaker {
 			}
 
 			awaitBuild();
-			MyExecutor.awaitTermination(1, TimeUnit.DAYS);
-			System.exit(0);
+			return;
 		}
 
 		MyExecutor.executeCode(() -> createCumulativeStats());
