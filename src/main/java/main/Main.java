@@ -1,10 +1,11 @@
-package covid;
+package main;
 
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 
 import charts.ChartMaker;
+import covid.ColoradoStats;
 import library.MyExecutor;
 
 /**
