@@ -20,11 +20,11 @@ import org.nanohttpd.protocols.http.NanoHTTPD;
  * 
  * @author jdorje@gmail.com
  */
-public class WebServer extends NanoHTTPD {
+public class CovidServer extends NanoHTTPD {
 
-	final static int port = 8080;
+	final static int port = 8888;
 
-	public WebServer() throws IOException {
+	public CovidServer() throws IOException {
 		super(port);
 		setAsyncRunner(new PoolRunner());
 		start(NanoHTTPD.SOCKET_READ_TIMEOUT, false);
