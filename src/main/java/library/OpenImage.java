@@ -29,7 +29,10 @@ public class OpenImage {
 	 *            File name
 	 */
 	public static void openImage(String fileName) {
-		if (fileName != null) {
+		if (fileName == null) {
+			return;
+		}
+		try {
 			LinkedList<String> process = new LinkedList<>();
 			process.add("C:\\Program Files (x86)\\IrfanView\\i_view32.exe");
 			process.add(fileName);
@@ -39,6 +42,8 @@ public class OpenImage {
 				e.printStackTrace();
 			}
 			System.out.println("Opened " + fileName + ".");
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 }
