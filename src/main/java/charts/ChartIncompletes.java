@@ -131,7 +131,7 @@ public class ChartIncompletes {
 		if (logarithmic) {
 			LogarithmicAxis yAxis = new LogarithmicAxis(verticalAxis);
 			yAxis.setLowerBound(1);
-			yAxis.setUpperBound(100000);
+			yAxis.setUpperBound(200000);
 			plot.setRangeAxis(yAxis);
 
 			DateAxis xAxis = new DateAxis("Date");
