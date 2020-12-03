@@ -201,14 +201,13 @@ public class ChartMaker {
 
 		buildStarted = System.currentTimeMillis();
 
-		Charts.TOP_FOLDER = "H:\\CovidCoCharts";
 		if (false) {
+			Charts.TOP_FOLDER = "H:\\CovidCoCharts";
 			new File(Charts.TOP_FOLDER).mkdir();
 
-			Set<NumbersType> fullTypes = NumbersType.getSet(null);
-			for (NumbersTiming timing : NumbersTiming.values()) {
-				build(() -> incompletes.buildCharts(fullTypes, timing, true, true));
-			}
+			Set<NumbersType> fullTypes = NumbersType.getSet(NumbersType.CASES, NumbersType.HOSPITALIZATIONS);
+
+			build(() -> incompletes.buildCharts(fullTypes, NumbersTiming.INFECTION, true, true));
 
 			awaitBuild();
 			return;
@@ -216,9 +215,10 @@ public class ChartMaker {
 
 		MyExecutor.executeCode(() -> createCumulativeStats());
 
-		Set<NumbersType> fullTypes = NumbersType.getSet(null);
+		Set<NumbersType> fullTypes = NumbersType.getSet();
 		for (NumbersTiming timing : NumbersTiming.values()) {
 			build(() -> incompletes.buildCharts(fullTypes, timing, true, true));
+			build(() -> incompletes.buildCharts(fullTypes, timing, false, true));
 		}
 
 		for (NumbersType type : NumbersType.values()) {

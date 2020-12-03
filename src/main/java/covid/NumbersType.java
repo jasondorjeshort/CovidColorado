@@ -23,7 +23,7 @@ public enum NumbersType {
 	CASES(Smoothing.GEOMETRIC_SYMMETRIC_WEEKLY),
 	HOSPITALIZATIONS(Smoothing.GEOMETRIC_SYMMETRIC_WEEKLY),
 	DEATHS(Smoothing.ALGEBRAIC_SYMMETRIC_WEEKLY),
-	TESTS(Smoothing.ALGEBRAIC_SYMMETRIC_WEEKLY);
+	TESTS(Smoothing.GEOMETRIC_SYMMETRIC_WEEKLY);
 
 	NumbersType(Smoothing smoothing) {
 		this.smoothing = smoothing;
@@ -36,14 +36,16 @@ public enum NumbersType {
 		return type.lowerName;
 	}
 
-	public static Set<NumbersType> getSet(NumbersType type) {
+	public static Set<NumbersType> getSet(NumbersType... type) {
 		Set<NumbersType> types = new HashSet<>();
-		if (type == null) {
+		if (type.length == 0) {
 			for (NumbersType t : NumbersType.values()) {
 				types.add(t);
 			}
 		} else {
-			types.add(type);
+			for (NumbersType t : type) {
+				types.add(t);
+			}
 		}
 		return types;
 	}
