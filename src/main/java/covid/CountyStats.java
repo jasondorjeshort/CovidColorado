@@ -45,7 +45,7 @@ public class CountyStats {
 	public String getDisplayName() {
 		return displayName;
 	}
-	
+
 	public void build() {
 		cases.build();
 		deaths.build();
