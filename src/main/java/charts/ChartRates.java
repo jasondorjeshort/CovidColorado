@@ -68,7 +68,7 @@ public class ChartRates {
 					dayOfData, dayOfInfection, INTERVAL);
 			double tests = stats.getCasesInInterval(NumbersType.TESTS, NumbersTiming.INFECTION, dayOfData,
 					dayOfInfection, INTERVAL);
-			double testsProjected = stats.getCasesInInterval(NumbersType.TESTS, NumbersTiming.INFECTION, dayOfData,
+			double testsProjected = stats.getProjectedCasesInInterval(NumbersType.TESTS, NumbersTiming.INFECTION, dayOfData,
 					dayOfInfection, INTERVAL);
 
 			if (!Double.isFinite(cases) || cases == 0) {
@@ -176,7 +176,7 @@ public class ChartRates {
 				fixedHeight = Math.max(fixedHeight, 10);
 			}
 			if (useCHR) {
-				fixedHeight = Math.max(fixedHeight, 40);
+				fixedHeight = Math.max(fixedHeight, 16);
 			}
 			if (useHFR) {
 				fixedHeight = Math.max(fixedHeight, 50);
