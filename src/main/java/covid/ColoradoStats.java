@@ -142,24 +142,6 @@ public class ColoradoStats {
 		return getNumbers(type, timing).getProjectedNumbers(dayOfData, dayOfType);
 	}
 
-	public double getSmoothedProjectedCasesByType(NumbersType type, NumbersTiming timing, int dayOfData,
-			int dayOfType) {
-		double sum = 0;
-		for (int i = -3; i <= 3; i++) {
-			sum += getExactProjectedCasesByType(type, timing, dayOfData, dayOfType + i);
-		}
-		return sum / 7.0;
-		/*
-		 * return getExactProjectedCasesByType(type, timing, dayOfData,
-		 * dayOfType) * 0.4 + getExactProjectedCasesByType(type, timing,
-		 * dayOfData, dayOfType + 1) * 0.2 + getExactProjectedCasesByType(type,
-		 * timing, dayOfData, dayOfType - 1) * 0.2 +
-		 * getExactProjectedCasesByType(type, timing, dayOfData, dayOfType + 2)
-		 * * 0.1 + getExactProjectedCasesByType(type, timing, dayOfData,
-		 * dayOfType - 2) * 0.1;
-		 */
-	}
-
 	public double getProjectedCasesInInterval(NumbersType type, NumbersTiming timing, int dayOfData, int dayOfType,
 			int interval) {
 		double sum = 0;
