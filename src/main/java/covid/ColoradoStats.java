@@ -134,39 +134,9 @@ public class ColoradoStats {
 		return lastDay;
 	}
 
-	public double getCasesByType(NumbersType type, NumbersTiming timing, int dayOfData, int dayOfType) {
-		return getNumbers(type, timing).getNumbers(dayOfData, dayOfType);
-	}
-
-	public double getExactProjectedCasesByType(NumbersType type, NumbersTiming timing, int dayOfData, int dayOfType) {
-		return getNumbers(type, timing).getProjectedNumbers(dayOfData, dayOfType);
-	}
-
-	public double getProjectedCasesInInterval(NumbersType type, NumbersTiming timing, int dayOfData, int dayOfType,
-			int interval) {
-		double sum = 0;
-
-		for (int i = 0; i < interval; i++) {
-			sum += getExactProjectedCasesByType(type, timing, dayOfData, dayOfType - i);
-		}
-
-		return sum;
-	}
-
-	public double getCasesInInterval(NumbersType type, NumbersTiming timing, int dayOfData, int dayOfType,
-			int interval) {
-		double sum = 0;
-
-		for (int i = 0; i < interval; i++) {
-			sum += getCasesByType(type, timing, dayOfData, dayOfType - i);
-		}
-
-		return sum;
-	}
-
 	public double getNewCasesByType(NumbersType type, NumbersTiming timing, int dayOfData, int dayOfType) {
-		return getCasesByType(type, timing, dayOfData, dayOfType)
-				- getCasesByType(type, timing, dayOfData - 1, dayOfType);
+		return getNumbers(type, timing).getNumbers(dayOfData, dayOfType)
+				- getNumbers(type, timing).getNumbers(dayOfData - 1, dayOfType);
 	}
 
 	public int getLastDayOfType(NumbersType type, NumbersTiming timing, int dayOfData) {
@@ -199,9 +169,9 @@ public class ColoradoStats {
 
 			// IncompleteNumbers numbers = getNumbers(type, timing);
 
-			double c = getExactProjectedCasesByType(type, timing, dayOfData, dayOfType);
-			double week = getProjectedCasesInInterval(type, timing, dayOfData, dayOfType, DAYS);
-			double lastWeek = getProjectedCasesInInterval(type, timing, dayOfData, dayOfType - DAYS, DAYS);
+			double c = getNumbers(type, timing).getProjectedNumbers(dayOfData, dayOfType);
+			double week = getNumbers(type, timing).getNumbers(dayOfData, dayOfType, true, 7);
+			double lastWeek = getNumbers(type, timing).getNumbers(dayOfData, dayOfType - DAYS, true, 7);
 			double growth = 100 * Math.pow(week / lastWeek, 1.0 / DAYS) - 100;
 			System.out.println(type.capName + "," + timing.capName + "," + Date.dayToDate(dayOfType) + " => "
 					+ dayOfType + " => " + c + " => " + week + " => " + growth + "%");

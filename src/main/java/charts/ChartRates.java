@@ -17,6 +17,7 @@ import com.madgag.gif.fmsware.AnimatedGifEncoder;
 import covid.ColoradoStats;
 import covid.Date;
 import covid.Event;
+import covid.IncompleteNumbers;
 import covid.NumbersTiming;
 import covid.NumbersType;
 
@@ -52,24 +53,24 @@ public class ChartRates {
 		TimeSeries pos = new TimeSeries("Positivity");
 		TimeSeries posProjected = new TimeSeries("Positivity (projected)");
 
+		IncompleteNumbers tNumbers = stats.getNumbers(NumbersType.TESTS, NumbersTiming.INFECTION);
+		IncompleteNumbers cNumbers = stats.getNumbers(NumbersType.CASES, NumbersTiming.INFECTION);
+		IncompleteNumbers hNumbers = stats.getNumbers(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION);
+		IncompleteNumbers dNumbers = stats.getNumbers(NumbersType.DEATHS, NumbersTiming.INFECTION);
+
 		for (int dayOfInfection = (age == null || fixedHeight != null ? 0
 				: stats.getLastDay() - age); dayOfInfection <= stats.getLastDay(); dayOfInfection++) {
-			double cases = stats.getCasesInInterval(NumbersType.CASES, NumbersTiming.INFECTION, dayOfData,
-					dayOfInfection, INTERVAL);
-			double hosp = stats.getCasesInInterval(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION, dayOfData,
-					dayOfInfection, INTERVAL);
-			double deaths = stats.getCasesInInterval(NumbersType.DEATHS, NumbersTiming.INFECTION, dayOfData,
-					dayOfInfection, INTERVAL);
-			double casesProjected = stats.getProjectedCasesInInterval(NumbersType.CASES, NumbersTiming.INFECTION,
-					dayOfData, dayOfInfection, INTERVAL);
-			double hospProjected = stats.getProjectedCasesInInterval(NumbersType.HOSPITALIZATIONS,
-					NumbersTiming.INFECTION, dayOfData, dayOfInfection, INTERVAL);
-			double deathsProjected = stats.getProjectedCasesInInterval(NumbersType.DEATHS, NumbersTiming.INFECTION,
-					dayOfData, dayOfInfection, INTERVAL);
-			double tests = stats.getCasesInInterval(NumbersType.TESTS, NumbersTiming.INFECTION, dayOfData,
-					dayOfInfection, INTERVAL);
-			double testsProjected = stats.getProjectedCasesInInterval(NumbersType.TESTS, NumbersTiming.INFECTION, dayOfData,
-					dayOfInfection, INTERVAL);
+			double tests = tNumbers.getNumbers(dayOfData, dayOfInfection, false, INTERVAL);
+			double testsProjected = tNumbers.getNumbers(dayOfData, dayOfInfection, true, INTERVAL);
+
+			double cases = cNumbers.getNumbers(dayOfData, dayOfInfection, false, INTERVAL);
+			double casesProjected = cNumbers.getNumbers(dayOfData, dayOfInfection, true, INTERVAL);
+
+			double hosp = hNumbers.getNumbers(dayOfData, dayOfInfection, false, INTERVAL);
+			double hospProjected = hNumbers.getNumbers(dayOfData, dayOfInfection, true, INTERVAL);
+
+			double deaths = dNumbers.getNumbers(dayOfData, dayOfInfection, false, INTERVAL);
+			double deathsProjected = dNumbers.getNumbers(dayOfData, dayOfInfection, true, INTERVAL);
 
 			if (!Double.isFinite(cases) || cases == 0) {
 				continue;

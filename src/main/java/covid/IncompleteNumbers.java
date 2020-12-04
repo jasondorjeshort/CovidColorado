@@ -88,6 +88,14 @@ public class IncompleteNumbers {
 		throw new RuntimeException("...");
 	}
 
+	public double getNumbers(int dayOfData, int dayOfType, boolean projected, int interval) {
+		double numbers = 0;
+		for (int d = 0; d < interval; d++) {
+			numbers += getNumbers(dayOfData, dayOfType - d, projected);
+		}
+		return numbers;
+	}
+
 	public double getNumbers(int dayOfData, int dayOfType) {
 		if (dayOfData >= allNumbers.size()) {
 			return 0;
