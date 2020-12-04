@@ -21,6 +21,7 @@ import covid.Event;
 import covid.IncompleteNumbers;
 import covid.NumbersTiming;
 import covid.NumbersType;
+import covid.Smoothing;
 
 /**
  * This program is free software: you can redistribute it and/or modify it under
@@ -46,12 +47,15 @@ public class ChartIncompletes {
 	private final ColoradoStats stats;
 
 	private Chart buildChart(String baseName, int dayOfData, Set<NumbersType> types, NumbersTiming timing,
-			boolean projections, boolean logarithmic) {
+			boolean logarithmic) {
 		TimeSeriesCollection collection = new TimeSeriesCollection();
 		int incomplete = Integer.MAX_VALUE;
 		String verticalAxis = null;
 		StringBuilder title = new StringBuilder();
+
 		boolean multi = (types.size() > 1);
+		boolean useProjections = (types.size() == 1);
+		boolean useExact = (types.size() == 1);
 
 		title.append("Colorado ");
 		if (multi) {
@@ -91,19 +95,26 @@ public class ChartIncompletes {
 			}
 			TimeSeries series = new TimeSeries(desc);
 			TimeSeries pSeries = new TimeSeries(type.capName + " (projected)");
+			TimeSeries exact = new TimeSeries("Exact");
 			IncompleteNumbers numbers = stats.getNumbers(type, timing);
 
 			for (int d = stats.getFirstDay(); d <= dayOfData; d++) {
 				Day ddd = Date.dayToDay(d);
 
 				double cases = numbers.getNumbers(dayOfData, d, false, type.smoothing);
-
 				if (!logarithmic || cases > 0) {
 					series.add(ddd, cases);
 				}
 
+				if (useExact) {
+					double exactNumbers = numbers.getNumbers(dayOfData, d, false, Smoothing.NONE);
+					if (!logarithmic || cases > 0) {
+						exact.add(ddd, exactNumbers);
+					}
+				}
+
 				double projected = numbers.getNumbers(dayOfData, d, true, type.smoothing);
-				if (projections && (!logarithmic || projected > 0)) {
+				if (useProjections && (!logarithmic || projected > 0)) {
 					pSeries.add(ddd, projected);
 				}
 				if (cases > 0 && projected / cases > 1.1) {
@@ -112,8 +123,11 @@ public class ChartIncompletes {
 			}
 
 			collection.addSeries(series);
-			if (projections) {
+			if (useProjections) {
 				collection.addSeries(pSeries);
+			}
+			if (useExact) {
+				collection.addSeries(exact);
 			}
 
 			if (verticalAxis == null) {
@@ -163,20 +177,23 @@ public class ChartIncompletes {
 		return c;
 	}
 
-	public String buildCharts(Set<NumbersType> types, NumbersTiming timing, boolean projections, boolean logarithmic) {
+	public String buildCharts(Set<NumbersType> types, NumbersTiming timing, boolean logarithmic) {
 		AnimatedGifEncoder gif = new AnimatedGifEncoder();
-		String baseName = NumbersType.name(types, "-") + "-" + timing.lowerName + (logarithmic ? "-log" : "-cart")
-				+ (projections ? "-p" : "-c");
+		String baseName = NumbersType.name(types, "-") + "-" + timing.lowerName + (logarithmic ? "-log" : "-cart");
 		String gifName = Charts.TOP_FOLDER + "\\" + baseName + ".gif";
 		new File(Charts.TOP_FOLDER + "\\" + baseName).mkdir();
 		gif.start(gifName);
 		for (int dayOfData = stats.getFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
-			Chart c = buildChart(baseName, dayOfData, types, timing, projections, logarithmic);
+			Chart c = buildChart(baseName, dayOfData, types, timing, logarithmic);
 			Charts.setDelay(stats, dayOfData, gif);
 			gif.addFrame(c.image);
 		}
 		gif.finish();
 		return gifName;
+	}
+
+	public String buildCharts(NumbersType type, NumbersTiming timing, boolean logarithmic) {
+		return buildCharts(NumbersType.getSet(type), timing, logarithmic);
 	}
 
 }

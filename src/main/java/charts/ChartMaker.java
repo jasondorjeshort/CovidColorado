@@ -197,6 +197,7 @@ public class ChartMaker {
 		new File(Charts.TOP_FOLDER).mkdir();
 		ChartCounty county = new ChartCounty(stats);
 		ChartIncompletes incompletes = new ChartIncompletes(stats);
+		Set<NumbersType> fullTypes = NumbersType.getSet();
 
 		buildStarted = System.currentTimeMillis();
 
@@ -204,9 +205,7 @@ public class ChartMaker {
 			Charts.TOP_FOLDER = "H:\\CovidCoCharts";
 			new File(Charts.TOP_FOLDER).mkdir();
 
-			Set<NumbersType> fullTypes = NumbersType.getSet(NumbersType.CASES, NumbersType.HOSPITALIZATIONS);
-
-			build(() -> incompletes.buildCharts(fullTypes, NumbersTiming.INFECTION, true, true));
+			build(() -> incompletes.buildCharts(NumbersType.CASES, NumbersTiming.INFECTION, true));
 
 			awaitBuild();
 			return;
@@ -214,17 +213,16 @@ public class ChartMaker {
 
 		MyExecutor.executeCode(() -> createCumulativeStats());
 
-		Set<NumbersType> fullTypes = NumbersType.getSet();
 		for (NumbersTiming timing : NumbersTiming.values()) {
-			build(() -> incompletes.buildCharts(fullTypes, timing, true, true));
-			build(() -> incompletes.buildCharts(fullTypes, timing, false, true));
+			build(() -> incompletes.buildCharts(fullTypes, timing, true));
+			build(() -> incompletes.buildCharts(fullTypes, timing, false));
 		}
 
 		for (NumbersType type : NumbersType.values()) {
 			Set<NumbersType> types = NumbersType.getSet(type);
 			for (NumbersTiming timing : NumbersTiming.values()) {
-				build(() -> incompletes.buildCharts(types, timing, true, true));
-				build(() -> incompletes.buildCharts(types, timing, true, false));
+				build(() -> incompletes.buildCharts(types, timing, true));
+				build(() -> incompletes.buildCharts(types, timing, false));
 				build(() -> buildNewTimeseriesCharts(type, timing));
 				build(() -> buildAgeTimeseriesChart(type, timing, stats.getLastDay()));
 			}
