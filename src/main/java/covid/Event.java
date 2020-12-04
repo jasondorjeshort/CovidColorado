@@ -35,7 +35,7 @@ public class Event {
 			new Event("Intervention", "11-05-2020"),
 			// new Event("RED", "11-20-2020"),
 			// new Event("Intervention", "11-05-2020")
-	};
+			new Event("TG", "11-26-2020"), };
 
 	public Event(String name, String date) {
 		this.name = name;
