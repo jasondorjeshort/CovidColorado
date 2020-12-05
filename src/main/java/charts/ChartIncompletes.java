@@ -54,7 +54,7 @@ public class ChartIncompletes {
 		StringBuilder title = new StringBuilder();
 
 		boolean multi = (types.size() > 1);
-		boolean useProjections = (types.size() == 1);
+		boolean useProjections = true;
 		boolean useExact = (types.size() == 1);
 
 		title.append("Colorado ");
