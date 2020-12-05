@@ -205,7 +205,7 @@ public class ChartMaker {
 			Charts.TOP_FOLDER = "H:\\CovidCoCharts";
 			new File(Charts.TOP_FOLDER).mkdir();
 
-			build(() -> incompletes.buildCharts(NumbersType.CASES, NumbersTiming.INFECTION, true));
+			build(() -> incompletes.buildCharts(fullTypes, NumbersTiming.INFECTION, true));
 
 			awaitBuild();
 			return;
