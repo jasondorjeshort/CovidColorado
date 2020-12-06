@@ -88,4 +88,11 @@ public class Charts {
 			gif.setDelay(50);
 		}
 	}
+
+	public static double ratio(double v1, double v2) {
+		if (v1 == 0 || v2 == 0 || !Double.isFinite(v1) || !Double.isFinite(v2)) {
+			return 0;
+		}
+		return Math.max(v1 / v2, v2 / v1);
+	}
 }

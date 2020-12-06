@@ -46,10 +46,12 @@ public class ChartIncompletes {
 
 	private final ColoradoStats stats;
 
+	private static final double incompleteCutoff = 1.1;
+
 	private Chart buildChart(String baseName, int dayOfData, Set<NumbersType> types, NumbersTiming timing,
 			boolean logarithmic) {
 		TimeSeriesCollection collection = new TimeSeriesCollection();
-		int incomplete = Integer.MAX_VALUE;
+		int incomplete = dayOfData + 1;
 		String verticalAxis = null;
 		StringBuilder title = new StringBuilder();
 
@@ -117,7 +119,7 @@ public class ChartIncompletes {
 				if (useProjections && (!logarithmic || projected > 0)) {
 					pSeries.add(ddd, projected);
 				}
-				if (cases > 0 && projected / cases > 1.1) {
+				if (cases > 0 && Charts.ratio(projected, cases) > incompleteCutoff) {
 					incomplete = Math.min(incomplete, d);
 				}
 			}

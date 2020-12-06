@@ -39,6 +39,8 @@ import covid.NumbersType;
  */
 public class ChartRates {
 
+	private static final double incompleteCutoff = 1.21;
+
 	private static BufferedImage buildRates(ColoradoStats stats, int dayOfData, String fileName, String title,
 			boolean useCFR, boolean useCHR, boolean useHFR, boolean usePositivity, Integer age, Integer fixedHeight) {
 
@@ -58,19 +60,25 @@ public class ChartRates {
 		IncompleteNumbers hNumbers = stats.getNumbers(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION);
 		IncompleteNumbers dNumbers = stats.getNumbers(NumbersType.DEATHS, NumbersTiming.INFECTION);
 
+		int incomplete = dayOfData + 1;
+
 		for (int dayOfInfection = (age == null || fixedHeight != null ? 0
 				: stats.getLastDay() - age); dayOfInfection <= stats.getLastDay(); dayOfInfection++) {
 			double tests = tNumbers.getNumbers(dayOfData, dayOfInfection, false, INTERVAL);
 			double testsProjected = tNumbers.getNumbers(dayOfData, dayOfInfection, true, INTERVAL);
+			double testsRatio = Charts.ratio(tests, testsProjected);
 
 			double cases = cNumbers.getNumbers(dayOfData, dayOfInfection, false, INTERVAL);
 			double casesProjected = cNumbers.getNumbers(dayOfData, dayOfInfection, true, INTERVAL);
+			double casesRatio = Charts.ratio(cases, casesProjected);
 
 			double hosp = hNumbers.getNumbers(dayOfData, dayOfInfection, false, INTERVAL);
 			double hospProjected = hNumbers.getNumbers(dayOfData, dayOfInfection, true, INTERVAL);
+			double hospRatio = Charts.ratio(hosp, hospProjected);
 
 			double deaths = dNumbers.getNumbers(dayOfData, dayOfInfection, false, INTERVAL);
 			double deathsProjected = dNumbers.getNumbers(dayOfData, dayOfInfection, true, INTERVAL);
+			double deathsRatio = Charts.ratio(deaths, deathsProjected);
 
 			if (!Double.isFinite(cases) || cases == 0) {
 				continue;
@@ -83,18 +91,30 @@ public class ChartRates {
 			}
 			if (Double.isFinite(casesProjected) && casesProjected > 0) {
 				cfrProjected.add(ddd, 100.0 * deathsProjected / casesProjected);
+
+				if (useCFR && casesRatio * hospRatio > incompleteCutoff) {
+					incomplete = Math.min(incomplete, dayOfInfection);
+				}
 			}
 			if (Double.isFinite(cases) && cases > 0) {
 				chr.add(ddd, 100.0 * hosp / cases);
 			}
 			if (Double.isFinite(casesProjected) && casesProjected > 0) {
 				chrProjected.add(ddd, 100.0 * hospProjected / casesProjected);
+
+				if (useCHR && hospRatio * casesRatio > incompleteCutoff) {
+					incomplete = Math.min(incomplete, dayOfInfection);
+				}
 			}
 			if (Double.isFinite(hosp) && hosp > 0) {
 				hfr.add(ddd, 100.0 * deaths / hosp);
 			}
 			if (Double.isFinite(hospProjected) && hospProjected > 0) {
 				hfrProjected.add(ddd, 100.0 * deathsProjected / hospProjected);
+
+				if (useHFR && deathsRatio * hospRatio > incompleteCutoff) {
+					incomplete = Math.min(incomplete, dayOfInfection);
+				}
 			}
 
 			if (Double.isFinite(tests) && tests > 0) {
@@ -102,6 +122,10 @@ public class ChartRates {
 			}
 			if (Double.isFinite(testsProjected) && testsProjected > 0) {
 				posProjected.add(ddd, 100.0 * casesProjected / testsProjected);
+
+				if (usePositivity && casesRatio * testsRatio > incompleteCutoff) {
+					incomplete = Math.min(incomplete, dayOfInfection);
+				}
 			}
 		}
 
@@ -137,7 +161,9 @@ public class ChartRates {
 		// chart.getXYPlot().setRangeAxis(new LogarithmicAxis("Cases"));
 
 		XYPlot plot = chart.getXYPlot();
-		plot.addDomainMarker(Charts.getIncompleteMarker(dayOfData - 35));
+		if (incomplete < Integer.MAX_VALUE) {
+			plot.addDomainMarker(Charts.getIncompleteMarker(incomplete));
+		}
 
 		if (fixedHeight != null) {
 			DateAxis xAxis = (DateAxis) plot.getDomainAxis();
