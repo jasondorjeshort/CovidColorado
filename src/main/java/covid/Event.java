@@ -34,7 +34,9 @@ public class Event {
 			// new Event("ENS", "10-25-2020"),
 			new Event("10-30", "10-30-2020"), new Event("RED", "11-20-2020"),
 			// new Event("Intervention", "11-05-2020")
-			 new Event("TG", "11-26-2020"),
+			new Event("TG", "11-26-2020"),
+
+			// keep this below
 	};
 
 	public Event(String name, String date) {
