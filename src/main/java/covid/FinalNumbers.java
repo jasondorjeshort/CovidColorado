@@ -53,14 +53,32 @@ public class FinalNumbers {
 			return getNumbersInInterval(day, 14);
 		case TOTAL_7_DAY:
 			return getNumbersInInterval(day, 7);
+		case GEOMETRIC_SYMMETRIC_WEEKLY:
+			double product = 1;
+			for (int d = -3; d <= 3; d++) {
+				int daily = getDailyNumbers(day + d);
+
+				product *= daily;
+			}
+			product = Math.pow(product, 1 / 7.0);
+			if (!Double.isFinite(product)) {
+				throw new RuntimeException("Uh oh: " + product);
+			}
+			return product;
+		case TOTAL_30_DAY:
+			return getNumbersInInterval(day, 30);
 		default:
+			break;
 		}
 		throw new RuntimeException("FAIL");
 	}
 
 	public int getCumulativeNumbers(int day) {
-		if (day < 0 || day >= numbers.size()) {
+		if (day < 0 || numbers.size() == 0) {
 			return 0;
+		}
+		if (day >= numbers.size()) {
+			day = numbers.size() - 1;
 		}
 		Integer numbersForDay = numbers.get(day);
 		if (numbersForDay == null) {
