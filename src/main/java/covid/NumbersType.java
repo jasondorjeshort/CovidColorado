@@ -20,10 +20,10 @@ import java.util.Set;
  * @author jdorje@gmail.com
  */
 public enum NumbersType {
-	CASES(Smoothing.GEOMETRIC_SYMMETRIC_WEEKLY),
-	HOSPITALIZATIONS(Smoothing.GEOMETRIC_SYMMETRIC_WEEKLY),
+	CASES(Smoothing.NONE),
+	HOSPITALIZATIONS(Smoothing.ALGEBRAIC_SYMMETRIC_WEEKLY),
 	DEATHS(Smoothing.ALGEBRAIC_SYMMETRIC_WEEKLY),
-	TESTS(Smoothing.GEOMETRIC_SYMMETRIC_WEEKLY);
+	TESTS(Smoothing.NONE);
 
 	NumbersType(Smoothing smoothing) {
 		this.smoothing = smoothing;

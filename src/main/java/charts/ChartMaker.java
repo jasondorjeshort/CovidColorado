@@ -61,7 +61,7 @@ public class ChartMaker {
 
 		TimeSeries series = new TimeSeries("Cases");
 		TimeSeries projectedSeries = new TimeSeries("Projected");
-		for (int d = Math.max(showAverage ? dayOfData - 30 : 0, stats.getFirstDay()); d <= dayOfData
+		for (int d = Math.max(showAverage ? dayOfData - 30 : 0, stats.getFirstDayOfData()); d <= dayOfData
 				- daysToSkip; d++) {
 			Day ddd = Date.dayToDay(d);
 
@@ -102,7 +102,7 @@ public class ChartMaker {
 
 			DateAxis xAxis = new DateAxis("Date");
 
-			xAxis.setMinimumDate(Date.dayToJavaDate(stats.getFirstDay()));
+			xAxis.setMinimumDate(Date.dayToJavaDate(stats.getFirstDayOfData()));
 			xAxis.setMaximumDate(Date.dayToJavaDate(stats.getLastDay() + 14));
 
 			plot.setDomainAxis(xAxis);
@@ -129,7 +129,7 @@ public class ChartMaker {
 	}
 
 	public String buildNewTimeseriesCharts(NumbersType type, NumbersTiming timing) {
-		for (int dayOfData = stats.getFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
+		for (int dayOfData = stats.getFirstDayOfData(); dayOfData <= stats.getLastDay(); dayOfData++) {
 			buildNewTimeseriesChart(type, timing, dayOfData);
 		}
 		return null;
@@ -205,7 +205,8 @@ public class ChartMaker {
 			Charts.TOP_FOLDER = "H:\\CovidCoCharts";
 			new File(Charts.TOP_FOLDER).mkdir();
 
-			build(() -> incompletes.buildCharts(fullTypes, NumbersTiming.INFECTION, true));
+			build(() -> ChartRates.buildRates(stats, "CFR", "Colorado rates by day of infection, ", true, false, false,
+					false));
 
 			awaitBuild();
 			return;

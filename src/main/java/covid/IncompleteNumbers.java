@@ -97,7 +97,7 @@ public class IncompleteNumbers {
 	}
 
 	public double getNumbers(int dayOfData, int dayOfType) {
-		if (dayOfData >= allNumbers.size()) {
+		if (dayOfData >= allNumbers.size() || dayOfData <= 0) {
 			return 0;
 		}
 		Daily daily = allNumbers.get(dayOfData);
@@ -112,6 +112,9 @@ public class IncompleteNumbers {
 	}
 
 	public double getProjectedNumbers(int dayOfData, int dayOfType) {
+		if (dayOfData >= allNumbers.size()) {
+			return 0;
+		}
 		Daily daily = allNumbers.get(dayOfData);
 		ArrayList<Double> projected = daily.projected;
 		if (dayOfType >= projected.size() || dayOfType < 0) {
@@ -236,6 +239,11 @@ public class IncompleteNumbers {
 	 * Sets numbers for the given days.
 	 */
 	public void setNumbers(int dayOfData, int dayOfType, double numbers) {
+		if (dayOfType < 0) {
+			new Exception("Improbable day-of-type " + Date.dayToDate(dayOfType)).printStackTrace();
+			dayOfType = 0;
+		}
+
 		while (allNumbers.size() <= dayOfData) {
 			allNumbers.add(new Daily());
 		}
@@ -300,10 +308,6 @@ public class IncompleteNumbers {
 		}
 
 		return daySum / numbersSum;
-	}
-
-	public double getAverageAgeOfNewNumbers(int dayOfData) {
-		return getAverageAgeOfNewNumbers(dayOfData, Smoothing.TOTAL_14_DAY);
 	}
 
 }

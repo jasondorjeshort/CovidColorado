@@ -41,8 +41,10 @@ public class ChartRates {
 
 	private static final double incompleteCutoff = 1.21;
 
-	private static BufferedImage buildRates(ColoradoStats stats, int dayOfData, String fileName, String title,
-			boolean useCFR, boolean useCHR, boolean useHFR, boolean usePositivity, Integer age, Integer fixedHeight) {
+	private static final NumbersTiming timing = NumbersTiming.INFECTION;
+
+	private static Chart buildRates(ColoradoStats stats, int dayOfData, String fileName, String title, boolean useCFR,
+			boolean useCHR, boolean useHFR, boolean usePositivity, Integer age, Integer fixedHeight) {
 
 		int INTERVAL = 7;
 
@@ -55,10 +57,10 @@ public class ChartRates {
 		TimeSeries pos = new TimeSeries("Positivity");
 		TimeSeries posProjected = new TimeSeries("Positivity (projected)");
 
-		IncompleteNumbers tNumbers = stats.getNumbers(NumbersType.TESTS, NumbersTiming.INFECTION);
-		IncompleteNumbers cNumbers = stats.getNumbers(NumbersType.CASES, NumbersTiming.INFECTION);
-		IncompleteNumbers hNumbers = stats.getNumbers(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION);
-		IncompleteNumbers dNumbers = stats.getNumbers(NumbersType.DEATHS, NumbersTiming.INFECTION);
+		IncompleteNumbers tNumbers = stats.getNumbers(NumbersType.TESTS, timing);
+		IncompleteNumbers cNumbers = stats.getNumbers(NumbersType.CASES, timing);
+		IncompleteNumbers hNumbers = stats.getNumbers(NumbersType.HOSPITALIZATIONS, timing);
+		IncompleteNumbers dNumbers = stats.getNumbers(NumbersType.DEATHS, timing);
 
 		int incomplete = dayOfData + 1;
 
@@ -167,7 +169,7 @@ public class ChartRates {
 
 		if (fixedHeight != null) {
 			DateAxis xAxis = (DateAxis) plot.getDomainAxis();
-			xAxis.setMinimumDate(Date.dayToJavaDate(stats.getFirstDay()));
+			xAxis.setMinimumDate(Date.dayToJavaDate(stats.getFirstDayOfTiming(timing)));
 			xAxis.setMaximumDate(Date.dayToJavaDate(stats.getLastDay()));
 
 			ValueAxis yAxis = plot.getRangeAxis();
@@ -179,9 +181,16 @@ public class ChartRates {
 			Event.addEvents(plot);
 		}
 
-		BufferedImage image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT);
-		Charts.saveBufferedImageAsPNG(Charts.TOP_FOLDER + "\\rates", fileName, image);
-		return image;
+		Chart c = new Chart();
+		c.image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT);
+		c.fileName = Charts.TOP_FOLDER + "\\rates" + "\\" + fileName + ".png";
+		c.saveAsPNG();
+
+		if (timing == NumbersTiming.INFECTION && useCFR && useHFR && useCHR && usePositivity
+				&& dayOfData == stats.getLastDay()) {
+			c.open();
+		}
+		return c;
 	}
 
 	public static String buildRates(ColoradoStats stats, String prefix, String title, boolean useCFR, boolean useCHR,
@@ -193,7 +202,7 @@ public class ChartRates {
 
 		String fileName = Charts.TOP_FOLDER + "\\" + prefix + ".gif";
 		gif.start(fileName);
-		for (int dayOfData = stats.getFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
+		for (int dayOfData = stats.getFirstDayOfTiming(timing); dayOfData <= stats.getLastDay(); dayOfData++) {
 
 			String day = Date.dayToDate(dayOfData);
 			String full = Date.dayToFullDate(dayOfData, '-');
@@ -206,16 +215,16 @@ public class ChartRates {
 				fixedHeight = Math.max(fixedHeight, 16);
 			}
 			if (useHFR) {
-				fixedHeight = Math.max(fixedHeight, 50);
+				fixedHeight = Math.max(fixedHeight, 100);
 			}
 			if (usePositivity) {
 				fixedHeight = Math.max(fixedHeight, 25);
 			}
 
-			BufferedImage bi = buildRates(stats, dayOfData, prefix + "-" + full, title + day, useCFR, useCHR, useHFR,
+			Chart c = buildRates(stats, dayOfData, prefix + "-" + full, title + day, useCFR, useCHR, useHFR,
 					usePositivity, null, fixedHeight);
 			Charts.setDelay(stats, dayOfData, gif);
-			gif.addFrame(bi);
+			gif.addFrame(c.image);
 		}
 
 		gif.finish();

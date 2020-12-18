@@ -100,8 +100,13 @@ public class ChartIncompletes {
 			TimeSeries exact = new TimeSeries("Exact");
 			IncompleteNumbers numbers = stats.getNumbers(type, timing);
 
-			for (int d = stats.getFirstDay(); d <= dayOfData; d++) {
+			for (int d = stats.getFirstDayOfTiming(timing); d <= dayOfData; d++) {
 				Day ddd = Date.dayToDay(d);
+
+				if (ddd == null) {
+					new Exception("Uh oh: " + d).printStackTrace();
+					continue;
+				}
 
 				double cases = numbers.getNumbers(dayOfData, d, false, type.smoothing);
 				if (!logarithmic || cases > 0) {
@@ -152,7 +157,7 @@ public class ChartIncompletes {
 
 			DateAxis xAxis = new DateAxis("Date");
 
-			xAxis.setMinimumDate(Date.dayToJavaDate(stats.getFirstDay()));
+			xAxis.setMinimumDate(Date.dayToJavaDate(Date.dateToDay("9-1-2020")));
 			xAxis.setMaximumDate(Date.dayToJavaDate(stats.getLastDay() + 14));
 
 			plot.setDomainAxis(xAxis);
@@ -165,7 +170,7 @@ public class ChartIncompletes {
 			Event.addEvents(plot);
 		}
 
-		if (incomplete >= stats.getFirstDay() && incomplete <= stats.getLastDay()) {
+		if (incomplete >= stats.getFirstDayOfTiming(timing) && incomplete <= stats.getLastDay()) {
 			plot.addDomainMarker(Charts.getIncompleteMarker(incomplete));
 		}
 
@@ -185,7 +190,7 @@ public class ChartIncompletes {
 		String gifName = Charts.TOP_FOLDER + "\\" + baseName + ".gif";
 		new File(Charts.TOP_FOLDER + "\\" + baseName).mkdir();
 		gif.start(gifName);
-		for (int dayOfData = stats.getFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
+		for (int dayOfData = stats.getFirstDayOfTiming(timing); dayOfData <= stats.getLastDay(); dayOfData++) {
 			Chart c = buildChart(baseName, dayOfData, types, timing, logarithmic);
 			Charts.setDelay(stats, dayOfData, gif);
 			gif.addFrame(c.image);
