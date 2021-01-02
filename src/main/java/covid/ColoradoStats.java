@@ -33,6 +33,7 @@ public class ColoradoStats {
 	private int firstDayOfInfection = Integer.MAX_VALUE;
 	private int firstDayOfOnset = Integer.MAX_VALUE;
 	private int firstDayOfReporting = Integer.MAX_VALUE;
+	private int firstDayOfDeath = Integer.MAX_VALUE;
 
 	private static final int firstCSV = 77; // 77, 314
 
@@ -142,7 +143,8 @@ public class ColoradoStats {
 			return firstDayOfOnset;
 		case REPORTED:
 			return firstDayOfReporting;
-		default:
+		case DEATH:
+			return firstDayOfDeath;
 		}
 		throw new RuntimeException("...");
 	}
@@ -283,7 +285,9 @@ public class ColoradoStats {
 	private final Charset charset = Charset.forName("US-ASCII");
 
 	public boolean readCSV(int dayOfData) {
-		File f = new File(csvFileName(dayOfData));
+		String fname = csvFileName(dayOfData);
+		System.out.println("Reading " + fname);
+		File f = new File(fname);
 		try (CSVParser csv = CSVParser.parse(f, charset, CSVFormat.DEFAULT)) {
 			synchronized (this) {
 				lastDay = Math.max(dayOfData, lastDay);
@@ -375,7 +379,14 @@ public class ColoradoStats {
 					getNumbers(NumbersType.DEATHS, NumbersTiming.INFECTION).setNumbers(dayOfData, dayOfInfection, c);
 				} else if (line.get(0)
 						.equals("Cumulative Number of Deaths From COVID-19 in Colorado by Date of Death")) {
-					// TODO
+
+					int dayOfDeath = Date.dateToDay(line.get(1));
+					int c = Integer.valueOf(line.get(3));
+
+					firstDayOfDeath = Math.min(dayOfDeath, firstDayOfDeath);
+
+					getNumbers(NumbersType.DEATHS, NumbersTiming.DEATH).setNumbers(dayOfData, dayOfDeath, c);
+					getNumbers(NumbersType.DEATHS, NumbersTiming.DEATH).setCumulative();
 				} else if (line.get(0).equals("Cases of COVID-19 in Colorado by Date Reported to the State")
 						|| line.get(0).equals("Case Counts by Reported Date")) {
 					if (line.get(2).equals("Cases")) {
