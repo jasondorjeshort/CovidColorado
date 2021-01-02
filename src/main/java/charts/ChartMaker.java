@@ -202,9 +202,6 @@ public class ChartMaker {
 		buildStarted = System.currentTimeMillis();
 
 		if (false) {
-			Charts.TOP_FOLDER = "H:\\CovidCoCharts";
-			new File(Charts.TOP_FOLDER).mkdir();
-
 			build(() -> ChartRates.buildRates(stats, "CFR", "Colorado rates by day of infection, ", true, false, false,
 					false));
 
