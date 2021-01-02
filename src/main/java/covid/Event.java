@@ -36,6 +36,8 @@ public class Event {
 			// new Event("Intervention", "11-05-2020")
 			new Event("TG", "11-26-2020"),
 
+			new Event("V+5", "12-19-2020"),
+
 			// keep this below
 	};
 
