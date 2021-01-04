@@ -3,6 +3,7 @@ package covid;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -29,17 +30,17 @@ import org.apache.commons.csv.CSVRecord;
  */
 public class ColoradoStats {
 
-	private int firstDayOfData = 48; // 2/17/2020, first day of data
+	private static final int firstCSV = CalendarUtils.dateToDay("3-17-2020");
+
+	private int firstDayOfCumulative = CalendarUtils.dateToDay("2-17-2020");
 	private int firstDayOfInfection = Integer.MAX_VALUE;
 	private int firstDayOfOnset = Integer.MAX_VALUE;
 	private int firstDayOfReporting = Integer.MAX_VALUE;
 	private int firstDayOfDeath = Integer.MAX_VALUE;
 
-	private static final int firstCSV = 77; // 77, 314
-
 	private static String csvFileName(int day) {
 		return String.format("H:\\Downloads\\CovidColoradoCSV\\covid19_case_summary_%s.csv",
-				Date.dayToFullDate(day, '-'));
+				CalendarUtils.dayToFullDate(day, '-'));
 	}
 
 	private final HashMap<String, CountyStats> counties = new HashMap<>();
@@ -131,8 +132,8 @@ public class ColoradoStats {
 		return finalNumbers[type.ordinal()];
 	}
 
-	public int getFirstDayOfData() {
-		return firstDayOfData;
+	public int getFirstDayOfCumulative() {
+		return firstDayOfCumulative;
 	}
 
 	public int getFirstDayOfTiming(NumbersTiming timing) {
@@ -192,7 +193,7 @@ public class ColoradoStats {
 			double week = getNumbers(type, timing).getNumbers(dayOfData, dayOfType, true, 7);
 			double lastWeek = getNumbers(type, timing).getNumbers(dayOfData, dayOfType - DAYS, true, 7);
 			double growth = 100 * Math.pow(week / lastWeek, 1.0 / DAYS) - 100;
-			System.out.println(type.capName + "," + timing.capName + "," + Date.dayToDate(dayOfType) + " => "
+			System.out.println(type.capName + "," + timing.capName + "," + CalendarUtils.dayToDate(dayOfType) + " => "
 					+ dayOfType + " => " + c + " => " + week + " => " + growth + "%");
 
 		}
@@ -222,8 +223,8 @@ public class ColoradoStats {
 
 	public void outputDailyStats() {
 		int t = lastDay, y = lastDay - 1, w = lastDay - 7;
-		String today = Date.dayToDate(lastDay);
-		String lastWeek = Date.dayToDate(w);
+		String today = CalendarUtils.dayToDate(lastDay);
+		String lastWeek = CalendarUtils.dayToDate(w);
 
 		System.out.println("Update for " + today);
 		System.out.println("Newly released deaths:");
@@ -334,12 +335,12 @@ public class ColoradoStats {
 						// and so treats 100,000 as a separator
 					} else if (line.get(2).equals("Outbreaks")) {
 					} else {
-						write(Date.dayToDate(dayOfData) + "???", line);
+						write(CalendarUtils.dayToDate(dayOfData) + "???", line);
 					}
 				} else if (line.get(0).equals("Case Counts by Onset Date")
 						|| line.get(0).equals("Cases of COVID-19 in Colorado by Date of Illness Onset")) {
 					if (line.get(2).equals("Cases")) {
-						int dayOfOnset = Date.dateToDay(line.get(1));
+						int dayOfOnset = CalendarUtils.dateToDay(line.get(1));
 						int dayOfInfection = Math.max(dayOfOnset - 5, 1); // TODO
 						int c = Integer.valueOf(line.get(3));
 
@@ -352,7 +353,7 @@ public class ColoradoStats {
 				} else if (line.get(0).equals(
 						"Cumulative Number of Hospitalized Cases of COVID-19 in Colorado by Date of Illness Onset")
 						|| line.get(0).equals("Cumulative Number of Hospitalizations by Onset Date")) {
-					int dayOfOnset = Date.dateToDay(line.get(1));
+					int dayOfOnset = CalendarUtils.dateToDay(line.get(1));
 					int dayOfInfection = dayOfOnset - 5;
 					int c = Integer.valueOf(line.get(3));
 
@@ -366,7 +367,7 @@ public class ColoradoStats {
 							dayOfInfection, c);
 				} else if (line.get(0).equals("Cumulative Number of Deaths by Onset Date") || line.get(0)
 						.equals("Cumulative Number of Deaths From COVID-19 in Colorado by Date of Illness")) {
-					int dayOfOnset = Date.dateToDay(line.get(1));
+					int dayOfOnset = CalendarUtils.dateToDay(line.get(1));
 					int dayOfInfection = dayOfOnset - 5;
 					int c = Integer.valueOf(line.get(3));
 
@@ -380,7 +381,7 @@ public class ColoradoStats {
 				} else if (line.get(0)
 						.equals("Cumulative Number of Deaths From COVID-19 in Colorado by Date of Death")) {
 
-					int dayOfDeath = Date.dateToDay(line.get(1));
+					int dayOfDeath = CalendarUtils.dateToDay(line.get(1));
 					int c = Integer.valueOf(line.get(3));
 
 					firstDayOfDeath = Math.min(dayOfDeath, firstDayOfDeath);
@@ -390,7 +391,7 @@ public class ColoradoStats {
 				} else if (line.get(0).equals("Cases of COVID-19 in Colorado by Date Reported to the State")
 						|| line.get(0).equals("Case Counts by Reported Date")) {
 					if (line.get(2).equals("Cases")) {
-						int dayOfReporting = Date.dateToDay(line.get(1));
+						int dayOfReporting = CalendarUtils.dateToDay(line.get(1));
 						firstDayOfReporting = Math.min(firstDayOfReporting, dayOfReporting);
 						int c = Integer.valueOf(line.get(3));
 						getNumbers(NumbersType.CASES, NumbersTiming.REPORTED).setNumbers(dayOfData, dayOfReporting, c);
@@ -403,7 +404,7 @@ public class ColoradoStats {
 						"Cumulative Number of Hospitalized Cases of COVID-19 in Colorado by Date Reported to the State")
 						|| line.get(0).equals("Cumulative Number of Hospitalizations by Reported Date")) {
 					if (line.get(2).equals("Cases")) {
-						int dayOfReporting = Date.dateToDay(line.get(1));
+						int dayOfReporting = CalendarUtils.dateToDay(line.get(1));
 						firstDayOfReporting = Math.min(firstDayOfReporting, dayOfReporting);
 						int c = Integer.valueOf(line.get(3));
 						getNumbers(NumbersType.HOSPITALIZATIONS, NumbersTiming.REPORTED).setCumulative();
@@ -416,7 +417,7 @@ public class ColoradoStats {
 						.equals("Cumulative Number of Deaths From COVID-19 in Colorado by Date Reported to the State")
 						|| line.get(0).equals("Cumulative Number of Deaths by Reported Date")) {
 					if (line.get(2).equals("Cases")) {
-						int dayOfReporting = Date.dateToDay(line.get(1));
+						int dayOfReporting = CalendarUtils.dateToDay(line.get(1));
 						firstDayOfReporting = Math.min(firstDayOfReporting, dayOfReporting);
 						int c = Integer.valueOf(line.get(3));
 						getNumbers(NumbersType.DEATHS, NumbersTiming.REPORTED).setCumulative();
@@ -481,7 +482,7 @@ public class ColoradoStats {
 				} else {
 					if (!keySet.contains(line.get(0))) {
 						keySet.add(line.get(0));
-						write(Date.dayToDate(dayOfData), line);
+						write(CalendarUtils.dayToDate(dayOfData), line);
 					}
 				}
 			}
@@ -493,6 +494,7 @@ public class ColoradoStats {
 	}
 
 	public ColoradoStats() {
+
 		for (NumbersType type : NumbersType.values()) {
 			setNumbers(type, new FinalNumbers(type));
 			for (NumbersTiming timing : NumbersTiming.values()) {
@@ -523,7 +525,7 @@ public class ColoradoStats {
 		 * 
 		 * Imperfect, but it's clearly the "correct" way to approximate it.
 		 */
-		for (int dayOfData = getFirstDayOfData(); dayOfData <= getLastDay(); dayOfData++) {
+		for (int dayOfData = getFirstDayOfCumulative(); dayOfData <= getLastDay(); dayOfData++) {
 			double casesOnDay = getNumbers(NumbersType.CASES).getDailyNumbers(dayOfData);
 			if (casesOnDay == 0) {
 				continue;

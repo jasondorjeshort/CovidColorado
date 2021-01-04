@@ -229,7 +229,7 @@ public class IncompleteNumbers {
 
 		TimeSeries series = new TimeSeries(name);
 		for (int day = firstDay; day < allNumbers.size(); day++) {
-			series.add(Date.dayToDay(day), daily.getNumbers(day, isProjected));
+			series.add(CalendarUtils.dayToDay(day), daily.getNumbers(day, isProjected));
 		}
 
 		return series;
@@ -240,7 +240,7 @@ public class IncompleteNumbers {
 	 */
 	public void setNumbers(int dayOfData, int dayOfType, double numbers) {
 		if (dayOfType < 0) {
-			new Exception("Improbable day-of-type " + Date.dayToDate(dayOfType)).printStackTrace();
+			new Exception("Improbable day-of-type " + CalendarUtils.dayToDate(dayOfType)).printStackTrace();
 			dayOfType = 0;
 		}
 

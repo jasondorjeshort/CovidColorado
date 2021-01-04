@@ -43,7 +43,7 @@ public class Event {
 
 	public Event(String name, String date) {
 		this.name = name;
-		this.time = Date.dateToTime(date);
+		this.time = CalendarUtils.dateToTime(date);
 	}
 
 	public static void addEvents(XYPlot plot) {

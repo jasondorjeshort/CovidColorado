@@ -14,7 +14,7 @@ import org.jfree.data.time.TimeSeriesCollection;
 
 import covid.ColoradoStats;
 import covid.CountyStats;
-import covid.Date;
+import covid.CalendarUtils;
 import covid.Smoothing;
 
 /**
@@ -45,8 +45,8 @@ public class ChartCounty {
 
 		TimeSeries cSeries = new TimeSeries("Cases");
 		TimeSeries dSeries = new TimeSeries("Deaths");
-		for (int day = stats.getFirstDayOfData(); day <= stats.getLastDay(); day++) {
-			Day ddd = Date.dayToDay(day);
+		for (int day = stats.getFirstDayOfCumulative(); day <= stats.getLastDay(); day++) {
+			Day ddd = CalendarUtils.dayToDay(day);
 
 			double cases = c.getCases().getNumbers(day, smoothing);
 			double deaths = c.getDeaths().getNumbers(day, smoothing);
@@ -71,7 +71,7 @@ public class ChartCounty {
 		TimeSeriesCollection collection = new TimeSeriesCollection();
 		collection.addSeries(cSeries);
 		collection.addSeries(dSeries);
-		String title = String.format("%s County, %s\n(%s%s)", c.getName(), Date.dayToDate(stats.getLastDay()),
+		String title = String.format("%s County, %s\n(%s%s)", c.getName(), CalendarUtils.dayToDate(stats.getLastDay()),
 				smoothing.description, (log ? ", logarithmic" : ""));
 		String verticalAxis = smoothing.description;
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title, "Date", verticalAxis, collection);
@@ -82,8 +82,8 @@ public class ChartCounty {
 			plot.setRangeAxis(yAxis);
 
 			DateAxis xAxis = new DateAxis("Date");
-			xAxis.setMinimumDate(Date.dayToJavaDate(stats.getFirstDayOfData()));
-			xAxis.setMaximumDate(Date.dayToJavaDate(stats.getLastDay()));
+			xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(stats.getFirstDayOfCumulative()));
+			xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(stats.getLastDay()));
 			plot.setDomainAxis(xAxis);
 		}
 

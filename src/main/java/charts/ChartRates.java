@@ -15,7 +15,7 @@ import org.jfree.data.time.TimeSeriesCollection;
 import com.madgag.gif.fmsware.AnimatedGifEncoder;
 
 import covid.ColoradoStats;
-import covid.Date;
+import covid.CalendarUtils;
 import covid.Event;
 import covid.IncompleteNumbers;
 import covid.NumbersTiming;
@@ -86,7 +86,7 @@ public class ChartRates {
 				continue;
 			}
 
-			Day ddd = Date.dayToDay(dayOfInfection);
+			Day ddd = CalendarUtils.dayToDay(dayOfInfection);
 
 			if (Double.isFinite(cases) && cases > 0) {
 				cfr.add(ddd, 100.0 * deaths / cases);
@@ -169,8 +169,8 @@ public class ChartRates {
 
 		if (fixedHeight != null) {
 			DateAxis xAxis = (DateAxis) plot.getDomainAxis();
-			xAxis.setMinimumDate(Date.dayToJavaDate(stats.getFirstDayOfTiming(timing)));
-			xAxis.setMaximumDate(Date.dayToJavaDate(stats.getLastDay()));
+			xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(stats.getFirstDayOfTiming(timing)));
+			xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(stats.getLastDay()));
 
 			ValueAxis yAxis = plot.getRangeAxis();
 			yAxis.setLowerBound(0);
@@ -204,8 +204,8 @@ public class ChartRates {
 		gif.start(fileName);
 		for (int dayOfData = stats.getFirstDayOfTiming(timing); dayOfData <= stats.getLastDay(); dayOfData++) {
 
-			String day = Date.dayToDate(dayOfData);
-			String full = Date.dayToFullDate(dayOfData, '-');
+			String day = CalendarUtils.dayToDate(dayOfData);
+			String full = CalendarUtils.dayToFullDate(dayOfData, '-');
 			int fixedHeight = 0;
 
 			if (useCFR) {

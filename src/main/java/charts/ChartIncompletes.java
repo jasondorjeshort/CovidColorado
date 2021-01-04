@@ -16,7 +16,7 @@ import org.jfree.data.time.TimeSeriesCollection;
 import com.madgag.gif.fmsware.AnimatedGifEncoder;
 
 import covid.ColoradoStats;
-import covid.Date;
+import covid.CalendarUtils;
 import covid.Event;
 import covid.IncompleteNumbers;
 import covid.NumbersTiming;
@@ -70,7 +70,7 @@ public class ChartIncompletes {
 		title.append(" by ");
 		title.append(timing.lowerName);
 		title.append(" date as of ");
-		title.append(Date.dayToDate(dayOfData));
+		title.append(CalendarUtils.dayToDate(dayOfData));
 		if (logarithmic || !multi) {
 			title.append("\n(");
 			if (logarithmic) {
@@ -101,7 +101,7 @@ public class ChartIncompletes {
 			IncompleteNumbers numbers = stats.getNumbers(type, timing);
 
 			for (int d = stats.getFirstDayOfTiming(timing); d <= dayOfData; d++) {
-				Day ddd = Date.dayToDay(d);
+				Day ddd = CalendarUtils.dayToDay(d);
 
 				if (ddd == null) {
 					new Exception("Uh oh: " + d).printStackTrace();
@@ -157,8 +157,8 @@ public class ChartIncompletes {
 
 			DateAxis xAxis = new DateAxis("Date");
 
-			xAxis.setMinimumDate(Date.dayToJavaDate(Date.dateToDay("9-1-2020")));
-			xAxis.setMaximumDate(Date.dayToJavaDate(stats.getLastDay() + 14));
+			xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(CalendarUtils.dateToDay("9-1-2020")));
+			xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(stats.getLastDay() + 14));
 
 			plot.setDomainAxis(xAxis);
 
@@ -176,7 +176,7 @@ public class ChartIncompletes {
 
 		Chart c = new Chart();
 		c.image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT);
-		c.fileName = Charts.TOP_FOLDER + "\\" + baseName + "\\" + Date.dayToFullDate(dayOfData, '-') + ".png";
+		c.fileName = Charts.TOP_FOLDER + "\\" + baseName + "\\" + CalendarUtils.dayToFullDate(dayOfData, '-') + ".png";
 		c.saveAsPNG();
 		if (timing == NumbersTiming.INFECTION && types.size() >= 4 && logarithmic && dayOfData == stats.getLastDay()) {
 			c.open();

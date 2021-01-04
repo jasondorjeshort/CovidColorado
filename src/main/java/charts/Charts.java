@@ -19,7 +19,7 @@ import org.jfree.chart.ui.TextAnchor;
 import com.madgag.gif.fmsware.AnimatedGifEncoder;
 
 import covid.ColoradoStats;
-import covid.Date;
+import covid.CalendarUtils;
 
 /**
  * This program is free software: you can redistribute it and/or modify it under
@@ -46,7 +46,7 @@ public class Charts {
 	public static String TOP_FOLDER = "H:\\CovidCoCharts";
 
 	public static ValueMarker getTodayMarker(int dayOfData) {
-		ValueMarker marker = new ValueMarker(Date.dayToJavaDate(dayOfData).getTime());
+		ValueMarker marker = new ValueMarker(CalendarUtils.dayToJavaDate(dayOfData).getTime());
 		marker.setPaint(Color.black);
 		marker.setLabel("Today");
 		marker.setLabelFont(Charts.font);
@@ -68,7 +68,7 @@ public class Charts {
 	}
 
 	public static IntervalMarker getIncompleteMarker(int incompleteDay) {
-		IntervalMarker marker = new IntervalMarker(Date.dayToTime(incompleteDay), Double.MAX_VALUE);
+		IntervalMarker marker = new IntervalMarker(CalendarUtils.dayToTime(incompleteDay), Double.MAX_VALUE);
 		marker.setPaint(Color.black);
 		// marker.setLabel("Incomplete");
 		// marker.setLabelTextAnchor(TextAnchor.TOP_LEFT);

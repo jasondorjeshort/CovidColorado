@@ -19,7 +19,7 @@ import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 
 import covid.ColoradoStats;
-import covid.Date;
+import covid.CalendarUtils;
 import covid.Event;
 import covid.IncompleteNumbers;
 import covid.NumbersTiming;
@@ -61,9 +61,9 @@ public class ChartMaker {
 
 		TimeSeries series = new TimeSeries("Cases");
 		TimeSeries projectedSeries = new TimeSeries("Projected");
-		for (int d = Math.max(showAverage ? dayOfData - 30 : 0, stats.getFirstDayOfData()); d <= dayOfData
+		for (int d = Math.max(showAverage ? dayOfData - 30 : 0, stats.getFirstDayOfCumulative()); d <= dayOfData
 				- daysToSkip; d++) {
-			Day ddd = Date.dayToDay(d);
+			Day ddd = CalendarUtils.dayToDay(d);
 
 			double cases = getCasesForDay.apply(d);
 
@@ -102,8 +102,8 @@ public class ChartMaker {
 
 			DateAxis xAxis = new DateAxis("Date");
 
-			xAxis.setMinimumDate(Date.dayToJavaDate(stats.getFirstDayOfData()));
-			xAxis.setMaximumDate(Date.dayToJavaDate(stats.getLastDay() + 14));
+			xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(stats.getFirstDayOfCumulative()));
+			xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(stats.getLastDay() + 14));
 
 			plot.setDomainAxis(xAxis);
 
@@ -123,13 +123,13 @@ public class ChartMaker {
 
 	public BufferedImage buildNewTimeseriesChart(NumbersType type, NumbersTiming timing, int dayOfData) {
 		String by = "new-" + type.lowerName + "-" + timing.lowerName;
-		return buildCasesTimeseriesChart(by, Date.dayToFullDate(dayOfData), dayOfData,
+		return buildCasesTimeseriesChart(by, CalendarUtils.dayToFullDate(dayOfData), dayOfData,
 				dayOfOnset -> (double) stats.getNewCasesByType(type, timing, dayOfData, dayOfOnset), null, by, "?",
 				false, true, 0, false);
 	}
 
 	public String buildNewTimeseriesCharts(NumbersType type, NumbersTiming timing) {
-		for (int dayOfData = stats.getFirstDayOfData(); dayOfData <= stats.getLastDay(); dayOfData++) {
+		for (int dayOfData = stats.getFirstDayOfCumulative(); dayOfData <= stats.getLastDay(); dayOfData++) {
 			buildNewTimeseriesChart(type, timing, dayOfData);
 		}
 		return null;
@@ -138,14 +138,14 @@ public class ChartMaker {
 	public String buildAgeTimeseriesChart(NumbersType type, NumbersTiming timing, int finalDay) {
 		String by = "age-" + type.lowerName + "-" + timing.lowerName;
 		IncompleteNumbers numbers = stats.getNumbers(type, timing);
-		buildCasesTimeseriesChart(by, Date.dayToFullDate(finalDay), finalDay,
+		buildCasesTimeseriesChart(by, CalendarUtils.dayToFullDate(finalDay), finalDay,
 				dayOfData -> numbers.getAverageAgeOfNewNumbers(dayOfData, Smoothing.TOTAL_14_DAY), null, by, "?", false,
 				false, 0, false);
 		return null;
 	}
 
 	public void createCumulativeStats() {
-		String date = Date.dayToFullDate(stats.getLastDay());
+		String date = CalendarUtils.dayToFullDate(stats.getLastDay());
 		buildCasesTimeseriesChart("cumulative", date, stats.getLastDay(),
 				dayOfCases -> (double) stats.getNumbers(NumbersType.CASES).getCumulativeNumbers(dayOfCases), null,
 				"cases", "count", false, false, 0, false);
