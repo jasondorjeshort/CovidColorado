@@ -32,11 +32,12 @@ public class ColoradoStats {
 
 	private static final int firstCSV = CalendarUtils.dateToDay("3-17-2020");
 
-	private int firstDayOfCumulative = CalendarUtils.dateToDay("2-17-2020");
-	private int firstDayOfInfection = Integer.MAX_VALUE;
-	private int firstDayOfOnset = Integer.MAX_VALUE;
-	private int firstDayOfReporting = Integer.MAX_VALUE;
-	private int firstDayOfDeath = Integer.MAX_VALUE;
+	private int veryFirstDay = Integer.MAX_VALUE;
+	private int firstDayOfCumulativeX = Integer.MAX_VALUE;
+	private int firstDayOfInfectionX = Integer.MAX_VALUE;
+	private int firstDayOfOnsetX = Integer.MAX_VALUE;
+	private int firstDayOfReportingX = Integer.MAX_VALUE;
+	private int firstDayOfDeathX = Integer.MAX_VALUE;
 
 	private static String csvFileName(int day) {
 		return String.format("H:\\Downloads\\CovidColoradoCSV\\covid19_case_summary_%s.csv",
@@ -132,22 +133,50 @@ public class ColoradoStats {
 		return finalNumbers[type.ordinal()];
 	}
 
-	public int getFirstDayOfCumulative() {
-		return firstDayOfCumulative;
+	public int getFirstDayOfCumulativeX() {
+		return firstDayOfCumulativeX;
+	}
+
+	public int getVeryFirstDay() {
+		return veryFirstDay;
 	}
 
 	public int getFirstDayOfTiming(NumbersTiming timing) {
 		switch (timing) {
 		case INFECTION:
-			return firstDayOfInfection;
+			return firstDayOfInfectionX;
 		case ONSET:
-			return firstDayOfOnset;
+			return firstDayOfOnsetX;
 		case REPORTED:
-			return firstDayOfReporting;
+			return firstDayOfReportingX;
 		case DEATH:
-			return firstDayOfDeath;
+			return firstDayOfDeathX;
 		}
 		throw new RuntimeException("...");
+	}
+
+	public void setFirstDayOfTiming(NumbersTiming timing, int day) {
+		veryFirstDay = Math.min(veryFirstDay, day);
+		switch (timing) {
+		case INFECTION:
+			firstDayOfInfectionX = Math.min(firstDayOfInfectionX, day);
+			return;
+		case ONSET:
+			firstDayOfOnsetX = Math.min(firstDayOfOnsetX, day);
+			return;
+		case REPORTED:
+			firstDayOfReportingX = Math.min(firstDayOfReportingX, day);
+			return;
+		case DEATH:
+			firstDayOfDeathX = Math.min(firstDayOfDeathX, day);
+			return;
+		}
+		throw new RuntimeException("...");
+	}
+
+	public void setFirstDayOfCumulative(int day) {
+		veryFirstDay = Math.min(veryFirstDay, day);
+		firstDayOfCumulativeX = Math.min(firstDayOfCumulativeX, day);
 	}
 
 	public int getLastDay() {
@@ -344,8 +373,8 @@ public class ColoradoStats {
 						int dayOfInfection = Math.max(dayOfOnset - 5, 1); // TODO
 						int c = Integer.valueOf(line.get(3));
 
-						firstDayOfOnset = Math.min(firstDayOfOnset, dayOfOnset);
-						firstDayOfInfection = Math.min(firstDayOfInfection, dayOfInfection);
+						setFirstDayOfTiming(NumbersTiming.ONSET, dayOfOnset);
+						setFirstDayOfTiming(NumbersTiming.INFECTION, dayOfInfection);
 
 						getNumbers(NumbersType.CASES, NumbersTiming.ONSET).setNumbers(dayOfData, dayOfOnset, c);
 						getNumbers(NumbersType.CASES, NumbersTiming.INFECTION).setNumbers(dayOfData, dayOfInfection, c);
@@ -357,8 +386,8 @@ public class ColoradoStats {
 					int dayOfInfection = dayOfOnset - 5;
 					int c = Integer.valueOf(line.get(3));
 
-					firstDayOfOnset = Math.min(firstDayOfOnset, dayOfOnset);
-					firstDayOfInfection = Math.min(firstDayOfInfection, dayOfInfection);
+					setFirstDayOfTiming(NumbersTiming.ONSET, dayOfOnset);
+					setFirstDayOfTiming(NumbersTiming.INFECTION, dayOfInfection);
 
 					getNumbers(NumbersType.HOSPITALIZATIONS, NumbersTiming.ONSET).setCumulative();
 					getNumbers(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION).setCumulative();
@@ -371,8 +400,8 @@ public class ColoradoStats {
 					int dayOfInfection = dayOfOnset - 5;
 					int c = Integer.valueOf(line.get(3));
 
-					firstDayOfOnset = Math.min(firstDayOfOnset, dayOfOnset);
-					firstDayOfInfection = Math.min(firstDayOfInfection, dayOfInfection);
+					setFirstDayOfTiming(NumbersTiming.ONSET, dayOfOnset);
+					setFirstDayOfTiming(NumbersTiming.INFECTION, dayOfInfection);
 
 					getNumbers(NumbersType.DEATHS, NumbersTiming.ONSET).setCumulative();
 					getNumbers(NumbersType.DEATHS, NumbersTiming.INFECTION).setCumulative();
@@ -384,7 +413,7 @@ public class ColoradoStats {
 					int dayOfDeath = CalendarUtils.dateToDay(line.get(1));
 					int c = Integer.valueOf(line.get(3));
 
-					firstDayOfDeath = Math.min(dayOfDeath, firstDayOfDeath);
+					setFirstDayOfTiming(NumbersTiming.DEATH, dayOfDeath);
 
 					getNumbers(NumbersType.DEATHS, NumbersTiming.DEATH).setNumbers(dayOfData, dayOfDeath, c);
 					getNumbers(NumbersType.DEATHS, NumbersTiming.DEATH).setCumulative();
@@ -392,7 +421,7 @@ public class ColoradoStats {
 						|| line.get(0).equals("Case Counts by Reported Date")) {
 					if (line.get(2).equals("Cases")) {
 						int dayOfReporting = CalendarUtils.dateToDay(line.get(1));
-						firstDayOfReporting = Math.min(firstDayOfReporting, dayOfReporting);
+						setFirstDayOfTiming(NumbersTiming.REPORTED, dayOfReporting);
 						int c = Integer.valueOf(line.get(3));
 						getNumbers(NumbersType.CASES, NumbersTiming.REPORTED).setNumbers(dayOfData, dayOfReporting, c);
 					} else if (line.get(2).equals("Three-Day Moving Average Of Cases")) {
@@ -405,7 +434,7 @@ public class ColoradoStats {
 						|| line.get(0).equals("Cumulative Number of Hospitalizations by Reported Date")) {
 					if (line.get(2).equals("Cases")) {
 						int dayOfReporting = CalendarUtils.dateToDay(line.get(1));
-						firstDayOfReporting = Math.min(firstDayOfReporting, dayOfReporting);
+						setFirstDayOfTiming(NumbersTiming.REPORTED, dayOfReporting);
 						int c = Integer.valueOf(line.get(3));
 						getNumbers(NumbersType.HOSPITALIZATIONS, NumbersTiming.REPORTED).setCumulative();
 						getNumbers(NumbersType.HOSPITALIZATIONS, NumbersTiming.REPORTED).setNumbers(dayOfData,
@@ -418,7 +447,7 @@ public class ColoradoStats {
 						|| line.get(0).equals("Cumulative Number of Deaths by Reported Date")) {
 					if (line.get(2).equals("Cases")) {
 						int dayOfReporting = CalendarUtils.dateToDay(line.get(1));
-						firstDayOfReporting = Math.min(firstDayOfReporting, dayOfReporting);
+						setFirstDayOfTiming(NumbersTiming.REPORTED, dayOfReporting);
 						int c = Integer.valueOf(line.get(3));
 						getNumbers(NumbersType.DEATHS, NumbersTiming.REPORTED).setCumulative();
 						getNumbers(NumbersType.DEATHS, NumbersTiming.REPORTED).setNumbers(dayOfData, dayOfReporting, c);
@@ -436,6 +465,7 @@ public class ColoradoStats {
 					Integer c = Integer.valueOf(line.get(3));
 					CountyStats county = readCounty(line.get(1));
 					county.getDeaths().setCumulativeNumbers(dayOfData, c);
+					setFirstDayOfCumulative(dayOfData);
 				} else if (line.get(0).equals("Daily Serology Data From Clinical Laboratories")) {
 					// ignored?
 				} else if (line.get(0).equals("Positivity Data from Clinical Laboratories")) {
@@ -525,7 +555,7 @@ public class ColoradoStats {
 		 * 
 		 * Imperfect, but it's clearly the "correct" way to approximate it.
 		 */
-		for (int dayOfData = getFirstDayOfCumulative(); dayOfData <= getLastDay(); dayOfData++) {
+		for (int dayOfData = getVeryFirstDay(); dayOfData <= getLastDay(); dayOfData++) {
 			double casesOnDay = getNumbers(NumbersType.CASES).getDailyNumbers(dayOfData);
 			if (casesOnDay == 0) {
 				continue;

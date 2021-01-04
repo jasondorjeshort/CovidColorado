@@ -61,7 +61,7 @@ public class ChartMaker {
 
 		TimeSeries series = new TimeSeries("Cases");
 		TimeSeries projectedSeries = new TimeSeries("Projected");
-		for (int d = Math.max(showAverage ? dayOfData - 30 : 0, stats.getFirstDayOfCumulative()); d <= dayOfData
+		for (int d = Math.max(showAverage ? dayOfData - 30 : 0, stats.getVeryFirstDay()); d <= dayOfData
 				- daysToSkip; d++) {
 			Day ddd = CalendarUtils.dayToDay(d);
 
@@ -102,7 +102,7 @@ public class ChartMaker {
 
 			DateAxis xAxis = new DateAxis("Date");
 
-			xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(stats.getFirstDayOfCumulative()));
+			xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(stats.getVeryFirstDay()));
 			xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(stats.getLastDay() + 14));
 
 			plot.setDomainAxis(xAxis);
@@ -129,7 +129,7 @@ public class ChartMaker {
 	}
 
 	public String buildNewTimeseriesCharts(NumbersType type, NumbersTiming timing) {
-		for (int dayOfData = stats.getFirstDayOfCumulative(); dayOfData <= stats.getLastDay(); dayOfData++) {
+		for (int dayOfData = stats.getVeryFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
 			buildNewTimeseriesChart(type, timing, dayOfData);
 		}
 		return null;

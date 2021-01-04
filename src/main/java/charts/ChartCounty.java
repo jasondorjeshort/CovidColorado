@@ -45,7 +45,7 @@ public class ChartCounty {
 
 		TimeSeries cSeries = new TimeSeries("Cases");
 		TimeSeries dSeries = new TimeSeries("Deaths");
-		for (int day = stats.getFirstDayOfCumulative(); day <= stats.getLastDay(); day++) {
+		for (int day = stats.getFirstDayOfCumulativeX(); day <= stats.getLastDay(); day++) {
 			Day ddd = CalendarUtils.dayToDay(day);
 
 			double cases = c.getCases().getNumbers(day, smoothing);
@@ -82,7 +82,7 @@ public class ChartCounty {
 			plot.setRangeAxis(yAxis);
 
 			DateAxis xAxis = new DateAxis("Date");
-			xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(stats.getFirstDayOfCumulative()));
+			xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(stats.getFirstDayOfCumulativeX()));
 			xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(stats.getLastDay()));
 			plot.setDomainAxis(xAxis);
 		}
