@@ -41,7 +41,7 @@ public class Charts {
 	public static final BasicStroke stroke = new BasicStroke(2);
 	public static final Font font = new Font("normal", 0, 12);
 
-	public static final int WIDTH = 800, HEIGHT = 600;
+	public static final int WIDTH = 1024, HEIGHT = 800;
 
 	public static String TOP_FOLDER = "H:\\CovidCoCharts";
 
