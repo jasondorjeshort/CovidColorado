@@ -32,11 +32,12 @@ public class Event {
 			new Event("Bars", "06-30-2020"), new Event("Masks", "7-16-2020"), new Event("Snow", "9-9-2020"),
 			new Event("CU", "8-24-2020"),
 			// new Event("ENS", "10-25-2020"),
-			new Event("10-30", "10-30-2020"), new Event("RED", "11-20-2020"),
+			new Event("10-29", "10-29-2020"), new Event("RED", "11-20-2020"),
 			// new Event("Intervention", "11-05-2020")
 			new Event("TG", "11-26-2020"),
 
 			new Event("V+5", "12-19-2020"),
+			new Event("C", "12-25-2020"),
 
 			// keep this below
 	};
