@@ -54,6 +54,7 @@ public class ChartIncompletes {
 		int incomplete = dayOfData + 1;
 		String verticalAxis = null;
 		StringBuilder title = new StringBuilder();
+		double highest = 1;
 
 		boolean multi = (types.size() > 1);
 		boolean useProjections = true;
@@ -90,7 +91,7 @@ public class ChartIncompletes {
 				continue;
 			}
 			String desc;
-			if (multi) {
+			if (multi || type.smoothing != Smoothing.NONE) {
 				desc = type.capName + " (" + type.smoothing.description + ")";
 			} else {
 				desc = type.capName;
@@ -111,18 +112,21 @@ public class ChartIncompletes {
 				double cases = numbers.getNumbers(dayOfData, d, false, type.smoothing);
 				if (!logarithmic || cases > 0) {
 					series.add(ddd, cases);
+					highest = Math.max(highest, cases);
 				}
 
 				if (useExact) {
 					double exactNumbers = numbers.getNumbers(dayOfData, d, false, Smoothing.NONE);
 					if (!logarithmic || cases > 0) {
 						exact.add(ddd, exactNumbers);
+						highest = Math.max(highest, exactNumbers);
 					}
 				}
 
 				double projected = numbers.getNumbers(dayOfData, d, true, type.smoothing);
 				if (useProjections && (!logarithmic || projected > 0)) {
 					pSeries.add(ddd, projected);
+					highest = Math.max(highest, projected);
 				}
 				if (cases > 0 && Charts.ratio(projected, cases) > incompleteCutoff) {
 					incomplete = Math.min(incomplete, d);
@@ -152,13 +156,14 @@ public class ChartIncompletes {
 		if (logarithmic) {
 			LogarithmicAxis yAxis = new LogarithmicAxis(verticalAxis);
 			yAxis.setLowerBound(1);
-			yAxis.setUpperBound(200000);
+			yAxis.setUpperBound(highest * 1.5);
 			plot.setRangeAxis(yAxis);
 
 			DateAxis xAxis = new DateAxis("Date");
 
-			xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(CalendarUtils.dateToDay("9-1-2020")));
-			xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(stats.getLastDay() + 14));
+			// xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(stats.getFirstDayOfData()));
+			// xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(stats.getLastDay()
+			// + 14));
 
 			plot.setDomainAxis(xAxis);
 
