@@ -198,6 +198,8 @@ public class ChartMaker {
 		ChartCounty county = new ChartCounty(stats);
 		ChartIncompletes incompletes = new ChartIncompletes(stats);
 		Set<NumbersType> fullTypes = NumbersType.getSet();
+		Set<NumbersType> noTests = NumbersType.getSet(NumbersType.CASES, NumbersType.DEATHS,
+				NumbersType.HOSPITALIZATIONS);
 
 		buildStarted = System.currentTimeMillis();
 
@@ -212,13 +214,13 @@ public class ChartMaker {
 		MyExecutor.executeCode(() -> createCumulativeStats());
 
 		for (NumbersTiming timing : NumbersTiming.values()) {
+			build(() -> incompletes.buildCharts(noTests, timing, true));
+			build(() -> incompletes.buildCharts(noTests, timing, false));
 			build(() -> incompletes.buildCharts(fullTypes, timing, true));
 			build(() -> incompletes.buildCharts(fullTypes, timing, false));
-		}
 
-		for (NumbersType type : NumbersType.values()) {
-			Set<NumbersType> types = NumbersType.getSet(type);
-			for (NumbersTiming timing : NumbersTiming.values()) {
+			for (NumbersType type : NumbersType.values()) {
+				Set<NumbersType> types = NumbersType.getSet(type);
 				build(() -> incompletes.buildCharts(types, timing, true));
 				build(() -> incompletes.buildCharts(types, timing, false));
 				build(() -> buildNewTimeseriesCharts(type, timing));
