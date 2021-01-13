@@ -15,8 +15,8 @@ import org.jfree.data.time.TimeSeriesCollection;
 
 import com.madgag.gif.fmsware.AnimatedGifEncoder;
 
-import covid.ColoradoStats;
 import covid.CalendarUtils;
+import covid.ColoradoStats;
 import covid.Event;
 import covid.IncompleteNumbers;
 import covid.NumbersTiming;
@@ -183,7 +183,7 @@ public class ChartIncompletes {
 		c.image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT);
 		c.fileName = Charts.TOP_FOLDER + "\\" + baseName + "\\" + CalendarUtils.dayToFullDate(dayOfData, '-') + ".png";
 		c.saveAsPNG();
-		if (timing == NumbersTiming.INFECTION && types.size() >= 4 && logarithmic && dayOfData == stats.getLastDay()) {
+		if (timing == NumbersTiming.INFECTION && types.size() == 3 && logarithmic && dayOfData == stats.getLastDay()) {
 			c.open();
 		}
 		return c;
