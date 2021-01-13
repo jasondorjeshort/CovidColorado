@@ -101,6 +101,7 @@ public class ChartIncompletes {
 			TimeSeries exact = new TimeSeries("Exact");
 			IncompleteNumbers numbers = stats.getNumbers(type, timing);
 
+			boolean started = false;
 			for (int d = stats.getFirstDayOfTiming(timing); d <= dayOfData; d++) {
 				Day ddd = CalendarUtils.dayToDay(d);
 
@@ -110,6 +111,10 @@ public class ChartIncompletes {
 				}
 
 				double cases = numbers.getNumbers(dayOfData, d, false, type.smoothing);
+				if (cases == 0.0 && !started) {
+					continue;
+				}
+				started = true;
 				if (!logarithmic || cases > 0) {
 					series.add(ddd, cases);
 					highest = Math.max(highest, cases);
