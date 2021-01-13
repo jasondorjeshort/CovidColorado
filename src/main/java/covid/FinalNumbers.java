@@ -1,6 +1,6 @@
 package covid;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * This program is free software: you can redistribute it and/or modify it under
@@ -28,8 +28,9 @@ import java.util.ArrayList;
  */
 public class FinalNumbers {
 
-	private final ArrayList<Integer> numbers = new ArrayList<>();
+	private final HashMap<Integer, Integer> cumulative = new HashMap<>();
 	public final NumbersType type;
+	private int firstDay = Integer.MAX_VALUE, lastDay = Integer.MIN_VALUE;
 
 	public FinalNumbers(NumbersType type) {
 		this.type = type;
@@ -74,32 +75,32 @@ public class FinalNumbers {
 	}
 
 	public int getCumulativeNumbers(int day) {
-		if (day < 0 || numbers.size() == 0) {
+		if (day < firstDay) {
 			return 0;
 		}
-		if (day >= numbers.size()) {
-			day = numbers.size() - 1;
+		if (day > lastDay) {
+			day = lastDay;
 		}
-		Integer numbersForDay = numbers.get(day);
+		Integer numbersForDay = cumulative.get(day);
 		if (numbersForDay == null) {
-			return 0;
+			new Exception("Uh oh!").printStackTrace();
+			return getCumulativeNumbers(day - 1);
 		}
 		return numbersForDay;
 	}
 
 	public void setCumulativeNumbers(int day, int numbersForDay) {
-		while (numbers.size() <= day) {
-			numbers.add(0);
-		}
-		numbers.set(day, numbersForDay);
+		firstDay = Math.min(firstDay, day);
+		lastDay = Math.max(firstDay, day);
+		cumulative.put(day, numbersForDay);
 	}
 
 	public boolean build() {
 		int max = Integer.MAX_VALUE;
-		for (int day = numbers.size() - 1; day >= 0; day--) {
-			int number = numbers.get(day);
-			if (number > max) {
-				numbers.set(day, max);
+		for (int day = lastDay; day >= firstDay; day--) {
+			Integer number = cumulative.get(day);
+			if (number == null || number > max) {
+				cumulative.put(day, max);
 			} else {
 				max = number;
 			}
