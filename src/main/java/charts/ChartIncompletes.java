@@ -48,7 +48,7 @@ public class ChartIncompletes {
 
 	private static final double incompleteCutoff = 1.1;
 
-	private Chart buildChart(String baseName, int dayOfData, Set<NumbersType> types, NumbersTiming timing,
+	public Chart buildChart(String baseName, int dayOfData, Set<NumbersType> types, NumbersTiming timing,
 			boolean logarithmic) {
 		TimeSeriesCollection collection = new TimeSeriesCollection();
 		int incomplete = dayOfData + 1;
