@@ -19,6 +19,8 @@ package covid;
 public enum Smoothing {
 	NONE("daily numbers"),
 	ALGEBRAIC_SYMMETRIC_WEEKLY("7-day symmetric average"),
+	GEOMETRIC_SYMMETRIC_13DAY("13-day symmetric average"),
+	GEOMETRIC_SYMMETRIC_21DAY("21-day symmetric average"),
 	GEOMETRIC_SYMMETRIC_WEEKLY("7-day symmetric geometric average"),
 	TOTAL_30_DAY("30-day total"),
 	TOTAL_14_DAY("14-day total"),
