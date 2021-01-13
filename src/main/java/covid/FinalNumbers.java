@@ -94,7 +94,7 @@ public class FinalNumbers {
 		numbers.set(day, numbersForDay);
 	}
 
-	public void build() {
+	public boolean build() {
 		int max = Integer.MAX_VALUE;
 		for (int day = numbers.size() - 1; day >= 0; day--) {
 			int number = numbers.get(day);
@@ -104,5 +104,6 @@ public class FinalNumbers {
 				max = number;
 			}
 		}
+		return true;
 	}
 }

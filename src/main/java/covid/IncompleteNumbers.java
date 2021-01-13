@@ -30,6 +30,8 @@ public class IncompleteNumbers {
 	private boolean isCumulative; // we want daily numbers, but the sheet only
 									// gives cumulative
 
+	private int firstDayOfType = Integer.MAX_VALUE;
+
 	protected class Daily {
 		protected final ArrayList<Double> numbers = new ArrayList<>();
 		protected final ArrayList<Double> projected = new ArrayList<>();
@@ -75,6 +77,18 @@ public class IncompleteNumbers {
 				numbers *= getNumbers(dayOfData, dayOfType + d, projected);
 			}
 			return Math.pow(numbers, 1.0 / 7.0);
+		case GEOMETRIC_SYMMETRIC_13DAY:
+			numbers = 1;
+			for (int d = -6; d <= 6; d++) {
+				numbers *= getNumbers(dayOfData, dayOfType + d, projected);
+			}
+			return Math.pow(numbers, 1.0 / 13.0);
+		case GEOMETRIC_SYMMETRIC_21DAY:
+			numbers = 1;
+			for (int d = -10; d <= 10; d++) {
+				numbers *= getNumbers(dayOfData, dayOfType + d, projected);
+			}
+			return Math.pow(numbers, 1.0 / 21.0);
 		case NONE:
 			return getNumbers(dayOfData, dayOfType, projected);
 		case TOTAL_14_DAY:
@@ -141,7 +155,7 @@ public class IncompleteNumbers {
 
 	public double SAMPLE_DAYS = 14;
 
-	public void build() {
+	public boolean build() {
 		if (isCumulative) {
 			// TODO: should avoid negatives first
 			for (int dayOfData = 0; dayOfData < allNumbers.size(); dayOfData++) {
@@ -193,7 +207,7 @@ public class IncompleteNumbers {
 		// projections
 		for (int dayOfData = 0; dayOfData < allNumbers.size(); dayOfData++) {
 			Daily daily = allNumbers.get(dayOfData);
-			for (int dayOfType = 0; dayOfType < dayOfData && dayOfType < daily.numbers.size(); dayOfType++) {
+			for (int dayOfType = firstDayOfType; dayOfType < dayOfData && dayOfType < daily.numbers.size(); dayOfType++) {
 				Double p = daily.numbers.get(dayOfType);
 				if (p == null) {
 					continue;
@@ -213,6 +227,8 @@ public class IncompleteNumbers {
 				daily.projected.set(dayOfType, projected);
 			}
 		}
+
+		return true;
 	}
 
 	TimeSeries createTimeSeries(int dayOfData, String name, boolean isProjected) {
@@ -239,6 +255,7 @@ public class IncompleteNumbers {
 	 * Sets numbers for the given days.
 	 */
 	public void setNumbers(int dayOfData, int dayOfType, double numbers) {
+		firstDayOfType = Math.min(firstDayOfType, dayOfType);
 		if (dayOfType < 0) {
 			new Exception("Improbable day-of-type " + CalendarUtils.dayToDate(dayOfType)).printStackTrace();
 			dayOfType = 0;

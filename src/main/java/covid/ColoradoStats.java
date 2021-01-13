@@ -6,11 +6,16 @@ import java.nio.charset.Charset;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+
+import library.MyExecutor;
 
 /**
  * This program is free software: you can redistribute it and/or modify it under
@@ -580,21 +585,35 @@ public class ColoradoStats {
 			}
 		}
 
+		long time = System.nanoTime();
+
+		LinkedList<Future<Boolean>> futures = new LinkedList<>();
 		for (IncompleteNumbers incompletes : incompleteNumbers) {
-			incompletes.build();
+			futures.add(MyExecutor.submitCode(() -> incompletes.build()));
+			// incompletes.build();
 		}
 		for (FinalNumbers finals : finalNumbers) {
-			finals.build();
+			futures.add(MyExecutor.submitCode(() -> finals.build()));
+		}
+		counties.forEach((name, county) -> futures.add(MyExecutor.submitCode(() -> county.build())));
+		while (futures.size() > 0) {
+			try {
+				futures.pop().get();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 
-		if (true) {
+		if (false) {
+			time = System.nanoTime() - time;
+			System.out.println("Built all in " + (time / 1000000000.0) + "s.");
+			System.exit(0);
+		}
+
+		if (false) {
 			outputProjections(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION);
 			outputDailyStats();
 		}
-
-		counties.forEach((name, county) -> county.build());
-
-		// System.exit(0);
 	}
 
 }
