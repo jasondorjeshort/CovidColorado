@@ -1,6 +1,6 @@
 package covid;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.jfree.data.time.TimeSeries;
 
@@ -31,11 +31,14 @@ public class IncompleteNumbers {
 									// gives cumulative
 
 	private int firstDayOfType = Integer.MAX_VALUE;
+	private int lastDayOfType = Integer.MIN_VALUE;
+	private int firstDayOfData = Integer.MAX_VALUE;
+	private int lastDayOfData = Integer.MIN_VALUE;
 
 	protected class Daily {
-		protected final ArrayList<Double> numbers = new ArrayList<>();
-		protected final ArrayList<Double> projected = new ArrayList<>();
-		protected final ArrayList<Incomplete> ratios = new ArrayList<>();
+		protected final HashMap<Integer, Double> numbers = new HashMap<>();
+		protected final HashMap<Integer, Double> projected = new HashMap<>();
+		protected final HashMap<Integer, Incomplete> ratios = new HashMap<>();
 
 		protected double getNumbers(int day, boolean isProjected) {
 			if (isProjected) {
@@ -45,7 +48,7 @@ public class IncompleteNumbers {
 		}
 	}
 
-	private final ArrayList<Daily> allNumbers = new ArrayList<>();
+	private final HashMap<Integer, Daily> allNumbers = new HashMap<>();
 
 	public final NumbersType type;
 	public final NumbersTiming timing;
@@ -115,11 +118,8 @@ public class IncompleteNumbers {
 	}
 
 	public double getNumbers(int dayOfData, int dayOfType) {
-		if (dayOfData >= allNumbers.size() || dayOfData <= 0) {
-			return 0;
-		}
 		Daily daily = allNumbers.get(dayOfData);
-		if (dayOfType >= daily.numbers.size() || dayOfType < 0) {
+		if (daily == null) {
 			return 0;
 		}
 		Double i = daily.numbers.get(dayOfType);
@@ -130,15 +130,11 @@ public class IncompleteNumbers {
 	}
 
 	public double getProjectedNumbers(int dayOfData, int dayOfType) {
-		if (dayOfData >= allNumbers.size()) {
-			return 0;
-		}
 		Daily daily = allNumbers.get(dayOfData);
-		ArrayList<Double> projected = daily.projected;
-		if (dayOfType >= projected.size() || dayOfType < 0) {
+		if (daily == null) {
 			return 0;
 		}
-		Double i = projected.get(dayOfType);
+		Double i = daily.projected.get(dayOfType);
 		if (i == null) {
 			return 0;
 		}
@@ -150,24 +146,65 @@ public class IncompleteNumbers {
 	}
 
 	private Incomplete getIncompletion(int dayOfType, int delay) {
-		Daily daily = allNumbers.get(dayOfType);
-		while (daily.ratios.size() <= delay) {
-			daily.ratios.add(new Incomplete());
+		if (dayOfType < firstDayOfType || dayOfType > lastDayOfData) {
+			throw new RuntimeException("Uh oh: " + CalendarUtils.dayToDate(dayOfType) + " is not between "
+					+ CalendarUtils.dayToDate(firstDayOfType) + " and " + CalendarUtils.dayToDate(lastDayOfType));
 		}
-		return daily.ratios.get(delay);
+		Daily daily = allNumbers.get(dayOfType);
+		Incomplete incompletion = daily.ratios.get(delay);
+		if (incompletion == null) {
+			incompletion = new Incomplete();
+			daily.ratios.put(delay, incompletion);
+		}
+		return incompletion;
 	}
 
 	public double SAMPLE_DAYS = 14;
 
 	public boolean build() {
+		if (type != NumbersType.HOSPITALIZATIONS || timing != NumbersTiming.INFECTION) {
+			// return false;
+		}
+		int logDayOfType = -100; // CalendarUtils.dateToDay("12-28-2020");
+		if (logDayOfType > 0) {
+			System.out.println("Doing build for " + type + "/" + timing + " from "
+					+ CalendarUtils.dayToDate(firstDayOfData) + " / " + CalendarUtils.dayToDate(firstDayOfType) + " to "
+					+ CalendarUtils.dayToDate(lastDayOfData) + " / " + CalendarUtils.dayToDate(lastDayOfType));
+		}
+
 		if (isCumulative) {
+			// first smooth values so we don't end up with negative daily
+			// values. We can only smooth within an individual day of data;
+			// negatives can still happen between days of data.
+			for (int dayOfData = firstDayOfData; dayOfData <= lastDayOfData; dayOfData++) {
+				double min = 0;
+				Daily daily = allNumbers.get(dayOfData);
+				for (int dayOfType = firstDayOfType; dayOfType <= dayOfData; dayOfType++) {
+					Double numbers = daily.numbers.get(dayOfType);
+					if (numbers == null || numbers < min) {
+						numbers = min;
+						daily.numbers.put(dayOfType, numbers);
+					}
+					min = numbers;
+				}
+			}
+
+			for (int dayOfData = logDayOfType; dayOfData <= lastDayOfData; dayOfData++) {
+				double numbers = getNumbers(dayOfData, logDayOfType);
+			}
 			// TODO: should avoid negatives first
-			for (int dayOfData = 0; dayOfData < allNumbers.size(); dayOfData++) {
+			for (int dayOfData = firstDayOfData; dayOfData <= lastDayOfData; dayOfData++) {
 				double last = 0;
 				Daily daily = allNumbers.get(dayOfData);
-				for (int dayOfType = 0; dayOfType < dayOfData && dayOfType < daily.numbers.size(); dayOfType++) {
-					double newLast = daily.numbers.get(dayOfType);
-					daily.numbers.set(dayOfType, newLast - last);
+				for (int dayOfType = firstDayOfType; dayOfType <= dayOfData
+						&& dayOfType <= lastDayOfType; dayOfType++) {
+					double newLast = getNumbers(dayOfData, dayOfType);
+
+					if (dayOfType == logDayOfType) {
+						System.out.println("De-cumulating " + CalendarUtils.dayToDate(logDayOfType) + " on "
+								+ CalendarUtils.dayToDate(dayOfData) + " to " + (newLast - last));
+					}
+					daily.numbers.put(dayOfType, newLast - last);
 					last = newLast;
 				}
 			}
@@ -179,21 +216,45 @@ public class IncompleteNumbers {
 		 * Delay 10 means the difference from day 10 to day 11. This will be in
 		 * the array under incomplete[10].
 		 */
-		for (int delay = 0; delay < allNumbers.size(); delay++) {
-			for (int typeDay = 0; typeDay < allNumbers.size() - delay; typeDay++) {
+		int continuing = 0, nc = 0;
+
+		for (int delay = 0; delay < lastDayOfType - firstDayOfType; delay++) {
+			for (int typeDay = firstDayOfType; typeDay < lastDayOfData - delay; typeDay++) {
 				int dayOfData1 = typeDay + delay;
 				int dayOfData2 = typeDay + delay + 1;
 
 				double numbers1 = getNumbers(dayOfData1, typeDay);
 				double numbers2 = getNumbers(dayOfData2, typeDay);
-				double newRatio = numbers2 / numbers1;
+
+				if (typeDay == logDayOfType) {
+					System.out.println("Numbers about " + CalendarUtils.dayToDate(logDayOfType) + " jumped from "
+							+ numbers1 + " to " + numbers2 + " on " + CalendarUtils.dayToDate(dayOfData1) + " to "
+							+ CalendarUtils.dayToDate(dayOfData2));
+				}
 
 				if (numbers1 <= 0 || numbers2 <= 0 || !Double.isFinite(numbers1) || !Double.isFinite(numbers2)) {
+					if (typeDay == logDayOfType) {
+						System.out.println("Continuing..." + continuing);
+						continuing++;
+					}
 					continue;
+				}
+				double newRatio = numbers2 / numbers1;
+				if (typeDay == logDayOfType) {
+					System.out.println("Not continuing..." + nc + " ...with new ratio " + newRatio + " as " + numbers1
+							+ " -> " + numbers2);
+					nc++;
 				}
 
 				Incomplete incomplete1 = getIncompletion(dayOfData1, delay);
 				Incomplete incomplete2 = getIncompletion(dayOfData2, delay);
+
+				if (incomplete1 == null) {
+					new Exception("Incomplete1 null " + dayOfData1).printStackTrace();
+				}
+				if (incomplete1 == null) {
+					new Exception("Incomplete2 null " + dayOfData2).printStackTrace();
+				}
 
 				incomplete2.samples = incomplete1.samples + 1;
 				double sampleDays = SAMPLE_DAYS + delay;
@@ -205,31 +266,66 @@ public class IncompleteNumbers {
 					incomplete2.ratio = Math.pow(incomplete1.ratio, (sampleDays - 1) / sampleDays)
 							* Math.pow(newRatio, 1.0 / sampleDays);
 				}
+				if (typeDay == logDayOfType) {
+					System.out.println("New ratio for delay=" + delay + " is " + incomplete2.ratio + " with "
+							+ incomplete2.samples + " samples.");
+				}
 			}
 		}
 
 		// projections
-		for (int dayOfData = 0; dayOfData < allNumbers.size(); dayOfData++) {
+		for (int dayOfData = firstDayOfData; dayOfData <= lastDayOfData; dayOfData++) {
 			Daily daily = allNumbers.get(dayOfData);
-			for (int dayOfType = firstDayOfType; dayOfType < dayOfData
-					&& dayOfType < daily.numbers.size(); dayOfType++) {
+			if (daily == null) {
+				if (logDayOfType > 0) {
+					new Exception("Problem with " + type + "/" + timing + " on day " + dayOfData + " aka "
+							+ CalendarUtils.dayToDate(dayOfData)).printStackTrace();
+				}
+				continue;
+			}
+			for (int dayOfType = firstDayOfType; dayOfType <= dayOfData && dayOfType <= lastDayOfType; dayOfType++) {
 				Double p = daily.numbers.get(dayOfType);
 				if (p == null) {
 					continue;
 				}
 				double projected = p;
-				for (int delay = dayOfData - dayOfType; delay < daily.ratios.size(); delay++) {
+				for (int delay = dayOfData - dayOfType;; delay++) {
 					Incomplete ratio = daily.ratios.get(delay);
+					if (dayOfData == logDayOfType + 10 && dayOfType == logDayOfType) {
+						System.out.print("On " + CalendarUtils.dayToDate(dayOfData) + " for "
+								+ CalendarUtils.dayToDate(dayOfType) + "; delay " + delay + ": ");
+					}
+					if (ratio == null) {
+						if (dayOfData == logDayOfType + 10 && dayOfType == logDayOfType) {
+							System.out.println("Breaking out with null ratio");
+						}
+						break;
+					}
+					if (ratio.ratio == 0.0) {
+						if (dayOfData == logDayOfType + 10 && dayOfType == logDayOfType) {
+							System.out.println("Continuing with 0 ratio");
+						}
+						continue;
+					}
 					if (delay > 30 && ratio.samples < 60) {
+						if (dayOfData == logDayOfType + 10 && dayOfType == logDayOfType) {
+							System.out.println("Breaking out with not enough values ");
+						}
 						// two months of samples before we consider adjusting
 						break;
 					}
+					if (dayOfData == logDayOfType + 10 && dayOfType == logDayOfType) {
+						System.out
+								.println("Adjusting previous projection of " + projected + " by factor " + ratio.ratio);
+					}
 					projected *= ratio.ratio;
 				}
-				while (daily.projected.size() <= dayOfType) {
-					daily.projected.add(0.0);
+				if (dayOfData == logDayOfType + 10 && dayOfType == logDayOfType) {
+					System.out.println("On " + CalendarUtils.dayToDate(dayOfData) + ", projection for " + type + "/"
+							+ timing + " on " + CalendarUtils.dayToDate(dayOfType) + " is " + projected + " vs "
+							+ getNumbers(dayOfData, dayOfType) + ".");
 				}
-				daily.projected.set(dayOfType, projected);
+				daily.projected.put(dayOfType, projected);
 			}
 		}
 
@@ -260,36 +356,36 @@ public class IncompleteNumbers {
 	 * Sets numbers for the given days.
 	 */
 	public void setNumbers(int dayOfData, int dayOfType, double numbers) {
+		firstDayOfData = Math.min(firstDayOfData, dayOfData);
+		lastDayOfData = Math.max(lastDayOfData, dayOfData);
 		firstDayOfType = Math.min(firstDayOfType, dayOfType);
-		if (dayOfType < 0) {
-			new Exception("Improbable day-of-type " + CalendarUtils.dayToDate(dayOfType)).printStackTrace();
-			dayOfType = 0;
-		}
-
-		while (allNumbers.size() <= dayOfData) {
-			allNumbers.add(new Daily());
-		}
+		lastDayOfType = Math.max(lastDayOfType, dayOfType);
 		Daily daily = allNumbers.get(dayOfData);
-		while (daily.numbers.size() <= dayOfType) {
-			daily.numbers.add(0.0);
+		if (daily == null) {
+			daily = new Daily();
+			allNumbers.put(dayOfData, daily);
 		}
-		daily.numbers.set(dayOfType, numbers);
+		daily.numbers.put(dayOfType, numbers);
 	}
 
 	/**
 	 * Adds more numbers for the given days.
 	 */
 	public void addNumbers(int dayOfData, int dayOfType, double numbers) {
+		firstDayOfData = Math.min(firstDayOfData, dayOfData);
+		lastDayOfData = Math.max(lastDayOfData, dayOfData);
 		firstDayOfType = Math.min(firstDayOfType, dayOfType);
-		while (allNumbers.size() <= dayOfData) {
-			allNumbers.add(new Daily());
-		}
+		lastDayOfType = Math.max(lastDayOfType, dayOfType);
 		Daily daily = allNumbers.get(dayOfData);
-		while (daily.numbers.size() <= dayOfType) {
-			daily.numbers.add(0.0);
+		if (daily == null) {
+			daily = new Daily();
+			allNumbers.put(dayOfData, daily);
 		}
-		numbers += daily.numbers.get(dayOfType);
-		daily.numbers.set(dayOfType, numbers);
+		Double original = daily.numbers.get(dayOfType);
+		if (original != null) {
+			numbers += original;
+		}
+		daily.numbers.put(dayOfType, numbers);
 	}
 
 	/**
