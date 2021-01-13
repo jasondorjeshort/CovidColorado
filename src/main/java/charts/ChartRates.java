@@ -1,6 +1,5 @@
 package charts;
 
-import java.awt.image.BufferedImage;
 import java.io.File;
 
 import org.jfree.chart.ChartFactory;
@@ -14,8 +13,8 @@ import org.jfree.data.time.TimeSeriesCollection;
 
 import com.madgag.gif.fmsware.AnimatedGifEncoder;
 
-import covid.ColoradoStats;
 import covid.CalendarUtils;
+import covid.ColoradoStats;
 import covid.Event;
 import covid.IncompleteNumbers;
 import covid.NumbersTiming;

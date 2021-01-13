@@ -12,9 +12,9 @@ import org.jfree.data.time.Day;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 
+import covid.CalendarUtils;
 import covid.ColoradoStats;
 import covid.CountyStats;
-import covid.CalendarUtils;
 import covid.Smoothing;
 
 /**
