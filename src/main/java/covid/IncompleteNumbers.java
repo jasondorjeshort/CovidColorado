@@ -62,6 +62,10 @@ public class IncompleteNumbers {
 		return getNumbers(dayOfData, dayOfType);
 	}
 
+	public int getFirstDayOfType() {
+		return firstDayOfType;
+	}
+
 	public double getNumbers(int dayOfData, int dayOfType, boolean projected, Smoothing smoothing) {
 		double numbers;
 		switch (smoothing) {
@@ -207,7 +211,8 @@ public class IncompleteNumbers {
 		// projections
 		for (int dayOfData = 0; dayOfData < allNumbers.size(); dayOfData++) {
 			Daily daily = allNumbers.get(dayOfData);
-			for (int dayOfType = firstDayOfType; dayOfType < dayOfData && dayOfType < daily.numbers.size(); dayOfType++) {
+			for (int dayOfType = firstDayOfType; dayOfType < dayOfData
+					&& dayOfType < daily.numbers.size(); dayOfType++) {
 				Double p = daily.numbers.get(dayOfType);
 				if (p == null) {
 					continue;
@@ -275,6 +280,7 @@ public class IncompleteNumbers {
 	 * Adds more numbers for the given days.
 	 */
 	public void addNumbers(int dayOfData, int dayOfType, double numbers) {
+		firstDayOfType = Math.min(firstDayOfType, dayOfType);
 		while (allNumbers.size() <= dayOfData) {
 			allNumbers.add(new Daily());
 		}
