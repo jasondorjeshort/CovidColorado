@@ -169,7 +169,7 @@ public class ChartRates {
 
 		if (fixedHeight != null) {
 			DateAxis xAxis = (DateAxis) plot.getDomainAxis();
-			xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(stats.getFirstDayOfTiming(timing)));
+			xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(CalendarUtils.dateToDay("6-1-2020")));
 			xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(stats.getLastDay()));
 
 			ValueAxis yAxis = plot.getRangeAxis();
