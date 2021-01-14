@@ -610,7 +610,7 @@ public class ColoradoStats {
 			System.exit(0);
 		}
 
-		if (false) {
+		if (true) {
 			outputProjections(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION);
 			outputDailyStats();
 		}
