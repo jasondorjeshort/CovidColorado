@@ -48,7 +48,7 @@ public class ChartIncompletes {
 
 	private static final double incompleteCutoff = 1.1;
 
-	public Chart buildChart(String baseName, int dayOfData, Set<NumbersType> types, NumbersTiming timing,
+	public Chart buildChart(String folder, String fileName, int dayOfData, Set<NumbersType> types, NumbersTiming timing,
 			boolean logarithmic) {
 		TimeSeriesCollection collection = new TimeSeriesCollection();
 		int incomplete = dayOfData + 1;
@@ -181,7 +181,10 @@ public class ChartIncompletes {
 
 		Chart c = new Chart();
 		c.image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT);
-		c.fileName = Charts.TOP_FOLDER + "\\" + baseName + "\\" + CalendarUtils.dayToFullDate(dayOfData, '-') + ".png";
+		if (fileName == null) {
+			fileName = CalendarUtils.dayToFullDate(dayOfData, '-');
+		}
+		c.fileName = folder + "\\" + fileName + ".png";
 		c.saveAsPNG();
 		if (timing == NumbersTiming.INFECTION && types.size() == 3 && logarithmic && dayOfData == stats.getLastDay()) {
 			c.open();
@@ -189,14 +192,21 @@ public class ChartIncompletes {
 		return c;
 	}
 
+	public String fastBuildChart(Set<NumbersType> types, NumbersTiming timing) {
+		String fileName = NumbersType.name(types, "-") + "-" + timing.lowerName;
+		Chart c = buildChart(Charts.TOP_FOLDER, fileName, stats.getLastDay(), types, timing, true);
+		return c.fileName;
+	}
+
 	public String buildCharts(Set<NumbersType> types, NumbersTiming timing, boolean logarithmic) {
 		AnimatedGifEncoder gif = new AnimatedGifEncoder();
-		String baseName = NumbersType.name(types, "-") + "-" + timing.lowerName + (logarithmic ? "-log" : "-cart");
-		String gifName = Charts.TOP_FOLDER + "\\" + baseName + ".gif";
-		new File(Charts.TOP_FOLDER + "\\" + baseName).mkdir();
+		String folder = Charts.TOP_FOLDER + "\\" + NumbersType.name(types, "-") + "-" + timing.lowerName
+				+ (logarithmic ? "-log" : "-cart");
+		String gifName = Charts.TOP_FOLDER + "\\" + folder + ".gif";
+		new File(folder).mkdir();
 		gif.start(gifName);
 		for (int dayOfData = stats.getFirstDayOfTiming(timing); dayOfData <= stats.getLastDay(); dayOfData++) {
-			Chart c = buildChart(baseName, dayOfData, types, timing, logarithmic);
+			Chart c = buildChart(folder, null, dayOfData, types, timing, logarithmic);
 			Charts.setDelay(stats, dayOfData, gif);
 			gif.addFrame(c.image);
 		}
