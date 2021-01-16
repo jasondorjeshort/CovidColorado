@@ -179,12 +179,10 @@ public class ChartIncompletes {
 			plot.addDomainMarker(Charts.getIncompleteMarker(incomplete));
 		}
 
-		Chart c = new Chart();
-		c.image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT);
 		if (fileName == null) {
 			fileName = CalendarUtils.dayToFullDate(dayOfData, '-');
 		}
-		c.fileName = folder + "\\" + fileName + ".png";
+		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), folder + "\\" + fileName + ".png");
 		c.saveAsPNG();
 		if (timing == NumbersTiming.INFECTION && types.size() == 3 && logarithmic && dayOfData == stats.getLastDay()) {
 			c.open();
@@ -195,7 +193,7 @@ public class ChartIncompletes {
 	public String buildChart(Set<NumbersType> types, NumbersTiming timing) {
 		String fileName = NumbersType.name(types, "-") + "-" + timing.lowerName;
 		Chart c = buildChart(Charts.TOP_FOLDER, fileName, stats.getLastDay(), types, timing, true);
-		return c.fileName;
+		return c.getFileName();
 	}
 
 	public String buildGIF(Set<NumbersType> types, NumbersTiming timing, boolean logarithmic) {
@@ -208,7 +206,7 @@ public class ChartIncompletes {
 		for (int dayOfData = stats.getFirstDayOfTiming(timing); dayOfData <= stats.getLastDay(); dayOfData++) {
 			Chart c = buildChart(folder, null, dayOfData, types, timing, logarithmic);
 			Charts.setDelay(stats, dayOfData, gif);
-			gif.addFrame(c.image);
+			gif.addFrame(c.getImage());
 		}
 		gif.finish();
 		return gifName;

@@ -180,9 +180,8 @@ public class ChartRates {
 			Event.addEvents(plot);
 		}
 
-		Chart c = new Chart();
-		c.image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT);
-		c.fileName = Charts.TOP_FOLDER + "\\rates" + "\\" + fileName + ".png";
+		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT),
+				Charts.TOP_FOLDER + "\\rates" + "\\" + fileName + ".png");
 		c.saveAsPNG();
 
 		if (timing == NumbersTiming.INFECTION && useCFR && useHFR && useCHR && usePositivity
@@ -223,7 +222,7 @@ public class ChartRates {
 			Chart c = buildRates(stats, dayOfData, prefix + "-" + full, title + day, useCFR, useCHR, useHFR,
 					usePositivity, null, fixedHeight);
 			Charts.setDelay(stats, dayOfData, gif);
-			gif.addFrame(c.image);
+			gif.addFrame(c.getImage());
 		}
 
 		gif.finish();

@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.HashSet;
 
 import org.jfree.chart.encoders.EncoderUtil;
 import org.jfree.chart.encoders.ImageFormat;
@@ -27,29 +28,46 @@ import org.jfree.chart.encoders.ImageFormat;
  * @author jdorje@gmail.com
  */
 public class Chart {
-	public String fileName;
-	public BufferedImage image;
+	private final HashSet<String> fileNames = new HashSet<>();
+	private BufferedImage image;
 
-	public Chart(String fileName, BufferedImage image) {
-		this.fileName = fileName;
+	public Chart(BufferedImage image, String... fileNames) {
+		for (String fileName : fileNames) {
+			this.fileNames.add(fileName);
+		}
 		this.image = image;
 	}
 
-	public Chart() {
-		this.fileName = null;
-		this.image = null;
+	public void addFileName(String fileName) {
+		fileNames.add(fileName);
 	}
 
 	public void saveAsPNG() {
-		File file = new File(fileName);
-		try (OutputStream out = new BufferedOutputStream(new FileOutputStream(file))) {
-			EncoderUtil.writeBufferedImage(image, ImageFormat.PNG, out);
-		} catch (IOException e) {
-			e.printStackTrace();
+		for (String fileName : fileNames) {
+			File file = new File(fileName);
+			try (OutputStream out = new BufferedOutputStream(new FileOutputStream(file))) {
+				EncoderUtil.writeBufferedImage(image, ImageFormat.PNG, out);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
+	public String getFileName() {
+		for (String fileName : fileNames) {
+			return fileName;
+		}
+		return null;
+	}
+
 	public void open() {
-		library.OpenImage.openImage(fileName);
+		for (String fileName : fileNames) {
+			library.OpenImage.openImage(fileName);
+			return;
+		}
+	}
+
+	public BufferedImage getImage() {
+		return image;
 	}
 }
