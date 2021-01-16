@@ -192,7 +192,7 @@ public class ChartRates {
 		return c;
 	}
 
-	public static String buildRates(ColoradoStats stats, String prefix, String title, boolean useCFR, boolean useCHR,
+	public static String buildGIF(ColoradoStats stats, String prefix, String title, boolean useCFR, boolean useCHR,
 			boolean useHFR, boolean usePositivity) {
 
 		new File(Charts.TOP_FOLDER + "\\rates").mkdir();

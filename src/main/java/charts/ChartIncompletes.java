@@ -192,13 +192,13 @@ public class ChartIncompletes {
 		return c;
 	}
 
-	public String fastBuildChart(Set<NumbersType> types, NumbersTiming timing) {
+	public String buildChart(Set<NumbersType> types, NumbersTiming timing) {
 		String fileName = NumbersType.name(types, "-") + "-" + timing.lowerName;
 		Chart c = buildChart(Charts.TOP_FOLDER, fileName, stats.getLastDay(), types, timing, true);
 		return c.fileName;
 	}
 
-	public String buildCharts(Set<NumbersType> types, NumbersTiming timing, boolean logarithmic) {
+	public String buildGIF(Set<NumbersType> types, NumbersTiming timing, boolean logarithmic) {
 		AnimatedGifEncoder gif = new AnimatedGifEncoder();
 		String folder = Charts.TOP_FOLDER + "\\" + NumbersType.name(types, "-") + "-" + timing.lowerName
 				+ (logarithmic ? "-log" : "-cart");
@@ -214,8 +214,8 @@ public class ChartIncompletes {
 		return gifName;
 	}
 
-	public String buildCharts(NumbersType type, NumbersTiming timing, boolean logarithmic) {
-		return buildCharts(NumbersType.getSet(type), timing, logarithmic);
+	public String buildGIF(NumbersType type, NumbersTiming timing, boolean logarithmic) {
+		return buildGIF(NumbersType.getSet(type), timing, logarithmic);
 	}
 
 }

@@ -204,7 +204,7 @@ public class ChartMaker {
 		buildStarted = System.currentTimeMillis();
 
 		if (false) {
-			build(() -> ChartRates.buildRates(stats, "CFR", "Colorado rates by day of infection, ", true, false, false,
+			build(() -> ChartRates.buildGIF(stats, "CFR", "Colorado rates by day of infection, ", true, false, false,
 					false));
 
 			awaitBuild();
@@ -214,29 +214,29 @@ public class ChartMaker {
 		MyExecutor.executeCode(() -> createCumulativeStats());
 
 		for (NumbersTiming timing : NumbersTiming.values()) {
-			build(() -> incompletes.buildCharts(noTests, timing, true));
-			build(() -> incompletes.buildCharts(noTests, timing, false));
-			build(() -> incompletes.buildCharts(fullTypes, timing, true));
-			build(() -> incompletes.buildCharts(fullTypes, timing, false));
+			build(() -> incompletes.buildGIF(noTests, timing, true));
+			build(() -> incompletes.buildGIF(noTests, timing, false));
+			build(() -> incompletes.buildGIF(fullTypes, timing, true));
+			build(() -> incompletes.buildGIF(fullTypes, timing, false));
 
 			for (NumbersType type : NumbersType.values()) {
 				Set<NumbersType> types = NumbersType.getSet(type);
-				build(() -> incompletes.buildCharts(types, timing, true));
-				build(() -> incompletes.buildCharts(types, timing, false));
+				build(() -> incompletes.buildGIF(types, timing, true));
+				build(() -> incompletes.buildGIF(types, timing, false));
 				build(() -> buildNewTimeseriesCharts(type, timing));
 				build(() -> buildAgeTimeseriesChart(type, timing, stats.getLastDay()));
 			}
 		}
 
-		build(() -> ChartRates.buildRates(stats, "rates", "Colorado rates by day of infection, ", true, true, true,
+		build(() -> ChartRates.buildGIF(stats, "rates", "Colorado rates by day of infection, ", true, true, true,
 				true));
-		build(() -> ChartRates.buildRates(stats, "CFR", "Colorado rates by day of infection, ", true, false, false,
+		build(() -> ChartRates.buildGIF(stats, "CFR", "Colorado rates by day of infection, ", true, false, false,
 				false));
-		build(() -> ChartRates.buildRates(stats, "CHR", "Colorado rates by day of infection, ", false, true, false,
+		build(() -> ChartRates.buildGIF(stats, "CHR", "Colorado rates by day of infection, ", false, true, false,
 				false));
-		build(() -> ChartRates.buildRates(stats, "HFR", "Colorado rates by day of infection, ", false, false, true,
+		build(() -> ChartRates.buildGIF(stats, "HFR", "Colorado rates by day of infection, ", false, false, true,
 				false));
-		build(() -> ChartRates.buildRates(stats, "Positivity", "Colorado rates by day of infection, ", false, false,
+		build(() -> ChartRates.buildGIF(stats, "Positivity", "Colorado rates by day of infection, ", false, false,
 				false, true));
 
 		stats.getCounties().forEach((key, value) -> build(() -> county.createCountyStats(value)));
