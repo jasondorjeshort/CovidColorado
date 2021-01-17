@@ -57,7 +57,7 @@ public class ChartMaker {
 			Function<Integer, Double> getCasesForDay, Function<Integer, Double> getProjectedCasesForDay, String title,
 			String verticalAxis, boolean log, boolean showAverage, int daysToSkip, boolean showEvents) {
 
-		folder = Charts.TOP_FOLDER + "\\" + folder;
+		folder = Charts.FULL_FOLDER + "\\" + folder;
 
 		TimeSeries series = new TimeSeries("Cases");
 		TimeSeries projectedSeries = new TimeSeries("Projected");
@@ -195,6 +195,7 @@ public class ChartMaker {
 
 	public void buildCharts() {
 		new File(Charts.TOP_FOLDER).mkdir();
+		new File(Charts.FULL_FOLDER).mkdir();
 		ChartCounty county = new ChartCounty(stats);
 		ChartIncompletes incompletes = new ChartIncompletes(stats);
 		Set<NumbersType> fullTypes = NumbersType.getSet();

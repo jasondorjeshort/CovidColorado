@@ -42,6 +42,8 @@ public class ChartRates {
 
 	private static final NumbersTiming timing = NumbersTiming.INFECTION;
 
+	public static final String RATES_FOLDER = Charts.FULL_FOLDER + "\\rates";
+
 	private static Chart buildRates(ColoradoStats stats, int dayOfData, String fileName, String title, boolean useCFR,
 			boolean useCHR, boolean useHFR, boolean usePositivity, Integer age, Integer fixedHeight) {
 
@@ -181,7 +183,7 @@ public class ChartRates {
 		}
 
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT),
-				Charts.TOP_FOLDER + "\\rates" + "\\" + fileName + ".png");
+				RATES_FOLDER + "\\" + fileName + ".png");
 		c.saveAsPNG();
 
 		if (timing == NumbersTiming.INFECTION && useCFR && useHFR && useCHR && usePositivity
@@ -194,11 +196,11 @@ public class ChartRates {
 	public static String buildGIF(ColoradoStats stats, String prefix, String title, boolean useCFR, boolean useCHR,
 			boolean useHFR, boolean usePositivity) {
 
-		new File(Charts.TOP_FOLDER + "\\rates").mkdir();
+		new File(RATES_FOLDER).mkdir();
 
 		AnimatedGifEncoder gif = new AnimatedGifEncoder();
 
-		String fileName = Charts.TOP_FOLDER + "\\" + prefix + ".gif";
+		String fileName = Charts.FULL_FOLDER + "\\" + prefix + ".gif";
 		gif.start(fileName);
 		for (int dayOfData = stats.getFirstDayOfTiming(timing); dayOfData <= stats.getLastDay(); dayOfData++) {
 
