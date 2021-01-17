@@ -3,7 +3,6 @@ package covid;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -319,7 +318,6 @@ public class ColoradoStats {
 
 	public boolean readCSV(int dayOfData) {
 		String fname = csvFileName(dayOfData);
-		System.out.println("Reading " + fname);
 		File f = new File(fname);
 		try (CSVParser csv = CSVParser.parse(f, charset, CSVFormat.DEFAULT)) {
 			synchronized (this) {
@@ -520,9 +518,11 @@ public class ColoradoStats {
 				}
 			}
 		} catch (IOException e1) {
+			System.out.println("Failed to read " + fname);
 			return false;
 		}
 
+		System.out.println("Read " + fname);
 		return true;
 	}
 
@@ -539,9 +539,21 @@ public class ColoradoStats {
 		 * Monolithic code to read all the CSVs into one big spaghetti
 		 * structure.
 		 */
-		for (int dayOfData = firstCSV;; dayOfData++) {
-			if (!readCSV(dayOfData)) {
-				break;
+		int currentDay = CalendarUtils.timeToDay(System.currentTimeMillis());
+		System.out.println("Current day: " + CalendarUtils.dayToDate(lastDay));
+		currentDay++;
+		LinkedList<Future<Boolean>> futures = new LinkedList<>();
+		for (int dayOfData = firstCSV; dayOfData <= currentDay; dayOfData++) {
+			int _dayOfData = dayOfData;
+			futures.add(MyExecutor.submitCode(() -> readCSV(_dayOfData)));
+		}
+
+		for (Future<Boolean> f : futures) {
+			try {
+				f.get();
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.exit(0);
 			}
 		}
 
@@ -602,8 +614,10 @@ public class ColoradoStats {
 			System.exit(0);
 		}
 
-		if (true) {
+		if (false) {
 			outputProjections(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION);
+		}
+		if (true) {
 			outputDailyStats();
 		}
 	}

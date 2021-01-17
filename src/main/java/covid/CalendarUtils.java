@@ -59,11 +59,15 @@ public class CalendarUtils {
 	private static final long MILLIS_PER_DAY = 86400l * 1000l;
 
 	public static int dateToDay(String date) {
-		return (int) ((dateToTime(date) + MILLIS_PER_DAY / 2) / MILLIS_PER_DAY);
+		return timeToDay(dateToTime(date));
 	}
 
 	public static long dateToTime(String date) {
 		return dateToCalendar(date).getTimeInMillis();
+	}
+
+	public static int timeToDay(long time) {
+		return (int) ((time + MILLIS_PER_DAY / 2) / MILLIS_PER_DAY);
 	}
 
 	public static long dayToTime(int day) {
