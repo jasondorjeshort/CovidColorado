@@ -24,7 +24,8 @@ public class IncompleteNumbers {
 
 	public class Incomplete {
 		int samples = 0;
-		double ratio = 1;
+		double ratio = 1; // day-day ratio
+		double multiplier = 1; // multiplication of all ratios
 	}
 
 	private boolean isCumulative; // we want daily numbers, but the sheet only
@@ -283,7 +284,9 @@ public class IncompleteNumbers {
 			}
 		}
 
-		// projections
+		// projections. Could do this in quadratic instead of cubic time if we
+		// assempled multipliers along the way, but reordering the logic seems
+		// tedious.
 		for (int dayOfData = firstDayOfData; dayOfData <= lastDayOfData; dayOfData++) {
 			Daily daily = allNumbers.get(dayOfData);
 			if (daily == null) {
@@ -299,6 +302,7 @@ public class IncompleteNumbers {
 					continue;
 				}
 				double projected = p;
+				Incomplete multiplier = daily.ratios.get(dayOfData - dayOfType);
 				for (int delay = dayOfData - dayOfType;; delay++) {
 					Incomplete ratio = daily.ratios.get(delay);
 					if (dayOfData == logDayOfType + 10 && dayOfType == logDayOfType) {
@@ -329,6 +333,7 @@ public class IncompleteNumbers {
 								.println("Adjusting previous projection of " + projected + " by factor " + ratio.ratio);
 					}
 					projected *= ratio.ratio;
+					multiplier.multiplier *= ratio.ratio;
 				}
 				if (dayOfData == logDayOfType + 10 && dayOfType == logDayOfType) {
 					System.out.println("On " + CalendarUtils.dayToDate(dayOfData) + ", projection for " + type + "/"
