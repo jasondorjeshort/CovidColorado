@@ -50,12 +50,20 @@ public class IncompleteNumbers {
 
 	private final HashMap<Integer, Daily> allNumbers = new HashMap<>();
 
-	public final NumbersType type;
-	public final NumbersTiming timing;
+	private final NumbersType type;
+	private final NumbersTiming timing;
 
 	public IncompleteNumbers(NumbersType type, NumbersTiming timing) {
 		this.type = type;
 		this.timing = timing;
+	}
+
+	public NumbersType getType() {
+		return type;
+	}
+
+	public NumbersTiming getTiming() {
+		return timing;
 	}
 
 	private double getNumbers(int dayOfData, int dayOfType, boolean projected) {
@@ -189,9 +197,13 @@ public class IncompleteNumbers {
 				}
 			}
 
-			for (int dayOfData = logDayOfType; dayOfData <= lastDayOfData; dayOfData++) {
-				double numbers = getNumbers(dayOfData, logDayOfType);
-			}
+			// ???
+			/*
+			 * for (int dayOfData = logDayOfType; dayOfData <= lastDayOfData;
+			 * dayOfData++) { double numbers = getNumbers(dayOfData,
+			 * logDayOfType); }
+			 */
+
 			// TODO: should avoid negatives first
 			for (int dayOfData = firstDayOfData; dayOfData <= lastDayOfData; dayOfData++) {
 				double last = 0;
@@ -251,9 +263,11 @@ public class IncompleteNumbers {
 
 				if (incomplete1 == null) {
 					new Exception("Incomplete1 null " + dayOfData1).printStackTrace();
+					continue;
 				}
-				if (incomplete1 == null) {
+				if (incomplete2 == null) {
 					new Exception("Incomplete2 null " + dayOfData2).printStackTrace();
+					continue;
 				}
 
 				incomplete2.samples = incomplete1.samples + 1;
@@ -333,7 +347,7 @@ public class IncompleteNumbers {
 	}
 
 	// not used
-	private TimeSeries createTimeSeries(int dayOfData, String name, boolean isProjected) {
+	public synchronized TimeSeries createTimeSeries(int dayOfData, String name, boolean isProjected) {
 		Daily daily = allNumbers.get(dayOfData);
 
 		int firstDay = 0;

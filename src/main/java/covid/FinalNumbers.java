@@ -29,11 +29,15 @@ import java.util.HashMap;
 public class FinalNumbers {
 
 	private final HashMap<Integer, Integer> cumulative = new HashMap<>();
-	public final NumbersType type;
+	private final NumbersType type;
 	private int firstDay = Integer.MAX_VALUE, lastDay = Integer.MIN_VALUE;
 
 	public FinalNumbers(NumbersType type) {
 		this.type = type;
+	}
+
+	public NumbersType getType() {
+		return type;
 	}
 
 	public synchronized int getNumbersInInterval(int day, int interval) {
