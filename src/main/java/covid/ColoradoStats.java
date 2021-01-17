@@ -156,8 +156,9 @@ public class ColoradoStats {
 			return firstDayOfReportingX;
 		case DEATH:
 			return firstDayOfDeathX;
+		default:
+			throw new RuntimeException("...");
 		}
-		throw new RuntimeException("...");
 	}
 
 	public void setFirstDayOfTiming(NumbersTiming timing, int day) {
@@ -175,8 +176,9 @@ public class ColoradoStats {
 		case DEATH:
 			firstDayOfDeathX = Math.min(firstDayOfDeathX, day);
 			return;
+		default:
+			throw new RuntimeException("...");
 		}
-		throw new RuntimeException("...");
 	}
 
 	public void setFirstDayOfCumulative(int day) {
