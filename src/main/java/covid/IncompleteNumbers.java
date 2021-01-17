@@ -58,18 +58,18 @@ public class IncompleteNumbers {
 		this.timing = timing;
 	}
 
-	public double getNumbers(int dayOfData, int dayOfType, boolean projected) {
+	private double getNumbers(int dayOfData, int dayOfType, boolean projected) {
 		if (projected) {
 			return getProjectedNumbers(dayOfData, dayOfType);
 		}
 		return getNumbers(dayOfData, dayOfType);
 	}
 
-	public int getFirstDayOfType() {
+	public synchronized int getFirstDayOfType() {
 		return firstDayOfType;
 	}
 
-	public double getNumbers(int dayOfData, int dayOfType, boolean projected, Smoothing smoothing) {
+	public synchronized double getNumbers(int dayOfData, int dayOfType, boolean projected, Smoothing smoothing) {
 		double numbers;
 		switch (smoothing) {
 		case ALGEBRAIC_SYMMETRIC_WEEKLY:
@@ -109,7 +109,7 @@ public class IncompleteNumbers {
 		throw new RuntimeException("...");
 	}
 
-	public double getNumbers(int dayOfData, int dayOfType, boolean projected, int interval) {
+	public synchronized double getNumbers(int dayOfData, int dayOfType, boolean projected, int interval) {
 		double numbers = 0;
 		for (int d = 0; d < interval; d++) {
 			numbers += getNumbers(dayOfData, dayOfType - d, projected);
@@ -117,7 +117,7 @@ public class IncompleteNumbers {
 		return numbers;
 	}
 
-	public double getNumbers(int dayOfData, int dayOfType) {
+	public synchronized double getNumbers(int dayOfData, int dayOfType) {
 		Daily daily = allNumbers.get(dayOfData);
 		if (daily == null) {
 			return 0;
@@ -129,7 +129,7 @@ public class IncompleteNumbers {
 		return i;
 	}
 
-	public double getProjectedNumbers(int dayOfData, int dayOfType) {
+	public synchronized double getProjectedNumbers(int dayOfData, int dayOfType) {
 		Daily daily = allNumbers.get(dayOfData);
 		if (daily == null) {
 			return 0;
@@ -141,7 +141,7 @@ public class IncompleteNumbers {
 		return i;
 	}
 
-	public int getLastDay(int dayOfData) {
+	public synchronized int getLastDay(int dayOfData) {
 		return allNumbers.get(dayOfData).numbers.size() - 1;
 	}
 
@@ -159,9 +159,9 @@ public class IncompleteNumbers {
 		return incompletion;
 	}
 
-	public double SAMPLE_DAYS = 14;
+	private static final double SAMPLE_DAYS = 14;
 
-	public boolean build() {
+	public synchronized boolean build() {
 		if (type != NumbersType.HOSPITALIZATIONS || timing != NumbersTiming.INFECTION) {
 			// return false;
 		}
@@ -332,7 +332,8 @@ public class IncompleteNumbers {
 		return true;
 	}
 
-	TimeSeries createTimeSeries(int dayOfData, String name, boolean isProjected) {
+	// not used
+	private TimeSeries createTimeSeries(int dayOfData, String name, boolean isProjected) {
 		Daily daily = allNumbers.get(dayOfData);
 
 		int firstDay = 0;
@@ -355,7 +356,7 @@ public class IncompleteNumbers {
 	/**
 	 * Sets numbers for the given days.
 	 */
-	public void setNumbers(int dayOfData, int dayOfType, double numbers) {
+	public synchronized void setNumbers(int dayOfData, int dayOfType, double numbers) {
 		firstDayOfData = Math.min(firstDayOfData, dayOfData);
 		lastDayOfData = Math.max(lastDayOfData, dayOfData);
 		firstDayOfType = Math.min(firstDayOfType, dayOfType);
@@ -371,7 +372,7 @@ public class IncompleteNumbers {
 	/**
 	 * Adds more numbers for the given days.
 	 */
-	public void addNumbers(int dayOfData, int dayOfType, double numbers) {
+	public synchronized void addNumbers(int dayOfData, int dayOfType, double numbers) {
 		firstDayOfData = Math.min(firstDayOfData, dayOfData);
 		lastDayOfData = Math.max(lastDayOfData, dayOfData);
 		firstDayOfType = Math.min(firstDayOfType, dayOfType);
@@ -393,11 +394,11 @@ public class IncompleteNumbers {
 	 * handling in finalize to separate it into daily numbers. Some of the
 	 * fields in the CSV files are just cumulative.
 	 */
-	public void setCumulative() {
+	public synchronized void setCumulative() {
 		isCumulative = true;
 	}
 
-	public double getAverageAgeOfNewNumbers(int baseDayOfData, Smoothing smoothing) {
+	public synchronized double getAverageAgeOfNewNumbers(int baseDayOfData, Smoothing smoothing) {
 		double daySum = 0, numbersSum = 0;
 		int dayMinimum = baseDayOfData, dayMaximum = baseDayOfData;
 
@@ -428,5 +429,4 @@ public class IncompleteNumbers {
 
 		return daySum / numbersSum;
 	}
-
 }

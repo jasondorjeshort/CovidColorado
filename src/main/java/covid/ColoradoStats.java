@@ -589,22 +589,13 @@ public class ColoradoStats {
 
 		long time = System.nanoTime();
 
-		LinkedList<Future<Boolean>> futures = new LinkedList<>();
 		for (IncompleteNumbers incompletes : incompleteNumbers) {
-			futures.add(MyExecutor.submitCode(() -> incompletes.build()));
-			// incompletes.build();
+			MyExecutor.executeCode(() -> incompletes.build());
 		}
 		for (FinalNumbers finals : finalNumbers) {
-			futures.add(MyExecutor.submitCode(() -> finals.build()));
+			MyExecutor.executeCode(() -> finals.build());
 		}
-		counties.forEach((name, county) -> futures.add(MyExecutor.submitCode(() -> county.build())));
-		while (futures.size() > 0) {
-			try {
-				futures.pop().get();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
+		counties.forEach((name, county) -> MyExecutor.executeCode(() -> county.build()));
 
 		if (false) {
 			time = System.nanoTime() - time;

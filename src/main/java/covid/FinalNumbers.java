@@ -36,15 +36,15 @@ public class FinalNumbers {
 		this.type = type;
 	}
 
-	public int getNumbersInInterval(int day, int interval) {
+	public synchronized int getNumbersInInterval(int day, int interval) {
 		return getCumulativeNumbers(day) - getCumulativeNumbers(day - interval);
 	}
 
-	public int getDailyNumbers(int day) {
+	public synchronized int getDailyNumbers(int day) {
 		return getNumbersInInterval(day, 1);
 	}
 
-	public double getNumbers(int day, Smoothing smoothing) {
+	public synchronized double getNumbers(int day, Smoothing smoothing) {
 		switch (smoothing) {
 		case ALGEBRAIC_SYMMETRIC_WEEKLY:
 			return getNumbersInInterval(day + 3, 7) / 7.0;
@@ -74,7 +74,7 @@ public class FinalNumbers {
 		throw new RuntimeException("FAIL");
 	}
 
-	public int getCumulativeNumbers(int day) {
+	public synchronized int getCumulativeNumbers(int day) {
 		if (day < firstDay) {
 			return 0;
 		}
@@ -89,13 +89,13 @@ public class FinalNumbers {
 		return numbersForDay;
 	}
 
-	public void setCumulativeNumbers(int day, int numbersForDay) {
+	public synchronized void setCumulativeNumbers(int day, int numbersForDay) {
 		firstDay = Math.min(firstDay, day);
 		lastDay = Math.max(firstDay, day);
 		cumulative.put(day, numbersForDay);
 	}
 
-	public boolean build() {
+	public synchronized boolean build() {
 		int max = Integer.MAX_VALUE;
 		for (int day = lastDay; day >= firstDay; day--) {
 			Integer number = cumulative.get(day);
