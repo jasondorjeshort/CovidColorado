@@ -215,6 +215,19 @@ public class ChartMaker {
 
 		MyExecutor.executeCode(() -> createCumulativeStats());
 
+		/* These are just ordered from slowest to fastest */
+
+		build(() -> ChartRates.buildGIF(stats, "rates", "Colorado rates by day of infection, ", true, true, true,
+				true));
+		build(() -> ChartRates.buildGIF(stats, "CFR", "Colorado rates by day of infection, ", true, false, false,
+				false));
+		build(() -> ChartRates.buildGIF(stats, "CHR", "Colorado rates by day of infection, ", false, true, false,
+				false));
+		build(() -> ChartRates.buildGIF(stats, "HFR", "Colorado rates by day of infection, ", false, false, true,
+				false));
+		build(() -> ChartRates.buildGIF(stats, "Positivity", "Colorado rates by day of infection, ", false, false,
+				false, true));
+
 		for (NumbersTiming timing : NumbersTiming.values()) {
 			build(() -> incompletes.buildGIF(noTests, timing, true));
 			build(() -> incompletes.buildGIF(noTests, timing, false));
@@ -229,17 +242,6 @@ public class ChartMaker {
 				build(() -> buildAgeTimeseriesChart(type, timing, stats.getLastDay()));
 			}
 		}
-
-		build(() -> ChartRates.buildGIF(stats, "rates", "Colorado rates by day of infection, ", true, true, true,
-				true));
-		build(() -> ChartRates.buildGIF(stats, "CFR", "Colorado rates by day of infection, ", true, false, false,
-				false));
-		build(() -> ChartRates.buildGIF(stats, "CHR", "Colorado rates by day of infection, ", false, true, false,
-				false));
-		build(() -> ChartRates.buildGIF(stats, "HFR", "Colorado rates by day of infection, ", false, false, true,
-				false));
-		build(() -> ChartRates.buildGIF(stats, "Positivity", "Colorado rates by day of infection, ", false, false,
-				false, true));
 
 		stats.getCounties().forEach((key, value) -> build(() -> county.createCountyStats(value)));
 
