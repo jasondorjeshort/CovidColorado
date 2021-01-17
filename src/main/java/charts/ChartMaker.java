@@ -206,6 +206,7 @@ public class ChartMaker {
 		if (false) {
 			build(() -> ChartRates.buildGIF(stats, "CFR", "Colorado rates by day of infection, ", true, false, false,
 					false));
+			build(() -> incompletes.buildGIF(fullTypes, NumbersTiming.INFECTION, true));
 
 			awaitBuild();
 			return;
