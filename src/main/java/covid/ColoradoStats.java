@@ -195,10 +195,6 @@ public class ColoradoStats {
 				- getNumbers(type, timing).getNumbers(dayOfData - 1, dayOfType);
 	}
 
-	public int getLastDayOfType(NumbersType type, NumbersTiming timing, int dayOfData) {
-		return getNumbers(type, timing).getLastDay(dayOfData);
-	}
-
 	private static void write(String lead, CSVRecord line) {
 		if (lead != null) {
 			System.out.print(lead + " : ");
@@ -563,12 +559,15 @@ public class ColoradoStats {
 		 * Imperfect, but it's clearly the "correct" way to approximate it.
 		 */
 		for (int dayOfData = getVeryFirstDay(); dayOfData <= getLastDay(); dayOfData++) {
+
+			// TODO: should use cumulatives from the incomplete numbers instead
 			double casesOnDay = getNumbers(NumbersType.CASES).getDailyNumbers(dayOfData);
 			if (casesOnDay == 0) {
 				continue;
 			}
 			double testsOnDay = getNumbers(NumbersType.TESTS).getDailyNumbers(dayOfData);
 			double positivity = casesOnDay / testsOnDay;
+
 			// System.out.println(String.format("%s : %.0f/%.0f = %.2f",
 			// Date.dayToDate(dayOfData), casesOnDay, testsOnDay,
 			// positivity * 100));

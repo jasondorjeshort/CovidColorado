@@ -66,7 +66,7 @@ public class IncompleteNumbers {
 		return timing;
 	}
 
-	private double getNumbers(int dayOfData, int dayOfType, boolean projected) {
+	public synchronized double getNumbers(int dayOfData, int dayOfType, boolean projected) {
 		if (projected) {
 			return getProjectedNumbers(dayOfData, dayOfType);
 		}
@@ -147,10 +147,6 @@ public class IncompleteNumbers {
 			return 0;
 		}
 		return i;
-	}
-
-	public synchronized int getLastDay(int dayOfData) {
-		return allNumbers.get(dayOfData).numbers.size() - 1;
 	}
 
 	private Incomplete getIncompletion(int dayOfType, int delay) {
