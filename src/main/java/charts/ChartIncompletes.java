@@ -183,9 +183,13 @@ public class ChartIncompletes {
 			fileName = CalendarUtils.dayToFullDate(dayOfData, '-');
 		}
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), folder + "\\" + fileName + ".png");
-		c.saveAsPNG();
-		if (timing == NumbersTiming.INFECTION && types.size() == 3 && logarithmic && dayOfData == stats.getLastDay()) {
+		if (timing == NumbersTiming.INFECTION && types.size() == 4 && logarithmic && dayOfData == stats.getLastDay()) {
+			c.addFileName(NumbersType.name(types, "-") + "-infection.png");
+			c.saveAsPNG();
 			c.open();
+		} else {
+			c.saveAsPNG();
+			
 		}
 		return c;
 	}
