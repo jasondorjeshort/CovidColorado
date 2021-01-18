@@ -61,10 +61,15 @@ public class Chart {
 	}
 
 	public void open() {
+		String fName = null;
+		// Arbitrary trick/hack : open the longest file name since it's probably
+		// the most specific
 		for (String fileName : fileNames) {
-			library.OpenImage.openImage(fileName);
-			return;
+			if (fName == null || fName.length() < fileName.length()) {
+				fName = fileName;
+			}
 		}
+		library.OpenImage.openImage(fName);
 	}
 
 	public BufferedImage getImage() {
