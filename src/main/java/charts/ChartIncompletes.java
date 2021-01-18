@@ -184,7 +184,7 @@ public class ChartIncompletes {
 		}
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), folder + "\\" + fileName + ".png");
 		if (timing == NumbersTiming.INFECTION && types.size() == 4 && logarithmic && dayOfData == stats.getLastDay()) {
-			c.addFileName(Charts.TOP_FOLDER + NumbersType.name(types, "-") + "-infection.png");
+			c.addFileName(Charts.TOP_FOLDER + "\\" + NumbersType.name(types, "-") + "-infection-log.png");
 			c.saveAsPNG();
 			c.open();
 		} else {
@@ -202,9 +202,9 @@ public class ChartIncompletes {
 
 	public String buildGIF(Set<NumbersType> types, NumbersTiming timing, boolean logarithmic) {
 		AnimatedGifEncoder gif = new AnimatedGifEncoder();
-		String folder = Charts.FULL_FOLDER + "\\" + NumbersType.name(types, "-") + "-" + timing.lowerName
-				+ (logarithmic ? "-log" : "-cart");
-		String gifName = Charts.FULL_FOLDER + "\\" + folder + ".gif";
+		String name = NumbersType.name(types, "-") + "-" + timing.lowerName + (logarithmic ? "-log" : "-cart");
+		String folder = Charts.FULL_FOLDER + "\\" + name;
+		String gifName = Charts.FULL_FOLDER + "\\" + name + ".gif";
 		new File(folder).mkdir();
 		gif.start(gifName);
 		for (int dayOfData = stats.getFirstDayOfTiming(timing); dayOfData <= stats.getLastDay(); dayOfData++) {

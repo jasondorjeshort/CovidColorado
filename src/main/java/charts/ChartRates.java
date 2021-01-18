@@ -44,6 +44,16 @@ public class ChartRates {
 
 	public static final String RATES_FOLDER = Charts.FULL_FOLDER + "\\rates";
 
+	public static int count(boolean... booleans) {
+		int count = 0;
+		for (boolean b : booleans) {
+			if (b) {
+				count++;
+			}
+		}
+		return count;
+	}
+
 	private static Chart buildRates(ColoradoStats stats, int dayOfData, String fileName, String title, boolean useCFR,
 			boolean useCHR, boolean useHFR, boolean usePositivity, Integer age, Integer fixedHeight) {
 
@@ -184,11 +194,26 @@ public class ChartRates {
 
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT),
 				RATES_FOLDER + "\\" + fileName + ".png");
-		c.saveAsPNG();
 
-		if (timing == NumbersTiming.INFECTION && useCFR && useHFR && useCHR && usePositivity
-				&& dayOfData == stats.getLastDay()) {
+		if (timing == NumbersTiming.INFECTION && dayOfData == stats.getLastDay()
+				&& count(useCFR, useHFR, useCHR, usePositivity) == 1) {
+			String name = Charts.TOP_FOLDER + "\\";
+			if (useCFR) {
+				name += "CFR-infection.png";
+			} else if (useHFR) {
+				name += "HFR-infection.png";
+			} else if (useCHR) {
+				name += "CHR-infection.png";
+			} else if (usePositivity) {
+				name += "Positivity-infection.png";
+			} else {
+				throw new RuntimeException("...");
+			}
+			c.addFileName(name);
+			c.saveAsPNG();
 			c.open();
+		} else {
+			c.saveAsPNG();
 		}
 		return c;
 	}
