@@ -205,8 +205,7 @@ public class IncompleteNumbers {
 			for (int dayOfData = firstDayOfData; dayOfData <= lastDayOfData; dayOfData++) {
 				double last = 0;
 				Daily daily = allNumbers.get(dayOfData);
-				for (int dayOfType = firstDayOfType; dayOfType <= dayOfData
-						&& dayOfType <= lastDayOfType; dayOfType++) {
+				for (int dayOfType = firstDayOfType; dayOfType <= dayOfData; dayOfType++) {
 					double newLast = getNumbers(dayOfData, dayOfType);
 
 					if (dayOfType == logDayOfType) {
