@@ -184,7 +184,8 @@ public class ChartIncompletes {
 		}
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), folder + "\\" + fileName + ".png");
 		if (timing == NumbersTiming.INFECTION && types.size() == 4 && logarithmic && dayOfData == stats.getLastDay()) {
-			c.addFileName(Charts.TOP_FOLDER + "\\" + NumbersType.name(types, "-") + "-infection-log.png");
+			c.addFileName(Charts.TOP_FOLDER + "\\" + NumbersType.name(types, "-") + "-infection"
+					+ (logarithmic ? "-log" : "-cart") + ".png");
 			c.saveAsPNG();
 			c.open();
 		} else {
