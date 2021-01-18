@@ -18,8 +18,8 @@ import org.jfree.data.time.Day;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 
-import covid.ColoradoStats;
 import covid.CalendarUtils;
+import covid.ColoradoStats;
 import covid.Event;
 import covid.IncompleteNumbers;
 import covid.NumbersTiming;
