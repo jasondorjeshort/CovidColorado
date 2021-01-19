@@ -17,6 +17,12 @@ package covid;
  * @author jdorje@gmail.com
  */
 public enum Smoothing {
+	/*
+	 * Should re-do this into a class where you can create your own smoothing:
+	 * 
+	 * smoothing = new Smoothing(7, GEOMETRIC | SYMMETRIC)
+	 */
+
 	NONE("daily numbers"),
 	ALGEBRAIC_SYMMETRIC_WEEKLY("7-day symmetric average"),
 	GEOMETRIC_SYMMETRIC_13DAY("13-day symmetric geometric average"),

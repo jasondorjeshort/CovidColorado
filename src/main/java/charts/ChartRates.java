@@ -19,6 +19,7 @@ import covid.Event;
 import covid.IncompleteNumbers;
 import covid.NumbersTiming;
 import covid.NumbersType;
+import covid.Smoothing;
 
 /**
  * This program is free software: you can redistribute it and/or modify it under
@@ -57,7 +58,7 @@ public class ChartRates {
 	private static Chart buildRates(ColoradoStats stats, int dayOfData, String fileName, String title, boolean useCFR,
 			boolean useCHR, boolean useHFR, boolean usePositivity, Integer age, Integer fixedHeight) {
 
-		int INTERVAL = 7;
+		Smoothing smoothing = Smoothing.ALGEBRAIC_SYMMETRIC_WEEKLY;
 
 		TimeSeries cfr = new TimeSeries("CFR (deaths / cases)");
 		TimeSeries cfrProjected = new TimeSeries("CFR (projected)");
@@ -77,20 +78,20 @@ public class ChartRates {
 
 		for (int dayOfInfection = (age == null || fixedHeight != null ? 0
 				: stats.getLastDay() - age); dayOfInfection <= stats.getLastDay(); dayOfInfection++) {
-			double tests = tNumbers.getNumbers(dayOfData, dayOfInfection, false, INTERVAL);
-			double testsProjected = tNumbers.getNumbers(dayOfData, dayOfInfection, true, INTERVAL);
+			double tests = tNumbers.getNumbers(dayOfData, dayOfInfection, false, smoothing);
+			double testsProjected = tNumbers.getNumbers(dayOfData, dayOfInfection, true, smoothing);
 			double testsRatio = Charts.ratio(tests, testsProjected);
 
-			double cases = cNumbers.getNumbers(dayOfData, dayOfInfection, false, INTERVAL);
-			double casesProjected = cNumbers.getNumbers(dayOfData, dayOfInfection, true, INTERVAL);
+			double cases = cNumbers.getNumbers(dayOfData, dayOfInfection, false, smoothing);
+			double casesProjected = cNumbers.getNumbers(dayOfData, dayOfInfection, true, smoothing);
 			double casesRatio = Charts.ratio(cases, casesProjected);
 
-			double hosp = hNumbers.getNumbers(dayOfData, dayOfInfection, false, INTERVAL);
-			double hospProjected = hNumbers.getNumbers(dayOfData, dayOfInfection, true, INTERVAL);
+			double hosp = hNumbers.getNumbers(dayOfData, dayOfInfection, false, smoothing);
+			double hospProjected = hNumbers.getNumbers(dayOfData, dayOfInfection, true, smoothing);
 			double hospRatio = Charts.ratio(hosp, hospProjected);
 
-			double deaths = dNumbers.getNumbers(dayOfData, dayOfInfection, false, INTERVAL);
-			double deathsProjected = dNumbers.getNumbers(dayOfData, dayOfInfection, true, INTERVAL);
+			double deaths = dNumbers.getNumbers(dayOfData, dayOfInfection, false, smoothing);
+			double deathsProjected = dNumbers.getNumbers(dayOfData, dayOfInfection, true, smoothing);
 			double deathsRatio = Charts.ratio(deaths, deathsProjected);
 
 			if (!Double.isFinite(cases) || cases == 0) {
@@ -168,7 +169,7 @@ public class ChartRates {
 			}
 		}
 
-		JFreeChart chart = ChartFactory.createTimeSeriesChart(title + "\n(" + INTERVAL + "-day running average)",
+		JFreeChart chart = ChartFactory.createTimeSeriesChart(title + "\n(" + smoothing.description + ")",
 				"Date of Infection", "Rate (%)", collection);
 
 		// chart.getXYPlot().setRangeAxis(new LogarithmicAxis("Cases"));
@@ -218,6 +219,12 @@ public class ChartRates {
 		return c;
 	}
 
+	public static int getFirstDayForAnimation(ColoradoStats stats) {
+		int day = 0;
+		day = Math.max(day, stats.getLastDay() - 7);
+		return Math.max(day, stats.getFirstDayOfTiming(timing));
+	}
+
 	public static String buildGIF(ColoradoStats stats, String prefix, String title, boolean useCFR, boolean useCHR,
 			boolean useHFR, boolean usePositivity) {
 
@@ -227,7 +234,7 @@ public class ChartRates {
 
 		String fileName = Charts.FULL_FOLDER + "\\" + prefix + ".gif";
 		gif.start(fileName);
-		for (int dayOfData = stats.getFirstDayOfTiming(timing); dayOfData <= stats.getLastDay(); dayOfData++) {
+		for (int dayOfData = getFirstDayForAnimation(stats); dayOfData <= stats.getLastDay(); dayOfData++) {
 
 			String day = CalendarUtils.dayToDate(dayOfData);
 			String full = CalendarUtils.dayToFullDate(dayOfData, '-');

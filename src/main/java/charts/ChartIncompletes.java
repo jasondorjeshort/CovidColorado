@@ -201,6 +201,12 @@ public class ChartIncompletes {
 		return c.getFileName();
 	}
 
+	public int getFirstDayForAnimation(NumbersTiming timing) {
+		int day = 0;
+		day = Math.max(day, stats.getLastDay() - 7);
+		return Math.max(day, stats.getFirstDayOfTiming(timing));
+	}
+
 	public String buildGIF(Set<NumbersType> types, NumbersTiming timing, boolean logarithmic) {
 		AnimatedGifEncoder gif = new AnimatedGifEncoder();
 		String name = NumbersType.name(types, "-") + "-" + timing.lowerName + (logarithmic ? "-log" : "-cart");
@@ -208,7 +214,7 @@ public class ChartIncompletes {
 		String gifName = Charts.FULL_FOLDER + "\\" + name + ".gif";
 		new File(folder).mkdir();
 		gif.start(gifName);
-		for (int dayOfData = stats.getFirstDayOfTiming(timing); dayOfData <= stats.getLastDay(); dayOfData++) {
+		for (int dayOfData = getFirstDayForAnimation(timing); dayOfData <= stats.getLastDay(); dayOfData++) {
 			Chart c = buildChart(folder, null, dayOfData, types, timing, logarithmic);
 			Charts.setDelay(stats, dayOfData, gif);
 			gif.addFrame(c.getImage());
