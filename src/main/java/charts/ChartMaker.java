@@ -219,13 +219,10 @@ public class ChartMaker {
 
 		build(() -> ChartRates.buildGIF(stats, "rates", "Colorado rates by day of infection, ", true, true, true,
 				true));
-		build(() -> ChartRates.buildGIF(stats, "CFR", "Colorado rates by day of infection, ", true, false, false,
-				false));
-		build(() -> ChartRates.buildGIF(stats, "CHR", "Colorado rates by day of infection, ", false, true, false,
-				false));
-		build(() -> ChartRates.buildGIF(stats, "HFR", "Colorado rates by day of infection, ", false, false, true,
-				false));
-		build(() -> ChartRates.buildGIF(stats, "Positivity", "Colorado rates by day of infection, ", false, false,
+		build(() -> ChartRates.buildGIF(stats, "CFR", "Colorado CFR by day of infection, ", true, false, false, false));
+		build(() -> ChartRates.buildGIF(stats, "CHR", "Colorado CHR by day of infection, ", false, true, false, false));
+		build(() -> ChartRates.buildGIF(stats, "HFR", "Colorado HFR by day of infection, ", false, false, true, false));
+		build(() -> ChartRates.buildGIF(stats, "Positivity", "Colorado positivity by day of infection, ", false, false,
 				false, true));
 
 		for (NumbersTiming timing : NumbersTiming.values()) {
