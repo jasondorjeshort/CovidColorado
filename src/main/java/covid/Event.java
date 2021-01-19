@@ -28,7 +28,11 @@ public class Event {
 	public final String name;
 	public final long time;
 
-	public static final Event[] events = new Event[] { new Event("SaH", "3-26-2020"), new Event("BLM", "05-28-2020"),
+	public static final Event[] events = new Event[] { 
+			
+			new Event("SoE", "3-10-2020"),
+			//new Event()
+			new Event("SaH", "3-26-2020"), new Event("BLM", "05-28-2020"),
 			new Event("Bars", "06-30-2020"), new Event("Masks", "7-16-2020"), new Event("Snow", "9-9-2020"),
 			new Event("CU/DPS open", "8-24-2020"),
 			// new Event("ENS", "10-25-2020"),
