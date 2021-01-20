@@ -75,62 +75,45 @@ public class IncompleteNumbers extends Numbers {
 	}
 
 	public synchronized double getNumbers(int dayOfData, int dayOfType, boolean projected, Smoothing smoothing) {
-		double numbers;
-		switch (smoothing) {
-		case ALGEBRAIC_SYMMETRIC_WEEKLY:
-			numbers = 0;
-			for (int d = -3; d <= 3; d++) {
-				numbers += getNumbers(dayOfData, dayOfType + d, projected);
+
+		int lastDayOfCalc;
+
+		switch (smoothing.getTiming()) {
+		case SYMMETRIC:
+			lastDayOfCalc = dayOfType + smoothing.getDays() / 2;
+			break;
+		case TRAILING:
+			lastDayOfCalc = dayOfType;
+			break;
+		default:
+			throw new RuntimeException("...");
+		}
+
+		switch (smoothing.getType()) {
+		case ALGEBRAIC_AVERAGE:
+		case ALGEBRAIC_SUM:
+			double sum = 0.0;
+			for (int d = lastDayOfCalc - smoothing.getDays() + 1; d <= lastDayOfCalc; d++) {
+				sum += getNumbers(dayOfData, d, projected);
 			}
-			return numbers / 7.0;
-		case GEOMETRIC_SYMMETRIC_WEEKLY:
-			numbers = 1;
-			for (int d = -3; d <= 3; d++) {
-				numbers *= getNumbers(dayOfData, dayOfType + d, projected);
+			if (smoothing.getType() == Smoothing.Type.ALGEBRAIC_AVERAGE) {
+				sum /= smoothing.getDays();
 			}
-			return Math.pow(numbers, 1.0 / 7.0);
-		case GEOMETRIC_SYMMETRIC_13DAY:
-			numbers = 1;
-			for (int d = -6; d <= 6; d++) {
-				numbers *= getNumbers(dayOfData, dayOfType + d, projected);
+			return sum;
+		case GEOMETRIC_AVERAGE:
+			double product = 1.0;
+			for (int d = lastDayOfCalc - smoothing.getDays() + 1; d <= lastDayOfCalc; d++) {
+				product *= getNumbers(dayOfData, d, projected);
 			}
-			return Math.pow(numbers, 1.0 / 13.0);
-		case GEOMETRIC_SYMMETRIC_21DAY:
-			numbers = 1;
-			for (int d = -10; d <= 10; d++) {
-				numbers *= getNumbers(dayOfData, dayOfType + d, projected);
+			product = Math.pow(product, 1.0 / smoothing.getDays());
+			if (!Double.isFinite(product)) {
+				throw new RuntimeException("Uh oh: " + product + " for " + smoothing.getDays());
 			}
-			return Math.pow(numbers, 1.0 / 21.0);
-		case NONE:
-			return getNumbers(dayOfData, dayOfType, projected);
-		case TOTAL_14_DAY:
-			numbers = 0;
-			for (int d = -13; d <= 0; d++) {
-				numbers += getNumbers(dayOfData, dayOfType + d, projected);
-			}
-			return numbers;
-		case TOTAL_30_DAY:
-			numbers = 0;
-			for (int d = -29; d <= 0; d++) {
-				numbers += getNumbers(dayOfData, dayOfType + d, projected);
-			}
-			return numbers;
-		case TOTAL_60_DAY:
-			numbers = 0;
-			for (int d = -59; d <= 0; d++) {
-				numbers += getNumbers(dayOfData, dayOfType + d, projected);
-			}
-			return numbers;
-		case TOTAL_7_DAY:
-			numbers = 0;
-			for (int d = -6; d <= 0; d++) {
-				numbers += getNumbers(dayOfData, dayOfType + d, projected);
-			}
-			return numbers;
+			return product;
 		default:
 			break;
 		}
-		throw new RuntimeException("...");
+		throw new RuntimeException("FAIL");
 	}
 
 	public synchronized double getNumbers(int dayOfData, int dayOfType, boolean projected, int interval) {
@@ -425,26 +408,9 @@ public class IncompleteNumbers extends Numbers {
 		isCumulative = true;
 	}
 
-	public synchronized double getAverageAgeOfNewNumbers(int baseDayOfData, Smoothing smoothing) {
+	public synchronized double getAverageAgeOfNewNumbers(int baseDayOfData, int dayRange) {
 		double daySum = 0, numbersSum = 0;
-		int dayMinimum = baseDayOfData, dayMaximum = baseDayOfData;
-
-		switch (smoothing) {
-		case ALGEBRAIC_SYMMETRIC_WEEKLY:
-			dayMinimum = baseDayOfData - 3;
-			dayMaximum = baseDayOfData + 3;
-			break;
-		case NONE:
-			break;
-		case TOTAL_14_DAY:
-			dayMinimum = baseDayOfData - 13;
-			break;
-		case TOTAL_7_DAY:
-			dayMinimum = baseDayOfData - 6;
-			break;
-		default:
-			throw new RuntimeException("Not implemented.");
-		}
+		int dayMinimum = baseDayOfData - dayRange + 1, dayMaximum = baseDayOfData;
 
 		for (int dayOfData = dayMinimum; dayOfData <= dayMaximum; dayOfData++) {
 			for (int dayOfType = 0; dayOfType < dayOfData; dayOfType++) {

@@ -18,10 +18,22 @@ package covid;
  */
 public class Smoothing {
 
+	public static final Smoothing NONE = new Smoothing(1, Type.ALGEBRAIC_SUM, Timing.SYMMETRIC);
+	public static final Smoothing GEOMETRIC_SYMMETRIC_WEEKLY = new Smoothing(7, Type.GEOMETRIC_AVERAGE,
+			Timing.SYMMETRIC);
+	public static final Smoothing GEOMETRIC_SYMMETRIC_13DAY = new Smoothing(13, Type.GEOMETRIC_AVERAGE,
+			Timing.SYMMETRIC);
+	public static final Smoothing GEOMETRIC_SYMMETRIC_21DAY = new Smoothing(21, Type.GEOMETRIC_AVERAGE,
+			Timing.SYMMETRIC);
+	public static final Smoothing TOTAL_7_DAY = new Smoothing(7, Type.ALGEBRAIC_SUM, Timing.TRAILING);
+	public static final Smoothing TOTAL_14_DAY = new Smoothing(14, Type.ALGEBRAIC_SUM, Timing.TRAILING);
+	public static final Smoothing ALGEBRAIC_SYMMETRIC_WEEKLY = new Smoothing(7, Type.ALGEBRAIC_AVERAGE,
+			Timing.SYMMETRIC);
+
 	public enum Type {
 		ALGEBRAIC_SUM,
 		ALGEBRAIC_AVERAGE,
-		SYMMETRIC, // average
+		GEOMETRIC_AVERAGE,
 	}
 
 	public enum Timing {
@@ -32,11 +44,15 @@ public class Smoothing {
 	private final int days;
 	private final Type type;
 	private final Timing timing;
+	private final String description;
 
 	public Smoothing(int days, Type type, Timing timing) {
 		this.days = days;
 		this.type = type;
 		this.timing = timing;
+
+		// TODO: FIX
+		description = String.format("%d-day %s %s", days, type.name(), timing.name());
 	}
 
 	public Type getType() {
@@ -49,6 +65,10 @@ public class Smoothing {
 
 	public int getDays() {
 		return days;
+	}
+
+	public String getDescription() {
+		return description;
 	}
 
 }

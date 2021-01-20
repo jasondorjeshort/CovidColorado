@@ -72,8 +72,8 @@ public class ChartCounty {
 		collection.addSeries(cSeries);
 		collection.addSeries(dSeries);
 		String title = String.format("%s County, %s\n(%s%s)", c.getName(), CalendarUtils.dayToDate(stats.getLastDay()),
-				smoothing.description, (log ? ", logarithmic" : ""));
-		String verticalAxis = smoothing.description;
+				smoothing.getDescription(), (log ? ", logarithmic" : ""));
+		String verticalAxis = smoothing.getDescription();
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title, "Date", verticalAxis, collection);
 
 		if (log) {

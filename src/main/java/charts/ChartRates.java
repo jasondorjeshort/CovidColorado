@@ -169,7 +169,7 @@ public class ChartRates {
 			}
 		}
 
-		JFreeChart chart = ChartFactory.createTimeSeriesChart(title + "\n(" + smoothing.description + ")",
+		JFreeChart chart = ChartFactory.createTimeSeriesChart(title + "\n(" + smoothing.getDescription() + ")",
 				"Date of Infection", "Rate (%)", collection);
 
 		// chart.getXYPlot().setRangeAxis(new LogarithmicAxis("Cases"));

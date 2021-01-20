@@ -92,7 +92,7 @@ public class ChartIncompletes {
 			}
 			String desc;
 			if (multi || type.smoothing != Smoothing.NONE) {
-				desc = type.capName + " (" + type.smoothing.description + ")";
+				desc = type.capName + " (" + type.smoothing.getDescription() + ")";
 			} else {
 				desc = type.capName;
 			}

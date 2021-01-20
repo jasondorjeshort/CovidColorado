@@ -44,29 +44,35 @@ public class FinalNumbers extends Numbers {
 	}
 
 	public synchronized double getNumbers(int day, Smoothing smoothing) {
-		switch (smoothing) {
-		case ALGEBRAIC_SYMMETRIC_WEEKLY:
-			return getNumbersInInterval(day + 3, 7) / 7.0;
-		case NONE:
-			return getDailyNumbers(day);
-		case TOTAL_14_DAY:
-			return getNumbersInInterval(day, 14);
-		case TOTAL_7_DAY:
-			return getNumbersInInterval(day, 7);
-		case GEOMETRIC_SYMMETRIC_WEEKLY:
-			double product = 1;
-			for (int d = -3; d <= 3; d++) {
-				int daily = getDailyNumbers(day + d);
 
-				product *= daily;
+		int lastDayOfCalc;
+
+		switch (smoothing.getTiming()) {
+		case SYMMETRIC:
+			lastDayOfCalc = day + smoothing.getDays() / 2;
+			break;
+		case TRAILING:
+			lastDayOfCalc = day;
+			break;
+		default:
+			throw new RuntimeException("...");
+		}
+
+		switch (smoothing.getType()) {
+		case ALGEBRAIC_AVERAGE:
+			return getNumbersInInterval(lastDay, smoothing.getDays()) / smoothing.getDays();
+		case ALGEBRAIC_SUM:
+			return getNumbersInInterval(lastDay, smoothing.getDays());
+		case GEOMETRIC_AVERAGE:
+			double product = 1.0;
+			for (int d = lastDayOfCalc - smoothing.getDays() + 1; d <= lastDayOfCalc; d++) {
+				product *= getDailyNumbers(d);
 			}
-			product = Math.pow(product, 1 / 7.0);
+			product = Math.pow(product, 1.0 / smoothing.getDays());
 			if (!Double.isFinite(product)) {
 				throw new RuntimeException("Uh oh: " + product);
 			}
 			return product;
-		case TOTAL_30_DAY:
-			return getNumbersInInterval(day, 30);
 		default:
 			break;
 		}

@@ -281,26 +281,21 @@ public class ColoradoStats {
 		System.out.println("Daily positivity:");
 		System.out.println(String.format("\tT: %.2f%% | Y : %.2f%% | %s : %.2f%%", 100 * getPositivity(t, 1),
 				100 * getPositivity(y, 1), lastWeek, 100 * getPositivity(w, 1)));
-		Smoothing smoothing = Smoothing.NONE;
 
-		System.out.println("Data age (" + smoothing.description + "):");
+		System.out.println("Data age (" + "daily" + "):");
 		System.out.println(String.format("\tCases: %.1f | Y : %.1f | %s : %.1f",
-				getNumbers(NumbersType.CASES, NumbersTiming.INFECTION).getAverageAgeOfNewNumbers(t, smoothing),
-				getNumbers(NumbersType.CASES, NumbersTiming.INFECTION).getAverageAgeOfNewNumbers(y, smoothing),
-				lastWeek,
-				getNumbers(NumbersType.CASES, NumbersTiming.INFECTION).getAverageAgeOfNewNumbers(w, smoothing)));
+				getNumbers(NumbersType.CASES, NumbersTiming.INFECTION).getAverageAgeOfNewNumbers(t, 1),
+				getNumbers(NumbersType.CASES, NumbersTiming.INFECTION).getAverageAgeOfNewNumbers(y, 1), lastWeek,
+				getNumbers(NumbersType.CASES, NumbersTiming.INFECTION).getAverageAgeOfNewNumbers(w, 1)));
 		System.out.println(String.format("\tHospitalizations: %.1f | Y : %.1f | %s : %.1f",
-				getNumbers(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION).getAverageAgeOfNewNumbers(t,
-						smoothing),
-				getNumbers(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION).getAverageAgeOfNewNumbers(y,
-						smoothing),
-				lastWeek, getNumbers(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION).getAverageAgeOfNewNumbers(w,
-						smoothing)));
-		System.out.println(String.format("\tDeaths: %.1f | Y : %.1f | %s : %.1f",
-				getNumbers(NumbersType.DEATHS, NumbersTiming.INFECTION).getAverageAgeOfNewNumbers(t, smoothing),
-				getNumbers(NumbersType.DEATHS, NumbersTiming.INFECTION).getAverageAgeOfNewNumbers(y, smoothing),
+				getNumbers(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION).getAverageAgeOfNewNumbers(t, 1),
+				getNumbers(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION).getAverageAgeOfNewNumbers(y, 1),
 				lastWeek,
-				getNumbers(NumbersType.DEATHS, NumbersTiming.INFECTION).getAverageAgeOfNewNumbers(w, smoothing)));
+				getNumbers(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION).getAverageAgeOfNewNumbers(w, 1)));
+		System.out.println(String.format("\tDeaths: %.1f | Y : %.1f | %s : %.1f",
+				getNumbers(NumbersType.DEATHS, NumbersTiming.INFECTION).getAverageAgeOfNewNumbers(t, 1),
+				getNumbers(NumbersType.DEATHS, NumbersTiming.INFECTION).getAverageAgeOfNewNumbers(y, 1), lastWeek,
+				getNumbers(NumbersType.DEATHS, NumbersTiming.INFECTION).getAverageAgeOfNewNumbers(w, 1)));
 
 		System.out.println("");
 	}

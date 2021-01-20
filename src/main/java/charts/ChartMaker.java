@@ -139,8 +139,7 @@ public class ChartMaker {
 		String by = "age-" + type.lowerName + "-" + timing.lowerName;
 		IncompleteNumbers numbers = stats.getNumbers(type, timing);
 		buildCasesTimeseriesChart(by, CalendarUtils.dayToFullDate(finalDay), finalDay,
-				dayOfData -> numbers.getAverageAgeOfNewNumbers(dayOfData, Smoothing.TOTAL_14_DAY), null, by, "?", false,
-				false, 0, false);
+				dayOfData -> numbers.getAverageAgeOfNewNumbers(dayOfData, 14), null, by, "?", false, false, 0, false);
 		return null;
 	}
 
