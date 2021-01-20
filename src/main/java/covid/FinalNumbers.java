@@ -26,7 +26,7 @@ import java.util.HashMap;
  * @author jdorje@gmail.com
  *
  */
-public class FinalNumbers {
+public class FinalNumbers extends Numbers {
 
 	private final HashMap<Integer, Integer> cumulative = new HashMap<>();
 	private final NumbersType type;

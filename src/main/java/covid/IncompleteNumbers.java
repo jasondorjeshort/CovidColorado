@@ -20,7 +20,7 @@ import org.jfree.data.time.TimeSeries;
  * 
  * @author jdorje@gmail.com
  */
-public class IncompleteNumbers {
+public class IncompleteNumbers extends Numbers {
 
 	public class Incomplete {
 		int samples = 0;
