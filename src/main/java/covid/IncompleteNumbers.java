@@ -52,16 +52,11 @@ public class IncompleteNumbers extends Numbers {
 
 	private final HashMap<Integer, Daily> allNumbers = new HashMap<>();
 
-	private final NumbersType type;
 	private final NumbersTiming timing;
 
 	public IncompleteNumbers(NumbersType type, NumbersTiming timing) {
-		this.type = type;
+		super(type);
 		this.timing = timing;
-	}
-
-	public NumbersType getType() {
-		return type;
 	}
 
 	public NumbersTiming getTiming() {
@@ -187,12 +182,12 @@ public class IncompleteNumbers extends Numbers {
 	private static final double SAMPLE_DAYS = 14;
 
 	public synchronized boolean build() {
-		if (type != NumbersType.HOSPITALIZATIONS || timing != NumbersTiming.INFECTION) {
+		if (getType() != NumbersType.HOSPITALIZATIONS || timing != NumbersTiming.INFECTION) {
 			// return false;
 		}
 		int logDayOfType = -100; // CalendarUtils.dateToDay("12-28-2020");
 		if (logDayOfType > 0) {
-			System.out.println("Doing build for " + type + "/" + timing + " from "
+			System.out.println("Doing build for " + getType() + "/" + timing + " from "
 					+ CalendarUtils.dayToDate(firstDayOfData) + " / " + CalendarUtils.dayToDate(firstDayOfType) + " to "
 					+ CalendarUtils.dayToDate(lastDayOfData) + " / " + CalendarUtils.dayToDate(lastDayOfData));
 		}
@@ -310,7 +305,7 @@ public class IncompleteNumbers extends Numbers {
 			Daily daily = allNumbers.get(dayOfData);
 			if (daily == null) {
 				if (logDayOfType > 0) {
-					new Exception("Problem with " + type + "/" + timing + " on day " + dayOfData + " aka "
+					new Exception("Problem with " + getType() + "/" + timing + " on day " + dayOfData + " aka "
 							+ CalendarUtils.dayToDate(dayOfData)).printStackTrace();
 				}
 				continue;
@@ -355,8 +350,8 @@ public class IncompleteNumbers extends Numbers {
 					multiplier.multiplier *= ratio.ratio;
 				}
 				if (dayOfData == logDayOfType + 10 && dayOfType == logDayOfType) {
-					System.out.println("On " + CalendarUtils.dayToDate(dayOfData) + ", projection for " + type + "/"
-							+ timing + " on " + CalendarUtils.dayToDate(dayOfType) + " is " + projected + " vs "
+					System.out.println("On " + CalendarUtils.dayToDate(dayOfData) + ", projection for " + getType()
+							+ "/" + timing + " on " + CalendarUtils.dayToDate(dayOfType) + " is " + projected + " vs "
 							+ getNumbers(dayOfData, dayOfType) + ".");
 				}
 				daily.projected.put(dayOfType, projected);
