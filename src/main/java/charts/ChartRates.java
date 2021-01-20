@@ -180,9 +180,9 @@ public class ChartRates {
 		}
 
 		if (fixedHeight != null) {
-			DateAxis xAxis = (DateAxis) plot.getDomainAxis();
-			xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(CalendarUtils.dateToDay("6-1-2020")));
-			xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(stats.getLastDay()));
+			// DateAxis xAxis = (DateAxis) plot.getDomainAxis();
+			// xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(CalendarUtils.dateToDay("6-1-2020")));
+			// xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(stats.getLastDay()));
 
 			ValueAxis yAxis = plot.getRangeAxis();
 			yAxis.setLowerBound(0);
@@ -244,7 +244,7 @@ public class ChartRates {
 				fixedHeight = Math.max(fixedHeight, 10);
 			}
 			if (useCHR) {
-				fixedHeight = Math.max(fixedHeight, 16);
+				fixedHeight = Math.max(fixedHeight, 40);
 			}
 			if (useHFR) {
 				fixedHeight = Math.max(fixedHeight, 100);
