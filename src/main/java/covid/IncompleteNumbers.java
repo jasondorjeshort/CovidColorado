@@ -113,7 +113,26 @@ public class IncompleteNumbers {
 				numbers += getNumbers(dayOfData, dayOfType + d, projected);
 			}
 			return numbers;
+		case TOTAL_30_DAY:
+			numbers = 0;
+			for (int d = -29; d <= 0; d++) {
+				numbers += getNumbers(dayOfData, dayOfType + d, projected);
+			}
+			return numbers;
+		case TOTAL_60_DAY:
+			numbers = 0;
+			for (int d = -59; d <= 0; d++) {
+				numbers += getNumbers(dayOfData, dayOfType + d, projected);
+			}
+			return numbers;
+		case TOTAL_7_DAY:
+			numbers = 0;
+			for (int d = -6; d <= 0; d++) {
+				numbers += getNumbers(dayOfData, dayOfType + d, projected);
+			}
+			return numbers;
 		default:
+			break;
 		}
 		throw new RuntimeException("...");
 	}
