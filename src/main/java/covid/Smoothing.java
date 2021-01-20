@@ -16,26 +16,39 @@ package covid;
  * 
  * @author jdorje@gmail.com
  */
-public enum Smoothing {
-	/*
-	 * Should re-do this into a class where you can create your own smoothing:
-	 * 
-	 * smoothing = new Smoothing(7, GEOMETRIC | SYMMETRIC)
-	 */
+public class Smoothing {
 
-	NONE("daily numbers"),
-	ALGEBRAIC_SYMMETRIC_WEEKLY("7-day symmetric average"),
-	GEOMETRIC_SYMMETRIC_13DAY("13-day symmetric geometric average"),
-	GEOMETRIC_SYMMETRIC_21DAY("21-day symmetric geometric average"),
-	GEOMETRIC_SYMMETRIC_WEEKLY("7-day symmetric geometric average"),
-	TOTAL_60_DAY("60-day totals"),
-	TOTAL_30_DAY("30-day total"),
-	TOTAL_14_DAY("14-day total"),
-	TOTAL_7_DAY("7-day total");
-
-	Smoothing(String description) {
-		this.description = description;
+	public enum Type {
+		ALGEBRAIC_SUM,
+		ALGEBRAIC_AVERAGE,
+		SYMMETRIC, // average
 	}
 
-	public final String description;
+	public enum Timing {
+		SYMMETRIC,
+		TRAILING
+	}
+
+	private final int days;
+	private final Type type;
+	private final Timing timing;
+
+	public Smoothing(int days, Type type, Timing timing) {
+		this.days = days;
+		this.type = type;
+		this.timing = timing;
+	}
+
+	public Type getType() {
+		return type;
+	}
+
+	public Timing getTiming() {
+		return timing;
+	}
+
+	public int getDays() {
+		return days;
+	}
+
 }
