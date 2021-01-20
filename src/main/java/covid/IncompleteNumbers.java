@@ -32,9 +32,10 @@ public class IncompleteNumbers extends Numbers {
 									// gives cumulative
 
 	private int firstDayOfType = Integer.MAX_VALUE;
-	private int lastDayOfType = Integer.MIN_VALUE;
 	private int firstDayOfData = Integer.MAX_VALUE;
 	private int lastDayOfData = Integer.MIN_VALUE;
+	// The last day of type is implicitly the same as the last day of data;
+	// sometimes we have to fill in 0s to get there
 
 	protected class Daily {
 		protected final HashMap<Integer, Double> numbers = new HashMap<>();
@@ -172,7 +173,7 @@ public class IncompleteNumbers extends Numbers {
 	private Incomplete getIncompletion(int dayOfType, int delay) {
 		if (dayOfType < firstDayOfType || dayOfType > lastDayOfData) {
 			throw new RuntimeException("Uh oh: " + CalendarUtils.dayToDate(dayOfType) + " is not between "
-					+ CalendarUtils.dayToDate(firstDayOfType) + " and " + CalendarUtils.dayToDate(lastDayOfType));
+					+ CalendarUtils.dayToDate(firstDayOfType) + " and " + CalendarUtils.dayToDate(lastDayOfData));
 		}
 		Daily daily = allNumbers.get(dayOfType);
 		Incomplete incompletion = daily.ratios.get(delay);
@@ -193,7 +194,7 @@ public class IncompleteNumbers extends Numbers {
 		if (logDayOfType > 0) {
 			System.out.println("Doing build for " + type + "/" + timing + " from "
 					+ CalendarUtils.dayToDate(firstDayOfData) + " / " + CalendarUtils.dayToDate(firstDayOfType) + " to "
-					+ CalendarUtils.dayToDate(lastDayOfData) + " / " + CalendarUtils.dayToDate(lastDayOfType));
+					+ CalendarUtils.dayToDate(lastDayOfData) + " / " + CalendarUtils.dayToDate(lastDayOfData));
 		}
 
 		if (isCumulative) {
@@ -245,7 +246,7 @@ public class IncompleteNumbers extends Numbers {
 		 */
 		int continuing = 0, nc = 0;
 
-		for (int delay = 0; delay < lastDayOfType - firstDayOfType; delay++) {
+		for (int delay = 0; delay < lastDayOfData - firstDayOfType; delay++) {
 			for (int typeDay = firstDayOfType; typeDay < lastDayOfData - delay; typeDay++) {
 				int dayOfData1 = typeDay + delay;
 				int dayOfData2 = typeDay + delay + 1;
@@ -314,7 +315,7 @@ public class IncompleteNumbers extends Numbers {
 				}
 				continue;
 			}
-			for (int dayOfType = firstDayOfType; dayOfType <= dayOfData && dayOfType <= lastDayOfType; dayOfType++) {
+			for (int dayOfType = firstDayOfType; dayOfType <= dayOfData; dayOfType++) {
 				Double p = daily.numbers.get(dayOfType);
 				if (p == null) {
 					continue;
@@ -393,7 +394,6 @@ public class IncompleteNumbers extends Numbers {
 		firstDayOfData = Math.min(firstDayOfData, dayOfData);
 		lastDayOfData = Math.max(lastDayOfData, dayOfData);
 		firstDayOfType = Math.min(firstDayOfType, dayOfType);
-		lastDayOfType = Math.max(lastDayOfType, dayOfType);
 		Daily daily = allNumbers.get(dayOfData);
 		if (daily == null) {
 			daily = new Daily();
@@ -409,7 +409,6 @@ public class IncompleteNumbers extends Numbers {
 		firstDayOfData = Math.min(firstDayOfData, dayOfData);
 		lastDayOfData = Math.max(lastDayOfData, dayOfData);
 		firstDayOfType = Math.min(firstDayOfType, dayOfType);
-		lastDayOfType = Math.max(lastDayOfType, dayOfType);
 		Daily daily = allNumbers.get(dayOfData);
 		if (daily == null) {
 			daily = new Daily();
