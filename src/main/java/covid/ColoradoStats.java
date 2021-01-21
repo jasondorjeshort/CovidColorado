@@ -581,7 +581,7 @@ public class ColoradoStats {
 				IncompleteNumbers cases = getNumbers(NumbersType.CASES, timing);
 				IncompleteNumbers tests = getNumbers(NumbersType.TESTS, timing);
 
-				for (int dayOfTiming = 0; dayOfTiming <= dayOfData; dayOfTiming++) {
+				for (int dayOfTiming = cases.getFirstDayOfType(); dayOfTiming <= dayOfData; dayOfTiming++) {
 					double newCasesOnDay = cases.getNumbers(dayOfData, dayOfTiming)
 							- cases.getNumbers(dayOfData - 1, dayOfTiming);
 					double newTestsOnDay = newCasesOnDay / positivity;
