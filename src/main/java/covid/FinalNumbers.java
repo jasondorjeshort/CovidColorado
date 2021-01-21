@@ -31,6 +31,14 @@ public class FinalNumbers extends Numbers {
 	private final HashMap<Integer, Integer> cumulative = new HashMap<>();
 	private int firstDay = Integer.MAX_VALUE, lastDay = Integer.MIN_VALUE;
 
+	public int getFirstDay() {
+		return firstDay;
+	}
+
+	public int getLastDay() {
+		return lastDay;
+	}
+
 	public FinalNumbers(NumbersType type) {
 		super(type);
 	}
@@ -96,16 +104,20 @@ public class FinalNumbers extends Numbers {
 
 	public synchronized void setCumulativeNumbers(int day, int numbersForDay) {
 		firstDay = Math.min(firstDay, day);
-		lastDay = Math.max(firstDay, day);
+		lastDay = Math.max(lastDay, day);
 		cumulative.put(day, numbersForDay);
 	}
 
-	public synchronized boolean build() {
+	public synchronized boolean build(String tag) {
 		int max = Integer.MAX_VALUE;
 		for (int day = lastDay; day >= firstDay; day--) {
 			Integer number = cumulative.get(day);
+			if (number == null) {
+				new Exception("Missing day in " + tag + "? " + CalendarUtils.dayToDate(day)).printStackTrace();
+			}
 			if (number == null || number > max) {
 				cumulative.put(day, max);
+				// System.out.println("Dropping cumulative to " + max);
 			} else {
 				max = number;
 			}

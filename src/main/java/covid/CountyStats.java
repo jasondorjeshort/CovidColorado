@@ -47,8 +47,8 @@ public class CountyStats {
 	}
 
 	public boolean build() {
-		cases.build();
-		deaths.build();
+		cases.build(name + "/cases");
+		deaths.build(name + "/deaths");
 		return true;
 	}
 }

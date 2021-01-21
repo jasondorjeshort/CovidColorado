@@ -302,12 +302,6 @@ public class ColoradoStats {
 
 	private HashSet<String> keySet = new HashSet<>();
 
-	/*
-	 * The "test encounters" metric only began on this day. Before that it's
-	 * just "people tested".
-	 */
-	private static final int TEST_ENCOUNTERS_STARTED = 205;
-
 	private final Charset charset = Charset.forName("US-ASCII");
 
 	public boolean readCSV(int dayOfData) {
@@ -344,15 +338,9 @@ public class ColoradoStats {
 					} else if (line.get(2).equals("Deaths Due to COVID-19")) {
 						confirmedDeaths.setCumulativeNumbers(dayOfData, number);
 					} else if (line.get(2).equals("Test Encounters")) {
-						if (dayOfData < TEST_ENCOUNTERS_STARTED) {
-							new Exception("SHOULD NOT BE HERE???").printStackTrace();
-						}
 						getNumbers(NumbersType.TESTS).setCumulativeNumbers(dayOfData, number);
 					} else if (line.get(2).equals("People Tested")) {
 						peopleTested.setCumulativeNumbers(dayOfData, number);
-						if (dayOfData < TEST_ENCOUNTERS_STARTED) {
-							getNumbers(NumbersType.TESTS).setCumulativeNumbers(dayOfData, number);
-						}
 					} else if (line.get(2).equals("Counties")) {
 					} else if (line.get(2).equals("Rate Per 100000") || line.get(2).equals("Rate per 100,000")) {
 						// uh, simple bug that the CSV reader ignores " escaping
@@ -552,6 +540,24 @@ public class ColoradoStats {
 		}
 
 		/*
+		 * Early on we only had "people tested", then we moved to
+		 * "test encounters". Bit of a hack on the data here since it's
+		 * essentially incomplete data prior to July 23.
+		 * 
+		 * The end result is there's a huge lump of ~100k extra tests thrown in
+		 * on one day that end up skewing the positivity of the numbers shortly
+		 * before that day. It might be better to take these extra numbers and
+		 * distribute them evenly over all days up to that point based on the
+		 * number of people tested on those days.
+		 */
+		FinalNumbers testEncounters = getNumbers(NumbersType.TESTS);
+		int finalDay = testEncounters.getFirstDay();
+		for (int dayOfData = peopleTested.getFirstDay(); dayOfData < finalDay; dayOfData++) {
+			int people = peopleTested.getCumulativeNumbers(dayOfData);
+
+			testEncounters.setCumulativeNumbers(dayOfData, people);
+		}
+		/*
 		 * So the challenge is that a negative test isn't associated with a
 		 * reported/onset/infection day. It is therefore "impossible" to have a
 		 * positivity rate for a given infection date. Sad!
@@ -594,13 +600,16 @@ public class ColoradoStats {
 
 		long time = System.nanoTime();
 
+		for (FinalNumbers finals : finalNumbers) {
+			finals.build(finals.getType().name());
+		}
+		MyExecutor.executeCode(() -> peopleTested.build("people tested"));
+		MyExecutor.executeCode(() -> confirmedDeaths.build("confirmed deaths"));
 		for (IncompleteNumbers incompletes : incompleteNumbers) {
 			MyExecutor.executeCode(() -> incompletes.build());
 		}
-		for (FinalNumbers finals : finalNumbers) {
-			MyExecutor.executeCode(() -> finals.build());
-		}
-		counties.forEach((name, county) -> MyExecutor.executeCode(() -> county.build()));
+		// counties.forEach((name, county) -> MyExecutor.executeCode(() ->
+		// county.build()));
 
 		if (false) {
 			time = System.nanoTime() - time;
