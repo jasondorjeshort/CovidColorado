@@ -68,9 +68,9 @@ public class FinalNumbers extends Numbers {
 
 		switch (smoothing.getType()) {
 		case AVERAGE:
-			return getNumbersInInterval(lastDay, smoothing.getDays()) / smoothing.getDays();
+			return getNumbersInInterval(lastDayOfCalc, smoothing.getDays()) / smoothing.getDays();
 		case TOTAL:
-			return getNumbersInInterval(lastDay, smoothing.getDays());
+			return getNumbersInInterval(lastDayOfCalc, smoothing.getDays());
 		case GEOMETRIC_AVERAGE:
 			double product = 1.0;
 			for (int d = lastDayOfCalc - smoothing.getDays() + 1; d <= lastDayOfCalc; d++) {
