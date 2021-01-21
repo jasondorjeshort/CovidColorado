@@ -56,8 +56,11 @@ public class Smoothing {
 		this.type = type;
 		this.timing = timing;
 
-		// TODO: FIX
-		description = String.format("%d-day %s %s", days, timing.lowerName, type.lowerName);
+		if (days == 1) {
+			description = "exact";
+		} else {
+			description = String.format("%d-day %s %s", days, timing.lowerName, type.lowerName);
+		}
 	}
 
 	public Type getType() {
