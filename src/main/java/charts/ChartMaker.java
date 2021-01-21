@@ -127,8 +127,14 @@ public class ChartMaker {
 				false, true, 0, false);
 	}
 
+	public static int getFirstDayForAnimation(ColoradoStats stats) {
+		int day = 0;
+		day = Math.max(day, stats.getLastDay() - 7);
+		return Math.max(day, stats.getVeryFirstDay());
+	}
+
 	public String buildNewTimeseriesCharts(NumbersType type, NumbersTiming timing) {
-		for (int dayOfData = stats.getVeryFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
+		for (int dayOfData = getFirstDayForAnimation(stats); dayOfData <= stats.getLastDay(); dayOfData++) {
 			buildNewTimeseriesChart(type, timing, dayOfData);
 		}
 		return null;
