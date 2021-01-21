@@ -5,7 +5,6 @@ import java.io.File;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.LogarithmicAxis;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.time.TimeSeries;
@@ -14,7 +13,6 @@ import org.jfree.data.time.TimeSeriesCollection;
 import covid.CalendarUtils;
 import covid.ColoradoStats;
 import covid.CountyStats;
-import covid.FinalNumbers;
 import covid.Smoothing;
 
 /**
@@ -45,35 +43,9 @@ public class ChartCounty {
 
 	public BufferedImage buildCountyTimeseriesChart(CountyStats c, boolean log, Smoothing smoothing) {
 
-		TimeSeries cSeries = new TimeSeries("Cases");
-		TimeSeries dSeries = new TimeSeries("Deaths");
-		boolean logging = false;
-		FinalNumbers cNumbers = c.getCases(), dNumbers = c.getDeaths();
-
-		for (int day = cNumbers.getFirstDay(); day <= cNumbers.getLastDay(); day++) {
-			double cases = cNumbers.getNumbers(day, smoothing);
-
-			if (!Double.isFinite(cases)) {
-				throw new RuntimeException("Uh oh.");
-			}
-			if (logging) {
-				System.out.println(CalendarUtils.dayToDate(day) + " => " + cases);
-			}
-			if (!log || cases > 0) {
-				cSeries.add(CalendarUtils.dayToDay(day), cases);
-			}
-		}
-
-		for (int day = dNumbers.getFirstDay(); day <= dNumbers.getLastDay(); day++) {
-			double deaths = dNumbers.getNumbers(day, smoothing);
-
-			if (!Double.isFinite(deaths)) {
-				throw new RuntimeException("Uh oh.");
-			}
-			if (!log || deaths > 0) {
-				dSeries.add(CalendarUtils.dayToDay(day), deaths);
-			}
-		}
+		TimeSeries cSeries = new TimeSeries("Cases"), dSeries = new TimeSeries("Deaths");
+		c.getCases().makeTimeSeries(cSeries, smoothing, log);
+		c.getDeaths().makeTimeSeries(dSeries, smoothing, log);
 
 		// dataset.addSeries("Cases", series);
 
@@ -90,10 +62,10 @@ public class ChartCounty {
 			LogarithmicAxis yAxis = new LogarithmicAxis(verticalAxis);
 			plot.setRangeAxis(yAxis);
 
-			DateAxis xAxis = new DateAxis("Date");
-			xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(stats.getFirstDayOfCumulative()));
-			xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(stats.getLastDay()));
-			plot.setDomainAxis(xAxis);
+			// DateAxis xAxis = new DateAxis("Date");
+			// xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(stats.getFirstDayOfCumulative()));
+			// xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(stats.getLastDay()));
+			// plot.setDomainAxis(xAxis);
 		}
 
 		String fileName = c.getName() + "-" + (log ? "log" : "cart");

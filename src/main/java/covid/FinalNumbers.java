@@ -2,6 +2,8 @@ package covid;
 
 import java.util.HashMap;
 
+import org.jfree.data.time.TimeSeries;
+
 /**
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -125,5 +127,18 @@ public class FinalNumbers extends Numbers {
 			}
 		}
 		return true;
+	}
+
+	public synchronized void makeTimeSeries(TimeSeries series, Smoothing smoothing, boolean isLogarithmic) {
+		for (int day = getFirstDay(); day <= getLastDay(); day++) {
+			double numbers = getNumbers(day, smoothing);
+
+			if (!Double.isFinite(numbers)) {
+				throw new RuntimeException("Uh oh.");
+			}
+			if (!isLogarithmic || numbers > 0) {
+				series.add(CalendarUtils.dayToDay(day), numbers);
+			}
+		}
 	}
 }
