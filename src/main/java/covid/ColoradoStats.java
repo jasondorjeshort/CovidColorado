@@ -188,11 +188,6 @@ public class ColoradoStats {
 		return lastDay;
 	}
 
-	public double getNewCasesByType(NumbersType type, NumbersTiming timing, int dayOfData, int dayOfType) {
-		return getNumbers(type, timing).getNumbers(dayOfData, dayOfType)
-				- getNumbers(type, timing).getNumbers(dayOfData - 1, dayOfType);
-	}
-
 	private static void write(String lead, CSVRecord line) {
 		if (lead != null) {
 			System.out.print(lead + " : ");

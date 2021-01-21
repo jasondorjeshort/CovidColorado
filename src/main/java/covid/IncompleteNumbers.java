@@ -129,6 +129,14 @@ public class IncompleteNumbers extends Numbers {
 		return numbers;
 	}
 
+	/*
+	 * Returns the new numbers for this day-of-type that appeared on the given
+	 * day-of-data
+	 */
+	public synchronized double getNewNumbers(int dayOfData, int dayOfType) {
+		return getNumbers(dayOfData, dayOfType) - getNumbers(dayOfData - 1, dayOfType);
+	}
+
 	public synchronized double getNumbers(int dayOfData, int dayOfType) {
 		Daily daily = allNumbers.get(dayOfData);
 		if (daily == null) {

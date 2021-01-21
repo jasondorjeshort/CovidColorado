@@ -127,9 +127,13 @@ public class ChartMaker {
 
 	public Chart buildNewTimeseriesChart(NumbersType type, NumbersTiming timing, int dayOfData) {
 		String by = "new-" + type.lowerName + "-" + timing.lowerName;
+		IncompleteNumbers numbers = stats.getNumbers(type, timing);
+		if (!numbers.hasData()) {
+			return null;
+		}
 		return buildCasesTimeseriesChart(by, CalendarUtils.dayToFullDate(dayOfData), dayOfData,
-				dayOfOnset -> (double) stats.getNewCasesByType(type, timing, dayOfData, dayOfOnset), null, by, "?",
-				false, true, 0, false);
+				dayOfType -> (double) numbers.getNewNumbers(dayOfData, dayOfType), null, by, "?", false, true, 0,
+				false);
 	}
 
 	public int getFirstDayForAnimation() {
