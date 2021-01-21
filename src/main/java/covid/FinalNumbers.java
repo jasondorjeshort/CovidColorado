@@ -96,8 +96,7 @@ public class FinalNumbers extends Numbers {
 		}
 		Double numbersForDay = cumulative.get(day);
 		if (numbersForDay == null) {
-			new Exception("Uh oh!").printStackTrace();
-			return getCumulativeNumbers(day - 1);
+			throw new RuntimeException("Uh oh: null day! On " + day + " + versus " + firstDay + "-" + lastDay);
 		}
 		return numbersForDay;
 	}
@@ -113,7 +112,10 @@ public class FinalNumbers extends Numbers {
 		for (int day = lastDay; day >= firstDay; day--) {
 			Double number = cumulative.get(day);
 			if (number == null) {
-				new Exception("Missing day in " + tag + "? " + CalendarUtils.dayToDate(day)).printStackTrace();
+				// This happens!??
+
+				// new Exception("Missing day in " + tag + "? " +
+				// CalendarUtils.dayToDate(day)).printStackTrace();
 			}
 			if (number == null || number > max) {
 				cumulative.put(day, max);
