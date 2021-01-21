@@ -539,6 +539,8 @@ public class ColoradoStats {
 			}
 		}
 
+		long time = System.nanoTime();
+
 		/*
 		 * Early on we only had "people tested", then we moved to
 		 * "test encounters". Bit of a hack on the data here since it's
@@ -562,6 +564,14 @@ public class ColoradoStats {
 			double people = peopleTested.getCumulativeNumbers(dayOfData);
 
 			testEncounters.setCumulativeNumbers(dayOfData, people * ratio);
+		}
+
+		// final tests must be built before incomplete tests can be determined
+		MyExecutor.executeCode(() -> peopleTested.build("people tested"));
+		MyExecutor.executeCode(() -> confirmedDeaths.build("confirmed deaths"));
+		counties.forEach((name, county) -> MyExecutor.executeCode(() -> county.build()));
+		for (FinalNumbers finals : finalNumbers) {
+			finals.build(finals.getType().name());
 		}
 
 		/*
@@ -605,18 +615,9 @@ public class ColoradoStats {
 			}
 		}
 
-		long time = System.nanoTime();
-
-		for (FinalNumbers finals : finalNumbers) {
-			finals.build(finals.getType().name());
-		}
-		MyExecutor.executeCode(() -> peopleTested.build("people tested"));
-		MyExecutor.executeCode(() -> confirmedDeaths.build("confirmed deaths"));
 		for (IncompleteNumbers incompletes : incompleteNumbers) {
 			MyExecutor.executeCode(() -> incompletes.build());
 		}
-		// counties.forEach((name, county) -> MyExecutor.executeCode(() ->
-		// county.build()));
 
 		if (false) {
 			time = System.nanoTime() - time;
