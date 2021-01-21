@@ -149,9 +149,11 @@ public class ChartMaker {
 		return null;
 	}
 
-	public String buildAgeTimeseriesChart(NumbersType type, NumbersTiming timing, int finalDay) {
-		String by = "age-" + type.lowerName + "-" + timing.lowerName;
-		IncompleteNumbers numbers = stats.getNumbers(type, timing);
+	public String buildAgeTimeseriesChart(IncompleteNumbers numbers, int finalDay) {
+		if (!numbers.hasData()) {
+			return null;
+		}
+		String by = "age-" + numbers.getType().lowerName + "-" + numbers.getTiming().lowerName;
 		buildCasesTimeseriesChart(by, CalendarUtils.dayToFullDate(finalDay), finalDay,
 				dayOfData -> numbers.getAverageAgeOfNewNumbers(dayOfData, 14), null, by, "?", false, false, 0, false);
 		return null;
@@ -250,7 +252,7 @@ public class ChartMaker {
 				build(() -> incompletes.buildGIF(types, timing, true));
 				build(() -> incompletes.buildGIF(types, timing, false));
 				build(() -> buildNewTimeseriesCharts(numbers));
-				build(() -> buildAgeTimeseriesChart(type, timing, stats.getLastDay()));
+				build(() -> buildAgeTimeseriesChart(numbers, stats.getLastDay()));
 			}
 		}
 
