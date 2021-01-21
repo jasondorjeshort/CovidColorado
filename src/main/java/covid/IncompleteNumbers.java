@@ -90,24 +90,25 @@ public class IncompleteNumbers extends Numbers {
 		}
 
 		switch (smoothing.getType()) {
-		case ALGEBRAIC_AVERAGE:
-		case ALGEBRAIC_SUM:
+		case AVERAGE:
+		case TOTAL:
 			double sum = 0.0;
 			for (int d = lastDayOfCalc - smoothing.getDays() + 1; d <= lastDayOfCalc; d++) {
 				sum += getNumbers(dayOfData, d, projected);
 			}
-			if (smoothing.getType() == Smoothing.Type.ALGEBRAIC_AVERAGE) {
+			if (smoothing.getType() == Smoothing.Type.AVERAGE) {
 				sum /= smoothing.getDays();
 			}
 			return sum;
 		case GEOMETRIC_AVERAGE:
 			double product = 1.0;
 			for (int d = lastDayOfCalc - smoothing.getDays() + 1; d <= lastDayOfCalc; d++) {
-				product *= getNumbers(dayOfData, d, projected);
+				// unsolvable issue with negative tests here. Analytics...
+				product *= Math.max(getNumbers(dayOfData, d, projected), 0.0);
 			}
 			product = Math.pow(product, 1.0 / smoothing.getDays());
 			if (!Double.isFinite(product)) {
-				throw new RuntimeException("Uh oh: " + product + " for " + smoothing.getDays());
+				throw new RuntimeException("Uh oh: " + product);
 			}
 			return product;
 		default:
@@ -369,24 +370,34 @@ public class IncompleteNumbers extends Numbers {
 	 * Sets numbers for the given days.
 	 */
 	public synchronized void setNumbers(int dayOfData, int dayOfType, double numbers) {
-		firstDayOfData = Math.min(firstDayOfData, dayOfData);
-		lastDayOfData = Math.max(lastDayOfData, dayOfData);
-		firstDayOfType = Math.min(firstDayOfType, dayOfType);
 		Daily daily = allNumbers.get(dayOfData);
 		if (daily == null) {
+			if (numbers == 0.0) {
+				return; // avoid unnecessary first/last days
+			}
 			daily = new Daily();
 			allNumbers.put(dayOfData, daily);
 		}
+		if (daily.numbers.get(dayOfType) == null && numbers == 0.0) {
+			return; // avoid unnecessary first/last days
+		}
+		if (daily.numbers.get(dayOfType) != null && numbers == daily.numbers.get(dayOfType)) {
+			return; // avoid unnecessary first/last days
+		}
 		daily.numbers.put(dayOfType, numbers);
+
+		firstDayOfData = Math.min(firstDayOfData, dayOfData);
+		lastDayOfData = Math.max(lastDayOfData, dayOfData);
+		firstDayOfType = Math.min(firstDayOfType, dayOfType);
 	}
 
 	/**
 	 * Adds more numbers for the given days.
 	 */
 	public synchronized void addNumbers(int dayOfData, int dayOfType, double numbers) {
-		firstDayOfData = Math.min(firstDayOfData, dayOfData);
-		lastDayOfData = Math.max(lastDayOfData, dayOfData);
-		firstDayOfType = Math.min(firstDayOfType, dayOfType);
+		if (numbers == 0.0) {
+			return; // avoid unnecessary first/last days
+		}
 		Daily daily = allNumbers.get(dayOfData);
 		if (daily == null) {
 			daily = new Daily();
@@ -397,6 +408,10 @@ public class IncompleteNumbers extends Numbers {
 			numbers += original;
 		}
 		daily.numbers.put(dayOfType, numbers);
+
+		firstDayOfData = Math.min(firstDayOfData, dayOfData);
+		lastDayOfData = Math.max(lastDayOfData, dayOfData);
+		firstDayOfType = Math.min(firstDayOfType, dayOfType);
 	}
 
 	/**

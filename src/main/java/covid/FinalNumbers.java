@@ -59,14 +59,14 @@ public class FinalNumbers extends Numbers {
 		}
 
 		switch (smoothing.getType()) {
-		case ALGEBRAIC_AVERAGE:
+		case AVERAGE:
 			return getNumbersInInterval(lastDay, smoothing.getDays()) / smoothing.getDays();
-		case ALGEBRAIC_SUM:
+		case TOTAL:
 			return getNumbersInInterval(lastDay, smoothing.getDays());
 		case GEOMETRIC_AVERAGE:
 			double product = 1.0;
 			for (int d = lastDayOfCalc - smoothing.getDays() + 1; d <= lastDayOfCalc; d++) {
-				product *= getDailyNumbers(d);
+				product *= Math.max(getDailyNumbers(d), 1.0);
 			}
 			product = Math.pow(product, 1.0 / smoothing.getDays());
 			if (!Double.isFinite(product)) {

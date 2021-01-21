@@ -18,27 +18,32 @@ package covid;
  */
 public class Smoothing {
 
-	public static final Smoothing NONE = new Smoothing(1, Type.ALGEBRAIC_SUM, Timing.SYMMETRIC);
+	public static final Smoothing NONE = new Smoothing(1, Type.TOTAL, Timing.SYMMETRIC);
 	public static final Smoothing GEOMETRIC_SYMMETRIC_WEEKLY = new Smoothing(7, Type.GEOMETRIC_AVERAGE,
 			Timing.SYMMETRIC);
 	public static final Smoothing GEOMETRIC_SYMMETRIC_13DAY = new Smoothing(13, Type.GEOMETRIC_AVERAGE,
 			Timing.SYMMETRIC);
 	public static final Smoothing GEOMETRIC_SYMMETRIC_21DAY = new Smoothing(21, Type.GEOMETRIC_AVERAGE,
 			Timing.SYMMETRIC);
-	public static final Smoothing TOTAL_7_DAY = new Smoothing(7, Type.ALGEBRAIC_SUM, Timing.TRAILING);
-	public static final Smoothing TOTAL_14_DAY = new Smoothing(14, Type.ALGEBRAIC_SUM, Timing.TRAILING);
-	public static final Smoothing ALGEBRAIC_SYMMETRIC_WEEKLY = new Smoothing(7, Type.ALGEBRAIC_AVERAGE,
-			Timing.SYMMETRIC);
+	public static final Smoothing TOTAL_7_DAY = new Smoothing(7, Type.TOTAL, Timing.TRAILING);
+	public static final Smoothing TOTAL_14_DAY = new Smoothing(14, Type.TOTAL, Timing.TRAILING);
+	public static final Smoothing ALGEBRAIC_SYMMETRIC_WEEKLY = new Smoothing(7, Type.AVERAGE, Timing.SYMMETRIC);
 
 	public enum Type {
-		ALGEBRAIC_SUM,
-		ALGEBRAIC_AVERAGE,
-		GEOMETRIC_AVERAGE,
+		TOTAL,
+		AVERAGE,
+		GEOMETRIC_AVERAGE;
+
+		public final String lowerName = name().toLowerCase().replaceAll("_", " ");
+		public final String capName = name().substring(0, 1) + name().substring(1).toLowerCase().replaceAll("_", " ");
 	}
 
 	public enum Timing {
 		SYMMETRIC,
-		TRAILING
+		TRAILING;
+
+		public final String lowerName = name().toLowerCase().replaceAll("_", " ");
+		public final String capName = name().substring(0, 1) + name().substring(1).toLowerCase().replaceAll("_", " ");
 	}
 
 	private final int days;
@@ -52,7 +57,7 @@ public class Smoothing {
 		this.timing = timing;
 
 		// TODO: FIX
-		description = String.format("%d-day %s %s", days, type.name(), timing.name());
+		description = String.format("%d-day %s %s", days, timing.lowerName, type.lowerName);
 	}
 
 	public Type getType() {
