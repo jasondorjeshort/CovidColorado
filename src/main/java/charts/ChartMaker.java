@@ -149,23 +149,22 @@ public class ChartMaker {
 	}
 
 	public void createCumulativeStats() {
-		String date = CalendarUtils.dayToFullDate(stats.getLastDay());
-		buildCasesTimeseriesChart("cumulative", date, stats.getLastDay(),
+		buildCasesTimeseriesChart("cumulative", "cases", stats.getLastDay(),
 				dayOfCases -> (double) stats.getNumbers(NumbersType.CASES).getCumulativeNumbers(dayOfCases), null,
 				"cases", "count", false, false, 0, false);
-		buildCasesTimeseriesChart("cumulative", date, stats.getLastDay(),
+		buildCasesTimeseriesChart("cumulative", "hospitalizations", stats.getLastDay(),
 				dayOfCases -> (double) stats.getNumbers(NumbersType.HOSPITALIZATIONS).getCumulativeNumbers(dayOfCases),
 				null, "hospitalizations", "count", false, false, 0, false);
-		buildCasesTimeseriesChart("cumulative", date, stats.getLastDay(),
+		buildCasesTimeseriesChart("cumulative", "deaths", stats.getLastDay(),
 				dayOfCases -> (double) stats.getNumbers(NumbersType.DEATHS).getCumulativeNumbers(dayOfCases), null,
 				"deaths", "count", false, false, 0, false);
-		buildCasesTimeseriesChart("cumulative", date, stats.getLastDay(),
+		buildCasesTimeseriesChart("cumulative", "deaths (confirmed)", stats.getLastDay(),
 				dayOfCases -> (double) stats.confirmedDeaths.getCumulativeNumbers(dayOfCases), null, "deaths (final)",
 				"count", false, false, 0, false);
-		buildCasesTimeseriesChart("cumulative", date, stats.getLastDay(),
+		buildCasesTimeseriesChart("cumulative", "people tested", stats.getLastDay(),
 				dayOfCases -> (double) stats.peopleTested.getCumulativeNumbers(dayOfCases), null, "peopleTested",
 				"count", false, false, 0, false);
-		buildCasesTimeseriesChart("cumulative", date, stats.getLastDay(),
+		buildCasesTimeseriesChart("cumulative", "tests", stats.getLastDay(),
 				dayOfCases -> (double) stats.getNumbers(NumbersType.TESTS).getCumulativeNumbers(dayOfCases), null,
 				"testEncounters", "count", false, false, 0, false);
 
