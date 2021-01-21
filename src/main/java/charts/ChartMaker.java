@@ -57,6 +57,7 @@ public class ChartMaker {
 			String verticalAxis, boolean log, boolean showAverage, int daysToSkip, boolean showEvents) {
 
 		folder = Charts.FULL_FOLDER + "\\" + folder;
+		new File(folder).mkdir();
 
 		TimeSeries series = new TimeSeries("Cases");
 		TimeSeries projectedSeries = new TimeSeries("Projected");
