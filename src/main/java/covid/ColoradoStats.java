@@ -36,11 +36,11 @@ public class ColoradoStats {
 	private static final int firstCSV = CalendarUtils.dateToDay("3-17-2020");
 
 	private int veryFirstDay = Integer.MAX_VALUE;
-	private int firstDayOfCumulativeX = Integer.MAX_VALUE;
-	private int firstDayOfInfectionX = Integer.MAX_VALUE;
-	private int firstDayOfOnsetX = Integer.MAX_VALUE;
-	private int firstDayOfReportingX = Integer.MAX_VALUE;
-	private int firstDayOfDeathX = Integer.MAX_VALUE;
+	private int firstDayOfCumulative = Integer.MAX_VALUE;
+	private int firstDayOfInfection = Integer.MAX_VALUE;
+	private int firstDayOfOnset = Integer.MAX_VALUE;
+	private int firstDayOfReporting = Integer.MAX_VALUE;
+	private int firstDayOfDeath = Integer.MAX_VALUE;
 
 	private static String csvFileName(int day) {
 		return String.format("H:\\Downloads\\CovidColoradoCSV\\covid19_case_summary_%s.csv",
@@ -136,8 +136,8 @@ public class ColoradoStats {
 		return finalNumbers[type.ordinal()];
 	}
 
-	public int getFirstDayOfCumulativeX() {
-		return firstDayOfCumulativeX;
+	public int getFirstDayOfCumulative() {
+		return firstDayOfCumulative;
 	}
 
 	public int getVeryFirstDay() {
@@ -147,13 +147,13 @@ public class ColoradoStats {
 	public int getFirstDayOfTiming(NumbersTiming timing) {
 		switch (timing) {
 		case INFECTION:
-			return firstDayOfInfectionX;
+			return firstDayOfInfection;
 		case ONSET:
-			return firstDayOfOnsetX;
+			return firstDayOfOnset;
 		case REPORTED:
-			return firstDayOfReportingX;
+			return firstDayOfReporting;
 		case DEATH:
-			return firstDayOfDeathX;
+			return firstDayOfDeath;
 		default:
 			throw new RuntimeException("...");
 		}
@@ -163,16 +163,16 @@ public class ColoradoStats {
 		veryFirstDay = Math.min(veryFirstDay, day);
 		switch (timing) {
 		case INFECTION:
-			firstDayOfInfectionX = Math.min(firstDayOfInfectionX, day);
+			firstDayOfInfection = Math.min(firstDayOfInfection, day);
 			return;
 		case ONSET:
-			firstDayOfOnsetX = Math.min(firstDayOfOnsetX, day);
+			firstDayOfOnset = Math.min(firstDayOfOnset, day);
 			return;
 		case REPORTED:
-			firstDayOfReportingX = Math.min(firstDayOfReportingX, day);
+			firstDayOfReporting = Math.min(firstDayOfReporting, day);
 			return;
 		case DEATH:
-			firstDayOfDeathX = Math.min(firstDayOfDeathX, day);
+			firstDayOfDeath = Math.min(firstDayOfDeath, day);
 			return;
 		default:
 			throw new RuntimeException("...");
@@ -181,7 +181,7 @@ public class ColoradoStats {
 
 	public void setFirstDayOfCumulative(int day) {
 		veryFirstDay = Math.min(veryFirstDay, day);
-		firstDayOfCumulativeX = Math.min(firstDayOfCumulativeX, day);
+		firstDayOfCumulative = Math.min(firstDayOfCumulative, day);
 	}
 
 	public int getLastDay() {
