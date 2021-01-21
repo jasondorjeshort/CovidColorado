@@ -24,6 +24,7 @@ import covid.Event;
 import covid.IncompleteNumbers;
 import covid.NumbersTiming;
 import covid.NumbersType;
+import library.Async;
 import library.MyExecutor;
 
 /**
@@ -181,32 +182,6 @@ public class ChartMaker {
 
 	}
 
-	private long buildStarted = System.currentTimeMillis();
-	private final LinkedList<Future<String>> background = new LinkedList<>();
-	private int runs = 0;
-
-	private void build(Callable<String> run) {
-		background.add(MyExecutor.submitCode(run));
-		runs++;
-	}
-
-	private void awaitBuild() {
-		MyExecutor.executeWeb(new Runnable() {
-			@Override
-			public void run() {
-				while (background.size() > 0) {
-					try {
-						background.pop().get();
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				}
-				System.out.println("Built charts in " + (System.currentTimeMillis() - buildStarted) + " ms with " + runs
-						+ " executions.");
-			}
-		});
-	}
-
 	public void buildCharts() {
 		// folders must be at very top
 		new File(Charts.TOP_FOLDER).mkdir();
@@ -217,14 +192,15 @@ public class ChartMaker {
 		Set<NumbersType> noTests = NumbersType.getSet(NumbersType.CASES, NumbersType.DEATHS,
 				NumbersType.HOSPITALIZATIONS);
 
-		buildStarted = System.currentTimeMillis();
+		long buildStarted = System.currentTimeMillis();
+
+		Async<String> build = new Async<>();
 
 		if (false) {
-			build(() -> ChartRates.buildGIF(stats, "CFR", "Colorado rates by day of infection, ", true, false, false,
-					false));
-			build(() -> incompletes.buildGIF(fullTypes, NumbersTiming.INFECTION, true));
-
-			awaitBuild();
+			build.exec(() -> ChartRates.buildGIF(stats, "CFR", "Colorado rates by day of infection, ", true, false,
+					false, false));
+			build.exec(() -> incompletes.buildGIF(fullTypes, NumbersTiming.INFECTION, true));
+			build.complete();
 			return;
 		}
 
@@ -232,32 +208,36 @@ public class ChartMaker {
 
 		/* These are just ordered from slowest to fastest */
 
-		build(() -> ChartRates.buildGIF(stats, "rates", "Colorado rates by day of infection, ", true, true, true,
+		build.exec(() -> ChartRates.buildGIF(stats, "rates", "Colorado rates by day of infection, ", true, true, true,
 				true));
-		build(() -> ChartRates.buildGIF(stats, "CFR", "Colorado CFR by day of infection, ", true, false, false, false));
-		build(() -> ChartRates.buildGIF(stats, "CHR", "Colorado CHR by day of infection, ", false, true, false, false));
-		build(() -> ChartRates.buildGIF(stats, "HFR", "Colorado HFR by day of infection, ", false, false, true, false));
-		build(() -> ChartRates.buildGIF(stats, "Positivity", "Colorado positivity by day of infection, ", false, false,
-				false, true));
+		build.exec(() -> ChartRates.buildGIF(stats, "CFR", "Colorado CFR by day of infection, ", true, false, false,
+				false));
+		build.exec(() -> ChartRates.buildGIF(stats, "CHR", "Colorado CHR by day of infection, ", false, true, false,
+				false));
+		build.exec(() -> ChartRates.buildGIF(stats, "HFR", "Colorado HFR by day of infection, ", false, false, true,
+				false));
+		build.exec(() -> ChartRates.buildGIF(stats, "Positivity", "Colorado positivity by day of infection, ", false,
+				false, false, true));
 
 		for (NumbersTiming timing : NumbersTiming.values()) {
-			build(() -> incompletes.buildGIF(noTests, timing, true));
-			build(() -> incompletes.buildGIF(noTests, timing, false));
-			build(() -> incompletes.buildGIF(fullTypes, timing, true));
-			build(() -> incompletes.buildGIF(fullTypes, timing, false));
+			build.exec(() -> incompletes.buildGIF(noTests, timing, true));
+			build.exec(() -> incompletes.buildGIF(noTests, timing, false));
+			build.exec(() -> incompletes.buildGIF(fullTypes, timing, true));
+			build.exec(() -> incompletes.buildGIF(fullTypes, timing, false));
 
 			for (NumbersType type : NumbersType.values()) {
 				Set<NumbersType> types = NumbersType.getSet(type);
 				IncompleteNumbers numbers = stats.getNumbers(type, timing);
-				build(() -> incompletes.buildGIF(types, timing, true));
-				build(() -> incompletes.buildGIF(types, timing, false));
-				build(() -> buildNewTimeseriesCharts(numbers));
-				build(() -> buildAgeTimeseriesChart(numbers, stats.getLastDay()));
+				build.exec(() -> incompletes.buildGIF(types, timing, true));
+				build.exec(() -> incompletes.buildGIF(types, timing, false));
+				build.exec(() -> buildNewTimeseriesCharts(numbers));
+				build.exec(() -> buildAgeTimeseriesChart(numbers, stats.getLastDay()));
 			}
 		}
 
-		stats.getCounties().forEach((key, value) -> build(() -> county.createCountyStats(value)));
-
-		awaitBuild();
+		stats.getCounties().forEach((key, value) -> build.exec(() -> county.createCountyStats(value)));
+		build.complete();
+		System.out.println("Built charts in " + (System.currentTimeMillis() - buildStarted) + " ms with "
+				+ build.getExecutions() + " executions.");
 	}
 }
