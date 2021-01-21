@@ -197,6 +197,7 @@ public class ChartMaker {
 	}
 
 	public void buildCharts() {
+		// folders must be at very top
 		new File(Charts.TOP_FOLDER).mkdir();
 		new File(Charts.FULL_FOLDER).mkdir();
 		ChartCounty county = new ChartCounty(stats);

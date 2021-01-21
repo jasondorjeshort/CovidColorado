@@ -36,12 +36,14 @@ import covid.Smoothing;
 public class ChartCounty {
 	public ChartCounty(ColoradoStats stats) {
 		this.stats = stats;
+		new File(COUNTY_FOLDER).mkdir();
 	}
 
 	private final ColoradoStats stats;
 
-	public BufferedImage buildCountyTimeseriesChart(CountyStats c, final String folder, boolean log,
-			Smoothing smoothing) {
+	public final String COUNTY_FOLDER = Charts.FULL_FOLDER + "\\county";
+
+	public BufferedImage buildCountyTimeseriesChart(CountyStats c, boolean log, Smoothing smoothing) {
 
 		TimeSeries cSeries = new TimeSeries("Cases");
 		TimeSeries dSeries = new TimeSeries("Deaths");
@@ -89,15 +91,13 @@ public class ChartCounty {
 
 		String fileName = c.getName() + "-" + (log ? "log" : "cart");
 		BufferedImage image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT);
-		Charts.saveBufferedImageAsPNG(folder, fileName, image);
+		Charts.saveBufferedImageAsPNG(COUNTY_FOLDER, fileName, image);
 		return image;
 	}
 
 	public String createCountyStats(CountyStats county) {
-		String folder = Charts.FULL_FOLDER + "\\county";
-		new File(folder).mkdir();
-		buildCountyTimeseriesChart(county, folder, false, Smoothing.TOTAL_7_DAY);
-		buildCountyTimeseriesChart(county, folder, true, Smoothing.TOTAL_7_DAY);
+		buildCountyTimeseriesChart(county, false, Smoothing.TOTAL_7_DAY);
+		buildCountyTimeseriesChart(county, true, Smoothing.TOTAL_7_DAY);
 		return null;
 	}
 
