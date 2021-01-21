@@ -125,9 +125,8 @@ public class ChartMaker {
 		return c;
 	}
 
-	public Chart buildNewTimeseriesChart(NumbersType type, NumbersTiming timing, int dayOfData) {
-		String by = "new-" + type.lowerName + "-" + timing.lowerName;
-		IncompleteNumbers numbers = stats.getNumbers(type, timing);
+	public Chart buildNewTimeseriesChart(IncompleteNumbers numbers, int dayOfData) {
+		String by = "new-" + numbers.getType().lowerName + "-" + numbers.getTiming().lowerName;
 		if (!numbers.hasData()) {
 			return null;
 		}
@@ -140,9 +139,12 @@ public class ChartMaker {
 		return Math.max(Charts.getFirstDayForCharts(stats), stats.getVeryFirstDay());
 	}
 
-	public String buildNewTimeseriesCharts(NumbersType type, NumbersTiming timing) {
+	public String buildNewTimeseriesCharts(IncompleteNumbers numbers) {
+		if (!numbers.hasData()) {
+			return null;
+		}
 		for (int dayOfData = getFirstDayForAnimation(); dayOfData <= stats.getLastDay(); dayOfData++) {
-			buildNewTimeseriesChart(type, timing, dayOfData);
+			buildNewTimeseriesChart(numbers, dayOfData);
 		}
 		return null;
 	}
@@ -244,9 +246,10 @@ public class ChartMaker {
 
 			for (NumbersType type : NumbersType.values()) {
 				Set<NumbersType> types = NumbersType.getSet(type);
+				IncompleteNumbers numbers = stats.getNumbers(type, timing);
 				build(() -> incompletes.buildGIF(types, timing, true));
 				build(() -> incompletes.buildGIF(types, timing, false));
-				build(() -> buildNewTimeseriesCharts(type, timing));
+				build(() -> buildNewTimeseriesCharts(numbers));
 				build(() -> buildAgeTimeseriesChart(type, timing, stats.getLastDay()));
 			}
 		}
