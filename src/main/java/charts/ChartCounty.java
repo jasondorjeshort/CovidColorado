@@ -8,13 +8,13 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.LogarithmicAxis;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.data.time.Day;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 
 import covid.CalendarUtils;
 import covid.ColoradoStats;
 import covid.CountyStats;
+import covid.FinalNumbers;
 import covid.Smoothing;
 
 /**
@@ -41,30 +41,37 @@ public class ChartCounty {
 
 	private final ColoradoStats stats;
 
-	public final String COUNTY_FOLDER = Charts.FULL_FOLDER + "\\county";
+	public static final String COUNTY_FOLDER = Charts.FULL_FOLDER + "\\county";
 
 	public BufferedImage buildCountyTimeseriesChart(CountyStats c, boolean log, Smoothing smoothing) {
 
 		TimeSeries cSeries = new TimeSeries("Cases");
 		TimeSeries dSeries = new TimeSeries("Deaths");
-		for (int day = stats.getFirstDayOfCumulative(); day <= stats.getLastDay(); day++) {
-			Day ddd = CalendarUtils.dayToDay(day);
+		boolean logging = false;
+		FinalNumbers cNumbers = c.getCases(), dNumbers = c.getDeaths();
 
-			double cases = c.getCases().getNumbers(day, smoothing);
-			double deaths = c.getDeaths().getNumbers(day, smoothing);
+		for (int day = cNumbers.getFirstDay(); day <= cNumbers.getLastDay(); day++) {
+			double cases = cNumbers.getNumbers(day, smoothing);
 
 			if (!Double.isFinite(cases)) {
 				throw new RuntimeException("Uh oh.");
 			}
+			if (logging) {
+				System.out.println(CalendarUtils.dayToDate(day) + " => " + cases);
+			}
+			if (!log || cases > 0) {
+				cSeries.add(CalendarUtils.dayToDay(day), cases);
+			}
+		}
+
+		for (int day = dNumbers.getFirstDay(); day <= dNumbers.getLastDay(); day++) {
+			double deaths = dNumbers.getNumbers(day, smoothing);
+
 			if (!Double.isFinite(deaths)) {
 				throw new RuntimeException("Uh oh.");
 			}
-			if (!log || cases > 0) {
-				cSeries.add(ddd, cases);
-			}
-
 			if (!log || deaths > 0) {
-				dSeries.add(ddd, deaths);
+				dSeries.add(CalendarUtils.dayToDay(day), deaths);
 			}
 		}
 
