@@ -37,6 +37,10 @@ public class IncompleteNumbers extends Numbers {
 	// The last day of type is implicitly the same as the last day of data;
 	// sometimes we have to fill in 0s to get there
 
+	public boolean hasData() {
+		return lastDayOfData >= firstDayOfData || lastDayOfData >= firstDayOfType;
+	}
+
 	protected class Daily {
 		protected final HashMap<Integer, Double> numbers = new HashMap<>();
 		protected final HashMap<Integer, Double> projected = new HashMap<>();

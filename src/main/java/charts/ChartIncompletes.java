@@ -90,6 +90,10 @@ public class ChartIncompletes {
 			if (!types.contains(type)) {
 				continue;
 			}
+			IncompleteNumbers numbers = stats.getNumbers(type, timing);
+			if (!numbers.hasData()) {
+				continue;
+			}
 			String desc;
 			if (multi || type.smoothing != Smoothing.NONE) {
 				desc = type.capName + " (" + type.smoothing.getDescription() + ")";
@@ -99,7 +103,6 @@ public class ChartIncompletes {
 			TimeSeries series = new TimeSeries(desc);
 			TimeSeries pSeries = new TimeSeries(type.capName + " (projected)");
 			TimeSeries exact = new TimeSeries("Exact");
-			IncompleteNumbers numbers = stats.getNumbers(type, timing);
 
 			for (int d = numbers.getFirstDayOfType(); d <= dayOfData; d++) {
 				Day ddd = CalendarUtils.dayToDay(d);
