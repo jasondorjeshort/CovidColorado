@@ -258,22 +258,22 @@ public class ColoradoStats {
 
 		System.out.println("Update for " + today);
 		System.out.println("Newly released deaths:");
-		System.out.println(String.format("\tT: %,d | Y : %,d | %s : %,d",
+		System.out.println(String.format("\tT: %,.0f | Y : %,.0f | %s : %,.0f",
 				getNumbers(NumbersType.DEATHS).getDailyNumbers(t), getNumbers(NumbersType.DEATHS).getDailyNumbers(y),
 				lastWeek, getNumbers(NumbersType.DEATHS).getDailyNumbers(w)));
 
 		FinalNumbers cases = getNumbers(NumbersType.CASES);
 		System.out.println("Newly released cases:");
-		System.out.println(String.format("\tT: %,d | Y : %,d | %s : %,d", cases.getDailyNumbers(t),
+		System.out.println(String.format("\tT: %,.0f | Y : %,.0f | %s : %,.0f", cases.getDailyNumbers(t),
 				cases.getDailyNumbers(y), lastWeek, cases.getDailyNumbers(w)));
 
 		System.out.println("New test encounters:");
-		System.out.println(String.format("\tT: %,d | Y : %,d | %s : %,d",
+		System.out.println(String.format("\tT: %,.0f | Y : %,.0f | %s : %,.0f",
 				getNumbers(NumbersType.TESTS).getDailyNumbers(t), getNumbers(NumbersType.TESTS).getDailyNumbers(y),
 				lastWeek, getNumbers(NumbersType.TESTS).getDailyNumbers(w)));
 
 		System.out.println("New hospitalizations:");
-		System.out.println(String.format("\tT: %,d | Y : %,d | %s : %,d",
+		System.out.println(String.format("\tT: %,.0f | Y : %,.0f | %s : %,.0f",
 				getNumbers(NumbersType.HOSPITALIZATIONS).getDailyNumbers(t),
 				getNumbers(NumbersType.HOSPITALIZATIONS).getDailyNumbers(y), lastWeek,
 				getNumbers(NumbersType.HOSPITALIZATIONS).getDailyNumbers(w)));
@@ -545,18 +545,25 @@ public class ColoradoStats {
 		 * essentially incomplete data prior to July 23.
 		 * 
 		 * The end result is there's a huge lump of ~100k extra tests thrown in
-		 * on one day that end up skewing the positivity of the numbers shortly
-		 * before that day. It might be better to take these extra numbers and
-		 * distribute them evenly over all days up to that point based on the
-		 * number of people tested on those days.
+		 * on one day that would end up skewing the positivity of the numbers
+		 * shortly before that day. To avoid that instant jump, we these extra
+		 * numbers and distribute them evenly over all days up to that point
+		 * based on the number of people tested on those days.
+		 * 
+		 * The real data is probably out there, though. The positivity numbers
+		 * the state publishes are different from anything that can be
+		 * calculated from public data, and must use some third number.
 		 */
 		FinalNumbers testEncounters = getNumbers(NumbersType.TESTS);
-		int finalDay = testEncounters.getFirstDay();
-		for (int dayOfData = peopleTested.getFirstDay(); dayOfData < finalDay; dayOfData++) {
-			int people = peopleTested.getCumulativeNumbers(dayOfData);
+		int firstDayOfEncounters = testEncounters.getFirstDay();
+		double ratio = testEncounters.getCumulativeNumbers(firstDayOfEncounters)
+				/ peopleTested.getCumulativeNumbers(firstDayOfEncounters);
+		for (int dayOfData = peopleTested.getFirstDay(); dayOfData < firstDayOfEncounters; dayOfData++) {
+			double people = peopleTested.getCumulativeNumbers(dayOfData);
 
-			testEncounters.setCumulativeNumbers(dayOfData, people);
+			testEncounters.setCumulativeNumbers(dayOfData, people * ratio);
 		}
+
 		/*
 		 * So the challenge is that a negative test isn't associated with a
 		 * reported/onset/infection day. It is therefore "impossible" to have a

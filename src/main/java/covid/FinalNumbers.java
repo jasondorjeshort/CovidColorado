@@ -28,7 +28,7 @@ import java.util.HashMap;
  */
 public class FinalNumbers extends Numbers {
 
-	private final HashMap<Integer, Integer> cumulative = new HashMap<>();
+	private final HashMap<Integer, Double> cumulative = new HashMap<>();
 	private int firstDay = Integer.MAX_VALUE, lastDay = Integer.MIN_VALUE;
 
 	public int getFirstDay() {
@@ -43,11 +43,11 @@ public class FinalNumbers extends Numbers {
 		super(type);
 	}
 
-	public synchronized int getNumbersInInterval(int day, int interval) {
+	public synchronized double getNumbersInInterval(int day, int interval) {
 		return getCumulativeNumbers(day) - getCumulativeNumbers(day - interval);
 	}
 
-	public synchronized int getDailyNumbers(int day) {
+	public synchronized double getDailyNumbers(int day) {
 		return getNumbersInInterval(day, 1);
 	}
 
@@ -87,14 +87,14 @@ public class FinalNumbers extends Numbers {
 		throw new RuntimeException("FAIL");
 	}
 
-	public synchronized int getCumulativeNumbers(int day) {
+	public synchronized double getCumulativeNumbers(int day) {
 		if (day < firstDay) {
 			return 0;
 		}
 		if (day > lastDay) {
 			day = lastDay;
 		}
-		Integer numbersForDay = cumulative.get(day);
+		Double numbersForDay = cumulative.get(day);
 		if (numbersForDay == null) {
 			new Exception("Uh oh!").printStackTrace();
 			return getCumulativeNumbers(day - 1);
@@ -102,16 +102,16 @@ public class FinalNumbers extends Numbers {
 		return numbersForDay;
 	}
 
-	public synchronized void setCumulativeNumbers(int day, int numbersForDay) {
+	public synchronized void setCumulativeNumbers(int day, double numbersForDay) {
 		firstDay = Math.min(firstDay, day);
 		lastDay = Math.max(lastDay, day);
 		cumulative.put(day, numbersForDay);
 	}
 
 	public synchronized boolean build(String tag) {
-		int max = Integer.MAX_VALUE;
+		Double max = Double.MAX_VALUE;
 		for (int day = lastDay; day >= firstDay; day--) {
-			Integer number = cumulative.get(day);
+			Double number = cumulative.get(day);
 			if (number == null) {
 				new Exception("Missing day in " + tag + "? " + CalendarUtils.dayToDate(day)).printStackTrace();
 			}
