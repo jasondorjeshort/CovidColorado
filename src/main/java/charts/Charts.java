@@ -100,4 +100,11 @@ public class Charts {
 		}
 		return Math.max(v1 / v2, v2 / v1);
 	}
+
+	public static int getFirstDayForCharts(ColoradoStats stats) {
+		if (true) {
+			return stats.getLastDay();
+		}
+		return 0;
+	}
 }
