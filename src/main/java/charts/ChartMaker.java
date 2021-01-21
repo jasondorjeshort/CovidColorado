@@ -52,7 +52,7 @@ public class ChartMaker {
 		this.stats = stats;
 	}
 
-	public BufferedImage buildCasesTimeseriesChart(String folder, String fileName, int dayOfData,
+	public Chart buildCasesTimeseriesChart(String folder, String fileName, int dayOfData,
 			Function<Integer, Double> getCasesForDay, Function<Integer, Double> getProjectedCasesForDay, String title,
 			String verticalAxis, boolean log, boolean showAverage, int daysToSkip, boolean showEvents) {
 
@@ -115,12 +115,16 @@ public class ChartMaker {
 
 		}
 
+		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), folder + "\\" + fileName + ".png");
 		BufferedImage image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT);
-		Charts.saveBufferedImageAsPNG(folder, fileName, image);
-		return image;
+		c.saveAsPNG();
+		if (dayOfData == stats.getLastDay()) {
+			// c.open();
+		}
+		return c;
 	}
 
-	public BufferedImage buildNewTimeseriesChart(NumbersType type, NumbersTiming timing, int dayOfData) {
+	public Chart buildNewTimeseriesChart(NumbersType type, NumbersTiming timing, int dayOfData) {
 		String by = "new-" + type.lowerName + "-" + timing.lowerName;
 		return buildCasesTimeseriesChart(by, CalendarUtils.dayToFullDate(dayOfData), dayOfData,
 				dayOfOnset -> (double) stats.getNewCasesByType(type, timing, dayOfData, dayOfOnset), null, by, "?",
