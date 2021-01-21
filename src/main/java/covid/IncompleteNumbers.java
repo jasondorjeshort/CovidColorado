@@ -427,8 +427,11 @@ public class IncompleteNumbers extends Numbers {
 		double daySum = 0, numbersSum = 0;
 		int dayMinimum = baseDayOfData - dayRange + 1, dayMaximum = baseDayOfData;
 
+		// TODO: this isn't TOO slow, but it's quadratic time and potentially
+		// run multiple times. Caching could help.
+
 		for (int dayOfData = dayMinimum; dayOfData <= dayMaximum; dayOfData++) {
-			for (int dayOfType = 0; dayOfType < dayOfData; dayOfType++) {
+			for (int dayOfType = firstDayOfType; dayOfType < dayOfData; dayOfType++) {
 				double newNumbers = getNumbers(dayOfData, dayOfType) - getNumbers(dayOfData - 1, dayOfType);
 				numbersSum += newNumbers;
 				daySum += newNumbers * (dayOfData - dayOfType);
