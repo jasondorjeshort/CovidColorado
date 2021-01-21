@@ -24,7 +24,6 @@ import covid.Event;
 import covid.IncompleteNumbers;
 import covid.NumbersTiming;
 import covid.NumbersType;
-import covid.Smoothing;
 import library.MyExecutor;
 
 /**
