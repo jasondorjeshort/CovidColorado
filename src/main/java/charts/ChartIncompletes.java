@@ -59,6 +59,7 @@ public class ChartIncompletes {
 		boolean multi = (types.size() > 1);
 		boolean useProjections = true;
 		boolean useExact = (types.size() == 1);
+		int firstDayOfChart = Integer.MAX_VALUE;
 
 		title.append("Colorado ");
 		if (multi) {
@@ -104,6 +105,7 @@ public class ChartIncompletes {
 			TimeSeries pSeries = new TimeSeries(type.capName + " (projected)");
 			TimeSeries exact = new TimeSeries("Exact");
 
+			firstDayOfChart = Math.min(firstDayOfChart, numbers.getFirstDayOfType());
 			for (int d = numbers.getFirstDayOfType(); d <= dayOfData; d++) {
 				Day ddd = CalendarUtils.dayToDay(d);
 
@@ -151,6 +153,11 @@ public class ChartIncompletes {
 			}
 		}
 
+		if (firstDayOfChart >= stats.getLastDay()) {
+			throw new RuntimeException(
+					"Chart don't exist: " + types + " ... " + timing + " ... " + CalendarUtils.dayToDate(dayOfData));
+		}
+
 		// dataset.addSeries("Cases", series);
 
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title.toString(), "Date", verticalAxis, collection);
@@ -163,11 +170,8 @@ public class ChartIncompletes {
 			plot.setRangeAxis(yAxis);
 
 			DateAxis xAxis = new DateAxis("Date");
-
-			// xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(stats.getFirstDayOfData()));
-			// xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(stats.getLastDay()
-			// + 14));
-
+			xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(firstDayOfChart));
+			xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(Charts.getLastDayForChartDisplay(stats)));
 			plot.setDomainAxis(xAxis);
 
 			ValueMarker marker = Charts.getTodayMarker(dayOfData);
@@ -209,6 +213,13 @@ public class ChartIncompletes {
 	}
 
 	public String buildGIF(Set<NumbersType> types, NumbersTiming timing, boolean logarithmic) {
+		boolean hasData = false;
+		for (NumbersType type : types) {
+			hasData |= stats.getNumbers(type, timing).hasData();
+		}
+		if (!hasData) {
+			return null;
+		}
 		AnimatedGifEncoder gif = new AnimatedGifEncoder();
 		String name = NumbersType.name(types, "-") + "-" + timing.lowerName + (logarithmic ? "-log" : "-cart");
 		String folder = Charts.FULL_FOLDER + "\\" + name;

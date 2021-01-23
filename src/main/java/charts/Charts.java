@@ -107,4 +107,10 @@ public class Charts {
 		}
 		return 0;
 	}
+
+	public static int getLastDayForChartDisplay(ColoradoStats stats) {
+		// This makes the last day always a saturday
+		int last = stats.getLastDay() + 14 - stats.getLastDay() % 7 + 5;
+		return last;
+	}
 }

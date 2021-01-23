@@ -4,6 +4,7 @@ import java.io.File;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.time.Day;
@@ -74,9 +75,9 @@ public class ChartRates {
 		IncompleteNumbers dNumbers = stats.getNumbers(NumbersType.DEATHS, timing);
 
 		int incomplete = dayOfData + 1;
+		int firstDayOfChart = stats.getVeryFirstDay();
 
-		for (int dayOfInfection = (age == null || fixedHeight != null ? 0
-				: stats.getLastDay() - age); dayOfInfection <= stats.getLastDay(); dayOfInfection++) {
+		for (int dayOfInfection = firstDayOfChart; dayOfInfection <= stats.getLastDay(); dayOfInfection++) {
 			double tests = tNumbers.getNumbers(dayOfData, dayOfInfection, false, smoothing);
 			double testsProjected = tNumbers.getNumbers(dayOfData, dayOfInfection, true, smoothing);
 			double testsRatio = Charts.ratio(tests, testsProjected);
@@ -179,9 +180,10 @@ public class ChartRates {
 		}
 
 		if (fixedHeight != null) {
-			// DateAxis xAxis = (DateAxis) plot.getDomainAxis();
-			// xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(CalendarUtils.dateToDay("6-1-2020")));
-			// xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(stats.getLastDay()));
+			DateAxis xAxis = new DateAxis("Date");
+			xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(firstDayOfChart));
+			xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(Charts.getLastDayForChartDisplay(stats)));
+			plot.setDomainAxis(xAxis);
 
 			ValueAxis yAxis = plot.getRangeAxis();
 			yAxis.setLowerBound(0);
