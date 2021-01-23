@@ -5,14 +5,13 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.Map;
-import java.util.concurrent.Future;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
+import library.ASync;
 import library.MyExecutor;
 
 /**
@@ -516,23 +515,13 @@ public class ColoradoStats {
 		 * Monolithic code to read all the CSVs into one big spaghetti
 		 * structure.
 		 */
-		int currentDay = CalendarUtils.timeToDay(System.currentTimeMillis());
-		System.out.println("Current day: " + CalendarUtils.dayToDate(lastDay));
-		currentDay++;
-		LinkedList<Future<Boolean>> futures = new LinkedList<>();
+		int currentDay = CalendarUtils.timeToDay(System.currentTimeMillis()) + 1;
+		ASync<Boolean> csvAsync = new ASync<>();
 		for (int dayOfData = firstCSV; dayOfData <= currentDay; dayOfData++) {
 			int _dayOfData = dayOfData;
-			futures.add(MyExecutor.submitCode(() -> readCSV(_dayOfData)));
+			csvAsync.submit(() -> readCSV(_dayOfData));
 		}
-
-		for (Future<Boolean> f : futures) {
-			try {
-				f.get();
-			} catch (Exception e) {
-				e.printStackTrace();
-				System.exit(0);
-			}
-		}
+		csvAsync.complete();
 
 		long time = System.nanoTime();
 

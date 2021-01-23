@@ -1,15 +1,15 @@
 package library;
 
 import java.util.LinkedList;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
-import java.util.function.Supplier;
 
 /**
  * Run some things asynchronously, then wait on them.
  * 
  * @author jdorje@gmail.com
  */
-public class Async<V> {
+public class ASync<V> {
 
 	private final LinkedList<Future<V>> exec = new LinkedList<>();
 	private int executions = 0;
@@ -20,8 +20,8 @@ public class Async<V> {
 	 * @param func
 	 *            The code.
 	 */
-	public void exec(Supplier<V> func) {
-		Future<V> future = MyExecutor.submitCode(() -> func.get());
+	public void submit(Callable<V> func) {
+		Future<V> future = MyExecutor.submitCode(func);
 		synchronized (this) {
 			exec.add(future);
 			executions++;
