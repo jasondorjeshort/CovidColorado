@@ -46,9 +46,8 @@ public class CountyStats {
 		return displayName;
 	}
 
-	public boolean build() {
-		cases.build(name + "/cases");
-		deaths.build(name + "/deaths");
-		return true;
+	public void build() {
+		cases.smooth();
+		deaths.smooth();
 	}
 }

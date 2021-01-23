@@ -536,6 +536,17 @@ public class ColoradoStats {
 
 		long time = System.nanoTime();
 
+		// final tests must be built before incomplete tests can be determined
+		MyExecutor.executeCode(() -> counties.forEach((name, county) -> county.build()));
+		MyExecutor.executeCode(() -> confirmedDeaths.smooth());
+		peopleTested.smooth();
+		for (FinalNumbers finals : finalNumbers) {
+			finals.smooth();
+		}
+
+		FinalNumbers testEncounters = getNumbers(NumbersType.TESTS);
+		FinalNumbers dailyCases = getNumbers(NumbersType.CASES);
+
 		/*
 		 * Early on we only had "people tested", then we moved to
 		 * "test encounters". Bit of a hack on the data here since it's
@@ -551,7 +562,6 @@ public class ColoradoStats {
 		 * the state publishes are different from anything that can be
 		 * calculated from public data, and must use some third number.
 		 */
-		FinalNumbers testEncounters = getNumbers(NumbersType.TESTS);
 		int firstDayOfEncounters = testEncounters.getFirstDay();
 		double ratio = testEncounters.getCumulativeNumbers(firstDayOfEncounters)
 				/ peopleTested.getCumulativeNumbers(firstDayOfEncounters);
@@ -561,13 +571,8 @@ public class ColoradoStats {
 			testEncounters.setCumulativeNumbers(dayOfData, people * ratio);
 		}
 
-		// final tests must be built before incomplete tests can be determined
-		MyExecutor.executeCode(() -> peopleTested.build("people tested"));
-		MyExecutor.executeCode(() -> confirmedDeaths.build("confirmed deaths"));
-		counties.forEach((name, county) -> MyExecutor.executeCode(() -> county.build()));
-		for (FinalNumbers finals : finalNumbers) {
-			finals.build(finals.getType().name());
-		}
+		// see comments for smoothFlatDays
+		testEncounters.smoothFlatDays(finalNumbers[NumbersType.CASES.ordinal()]);
 
 		/*
 		 * So the challenge is that a negative test isn't associated with a
@@ -583,13 +588,12 @@ public class ColoradoStats {
 		 * Imperfect, but it's clearly the "correct" way to approximate it.
 		 */
 		for (int dayOfData = getVeryFirstDay(); dayOfData <= getLastDay(); dayOfData++) {
-
-			// TODO: should use cumulatives from the incomplete numbers instead
-			double casesOnDay = getNumbers(NumbersType.CASES).getDailyNumbers(dayOfData);
+			// TODO: should use cumulatives from the incomplete numbers instead?
+			double casesOnDay = dailyCases.getDailyNumbers(dayOfData);
 			if (casesOnDay == 0) {
 				continue;
 			}
-			double testsOnDay = getNumbers(NumbersType.TESTS).getDailyNumbers(dayOfData);
+			double testsOnDay = testEncounters.getDailyNumbers(dayOfData);
 			double positivity = casesOnDay / testsOnDay;
 
 			// System.out.println(String.format("%s : %.0f/%.0f = %.2f",

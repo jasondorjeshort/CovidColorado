@@ -33,6 +33,10 @@ public class FinalNumbers extends Numbers {
 	private final HashMap<Integer, Double> cumulative = new HashMap<>();
 	private int firstDay = Integer.MAX_VALUE, lastDay = Integer.MIN_VALUE;
 
+	public FinalNumbers(NumbersType type) {
+		super(type);
+	}
+
 	public int getFirstDay() {
 		return firstDay;
 	}
@@ -41,8 +45,8 @@ public class FinalNumbers extends Numbers {
 		return lastDay;
 	}
 
-	public FinalNumbers(NumbersType type) {
-		super(type);
+	public boolean hasData() {
+		return lastDay >= firstDay;
 	}
 
 	public synchronized double getNumbersInInterval(int day, int interval) {
@@ -109,26 +113,6 @@ public class FinalNumbers extends Numbers {
 		cumulative.put(day, numbersForDay);
 	}
 
-	public synchronized boolean build(String tag) {
-		Double max = Double.MAX_VALUE;
-		for (int day = lastDay; day >= firstDay; day--) {
-			Double number = cumulative.get(day);
-			if (number == null) {
-				// This happens!??
-
-				// new Exception("Missing day in " + tag + "? " +
-				// CalendarUtils.dayToDate(day)).printStackTrace();
-			}
-			if (number == null || number > max) {
-				cumulative.put(day, max);
-				// System.out.println("Dropping cumulative to " + max);
-			} else {
-				max = number;
-			}
-		}
-		return true;
-	}
-
 	public synchronized void makeTimeSeries(TimeSeries series, Smoothing smoothing, boolean isLogarithmic) {
 		for (int day = getFirstDay(); day <= getLastDay(); day++) {
 			double numbers = getNumbers(day, smoothing);
@@ -140,5 +124,120 @@ public class FinalNumbers extends Numbers {
 				series.add(CalendarUtils.dayToDay(day), numbers);
 			}
 		}
+	}
+
+	/**
+	 * Sometimes (only with counties?), there are just empty values in the
+	 * middle.
+	 * 
+	 * We fill those in with the values from the previous day.
+	 */
+	public synchronized void smoothNulls() {
+		if (!hasData()) {
+			return;
+		}
+		double min = cumulative.get(firstDay);
+
+		for (int day = firstDay + 1; day <= lastDay; day++) {
+			Double number = cumulative.get(day);
+
+			if (number == null) {
+				cumulative.put(day, min);
+			} else {
+				min = number;
+			}
+		}
+	}
+
+	/**
+	 * Sometimes (often), cumulative numbers will rise and then drop again. This
+	 * is just reporting error, and while small inaccuracies are unavoidable,
+	 * negatives tend to break things.
+	 * 
+	 * To avoid this, we count backwards and if there are increases (temporally
+	 * in reverse), flatten them.
+	 * 
+	 * End result is that a [1, 1, 3, 2, 4] will be changed to [1, 1, 2, 2, 4].
+	 * 
+	 * Nulls must be smoothed first.
+	 */
+	public synchronized void smoothDrops() {
+		if (!hasData()) {
+			return;
+		}
+		double max = cumulative.get(lastDay);
+
+		for (int day = lastDay - 1; day >= firstDay; day--) {
+			double number = cumulative.get(day);
+			if (number > max) {
+				cumulative.put(day, max);
+				// System.out.println("Dropping cumulative to " + max);
+			} else {
+				max = number;
+			}
+		}
+	}
+
+	/**
+	 * This is another hack to "fix" issues in the data. Some days with (rarely)
+	 * test counts just aren't included, then 3 days later you get all 3 days
+	 * worth of tests added at once. This fucks with the positivity, and really
+	 * has no other effect. To balance it out we iterate over those days and
+	 * distribute the tests backwards evenly with the tests.
+	 * 
+	 * E.g., say we had 1 case and 2 tests every day, but the test data was
+	 * incomplete so it was [2, 2, 2, 8, 10] while cases were [1, 2, 3, 4, 5].
+	 * Then we just take those 6 new tests from that new day and distribute them
+	 * linearly (in this example) as [2, 4, 6, 8, 10].
+	 * 
+	 * This could be used with other values, but...I doubt it would ever be
+	 * useful.
+	 */
+	public synchronized void smoothFlatDays(FinalNumbers source) {
+		if (!hasData()) {
+			return;
+		}
+
+		for (int day = firstDay; day < lastDay; day++) {
+			double number = cumulative.get(day);
+
+			int jumpDay = day + 1;
+			if (cumulative.get(jumpDay) == number) {
+				for (; jumpDay <= lastDay; jumpDay++) {
+					if (cumulative.get(jumpDay) != number) {
+						break;
+					}
+				}
+
+				System.out.println("Jump on " + getType().lowerName + " from " + CalendarUtils.dayToDate(day) + " to "
+						+ CalendarUtils.dayToDate(jumpDay));
+
+				if (jumpDay <= lastDay) {
+					int interval = jumpDay - day;
+					double baseline = source.cumulative.get(day);
+					double margin = (cumulative.get(jumpDay) - number);
+					double ratioDiff = source.cumulative.get(jumpDay) - baseline;
+					double ratio = margin / ratioDiff;
+
+					for (int d = 1; d < interval; d++) {
+						double matcher = source.cumulative.get(day + d) - baseline;
+						double newValue = number + matcher * ratio;
+						System.out.println("Changing " + getType().lowerName + " on " + CalendarUtils.dayToDate(day + d)
+								+ " from " + cumulative.get(day + d) + " to " + newValue);
+						cumulative.put(day + d, newValue);
+					}
+				}
+
+				day = jumpDay;
+			}
+		}
+	}
+
+	/**
+	 * Combined function to smooth drops and nulls and ...
+	 */
+	public synchronized void smooth() {
+		smoothNulls();
+		smoothDrops();
 	}
 }
