@@ -69,6 +69,18 @@ public class MyExecutor {
 		return codePool.submit(catchWrapper(task));
 	}
 
+	public static <T> Future<T> submitCode(Runnable task) {
+		// surely there's a better way? Do we care?
+		return codePool.submit(new Callable<T>() {
+			@Override
+			public T call() {
+				task.run();
+				return null;
+			}
+
+		});
+	}
+
 	public static <T> Future<T> submitWeb(Callable<T> task) {
 		return webPool.submit(catchWrapper(task));
 	}

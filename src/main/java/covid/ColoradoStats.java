@@ -298,7 +298,7 @@ public class ColoradoStats {
 
 	private final Charset charset = Charset.forName("US-ASCII");
 
-	public boolean readCSV(int dayOfData) {
+	public void readCSV(int dayOfData) {
 		String fname = csvFileName(dayOfData);
 		File f = new File(fname);
 		try (CSVParser csv = CSVParser.parse(f, charset, CSVFormat.DEFAULT)) {
@@ -493,13 +493,11 @@ public class ColoradoStats {
 					}
 				}
 			}
+
+			System.out.println("Read " + fname);
 		} catch (IOException e1) {
 			System.out.println("Failed to read " + fname);
-			return false;
 		}
-
-		System.out.println("Read " + fname);
-		return true;
 	}
 
 	public ColoradoStats() {
@@ -516,10 +514,10 @@ public class ColoradoStats {
 		 * structure.
 		 */
 		int currentDay = CalendarUtils.timeToDay(System.currentTimeMillis()) + 1;
-		ASync<Boolean> csvAsync = new ASync<>();
+		ASync<Void> csvAsync = new ASync<>();
 		for (int dayOfData = firstCSV; dayOfData <= currentDay; dayOfData++) {
 			int _dayOfData = dayOfData;
-			csvAsync.submit(() -> readCSV(_dayOfData));
+			csvAsync.execute(() -> readCSV(_dayOfData));
 		}
 		csvAsync.complete();
 

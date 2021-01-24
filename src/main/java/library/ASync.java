@@ -29,6 +29,20 @@ public class ASync<V> {
 	}
 
 	/**
+	 * Start executing the given code immediately.
+	 * 
+	 * @param func
+	 *            The code.
+	 */
+	public void execute(Runnable func) {
+		Future<V> future = MyExecutor.submitCode(func);
+		synchronized (this) {
+			exec.add(future);
+			executions++;
+		}
+	}
+
+	/**
 	 * @return The number of executions done.
 	 */
 	public int getExecutions() {
