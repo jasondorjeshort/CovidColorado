@@ -212,13 +212,13 @@ public class ChartIncompletes {
 		return Math.max(Charts.getFirstDayForCharts(stats), stats.getFirstDayOfTiming(timing));
 	}
 
-	public String buildGIF(Set<NumbersType> types, NumbersTiming timing, boolean logarithmic) {
+	public void buildGIF(Set<NumbersType> types, NumbersTiming timing, boolean logarithmic) {
 		boolean hasData = false;
 		for (NumbersType type : types) {
 			hasData |= stats.getNumbers(type, timing).hasData();
 		}
 		if (!hasData) {
-			return null;
+			return;
 		}
 		AnimatedGifEncoder gif = new AnimatedGifEncoder();
 		String name = NumbersType.name(types, "-") + "-" + timing.lowerName + (logarithmic ? "-log" : "-cart");
@@ -232,11 +232,10 @@ public class ChartIncompletes {
 			gif.addFrame(c.getImage());
 		}
 		gif.finish();
-		return gifName;
 	}
 
-	public String buildGIF(NumbersType type, NumbersTiming timing, boolean logarithmic) {
-		return buildGIF(NumbersType.getSet(type), timing, logarithmic);
+	public void buildGIF(NumbersType type, NumbersTiming timing, boolean logarithmic) {
+		buildGIF(NumbersType.getSet(type), timing, logarithmic);
 	}
 
 }

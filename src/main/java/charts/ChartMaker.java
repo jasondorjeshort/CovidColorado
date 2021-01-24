@@ -22,7 +22,6 @@ import covid.IncompleteNumbers;
 import covid.NumbersTiming;
 import covid.NumbersType;
 import library.ASync;
-import library.MyExecutor;
 
 /**
  * This program is free software: you can redistribute it and/or modify it under
@@ -137,24 +136,22 @@ public class ChartMaker {
 		return Math.max(Charts.getFirstDayForCharts(stats), stats.getVeryFirstDay());
 	}
 
-	public String buildNewTimeseriesCharts(IncompleteNumbers numbers) {
+	public void buildNewTimeseriesCharts(IncompleteNumbers numbers) {
 		if (!numbers.hasData()) {
-			return null;
+			return;
 		}
 		for (int dayOfData = getFirstDayForAnimation(); dayOfData <= stats.getLastDay(); dayOfData++) {
 			buildNewTimeseriesChart(numbers, dayOfData);
 		}
-		return null;
 	}
 
-	public String buildAgeTimeseriesChart(IncompleteNumbers numbers, int finalDay) {
+	public void buildAgeTimeseriesChart(IncompleteNumbers numbers, int finalDay) {
 		if (!numbers.hasData()) {
-			return null;
+			return;
 		}
 		String by = "age-" + numbers.getType().lowerName + "-" + numbers.getTiming().lowerName;
 		buildCasesTimeseriesChart(by, CalendarUtils.dayToFullDate(finalDay), finalDay,
 				dayOfData -> numbers.getAverageAgeOfNewNumbers(dayOfData, 14), null, by, "?", false, false, 0, false);
-		return null;
 	}
 
 	public void createCumulativeStats() {
@@ -191,48 +188,48 @@ public class ChartMaker {
 
 		long buildStarted = System.currentTimeMillis();
 
-		ASync<String> build = new ASync<>();
+		ASync<Void> build = new ASync<>();
 
 		if (false) {
-			build.submit(() -> ChartRates.buildGIF(stats, "CFR", "Colorado rates by day of infection, ", true, false,
+			build.execute(() -> ChartRates.buildGIF(stats, "CFR", "Colorado rates by day of infection, ", true, false,
 					false, false));
-			build.submit(() -> incompletes.buildGIF(fullTypes, NumbersTiming.INFECTION, true));
+			build.execute(() -> incompletes.buildGIF(fullTypes, NumbersTiming.INFECTION, true));
 			build.complete();
 			return;
 		}
 
-		MyExecutor.executeCode(() -> createCumulativeStats());
+		build.execute(() -> createCumulativeStats());
 
 		/* These are just ordered from slowest to fastest */
 
-		build.submit(() -> ChartRates.buildGIF(stats, "rates", "Colorado rates by day of infection, ", true, true, true,
-				true));
-		build.submit(() -> ChartRates.buildGIF(stats, "CFR", "Colorado CFR by day of infection, ", true, false, false,
+		build.execute(() -> ChartRates.buildGIF(stats, "rates", "Colorado rates by day of infection, ", true, true,
+				true, true));
+		build.execute(() -> ChartRates.buildGIF(stats, "CFR", "Colorado CFR by day of infection, ", true, false, false,
 				false));
-		build.submit(() -> ChartRates.buildGIF(stats, "CHR", "Colorado CHR by day of infection, ", false, true, false,
+		build.execute(() -> ChartRates.buildGIF(stats, "CHR", "Colorado CHR by day of infection, ", false, true, false,
 				false));
-		build.submit(() -> ChartRates.buildGIF(stats, "HFR", "Colorado HFR by day of infection, ", false, false, true,
+		build.execute(() -> ChartRates.buildGIF(stats, "HFR", "Colorado HFR by day of infection, ", false, false, true,
 				false));
-		build.submit(() -> ChartRates.buildGIF(stats, "Positivity", "Colorado positivity by day of infection, ", false,
+		build.execute(() -> ChartRates.buildGIF(stats, "Positivity", "Colorado positivity by day of infection, ", false,
 				false, false, true));
 
 		for (NumbersTiming timing : NumbersTiming.values()) {
-			build.submit(() -> incompletes.buildGIF(noTests, timing, true));
-			build.submit(() -> incompletes.buildGIF(noTests, timing, false));
-			build.submit(() -> incompletes.buildGIF(fullTypes, timing, true));
-			build.submit(() -> incompletes.buildGIF(fullTypes, timing, false));
+			build.execute(() -> incompletes.buildGIF(noTests, timing, true));
+			build.execute(() -> incompletes.buildGIF(noTests, timing, false));
+			build.execute(() -> incompletes.buildGIF(fullTypes, timing, true));
+			build.execute(() -> incompletes.buildGIF(fullTypes, timing, false));
 
 			for (NumbersType type : NumbersType.values()) {
 				Set<NumbersType> types = NumbersType.getSet(type);
 				IncompleteNumbers numbers = stats.getNumbers(type, timing);
-				build.submit(() -> incompletes.buildGIF(types, timing, true));
-				build.submit(() -> incompletes.buildGIF(types, timing, false));
-				build.submit(() -> buildNewTimeseriesCharts(numbers));
-				build.submit(() -> buildAgeTimeseriesChart(numbers, stats.getLastDay()));
+				build.execute(() -> incompletes.buildGIF(types, timing, true));
+				build.execute(() -> incompletes.buildGIF(types, timing, false));
+				build.execute(() -> buildNewTimeseriesCharts(numbers));
+				build.execute(() -> buildAgeTimeseriesChart(numbers, stats.getLastDay()));
 			}
 		}
 
-		stats.getCounties().forEach((key, value) -> build.submit(() -> county.createCountyStats(value)));
+		stats.getCounties().forEach((key, value) -> build.execute(() -> county.createCountyStats(value)));
 		build.complete();
 		System.out.println("Built charts in " + (System.currentTimeMillis() - buildStarted) + " ms with "
 				+ build.getExecutions() + " executions.");

@@ -224,7 +224,7 @@ public class ChartRates {
 		return Math.max(Charts.getFirstDayForCharts(stats), stats.getFirstDayOfTiming(timing));
 	}
 
-	public static String buildGIF(ColoradoStats stats, String prefix, String title, boolean useCFR, boolean useCHR,
+	public static void buildGIF(ColoradoStats stats, String prefix, String title, boolean useCFR, boolean useCHR,
 			boolean useHFR, boolean usePositivity) {
 
 		new File(RATES_FOLDER).mkdir();
@@ -259,6 +259,5 @@ public class ChartRates {
 		}
 
 		gif.finish();
-		return fileName;
 	}
 }

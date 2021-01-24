@@ -74,10 +74,9 @@ public class ChartCounty {
 		return image;
 	}
 
-	public String createCountyStats(CountyStats county) {
+	public void createCountyStats(CountyStats county) {
 		buildCountyTimeseriesChart(county, false, Smoothing.TOTAL_7_DAY);
 		buildCountyTimeseriesChart(county, true, Smoothing.TOTAL_7_DAY);
-		return null;
 	}
 
 }
