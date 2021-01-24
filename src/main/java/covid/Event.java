@@ -41,12 +41,24 @@ public class Event {
 
 			new Event("V+5", "12-19-2020"), new Event("C", "12-25-2020"),
 
+			new Event(null, "1-10-2021"),
+
 			// keep this below
 	};
 
 	public Event(String name, String date) {
+		long time_ = 0;
+		try {
+			time_ = CalendarUtils.dateToTime(date);
+			if (name == null) {
+				String[] split = date.split("[-/]");
+				name = split[0] + "-" + split[1];
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		this.name = name;
-		this.time = CalendarUtils.dateToTime(date);
+		this.time = time_;
 	}
 
 	public static void addEvents(XYPlot plot) {
