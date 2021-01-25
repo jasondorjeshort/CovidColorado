@@ -67,8 +67,31 @@ public class IncompleteNumbers extends Numbers {
 		return timing;
 	}
 
+	private static final boolean USE_AVERAGES_FOR_PROJECTIONS = false;
+
 	public synchronized double getNumbers(int dayOfData, int dayOfType, boolean projected) {
 		if (projected) {
+			if (USE_AVERAGES_FOR_PROJECTIONS) {
+				/*
+				 * This is something I played around with to counter the
+				 * day-of-week issues with the rolling average system. But while
+				 * it does negate that, it also decreases accuracy by averaging
+				 * in older data.
+				 */
+				int days = 0;
+				double total = 0;
+				for (int _dayOfData = dayOfData - 6; _dayOfData <= dayOfData; _dayOfData++) {
+					double daily = getProjectedNumbers(_dayOfData, dayOfType);
+					if (daily != 0) {
+						total += daily;
+						days++;
+					}
+				}
+				if (days == 0) {
+					return 0;
+				}
+				return total / days;
+			}
 			return getProjectedNumbers(dayOfData, dayOfType);
 		}
 		return getNumbers(dayOfData, dayOfType);
