@@ -21,6 +21,7 @@ import covid.Event;
 import covid.IncompleteNumbers;
 import covid.NumbersTiming;
 import covid.NumbersType;
+import covid.Smoothing;
 import library.ASync;
 
 /**
@@ -155,25 +156,30 @@ public class ChartMaker {
 	}
 
 	public void createCumulativeStats() {
+		Smoothing smoothing = new Smoothing(7, Smoothing.Type.AVERAGE, Smoothing.Timing.TRAILING);
+		String format = "Colorado %s, daily numbers\n(" + smoothing.getDescription() + ")";
 		buildCasesTimeseriesChart("cumulative", "cases", stats.getLastDay(),
-				dayOfCases -> (double) stats.getNumbers(NumbersType.CASES).getCumulativeNumbers(dayOfCases), null,
-				"cases", "count", false, false, 0, false);
+				dayOfCases -> stats.getNumbers(NumbersType.CASES).getNumbers(dayOfCases, smoothing), null,
+				String.format(format, "cases"), "count", false, false, 0, false);
 		buildCasesTimeseriesChart("cumulative", "hospitalizations", stats.getLastDay(),
-				dayOfCases -> (double) stats.getNumbers(NumbersType.HOSPITALIZATIONS).getCumulativeNumbers(dayOfCases),
-				null, "hospitalizations", "count", false, false, 0, false);
+				dayOfCases -> stats.getNumbers(NumbersType.HOSPITALIZATIONS).getNumbers(dayOfCases, smoothing), null,
+				String.format(format, "hospitalizations"), "count", false, false, 0, false);
 		buildCasesTimeseriesChart("cumulative", "deaths", stats.getLastDay(),
-				dayOfCases -> (double) stats.getNumbers(NumbersType.DEATHS).getCumulativeNumbers(dayOfCases), null,
-				"deaths", "count", false, false, 0, false);
+				dayOfCases -> stats.getNumbers(NumbersType.DEATHS).getNumbers(dayOfCases, smoothing), null,
+				String.format(format, "deaths"), "count", false, false, 0, false);
 		buildCasesTimeseriesChart("cumulative", "deaths (confirmed)", stats.getLastDay(),
-				dayOfCases -> (double) stats.confirmedDeaths.getCumulativeNumbers(dayOfCases), null, "deaths (final)",
-				"count", false, false, 0, false);
+				dayOfCases -> stats.confirmedDeaths.getNumbers(dayOfCases, smoothing), null,
+				String.format(format, "deaths (final)"), "count", false, false, 0, false);
 		buildCasesTimeseriesChart("cumulative", "people tested", stats.getLastDay(),
-				dayOfCases -> (double) stats.peopleTested.getCumulativeNumbers(dayOfCases), null, "peopleTested",
-				"count", false, false, 0, false);
+				dayOfCases -> stats.peopleTested.getNumbers(dayOfCases, smoothing), null,
+				String.format(format, "people tested"), "count", false, false, 0, false);
 		buildCasesTimeseriesChart("cumulative", "tests", stats.getLastDay(),
-				dayOfCases -> (double) stats.getNumbers(NumbersType.TESTS).getCumulativeNumbers(dayOfCases), null,
-				"testEncounters", "count", false, false, 0, false);
-
+				dayOfCases -> stats.getNumbers(NumbersType.TESTS).getNumbers(dayOfCases, smoothing), null,
+				String.format(format, "test encounters"), "count", false, false, 0, false);
+		buildCasesTimeseriesChart("cumulative", "positivity", stats.getLastDay(),
+				dayOfCases -> stats.getNumbers(NumbersType.CASES).getNumbers(dayOfCases, smoothing)
+						/ stats.getNumbers(NumbersType.TESTS).getNumbers(dayOfCases, smoothing),
+				null, "positivity", "count", false, false, 0, false);
 	}
 
 	public void buildCharts() {
