@@ -73,4 +73,25 @@ public class ASync<V> {
 		}
 	}
 
+	/**
+	 * Waits until the next item completes, and returns it in FIFO order.
+	 * Returns null if there is nothing pending.
+	 */
+	public V get() {
+		Future<V> future;
+		synchronized (this) {
+			future = exec.poll();
+		}
+		if (future == null) {
+			return null;
+		}
+
+		try {
+			return future.get();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
 }
