@@ -43,7 +43,9 @@ public class IncompleteNumbers extends Numbers {
 
 	protected class Daily {
 		protected final HashMap<Integer, Double> numbers = new HashMap<>();
+		protected final HashMap<Integer, Double> cumulativeNumbers = new HashMap<>();
 		protected final HashMap<Integer, Double> projected = new HashMap<>();
+		protected final HashMap<Integer, Double> cumulativeProjected = new HashMap<>();
 		protected final HashMap<Integer, Incomplete> ratios = new HashMap<>();
 
 		protected double getNumbers(int day, boolean isProjected) {
@@ -101,6 +103,26 @@ public class IncompleteNumbers extends Numbers {
 		return firstDayOfType;
 	}
 
+	public synchronized double getCumulativeNumbers(int dayOfData, int dayOfType, boolean projected) {
+		if (dayOfType < firstDayOfType) {
+			return 0;
+		}
+		if (dayOfType >= dayOfData) {
+			dayOfType = dayOfData;
+		}
+		Daily daily = allNumbers.get(dayOfData);
+		String dateOfData = CalendarUtils.dayToDate(dayOfData);
+		String dateOfType = CalendarUtils.dayToDate(dayOfType);
+		Double value;
+		if (daily == null) {
+			return 0;
+		}
+		if (projected) {
+			return daily.cumulativeProjected.get(dayOfType);
+		}
+		return daily.cumulativeNumbers.get(dayOfType);
+	}
+
 	public synchronized double getNumbers(int dayOfData, int dayOfType, boolean projected, Smoothing smoothing) {
 
 		int lastDayOfCalc;
@@ -117,12 +139,12 @@ public class IncompleteNumbers extends Numbers {
 		}
 
 		switch (smoothing.getType()) {
+		case CUMULATIVE:
+			return getCumulativeNumbers(dayOfData, dayOfType, projected);
 		case AVERAGE:
 		case TOTAL:
-			double sum = 0.0;
-			for (int d = lastDayOfCalc - smoothing.getDays() + 1; d <= lastDayOfCalc; d++) {
-				sum += getNumbers(dayOfData, d, projected);
-			}
+			double sum = getCumulativeNumbers(dayOfData, lastDayOfCalc, projected)
+					- getCumulativeNumbers(dayOfData, lastDayOfCalc - smoothing.getDays(), projected);
 			if (smoothing.getType() == Smoothing.Type.AVERAGE) {
 				sum /= smoothing.getDays();
 			}
@@ -374,6 +396,24 @@ public class IncompleteNumbers extends Numbers {
 							+ getNumbers(dayOfData, dayOfType) + ".");
 				}
 				daily.projected.put(dayOfType, projected);
+			}
+		}
+
+		/*
+		 * Build cumulative numbers
+		 */
+		for (int dayOfData = firstDayOfData; dayOfData <= lastDayOfData; dayOfData++) {
+			double cumulative = 0, cumulativeProjected = 0;
+			Daily daily = allNumbers.get(dayOfData);
+			if (daily == null) {
+				continue;
+			}
+			for (int dayOfType = firstDayOfType; dayOfType <= dayOfData; dayOfType++) {
+				cumulative += getNumbers(dayOfData, dayOfType);
+				daily.cumulativeNumbers.put(dayOfType, cumulative);
+
+				cumulativeProjected += getProjectedNumbers(dayOfData, dayOfType);
+				daily.cumulativeProjected.put(dayOfType, cumulativeProjected);
 			}
 		}
 

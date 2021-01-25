@@ -30,6 +30,7 @@ public class Smoothing {
 	public static final Smoothing ALGEBRAIC_SYMMETRIC_WEEKLY = new Smoothing(7, Type.AVERAGE, Timing.SYMMETRIC);
 
 	public enum Type {
+		CUMULATIVE,
 		TOTAL,
 		AVERAGE,
 		GEOMETRIC_AVERAGE;
