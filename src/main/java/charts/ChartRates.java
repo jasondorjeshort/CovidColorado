@@ -58,7 +58,7 @@ public class ChartRates {
 	private static Chart buildRates(ColoradoStats stats, int dayOfData, String fileName, String title, boolean useCFR,
 			boolean useCHR, boolean useHFR, boolean usePositivity, Integer age, Integer fixedHeight) {
 
-		Smoothing smoothing = new Smoothing(13, Smoothing.Type.AVERAGE, Smoothing.Timing.SYMMETRIC);
+		Smoothing smoothing = new Smoothing(13, Smoothing.Type.AVERAGE, Smoothing.Timing.TRAILING);
 
 		TimeSeries cfr = new TimeSeries("CFR (deaths / cases)");
 		TimeSeries cfrProjected = new TimeSeries("CFR (projected)");
