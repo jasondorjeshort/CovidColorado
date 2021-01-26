@@ -41,7 +41,7 @@ public class Event {
 
 			new Event("V+5", "12-19-2020"), new Event("C", "12-25-2020"),
 
-			new Event(null, "1-10-2021"),
+			// new Event(null, "1-10-2021"),
 
 			// keep this below
 	};
