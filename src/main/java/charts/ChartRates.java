@@ -77,7 +77,7 @@ public class ChartRates {
 		int incomplete = dayOfData + 1;
 		int firstDayOfChart = stats.getVeryFirstDay();
 
-		for (int dayOfInfection = firstDayOfChart; dayOfInfection <= stats.getLastDay(); dayOfInfection++) {
+		for (int dayOfInfection = firstDayOfChart; dayOfInfection <= dayOfData; dayOfInfection++) {
 			double tests = tNumbers.getNumbers(dayOfData, dayOfInfection, false, smoothing);
 			double testsProjected = tNumbers.getNumbers(dayOfData, dayOfInfection, true, smoothing);
 			double testsRatio = Charts.ratio(tests, testsProjected);
