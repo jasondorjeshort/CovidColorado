@@ -63,9 +63,9 @@ public class ChartMaker {
 				- daysToSkip; d++) {
 			Day ddd = CalendarUtils.dayToDay(d);
 
-			double cases = getCasesForDay.apply(d);
+			Double cases = getCasesForDay.apply(d);
 
-			if (Double.isFinite(cases)) {
+			if (cases != null && Double.isFinite(cases)) {
 				if (!log || cases > 0) {
 					series.add(ddd, cases);
 				}
@@ -123,6 +123,10 @@ public class ChartMaker {
 		return c;
 	}
 
+	public int getFirstDayForAnimation() {
+		return Math.max(Charts.getFirstDayForCharts(stats), stats.getVeryFirstDay());
+	}
+
 	public Chart buildNewTimeseriesChart(IncompleteNumbers numbers, int dayOfData) {
 		String by = "new-" + numbers.getType().lowerName + "-" + numbers.getTiming().lowerName;
 		if (!numbers.hasData()) {
@@ -133,16 +137,30 @@ public class ChartMaker {
 				false);
 	}
 
-	public int getFirstDayForAnimation() {
-		return Math.max(Charts.getFirstDayForCharts(stats), stats.getVeryFirstDay());
-	}
-
 	public void buildNewTimeseriesCharts(IncompleteNumbers numbers) {
 		if (!numbers.hasData()) {
 			return;
 		}
 		for (int dayOfData = getFirstDayForAnimation(); dayOfData <= stats.getLastDay(); dayOfData++) {
 			buildNewTimeseriesChart(numbers, dayOfData);
+		}
+	}
+
+	public Chart buildRTimeseriesChart(IncompleteNumbers numbers, int dayOfData) {
+		String by = "R-" + numbers.getType().lowerName + "-" + numbers.getTiming().lowerName;
+		if (!numbers.hasData()) {
+			return null;
+		}
+		return buildCasesTimeseriesChart(by, CalendarUtils.dayToFullDate(dayOfData), dayOfData,
+				dayOfType -> numbers.getBigR(dayOfData, dayOfType), null, by, "?R?", false, true, 0, false);
+	}
+
+	public void buildRTimeseriesCharts(IncompleteNumbers numbers) {
+		if (!numbers.hasData()) {
+			return;
+		}
+		for (int dayOfData = getFirstDayForAnimation(); dayOfData <= stats.getLastDay(); dayOfData++) {
+			buildRTimeseriesChart(numbers, dayOfData);
 		}
 	}
 
@@ -189,6 +207,7 @@ public class ChartMaker {
 		ASync<Void> build = new ASync<>();
 
 		if (false) {
+			build.execute(() -> buildRTimeseriesCharts(stats.getNumbers(NumbersType.CASES, NumbersTiming.INFECTION)));
 			build.execute(() -> ChartRates.buildGIF(stats, "CFR", "Colorado rates by day of infection, ", true, false,
 					false, false));
 			build.execute(() -> incompletes.buildGIF(fullTypes, NumbersTiming.INFECTION, true));
@@ -215,7 +234,7 @@ public class ChartMaker {
 			build.execute(() -> incompletes.buildGIF(noTests, timing, true));
 			build.execute(() -> incompletes.buildGIF(noTests, timing, false));
 			build.execute(() -> age.buildChart(noTests, timing));
-			
+
 			build.execute(() -> incompletes.buildGIF(fullTypes, timing, true));
 			build.execute(() -> incompletes.buildGIF(fullTypes, timing, false));
 			// No point to testing age; it's identical to cases
@@ -226,6 +245,7 @@ public class ChartMaker {
 				build.execute(() -> incompletes.buildGIF(types, timing, true));
 				build.execute(() -> incompletes.buildGIF(types, timing, false));
 				build.execute(() -> buildNewTimeseriesCharts(numbers));
+				build.execute(() -> buildRTimeseriesCharts(numbers));
 				build.execute(() -> age.buildChart(types, timing));
 			}
 		}

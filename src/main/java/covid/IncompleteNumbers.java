@@ -41,11 +41,12 @@ public class IncompleteNumbers extends Numbers {
 		return lastDayOfData >= firstDayOfData || lastDayOfData >= firstDayOfType;
 	}
 
-	protected class Daily {
+	protected class DayOfData {
 		protected final HashMap<Integer, Double> numbers = new HashMap<>();
 		protected final HashMap<Integer, Double> cumulativeNumbers = new HashMap<>();
 		protected final HashMap<Integer, Double> projected = new HashMap<>();
 		protected final HashMap<Integer, Double> cumulativeProjected = new HashMap<>();
+		protected final HashMap<Integer, Double> bigR = new HashMap<>();
 		protected final HashMap<Integer, Incomplete> ratios = new HashMap<>();
 
 		protected double getNumbers(int day, boolean isProjected) {
@@ -56,7 +57,7 @@ public class IncompleteNumbers extends Numbers {
 		}
 	}
 
-	private final HashMap<Integer, Daily> allNumbers = new HashMap<>();
+	private final HashMap<Integer, DayOfData> allNumbers = new HashMap<>();
 
 	private final NumbersTiming timing;
 
@@ -118,7 +119,7 @@ public class IncompleteNumbers extends Numbers {
 		if (dayOfType >= dayOfData) {
 			dayOfType = dayOfData;
 		}
-		Daily daily = allNumbers.get(dayOfData);
+		DayOfData daily = allNumbers.get(dayOfData);
 		String dateOfData = CalendarUtils.dayToDate(dayOfData);
 		String dateOfType = CalendarUtils.dayToDate(dayOfType);
 		Double value;
@@ -174,6 +175,31 @@ public class IncompleteNumbers extends Numbers {
 		throw new RuntimeException("FAIL");
 	}
 
+	public synchronized Double getBigR(int dayOfData, int dayOfType) {
+		if (dayOfType < firstDayOfType || dayOfType > dayOfData) {
+			return null;
+		}
+
+		DayOfData daily = allNumbers.get(dayOfData);
+		if (daily == null) {
+			return null;
+		}
+
+		int count = 0;
+		double r = 1.0;
+		int RANGE = 7;
+		for (int d = dayOfType - RANGE + 1; d <= dayOfType + RANGE; d++) {
+			Double dailyR = daily.bigR.get(d);
+			if (dailyR == null) {
+				return null;
+			}
+			r *= dailyR;
+			count++;
+		}
+
+		return Math.pow(r, 1.0 / count);
+	}
+
 	public synchronized double getNumbers(int dayOfData, int dayOfType, boolean projected, int interval) {
 		double numbers = 0;
 		for (int d = 0; d < interval; d++) {
@@ -191,7 +217,7 @@ public class IncompleteNumbers extends Numbers {
 	}
 
 	public synchronized double getNumbers(int dayOfData, int dayOfType) {
-		Daily daily = allNumbers.get(dayOfData);
+		DayOfData daily = allNumbers.get(dayOfData);
 		if (daily == null) {
 			return 0;
 		}
@@ -203,7 +229,7 @@ public class IncompleteNumbers extends Numbers {
 	}
 
 	public synchronized double getProjectedNumbers(int dayOfData, int dayOfType) {
-		Daily daily = allNumbers.get(dayOfData);
+		DayOfData daily = allNumbers.get(dayOfData);
 		if (daily == null) {
 			return 0;
 		}
@@ -219,7 +245,7 @@ public class IncompleteNumbers extends Numbers {
 			throw new RuntimeException("Uh oh: " + CalendarUtils.dayToDate(dayOfType) + " is not between "
 					+ CalendarUtils.dayToDate(firstDayOfType) + " and " + CalendarUtils.dayToDate(lastDayOfData));
 		}
-		Daily daily = allNumbers.get(dayOfType);
+		DayOfData daily = allNumbers.get(dayOfType);
 		Incomplete incompletion = daily.ratios.get(delay);
 		if (incompletion == null) {
 			incompletion = new Incomplete();
@@ -247,7 +273,7 @@ public class IncompleteNumbers extends Numbers {
 			// negatives can still happen between days of data.
 			for (int dayOfData = firstDayOfData; dayOfData <= lastDayOfData; dayOfData++) {
 				double min = 0;
-				Daily daily = allNumbers.get(dayOfData);
+				DayOfData daily = allNumbers.get(dayOfData);
 				for (int dayOfType = firstDayOfType; dayOfType <= dayOfData; dayOfType++) {
 					Double numbers = daily.numbers.get(dayOfType);
 					if (numbers == null || numbers < min) {
@@ -268,7 +294,7 @@ public class IncompleteNumbers extends Numbers {
 			// TODO: should avoid negatives first
 			for (int dayOfData = firstDayOfData; dayOfData <= lastDayOfData; dayOfData++) {
 				double last = 0;
-				Daily daily = allNumbers.get(dayOfData);
+				DayOfData daily = allNumbers.get(dayOfData);
 				for (int dayOfType = firstDayOfType; dayOfType <= dayOfData; dayOfType++) {
 					double newLast = getNumbers(dayOfData, dayOfType);
 
@@ -351,7 +377,7 @@ public class IncompleteNumbers extends Numbers {
 		// assempled multipliers along the way, but reordering the logic seems
 		// tedious.
 		for (int dayOfData = firstDayOfData; dayOfData <= lastDayOfData; dayOfData++) {
-			Daily daily = allNumbers.get(dayOfData);
+			DayOfData daily = allNumbers.get(dayOfData);
 			if (daily == null) {
 				if (logDayOfType > 0) {
 					new Exception("Problem with " + getType() + "/" + timing + " on day " + dayOfData + " aka "
@@ -412,7 +438,7 @@ public class IncompleteNumbers extends Numbers {
 		 */
 		for (int dayOfData = firstDayOfData; dayOfData <= lastDayOfData; dayOfData++) {
 			double cumulative = 0, cumulativeProjected = 0;
-			Daily daily = allNumbers.get(dayOfData);
+			DayOfData daily = allNumbers.get(dayOfData);
 			if (daily == null) {
 				continue;
 			}
@@ -425,12 +451,31 @@ public class IncompleteNumbers extends Numbers {
 			}
 		}
 
+		int SERIAL_INTERVAL = 5;
+		Smoothing smoothing = new Smoothing(SERIAL_INTERVAL, Smoothing.Type.TOTAL, Smoothing.Timing.TRAILING);
+		for (int dayOfData = firstDayOfData; dayOfData <= lastDayOfData; dayOfData++) {
+			DayOfData daily = allNumbers.get(dayOfData);
+			if (daily == null) {
+				continue;
+			}
+
+			for (int dayOfType = firstDayOfType; dayOfType <= dayOfData - SERIAL_INTERVAL; dayOfType++) {
+				double end = getNumbers(dayOfData, dayOfType, true, smoothing);
+				double start = getNumbers(dayOfData, dayOfType - SERIAL_INTERVAL, true, smoothing);
+				if (start != 0 && end != 0) {
+					daily.bigR.put(dayOfType, end / start);
+				}
+
+			}
+
+		}
+
 		return true;
 	}
 
 	// not used
 	public synchronized TimeSeries createTimeSeries(int dayOfData, String name, boolean isProjected) {
-		Daily daily = allNumbers.get(dayOfData);
+		DayOfData daily = allNumbers.get(dayOfData);
 
 		int firstDay = 0;
 		while (daily.getNumbers(firstDay, isProjected) == 0) {
@@ -453,12 +498,12 @@ public class IncompleteNumbers extends Numbers {
 	 * Sets numbers for the given days.
 	 */
 	public synchronized void setNumbers(int dayOfData, int dayOfType, double numbers) {
-		Daily daily = allNumbers.get(dayOfData);
+		DayOfData daily = allNumbers.get(dayOfData);
 		if (daily == null) {
 			if (numbers == 0.0) {
 				return; // avoid unnecessary first/last days
 			}
-			daily = new Daily();
+			daily = new DayOfData();
 			allNumbers.put(dayOfData, daily);
 		}
 		if (daily.numbers.get(dayOfType) == null && numbers == 0.0) {
@@ -481,9 +526,9 @@ public class IncompleteNumbers extends Numbers {
 		if (numbers == 0.0) {
 			return; // avoid unnecessary first/last days
 		}
-		Daily daily = allNumbers.get(dayOfData);
+		DayOfData daily = allNumbers.get(dayOfData);
 		if (daily == null) {
-			daily = new Daily();
+			daily = new DayOfData();
 			allNumbers.put(dayOfData, daily);
 		}
 		Double original = daily.numbers.get(dayOfType);
