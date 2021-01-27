@@ -243,7 +243,9 @@ public class ChartMaker {
 				build.execute(() -> incompletes.buildGIF(types, timing, true));
 				build.execute(() -> incompletes.buildGIF(types, timing, false));
 				build.execute(() -> buildNewTimeseriesCharts(numbers));
-				build.execute(() -> buildRTimeseriesCharts(numbers));
+				if (timing == NumbersTiming.INFECTION) {
+					build.execute(() -> buildRTimeseriesCharts(numbers));
+				}
 				build.execute(() -> age.buildChart(types, timing));
 			}
 		}
