@@ -52,15 +52,14 @@ public class ChartMaker {
 
 	public Chart buildCasesTimeseriesChart(String folder, String fileName, int dayOfData,
 			Function<Integer, Double> getCasesForDay, Function<Integer, Double> getProjectedCasesForDay, String title,
-			String verticalAxis, boolean log, boolean showAverage, int daysToSkip, boolean showEvents) {
+			String verticalAxis, boolean log, int daysToSkip, boolean showEvents) {
 
 		folder = Charts.FULL_FOLDER + "\\" + folder;
 		new File(folder).mkdir();
 
 		TimeSeries series = new TimeSeries("Cases");
 		TimeSeries projectedSeries = new TimeSeries("Projected");
-		for (int d = Math.max(showAverage ? dayOfData - 30 : 0, stats.getVeryFirstDay()); d <= dayOfData
-				- daysToSkip; d++) {
+		for (int d = stats.getVeryFirstDay(); d <= dayOfData - daysToSkip; d++) {
 			Day ddd = CalendarUtils.dayToDay(d);
 
 			Double cases = getCasesForDay.apply(d);
@@ -133,8 +132,7 @@ public class ChartMaker {
 			return null;
 		}
 		return buildCasesTimeseriesChart(by, CalendarUtils.dayToFullDate(dayOfData), dayOfData,
-				dayOfType -> (double) numbers.getNewNumbers(dayOfData, dayOfType), null, by, "?", false, true, 0,
-				false);
+				dayOfType -> (double) numbers.getNewNumbers(dayOfData, dayOfType), null, by, "?", false, 0, false);
 	}
 
 	public void buildNewTimeseriesCharts(IncompleteNumbers numbers) {
@@ -152,7 +150,7 @@ public class ChartMaker {
 			return null;
 		}
 		return buildCasesTimeseriesChart(by, CalendarUtils.dayToFullDate(dayOfData), dayOfData,
-				dayOfType -> numbers.getBigR(dayOfData, dayOfType), null, by, "?R?", false, true, 0, false);
+				dayOfType -> numbers.getBigR(dayOfData, dayOfType), null, by, "?R?", false, 0, false);
 	}
 
 	public void buildRTimeseriesCharts(IncompleteNumbers numbers) {
@@ -169,26 +167,26 @@ public class ChartMaker {
 		String format = "Colorado %s, daily numbers\n(" + smoothing.getDescription() + ")";
 		buildCasesTimeseriesChart("cumulative", "cases", stats.getLastDay(),
 				dayOfCases -> stats.getNumbers(NumbersType.CASES).getNumbers(dayOfCases, smoothing), null,
-				String.format(format, "cases"), "count", false, false, 0, false);
+				String.format(format, "cases"), "count", false, 0, false);
 		buildCasesTimeseriesChart("cumulative", "hospitalizations", stats.getLastDay(),
 				dayOfCases -> stats.getNumbers(NumbersType.HOSPITALIZATIONS).getNumbers(dayOfCases, smoothing), null,
-				String.format(format, "hospitalizations"), "count", false, false, 0, false);
+				String.format(format, "hospitalizations"), "count", false, 0, false);
 		buildCasesTimeseriesChart("cumulative", "deaths", stats.getLastDay(),
 				dayOfCases -> stats.getNumbers(NumbersType.DEATHS).getNumbers(dayOfCases, smoothing), null,
-				String.format(format, "deaths"), "count", false, false, 0, false);
+				String.format(format, "deaths"), "count", false, 0, false);
 		buildCasesTimeseriesChart("cumulative", "deaths (confirmed)", stats.getLastDay(),
 				dayOfCases -> stats.confirmedDeaths.getNumbers(dayOfCases, smoothing), null,
-				String.format(format, "deaths (final)"), "count", false, false, 0, false);
+				String.format(format, "deaths (final)"), "count", false, 0, false);
 		buildCasesTimeseriesChart("cumulative", "people tested", stats.getLastDay(),
 				dayOfCases -> stats.peopleTested.getNumbers(dayOfCases, smoothing), null,
-				String.format(format, "people tested"), "count", false, false, 0, false);
+				String.format(format, "people tested"), "count", false, 0, false);
 		buildCasesTimeseriesChart("cumulative", "tests", stats.getLastDay(),
 				dayOfCases -> stats.getNumbers(NumbersType.TESTS).getNumbers(dayOfCases, smoothing), null,
-				String.format(format, "test encounters"), "count", false, false, 0, false);
+				String.format(format, "test encounters"), "count", false, 0, false);
 		buildCasesTimeseriesChart("cumulative", "positivity", stats.getLastDay(),
 				dayOfCases -> stats.getNumbers(NumbersType.CASES).getNumbers(dayOfCases, smoothing)
 						/ stats.getNumbers(NumbersType.TESTS).getNumbers(dayOfCases, smoothing),
-				null, "positivity", "count", false, false, 0, false);
+				null, "positivity", "count", false, 0, false);
 	}
 
 	public void buildCharts() {
