@@ -1,16 +1,11 @@
 package charts;
 
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Set;
-import java.util.function.Function;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.axis.DateAxis;
-import org.jfree.chart.axis.LogarithmicAxis;
 import org.jfree.chart.axis.ValueAxis;
-import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.TimeSeries;
@@ -22,7 +17,6 @@ import covid.Event;
 import covid.IncompleteNumbers;
 import covid.NumbersTiming;
 import covid.NumbersType;
-import covid.Smoothing;
 
 /**
  * This program is free software: you can redistribute it and/or modify it under
