@@ -103,6 +103,14 @@ public class IncompleteNumbers extends Numbers {
 		return firstDayOfType;
 	}
 
+	public synchronized int getFirstDayOfData() {
+		return firstDayOfData;
+	}
+
+	public synchronized int getLastDay() {
+		return lastDayOfData;
+	}
+
 	public synchronized double getCumulativeNumbers(int dayOfData, int dayOfType, boolean projected) {
 		if (dayOfType < firstDayOfType) {
 			return 0;

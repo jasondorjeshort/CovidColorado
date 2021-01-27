@@ -214,8 +214,11 @@ public class ChartMaker {
 		for (NumbersTiming timing : NumbersTiming.values()) {
 			build.execute(() -> incompletes.buildGIF(noTests, timing, true));
 			build.execute(() -> incompletes.buildGIF(noTests, timing, false));
+			build.execute(() -> age.buildChart(noTests, timing));
+			
 			build.execute(() -> incompletes.buildGIF(fullTypes, timing, true));
 			build.execute(() -> incompletes.buildGIF(fullTypes, timing, false));
+			// No point to testing age; it's identical to cases
 
 			for (NumbersType type : NumbersType.values()) {
 				Set<NumbersType> types = NumbersType.getSet(type);
@@ -223,7 +226,7 @@ public class ChartMaker {
 				build.execute(() -> incompletes.buildGIF(types, timing, true));
 				build.execute(() -> incompletes.buildGIF(types, timing, false));
 				build.execute(() -> buildNewTimeseriesCharts(numbers));
-				build.execute(() -> age.buildChart(numbers, stats.getLastDay()));
+				build.execute(() -> age.buildChart(types, timing));
 			}
 		}
 

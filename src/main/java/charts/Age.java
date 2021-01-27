@@ -2,12 +2,14 @@ package charts;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.Set;
 import java.util.function.Function;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.LogarithmicAxis;
+import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.time.Day;
@@ -20,6 +22,7 @@ import covid.Event;
 import covid.IncompleteNumbers;
 import covid.NumbersTiming;
 import covid.NumbersType;
+import covid.Smoothing;
 
 /**
  * This program is free software: you can redistribute it and/or modify it under
@@ -57,97 +60,101 @@ public class Age {
 	 */
 
 	final ColoradoStats stats;
+	final String FOLDER = Charts.FULL_FOLDER + "\\" + "age";
+	private final int DAYS = 14;
 
 	public Age(ColoradoStats stats) {
 		this.stats = stats;
+		new File(FOLDER).mkdir();
 	}
 
-	public Chart buildCasesTimeseriesChart(String folder, String fileName, int dayOfData,
-			Function<Integer, Double> getCasesForDay, Function<Integer, Double> getProjectedCasesForDay, String title,
-			String verticalAxis, boolean log, boolean showAverage, int daysToSkip, boolean showEvents) {
+	public void buildChart(Set<NumbersType> types, NumbersTiming timing) {
+		TimeSeriesCollection collection = new TimeSeriesCollection();
+		StringBuilder title = new StringBuilder();
 
-		folder = Charts.FULL_FOLDER + "\\" + folder;
-		new File(folder).mkdir();
+		boolean multi = (types.size() > 1);
 
-		TimeSeries series = new TimeSeries("Cases");
-		TimeSeries projectedSeries = new TimeSeries("Projected");
-		for (int d = Math.max(showAverage ? dayOfData - 30 : 0, stats.getVeryFirstDay()); d <= dayOfData
-				- daysToSkip; d++) {
-			Day ddd = CalendarUtils.dayToDay(d);
-
-			double cases = getCasesForDay.apply(d);
-
-			if (Double.isFinite(cases)) {
-				if (!log || cases > 0) {
-					series.add(ddd, cases);
-				}
+		title.append("Colorado ");
+		if (multi) {
+			title.append("COVID ages");
+		} else {
+			for (NumbersType type : types) {
+				title.append(type.lowerName);
 			}
+			title.append(" age");
+		}
+		title.append(" from ");
+		title.append(timing.lowerName);
+		title.append(" date as of ");
+		title.append(CalendarUtils.dayToDate(stats.getLastDay()));
+		title.append("\n(" + DAYS + "-day rolling average)");
+		boolean hasData = false;
 
-			if (getProjectedCasesForDay != null) {
+		double min = Double.MAX_VALUE, max = Double.MIN_VALUE;
+		boolean useExact = types.size() == 1;
 
-				double projected = getProjectedCasesForDay.apply(d);
-				if (Double.isFinite(projected)) {
-					if (!log || projected > 0) {
-						projectedSeries.add(ddd, projected);
+		for (NumbersType type : NumbersType.values()) {
+			if (!types.contains(type)) {
+				continue;
+			}
+			IncompleteNumbers numbers = stats.getNumbers(type, timing);
+			if (!numbers.hasData()) {
+				continue;
+			}
+			hasData = true;
+			TimeSeries ageSeries = new TimeSeries(type.capName);
+			TimeSeries exactSeries = new TimeSeries(type.capName + " (exact)");
+
+			for (int dayOfData = numbers.getFirstDayOfData(); dayOfData <= numbers.getLastDay(); dayOfData++) {
+				Day ddd = CalendarUtils.dayToDay(dayOfData);
+
+				double age = numbers.getAverageAgeOfNewNumbers(dayOfData, DAYS);
+				if (Double.isFinite(age)) {
+					// will be infinite if the sample size is 0
+					ageSeries.add(ddd, age);
+					min = Math.min(min, age);
+					max = Math.max(max, age);
+				}
+
+				if (useExact) {
+					double exact = numbers.getAverageAgeOfNewNumbers(dayOfData, 1);
+					if (Double.isFinite(exact)) {
+						exactSeries.add(ddd, exact);
 					}
 				}
+
+			}
+
+			collection.addSeries(ageSeries);
+			if (useExact) {
+				collection.addSeries(exactSeries);
 			}
 		}
 
-		// dataset.addSeries("Cases", series);
-
-		TimeSeriesCollection collection = new TimeSeriesCollection();
-		collection.addSeries(series);
-		if (getProjectedCasesForDay != null) {
-			collection.addSeries(projectedSeries);
-		}
-		JFreeChart chart = ChartFactory.createTimeSeriesChart(title, "Date", verticalAxis, collection);
-
-		if (log) {
-			XYPlot plot = chart.getXYPlot();
-			LogarithmicAxis yAxis = new LogarithmicAxis(verticalAxis);
-			yAxis.setLowerBound(1);
-			yAxis.setUpperBound(100000);
-			plot.setRangeAxis(yAxis);
-
-			DateAxis xAxis = new DateAxis("Date");
-
-			xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(stats.getVeryFirstDay()));
-			xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(stats.getLastDay() + 14));
-
-			plot.setDomainAxis(xAxis);
-
-			ValueMarker marker = Charts.getTodayMarker(dayOfData);
-			plot.addDomainMarker(marker);
-
-			if (showEvents) {
-				Event.addEvents(plot);
-			}
-
-		}
-
-		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), folder + "\\" + fileName + ".png");
-		BufferedImage image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT);
-		c.saveAsPNG();
-		return c;
-	}
-
-	public void buildChart(IncompleteNumbers numbers, int finalDay) {
-		if (!numbers.hasData()) {
+		if (!hasData) {
 			return;
 		}
-		String by = "age-" + numbers.getType().lowerName + "-" + numbers.getTiming().lowerName;
-		Chart c = buildCasesTimeseriesChart(by, CalendarUtils.dayToFullDate(finalDay), finalDay,
-				dayOfData -> numbers.getAverageAgeOfNewNumbers(dayOfData, 14), null, by, "?", false, false, 0, false);
 
-		if (finalDay == stats.getLastDay() && numbers.getType() == NumbersType.CASES
-				&& numbers.getTiming() == NumbersTiming.INFECTION) {
-			c.open();
+		JFreeChart chart = ChartFactory.createTimeSeriesChart(title.toString(), "Date", "Age (days)", collection);
+
+		XYPlot plot = chart.getXYPlot();
+		ValueAxis yAxis = plot.getRangeAxis();
+		// TOOD: maybe???
+
+		if (timing == NumbersTiming.INFECTION) {
+			Event.addEvents(plot);
 		}
-	}
 
-	public void buildChart(IncompleteNumbers numbers) {
-		buildChart(numbers, stats.getLastDay());
+		String fileName = NumbersType.name(types, "-") + "-" + timing.lowerName + ".png";
+		String fullFileName = FOLDER + "\\" + fileName;
+		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), fullFileName);
+		if (false && timing == NumbersTiming.INFECTION && types.size() == 3) {
+			c.addFileName(Charts.TOP_FOLDER + "\\" + fileName);
+			c.saveAsPNG();
+			c.open();
+		} else {
+			c.saveAsPNG();
+		}
 	}
 
 }
