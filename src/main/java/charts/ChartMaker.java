@@ -146,15 +146,6 @@ public class ChartMaker {
 		}
 	}
 
-	public void buildAgeTimeseriesChart(IncompleteNumbers numbers, int finalDay) {
-		if (!numbers.hasData()) {
-			return;
-		}
-		String by = "age-" + numbers.getType().lowerName + "-" + numbers.getTiming().lowerName;
-		buildCasesTimeseriesChart(by, CalendarUtils.dayToFullDate(finalDay), finalDay,
-				dayOfData -> numbers.getAverageAgeOfNewNumbers(dayOfData, 14), null, by, "?", false, false, 0, false);
-	}
-
 	public void createCumulativeStats() {
 		Smoothing smoothing = new Smoothing(7, Smoothing.Type.AVERAGE, Smoothing.Timing.TRAILING);
 		String format = "Colorado %s, daily numbers\n(" + smoothing.getDescription() + ")";
@@ -188,6 +179,7 @@ public class ChartMaker {
 		new File(Charts.FULL_FOLDER).mkdir();
 		ChartCounty county = new ChartCounty(stats);
 		ChartIncompletes incompletes = new ChartIncompletes(stats);
+		Age age = new Age(stats);
 		Set<NumbersType> fullTypes = NumbersType.getSet();
 		Set<NumbersType> noTests = NumbersType.getSet(NumbersType.CASES, NumbersType.DEATHS,
 				NumbersType.HOSPITALIZATIONS);
@@ -231,7 +223,7 @@ public class ChartMaker {
 				build.execute(() -> incompletes.buildGIF(types, timing, true));
 				build.execute(() -> incompletes.buildGIF(types, timing, false));
 				build.execute(() -> buildNewTimeseriesCharts(numbers));
-				build.execute(() -> buildAgeTimeseriesChart(numbers, stats.getLastDay()));
+				build.execute(() -> age.buildChart(numbers, stats.getLastDay()));
 			}
 		}
 
