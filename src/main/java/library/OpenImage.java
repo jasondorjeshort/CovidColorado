@@ -34,7 +34,7 @@ public class OpenImage {
 		if (fileName == null) {
 			return;
 		}
-		if (opened > 4) {
+		if (opened > 10) {
 			new Exception("Cannot open that many " + fileName).printStackTrace();
 			return;
 		}
