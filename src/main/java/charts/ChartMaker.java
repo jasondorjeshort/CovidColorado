@@ -1,27 +1,12 @@
 package charts;
 
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Set;
-import java.util.function.Function;
 
-import org.jfree.chart.ChartFactory;
-import org.jfree.chart.JFreeChart;
-import org.jfree.chart.axis.DateAxis;
-import org.jfree.chart.axis.LogarithmicAxis;
-import org.jfree.chart.plot.ValueMarker;
-import org.jfree.chart.plot.XYPlot;
-import org.jfree.data.time.Day;
-import org.jfree.data.time.TimeSeries;
-import org.jfree.data.time.TimeSeriesCollection;
-
-import covid.CalendarUtils;
 import covid.ColoradoStats;
-import covid.Event;
 import covid.IncompleteNumbers;
 import covid.NumbersTiming;
 import covid.NumbersType;
-import covid.Smoothing;
 import library.ASync;
 
 /**
@@ -50,145 +35,6 @@ public class ChartMaker {
 		this.stats = stats;
 	}
 
-	public Chart buildCasesTimeseriesChart(String folder, String fileName, int dayOfData,
-			Function<Integer, Double> getCasesForDay, Function<Integer, Double> getProjectedCasesForDay, String title,
-			String verticalAxis, boolean log, int daysToSkip, boolean showEvents) {
-
-		folder = Charts.FULL_FOLDER + "\\" + folder;
-		new File(folder).mkdir();
-
-		TimeSeries series = new TimeSeries("Cases");
-		TimeSeries projectedSeries = new TimeSeries("Projected");
-		for (int d = stats.getVeryFirstDay(); d <= dayOfData - daysToSkip; d++) {
-			Day ddd = CalendarUtils.dayToDay(d);
-
-			Double cases = getCasesForDay.apply(d);
-
-			if (cases != null && Double.isFinite(cases)) {
-				if (!log || cases > 0) {
-					series.add(ddd, cases);
-				}
-			}
-
-			if (getProjectedCasesForDay != null) {
-
-				double projected = getProjectedCasesForDay.apply(d);
-				if (Double.isFinite(projected)) {
-					if (!log || projected > 0) {
-						projectedSeries.add(ddd, projected);
-					}
-				}
-			}
-		}
-
-		// dataset.addSeries("Cases", series);
-
-		TimeSeriesCollection collection = new TimeSeriesCollection();
-		collection.addSeries(series);
-		if (getProjectedCasesForDay != null) {
-			collection.addSeries(projectedSeries);
-		}
-		JFreeChart chart = ChartFactory.createTimeSeriesChart(title, "Date", verticalAxis, collection);
-
-		if (log) {
-			XYPlot plot = chart.getXYPlot();
-			LogarithmicAxis yAxis = new LogarithmicAxis(verticalAxis);
-			yAxis.setLowerBound(1);
-			yAxis.setUpperBound(100000);
-			plot.setRangeAxis(yAxis);
-
-			DateAxis xAxis = new DateAxis("Date");
-
-			xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(stats.getVeryFirstDay()));
-			xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(stats.getLastDay() + 14));
-
-			plot.setDomainAxis(xAxis);
-
-			ValueMarker marker = Charts.getTodayMarker(dayOfData);
-			plot.addDomainMarker(marker);
-
-			if (showEvents) {
-				Event.addEvents(plot);
-			}
-
-		}
-
-		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), folder + "\\" + fileName + ".png");
-		BufferedImage image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT);
-		c.saveAsPNG();
-		if (dayOfData == stats.getLastDay()) {
-			// c.open();
-		}
-		return c;
-	}
-
-	public int getFirstDayForAnimation() {
-		return Math.max(Charts.getFirstDayForCharts(stats), stats.getVeryFirstDay());
-	}
-
-	public Chart buildNewTimeseriesChart(IncompleteNumbers numbers, int dayOfData) {
-		String by = "new-" + numbers.getType().lowerName + "-" + numbers.getTiming().lowerName;
-		if (!numbers.hasData()) {
-			return null;
-		}
-		return buildCasesTimeseriesChart(by, CalendarUtils.dayToFullDate(dayOfData), dayOfData,
-				dayOfType -> (double) numbers.getNewNumbers(dayOfData, dayOfType), null, by, "?", false, 0, false);
-	}
-
-	public void buildNewTimeseriesCharts(IncompleteNumbers numbers) {
-		if (!numbers.hasData()) {
-			return;
-		}
-		for (int dayOfData = getFirstDayForAnimation(); dayOfData <= stats.getLastDay(); dayOfData++) {
-			buildNewTimeseriesChart(numbers, dayOfData);
-		}
-	}
-
-	public Chart buildRTimeseriesChart(IncompleteNumbers numbers, int dayOfData) {
-		String by = "R-" + numbers.getType().lowerName + "-" + numbers.getTiming().lowerName;
-		if (!numbers.hasData()) {
-			return null;
-		}
-		return buildCasesTimeseriesChart(by, CalendarUtils.dayToFullDate(dayOfData), dayOfData,
-				dayOfType -> numbers.getBigR(dayOfData, dayOfType), null, by, "?R?", false, 0, false);
-	}
-
-	public void buildRTimeseriesCharts(IncompleteNumbers numbers) {
-		if (!numbers.hasData()) {
-			return;
-		}
-		for (int dayOfData = getFirstDayForAnimation(); dayOfData <= stats.getLastDay(); dayOfData++) {
-			buildRTimeseriesChart(numbers, dayOfData);
-		}
-	}
-
-	public void createCumulativeStats() {
-		Smoothing smoothing = new Smoothing(7, Smoothing.Type.AVERAGE, Smoothing.Timing.TRAILING);
-		String format = "Colorado %s, daily numbers\n(" + smoothing.getDescription() + ")";
-		buildCasesTimeseriesChart("cumulative", "cases", stats.getLastDay(),
-				dayOfCases -> stats.getNumbers(NumbersType.CASES).getNumbers(dayOfCases, smoothing), null,
-				String.format(format, "cases"), "count", false, 0, false);
-		buildCasesTimeseriesChart("cumulative", "hospitalizations", stats.getLastDay(),
-				dayOfCases -> stats.getNumbers(NumbersType.HOSPITALIZATIONS).getNumbers(dayOfCases, smoothing), null,
-				String.format(format, "hospitalizations"), "count", false, 0, false);
-		buildCasesTimeseriesChart("cumulative", "deaths", stats.getLastDay(),
-				dayOfCases -> stats.getNumbers(NumbersType.DEATHS).getNumbers(dayOfCases, smoothing), null,
-				String.format(format, "deaths"), "count", false, 0, false);
-		buildCasesTimeseriesChart("cumulative", "deaths (confirmed)", stats.getLastDay(),
-				dayOfCases -> stats.confirmedDeaths.getNumbers(dayOfCases, smoothing), null,
-				String.format(format, "deaths (final)"), "count", false, 0, false);
-		buildCasesTimeseriesChart("cumulative", "people tested", stats.getLastDay(),
-				dayOfCases -> stats.peopleTested.getNumbers(dayOfCases, smoothing), null,
-				String.format(format, "people tested"), "count", false, 0, false);
-		buildCasesTimeseriesChart("cumulative", "tests", stats.getLastDay(),
-				dayOfCases -> stats.getNumbers(NumbersType.TESTS).getNumbers(dayOfCases, smoothing), null,
-				String.format(format, "test encounters"), "count", false, 0, false);
-		buildCasesTimeseriesChart("cumulative", "positivity", stats.getLastDay(),
-				dayOfCases -> stats.getNumbers(NumbersType.CASES).getNumbers(dayOfCases, smoothing)
-						/ stats.getNumbers(NumbersType.TESTS).getNumbers(dayOfCases, smoothing),
-				null, "positivity", "count", false, 0, false);
-	}
-
 	public void buildCharts() {
 		// folders must be at very top
 		new File(Charts.TOP_FOLDER).mkdir();
@@ -196,6 +42,9 @@ public class ChartMaker {
 		ChartCounty county = new ChartCounty(stats);
 		ChartIncompletes incompletes = new ChartIncompletes(stats);
 		Age age = new Age(stats);
+		R R = new R(stats);
+		Finals finals = new Finals(stats);
+		Distribution distribution = new Distribution(stats);
 		Set<NumbersType> fullTypes = NumbersType.getSet();
 		Set<NumbersType> noTests = NumbersType.getSet(NumbersType.CASES, NumbersType.DEATHS,
 				NumbersType.HOSPITALIZATIONS);
@@ -205,7 +54,7 @@ public class ChartMaker {
 		ASync<Void> build = new ASync<>();
 
 		if (false) {
-			build.execute(() -> buildRTimeseriesCharts(stats.getNumbers(NumbersType.CASES, NumbersTiming.INFECTION)));
+			build.execute(() -> R.buildRTimeseriesCharts(stats.getNumbers(NumbersType.CASES, NumbersTiming.INFECTION)));
 			build.execute(() -> ChartRates.buildGIF(stats, "CFR", "Colorado rates by day of infection, ", true, false,
 					false, false));
 			build.execute(() -> incompletes.buildGIF(fullTypes, NumbersTiming.INFECTION, true));
@@ -213,7 +62,7 @@ public class ChartMaker {
 			return;
 		}
 
-		build.execute(() -> createCumulativeStats());
+		build.execute(() -> finals.createCumulativeStats());
 
 		/* These are just ordered from slowest to fastest */
 
@@ -242,9 +91,9 @@ public class ChartMaker {
 				IncompleteNumbers numbers = stats.getNumbers(type, timing);
 				build.execute(() -> incompletes.buildGIF(types, timing, true));
 				build.execute(() -> incompletes.buildGIF(types, timing, false));
-				build.execute(() -> buildNewTimeseriesCharts(numbers));
+				build.execute(() -> distribution.buildDistributions(numbers));
 				if (timing == NumbersTiming.INFECTION) {
-					build.execute(() -> buildRTimeseriesCharts(numbers));
+					build.execute(() -> R.buildRTimeseriesCharts(numbers));
 				}
 				build.execute(() -> age.buildChart(types, timing));
 			}
