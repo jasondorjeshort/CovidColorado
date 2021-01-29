@@ -187,8 +187,8 @@ public class IncompleteNumbers extends Numbers {
 
 		int count = 0;
 		double r = 1.0;
-		int RANGE = 7;
-		for (int d = dayOfType - RANGE + 1; d <= dayOfType + RANGE; d++) {
+		int RANGE = 10;
+		for (int d = dayOfType - RANGE; d <= dayOfType + RANGE; d++) {
 			Double dailyR = daily.bigR.get(d);
 			if (dailyR == null) {
 				return null;
@@ -452,7 +452,11 @@ public class IncompleteNumbers extends Numbers {
 		}
 
 		int SERIAL_INTERVAL = 5;
-		Smoothing smoothing = new Smoothing(SERIAL_INTERVAL, Smoothing.Type.TOTAL, Smoothing.Timing.TRAILING);
+
+		// kinda have to do weekly or we hit day-of-week issues
+		int SMOOTHING_INTERVAL = 7;
+
+		Smoothing smoothing = new Smoothing(SMOOTHING_INTERVAL, Smoothing.Type.TOTAL, Smoothing.Timing.SYMMETRIC);
 		for (int dayOfData = firstDayOfData; dayOfData <= lastDayOfData; dayOfData++) {
 			DayOfData daily = allNumbers.get(dayOfData);
 			if (daily == null) {
