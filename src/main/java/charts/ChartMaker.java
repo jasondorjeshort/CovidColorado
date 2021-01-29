@@ -42,7 +42,7 @@ public class ChartMaker {
 		ChartCounty county = new ChartCounty(stats);
 		ChartIncompletes incompletes = new ChartIncompletes(stats);
 		Age age = new Age(stats);
-		R R = new R(stats);
+		Reproductive R = new Reproductive(stats);
 		Finals finals = new Finals(stats);
 		Distribution distribution = new Distribution(stats);
 		Set<NumbersType> fullTypes = NumbersType.getSet();
@@ -54,7 +54,7 @@ public class ChartMaker {
 		ASync<Void> build = new ASync<>();
 
 		if (false) {
-			build.execute(() -> R.buildRTimeseriesCharts(stats.getNumbers(NumbersType.CASES, NumbersTiming.INFECTION)));
+			build.execute(() -> R.buildReproductiveCharts(noTests));
 			build.execute(() -> ChartRates.buildGIF(stats, "CFR", "Colorado rates by day of infection, ", true, false,
 					false, false));
 			build.execute(() -> incompletes.buildGIF(fullTypes, NumbersTiming.INFECTION, true));
@@ -77,6 +77,11 @@ public class ChartMaker {
 		build.execute(() -> ChartRates.buildGIF(stats, "Positivity", "Colorado positivity by day of infection, ", false,
 				false, false, true));
 
+		build.execute(() -> R.buildReproductiveCharts(noTests));
+		for (NumbersType type : NumbersType.values()) {
+			build.execute(() -> R.buildReproductiveCharts(NumbersType.getSet(type)));
+		}
+
 		for (NumbersTiming timing : NumbersTiming.values()) {
 			build.execute(() -> incompletes.buildGIF(noTests, timing, true));
 			build.execute(() -> incompletes.buildGIF(noTests, timing, false));
@@ -92,9 +97,6 @@ public class ChartMaker {
 				build.execute(() -> incompletes.buildGIF(types, timing, true));
 				build.execute(() -> incompletes.buildGIF(types, timing, false));
 				build.execute(() -> distribution.buildDistributions(numbers));
-				if (timing == NumbersTiming.INFECTION) {
-					build.execute(() -> R.buildRTimeseriesCharts(numbers));
-				}
 				build.execute(() -> age.buildChart(types, timing));
 			}
 		}
