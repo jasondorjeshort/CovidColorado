@@ -115,7 +115,6 @@ public class Distribution {
 		}
 
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), folder + "\\" + fileName + ".png");
-		BufferedImage image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT);
 		c.saveAsPNG();
 		if (dayOfData == stats.getLastDay()) {
 			// c.open();
