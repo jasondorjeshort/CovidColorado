@@ -187,7 +187,7 @@ public class IncompleteNumbers extends Numbers {
 
 		int count = 0;
 		double r = 1.0;
-		int RANGE = 10;
+		int RANGE = 5;
 		for (int d = dayOfType - RANGE; d <= dayOfType + RANGE; d++) {
 			Double dailyR = daily.bigR.get(d);
 			if (dailyR == null) {
