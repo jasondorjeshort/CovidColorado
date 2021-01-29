@@ -12,7 +12,6 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
 import library.ASync;
-import library.MyExecutor;
 
 /**
  * This program is free software: you can redistribute it and/or modify it under
@@ -514,18 +513,18 @@ public class ColoradoStats {
 		 * structure.
 		 */
 		int currentDay = CalendarUtils.timeToDay(System.currentTimeMillis()) + 1;
-		ASync<Void> csvAsync = new ASync<>();
+		ASync<Void> async = new ASync<>();
 		for (int dayOfData = firstCSV; dayOfData <= currentDay; dayOfData++) {
 			int _dayOfData = dayOfData;
-			csvAsync.execute(() -> readCSV(_dayOfData));
+			async.execute(() -> readCSV(_dayOfData));
 		}
-		csvAsync.complete();
+		async.complete();
 
 		long time = System.nanoTime();
 
 		// final tests must be built before incomplete tests can be determined
-		MyExecutor.executeCode(() -> counties.forEach((name, county) -> county.build()));
-		MyExecutor.executeCode(() -> confirmedDeaths.smooth());
+		async.execute(() -> counties.forEach((name, county) -> county.build()));
+		async.execute(() -> confirmedDeaths.smooth());
 		peopleTested.smooth();
 		for (FinalNumbers finals : finalNumbers) {
 			finals.smooth();
@@ -602,7 +601,7 @@ public class ColoradoStats {
 		}
 
 		for (IncompleteNumbers incompletes : incompleteNumbers) {
-			MyExecutor.executeCode(() -> incompletes.build());
+			async.execute(() -> incompletes.build());
 		}
 
 		if (false) {
@@ -617,6 +616,7 @@ public class ColoradoStats {
 		if (true) {
 			outputDailyStats();
 		}
+		async.complete();
 	}
 
 }
