@@ -1,5 +1,6 @@
 package charts;
 
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Set;
@@ -9,6 +10,7 @@ import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.LogarithmicAxis;
+import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.time.Day;
@@ -56,6 +58,8 @@ public class Reproductive {
 	private static final NumbersTiming TIMING = NumbersTiming.INFECTION;
 	private static final boolean SHOW_EVENTS = false;
 
+	private static final int FIRST_DAY = CalendarUtils.dateToDay("2-14-2020");
+
 	private Chart buildReproductiveChart(Set<NumbersType> types, int dayOfData) {
 
 		TimeSeriesCollection collection = new TimeSeriesCollection();
@@ -72,7 +76,7 @@ public class Reproductive {
 
 			TimeSeries series = new TimeSeries("Based on " + type.capName);
 
-			for (int dayOfType = numbers.getFirstDayOfType(); dayOfType <= dayOfData; dayOfType++) {
+			for (int dayOfType = FIRST_DAY; dayOfType <= dayOfData; dayOfType++) {
 				Day ddd = CalendarUtils.dayToDay(dayOfType);
 				if (ddd == null) {
 					new Exception("Uh oh: " + dayOfType).printStackTrace();
@@ -96,23 +100,13 @@ public class Reproductive {
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title, "Date", "R(t)", collection);
 
 		XYPlot plot = chart.getXYPlot();
-		/*
-		 * LogarithmicAxis yAxis = new LogarithmicAxis(verticalAxis);
-		 * yAxis.setLowerBound(1); yAxis.setUpperBound(100000);
-		 * plot.setRangeAxis(yAxis);
-		 * 
-		 * DateAxis xAxis = new DateAxis("Date");
-		 * 
-		 * xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(stats.
-		 * getVeryFirstDay()));
-		 * xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(stats.getLastDay() +
-		 * 14));
-		 * 
-		 * plot.setDomainAxis(xAxis);
-		 * 
-		 * ValueMarker marker = Charts.getTodayMarker(dayOfData);
-		 * plot.addDomainMarker(marker);
-		 */
+		ValueAxis yAxis = plot.getRangeAxis();
+		yAxis.setLowerBound(0);
+		yAxis.setUpperBound(4);
+
+		ValueMarker marker = new ValueMarker(1.0);
+		marker.setPaint(Color.black);
+		plot.addRangeMarker(marker);
 
 		if (SHOW_EVENTS) {
 			Event.addEvents(plot);
