@@ -122,8 +122,8 @@ public class Distribution {
 		return c;
 	}
 
-	private int getFirstDayForAnimation() {
-		return Math.max(Charts.getFirstDayForCharts(stats), stats.getVeryFirstDay());
+	private int getFirstDayForAnimation(IncompleteNumbers numbers) {
+		return Math.max(Charts.getFirstDayForCharts(stats), numbers.getFirstDayOfType());
 	}
 
 	public Chart buildDistributions(IncompleteNumbers numbers, int dayOfData) {
@@ -139,7 +139,7 @@ public class Distribution {
 		if (!numbers.hasData()) {
 			return;
 		}
-		for (int dayOfData = getFirstDayForAnimation(); dayOfData <= stats.getLastDay(); dayOfData++) {
+		for (int dayOfData = getFirstDayForAnimation(numbers); dayOfData <= stats.getLastDay(); dayOfData++) {
 			buildDistributions(numbers, dayOfData);
 		}
 	}
