@@ -56,7 +56,7 @@ public class Reproductive {
 	}
 
 	private static final NumbersTiming TIMING = NumbersTiming.INFECTION;
-	private static final boolean SHOW_EVENTS = false;
+	private static final boolean SHOW_EVENTS = true;
 
 	private static final int FIRST_DAY = CalendarUtils.dateToDay("2-14-2020");
 
