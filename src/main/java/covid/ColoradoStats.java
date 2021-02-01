@@ -610,13 +610,13 @@ public class ColoradoStats {
 			System.exit(0);
 		}
 
-		if (false) {
-			outputProjections(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION);
-		}
 		if (true) {
 			outputDailyStats();
 		}
 		async.complete();
+		if (false) {
+			outputProjections(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION);
+		}
 	}
 
 }
