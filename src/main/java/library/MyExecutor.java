@@ -74,7 +74,11 @@ public class MyExecutor {
 		return codePool.submit(new Callable<T>() {
 			@Override
 			public T call() {
-				task.run();
+				try {
+					task.run();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 				return null;
 			}
 
