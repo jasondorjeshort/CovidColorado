@@ -86,12 +86,17 @@ public class ASync<V> {
 			return null;
 		}
 
+		V value;
 		try {
-			return future.get();
+			value = future.get();
 		} catch (Exception e) {
 			e.printStackTrace();
+			return null;
 		}
-		return null;
+		if (value == null) {
+			return get();
+		}
+		return value;
 	}
 
 }
