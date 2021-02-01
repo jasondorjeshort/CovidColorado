@@ -32,7 +32,7 @@ public class Main {
 		long time = System.currentTimeMillis();
 		ColoradoStats stats = new ColoradoStats();
 
-		System.out.println("Read stats in " + (System.currentTimeMillis() - time) + " ms.");
+		System.out.println("Read stats in " + (System.currentTimeMillis() - time) / 1000.0 + " s.");
 
 		ChartMaker charts = new ChartMaker(stats);
 		charts.buildCharts();
@@ -49,6 +49,6 @@ public class Main {
 			MyExecutor.awaitTermination(1, TimeUnit.DAYS);
 		}
 
-		System.out.println("Exiting in " + (System.currentTimeMillis() - time) + " ms.");
+		System.out.println("Exiting in " + (System.currentTimeMillis() - time) / 1000.0 + " s.");
 	}
 }
