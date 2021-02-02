@@ -56,18 +56,18 @@ public class ChartRates {
 	}
 
 	private static Chart buildRates(ColoradoStats stats, int dayOfData, String fileName, String title, boolean useCFR,
-			boolean useCHR, boolean useHFR, boolean usePositivity, Integer age, Integer fixedHeight) {
+			boolean useCHR, boolean useHFR, boolean usePositivity, Integer fixedHeight) {
 
 		Smoothing smoothing = new Smoothing(13, Smoothing.Type.AVERAGE, Smoothing.Timing.TRAILING);
 
 		TimeSeries cfrUpper = new TimeSeries("CFR (deaths / cases) upper bound");
-		TimeSeries cfrLower = new TimeSeries("CFR (projected) lower bound");
-		TimeSeries chrUpper = new TimeSeries("CHR (hospitalizations / cases)");
-		TimeSeries chrLower = new TimeSeries("CHR (projected)");
-		TimeSeries hfrUpper = new TimeSeries("HFR (deaths / hospitalizations)");
-		TimeSeries hfrLower = new TimeSeries("HFR (projected)");
-		TimeSeries posUpper = new TimeSeries("Positivity");
-		TimeSeries posLower = new TimeSeries("Positivity (projected)");
+		TimeSeries cfrLower = new TimeSeries("CFR lower bound");
+		TimeSeries chrUpper = new TimeSeries("CHR (hospitalizations / cases) upper bound");
+		TimeSeries chrLower = new TimeSeries("CHR lower bound");
+		TimeSeries hfrUpper = new TimeSeries("HFR (deaths / hospitalizations) upper bound");
+		TimeSeries hfrLower = new TimeSeries("HFR lower bound");
+		TimeSeries posUpper = new TimeSeries("Positivity (cases / tests) upper bound");
+		TimeSeries posLower = new TimeSeries("Positivity lower bound");
 
 		IncompleteNumbers tNumbers = stats.getNumbers(NumbersType.TESTS, timing);
 		IncompleteNumbers cNumbers = stats.getNumbers(NumbersType.CASES, timing);
@@ -208,7 +208,7 @@ public class ChartRates {
 			}
 
 			Chart c = buildRates(stats, dayOfData, prefix + "-" + full, title + day, useCFR, useCHR, useHFR,
-					usePositivity, null, fixedHeight);
+					usePositivity, fixedHeight);
 			Charts.setDelay(stats, dayOfData, gif);
 			gif.addFrame(c.getImage());
 		}
