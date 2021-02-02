@@ -74,7 +74,8 @@ public class Reproductive {
 				throw new RuntimeException("UH OH");
 			}
 
-			TimeSeries series = new TimeSeries("Based on " + type.capName);
+			TimeSeries upper = new TimeSeries("Based on " + type.capName + " upper bound");
+			TimeSeries lower = new TimeSeries("Based on " + type.capName + " lower bound");
 
 			for (int dayOfType = FIRST_DAY; dayOfType <= dayOfData; dayOfType++) {
 				Day ddd = CalendarUtils.dayToDay(dayOfType);
@@ -83,14 +84,18 @@ public class Reproductive {
 					continue;
 				}
 
-				Double R = numbers.getBigR(dayOfData, dayOfType);
-				if (R == null || !Double.isFinite(R)) {
+				Double upperBound = numbers.getBigR(dayOfData, dayOfType, true);
+				Double lowerBound = numbers.getBigR(dayOfData, dayOfType, false);
+				if (upperBound == null || !Double.isFinite(upperBound) || lowerBound == null
+						|| !Double.isFinite(lowerBound)) {
 					continue;
 				}
 
-				series.add(ddd, R);
+				upper.add(ddd, upperBound);
+				lower.add(ddd, lowerBound);
 			}
-			collection.addSeries(series);
+			collection.addSeries(upper);
+			collection.addSeries(lower);
 		}
 
 		// dataset.addSeries("Cases", series);

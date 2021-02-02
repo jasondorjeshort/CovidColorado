@@ -60,113 +60,71 @@ public class ChartRates {
 
 		Smoothing smoothing = new Smoothing(13, Smoothing.Type.AVERAGE, Smoothing.Timing.TRAILING);
 
-		TimeSeries cfr = new TimeSeries("CFR (deaths / cases)");
-		TimeSeries cfrProjected = new TimeSeries("CFR (projected)");
-		TimeSeries chr = new TimeSeries("CHR (hospitalizations / cases)");
-		TimeSeries chrProjected = new TimeSeries("CHR (projected)");
-		TimeSeries hfr = new TimeSeries("HFR (deaths / hospitalizations)");
-		TimeSeries hfrProjected = new TimeSeries("HFR (projected)");
-		TimeSeries pos = new TimeSeries("Positivity");
-		TimeSeries posProjected = new TimeSeries("Positivity (projected)");
+		TimeSeries cfrUpper = new TimeSeries("CFR (deaths / cases) upper bound");
+		TimeSeries cfrLower = new TimeSeries("CFR (projected) lower bound");
+		TimeSeries chrUpper = new TimeSeries("CHR (hospitalizations / cases)");
+		TimeSeries chrLower = new TimeSeries("CHR (projected)");
+		TimeSeries hfrUpper = new TimeSeries("HFR (deaths / hospitalizations)");
+		TimeSeries hfrLower = new TimeSeries("HFR (projected)");
+		TimeSeries posUpper = new TimeSeries("Positivity");
+		TimeSeries posLower = new TimeSeries("Positivity (projected)");
 
 		IncompleteNumbers tNumbers = stats.getNumbers(NumbersType.TESTS, timing);
 		IncompleteNumbers cNumbers = stats.getNumbers(NumbersType.CASES, timing);
 		IncompleteNumbers hNumbers = stats.getNumbers(NumbersType.HOSPITALIZATIONS, timing);
 		IncompleteNumbers dNumbers = stats.getNumbers(NumbersType.DEATHS, timing);
 
-		int incomplete = dayOfData + 1;
 		int firstDayOfChart = stats.getVeryFirstDay();
 
 		for (int dayOfInfection = firstDayOfChart; dayOfInfection <= dayOfData; dayOfInfection++) {
-			double tests = tNumbers.getNumbers(dayOfData, dayOfInfection, false, smoothing);
-			double testsProjected = tNumbers.getNumbers(dayOfData, dayOfInfection, true, smoothing);
-			double testsRatio = Charts.ratio(tests, testsProjected);
+			double testsUpper = tNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.UPPER, smoothing);
+			double testsLower = tNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.LOWER, smoothing);
 
-			double cases = cNumbers.getNumbers(dayOfData, dayOfInfection, false, smoothing);
-			double casesProjected = cNumbers.getNumbers(dayOfData, dayOfInfection, true, smoothing);
-			double casesRatio = Charts.ratio(cases, casesProjected);
+			double casesUpper = cNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.UPPER, smoothing);
+			double casesLower = cNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.LOWER, smoothing);
 
-			double hosp = hNumbers.getNumbers(dayOfData, dayOfInfection, false, smoothing);
-			double hospProjected = hNumbers.getNumbers(dayOfData, dayOfInfection, true, smoothing);
-			double hospRatio = Charts.ratio(hosp, hospProjected);
+			double hospUpper = hNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.UPPER, smoothing);
+			double hospLower = hNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.LOWER, smoothing);
 
-			double deaths = dNumbers.getNumbers(dayOfData, dayOfInfection, false, smoothing);
-			double deathsProjected = dNumbers.getNumbers(dayOfData, dayOfInfection, true, smoothing);
-			double deathsRatio = Charts.ratio(deaths, deathsProjected);
-
-			if (!Double.isFinite(cases) || cases == 0) {
-				continue;
-			}
+			double deathUpper = dNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.UPPER, smoothing);
+			double deathLower = dNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.LOWER, smoothing);
 
 			Day ddd = CalendarUtils.dayToDay(dayOfInfection);
 
-			if (Double.isFinite(cases) && cases > 0) {
-				cfr.add(ddd, 100.0 * deaths / cases);
-			}
-			if (Double.isFinite(casesProjected) && casesProjected > 0) {
-				cfrProjected.add(ddd, 100.0 * deathsProjected / casesProjected);
+			if (Double.isFinite(casesUpper) && casesUpper > 0) {
+				cfrUpper.add(ddd, 100.0 * deathUpper / casesLower);
+				cfrLower.add(ddd, 100.0 * deathLower / casesUpper);
 
-				if (useCFR && casesRatio * hospRatio > incompleteCutoff) {
-					incomplete = Math.min(incomplete, dayOfInfection);
-				}
+				chrUpper.add(ddd, 100.0 * hospUpper / casesLower);
+				chrLower.add(ddd, 100.0 * hospLower / casesUpper);
 			}
-			if (Double.isFinite(cases) && cases > 0) {
-				chr.add(ddd, 100.0 * hosp / cases);
-			}
-			if (Double.isFinite(casesProjected) && casesProjected > 0) {
-				chrProjected.add(ddd, 100.0 * hospProjected / casesProjected);
-
-				if (useCHR && hospRatio * casesRatio > incompleteCutoff) {
-					incomplete = Math.min(incomplete, dayOfInfection);
-				}
-			}
-			if (Double.isFinite(hosp) && hosp > 0) {
-				hfr.add(ddd, 100.0 * deaths / hosp);
-			}
-			if (Double.isFinite(hospProjected) && hospProjected > 0) {
-				hfrProjected.add(ddd, 100.0 * deathsProjected / hospProjected);
-
-				if (useHFR && deathsRatio * hospRatio > incompleteCutoff) {
-					incomplete = Math.min(incomplete, dayOfInfection);
-				}
+			if (Double.isFinite(hospUpper) && hospUpper > 0) {
+				hfrUpper.add(ddd, 100.0 * deathUpper / hospLower);
+				hfrLower.add(ddd, 100.0 * deathLower / hospUpper);
 			}
 
-			if (Double.isFinite(tests) && tests > 0) {
-				pos.add(ddd, 100.0 * cases / tests);
-			}
-			if (Double.isFinite(testsProjected) && testsProjected > 0) {
-				posProjected.add(ddd, 100.0 * casesProjected / testsProjected);
-
-				if (usePositivity && casesRatio * testsRatio > incompleteCutoff) {
-					incomplete = Math.min(incomplete, dayOfInfection);
-				}
+			if (Double.isFinite(testsUpper) && testsUpper > 0) {
+				posUpper.add(ddd, 100.0 * casesUpper / testsLower);
+				posLower.add(ddd, 100.0 * casesLower / testsUpper);
 			}
 		}
 
 		TimeSeriesCollection collection = new TimeSeriesCollection();
 		if (useCFR) {
-			collection.addSeries(cfr);
-			if (!usePositivity) {
-				collection.addSeries(cfrProjected);
-			}
+			collection.addSeries(cfrUpper);
+			collection.addSeries(cfrLower);
 		}
 		if (useHFR) {
-			collection.addSeries(hfr);
-			if (!usePositivity) {
-				collection.addSeries(hfrProjected);
-			}
+			collection.addSeries(hfrUpper);
+			collection.addSeries(hfrLower);
 		}
 		if (useCHR) {
-			collection.addSeries(chr);
-			if (!usePositivity) {
-				collection.addSeries(chrProjected);
-			}
+			collection.addSeries(chrUpper);
+			collection.addSeries(chrLower);
 		}
 		if (usePositivity) {
-			collection.addSeries(pos);
-			if (!useCFR) {
-				collection.addSeries(posProjected);
-			}
+			collection.addSeries(posUpper);
+			collection.addSeries(posLower);
 		}
 
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title + "\n(" + smoothing.getDescription() + ")",
@@ -175,9 +133,6 @@ public class ChartRates {
 		// chart.getXYPlot().setRangeAxis(new LogarithmicAxis("Cases"));
 
 		XYPlot plot = chart.getXYPlot();
-		if (incomplete < Integer.MAX_VALUE) {
-			plot.addDomainMarker(Charts.getIncompleteMarker(incomplete));
-		}
 
 		if (fixedHeight != null) {
 			DateAxis xAxis = new DateAxis("Date");

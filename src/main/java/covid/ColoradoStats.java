@@ -213,8 +213,10 @@ public class ColoradoStats {
 			// IncompleteNumbers numbers = getNumbers(type, timing);
 
 			double c = getNumbers(type, timing).getProjectedNumbers(dayOfData, dayOfType);
-			double week = getNumbers(type, timing).getNumbers(dayOfData, dayOfType, true, 7);
-			double lastWeek = getNumbers(type, timing).getNumbers(dayOfData, dayOfType - DAYS, true, 7);
+			double week = getNumbers(type, timing).getNumbers(dayOfData, dayOfType, IncompleteNumbers.Form.PROJECTED,
+					7);
+			double lastWeek = getNumbers(type, timing).getNumbers(dayOfData, dayOfType - DAYS,
+					IncompleteNumbers.Form.PROJECTED, 7);
 			double growth = 100 * Math.pow(week / lastWeek, 1.0 / DAYS) - 100;
 			System.out.println(type.capName + "," + timing.capName + "," + CalendarUtils.dayToDate(dayOfType) + " => "
 					+ dayOfType + " => " + c + " => " + week + " => " + growth + "%");

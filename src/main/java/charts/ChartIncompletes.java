@@ -51,7 +51,6 @@ public class ChartIncompletes {
 	public Chart buildChart(String folder, String fileName, int dayOfData, Set<NumbersType> types, NumbersTiming timing,
 			boolean logarithmic) {
 		TimeSeriesCollection collection = new TimeSeriesCollection();
-		int incomplete = dayOfData + 1;
 		String verticalAxis = null;
 		StringBuilder title = new StringBuilder();
 		double highest = 1;
@@ -101,9 +100,8 @@ public class ChartIncompletes {
 			} else {
 				desc = type.capName;
 			}
-			TimeSeries series = new TimeSeries(desc);
-			TimeSeries pSeries = new TimeSeries(type.capName + " (projected)");
-			TimeSeries exact = new TimeSeries("Exact");
+			TimeSeries lower = new TimeSeries(type.capName + " (lower bound)");
+			TimeSeries upper = new TimeSeries(type.capName + " (upper bound)");
 
 			firstDayOfChart = Math.min(firstDayOfChart, numbers.getFirstDayOfType());
 			for (int d = numbers.getFirstDayOfType(); d <= dayOfData; d++) {
@@ -114,37 +112,21 @@ public class ChartIncompletes {
 					continue;
 				}
 
-				double cases = numbers.getNumbers(dayOfData, d, false, type.smoothing);
-				if (!logarithmic || cases > 0) {
-					series.add(ddd, cases);
-					highest = Math.max(highest, cases);
+				double lowerBound = numbers.getNumbers(dayOfData, d, IncompleteNumbers.Form.LOWER, type.smoothing);
+				if (!logarithmic || lowerBound > 0) {
+					lower.add(ddd, lowerBound);
+					highest = Math.max(highest, lowerBound);
 				}
 
-				if (useExact) {
-					double exactNumbers = numbers.getNumbers(dayOfData, d, false, Smoothing.NONE);
-					if (!logarithmic || cases > 0) {
-						exact.add(ddd, exactNumbers);
-						highest = Math.max(highest, exactNumbers);
-					}
-				}
-
-				double projected = numbers.getNumbers(dayOfData, d, true, type.smoothing);
-				if (useProjections && (!logarithmic || projected > 0)) {
-					pSeries.add(ddd, projected);
-					highest = Math.max(highest, projected);
-				}
-				if (cases > 0 && Charts.ratio(projected, cases) > incompleteCutoff) {
-					incomplete = Math.min(incomplete, d);
+				double upperBound = numbers.getNumbers(dayOfData, d, IncompleteNumbers.Form.UPPER, type.smoothing);
+				if (!logarithmic || upperBound > 0) {
+					upper.add(ddd, upperBound);
+					highest = Math.max(highest, upperBound);
 				}
 			}
 
-			collection.addSeries(series);
-			if (useProjections) {
-				collection.addSeries(pSeries);
-			}
-			if (useExact) {
-				collection.addSeries(exact);
-			}
+			collection.addSeries(lower);
+			collection.addSeries(upper);
 
 			if (verticalAxis == null) {
 				verticalAxis = type.capName;
@@ -180,10 +162,6 @@ public class ChartIncompletes {
 
 		if (timing == NumbersTiming.INFECTION) {
 			Event.addEvents(plot);
-		}
-
-		if (incomplete >= stats.getFirstDayOfTiming(timing) && incomplete <= stats.getLastDay()) {
-			plot.addDomainMarker(Charts.getIncompleteMarker(incomplete));
 		}
 
 		if (fileName == null) {

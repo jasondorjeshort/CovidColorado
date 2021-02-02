@@ -2,6 +2,7 @@ package covid;
 
 import java.util.HashMap;
 
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.jfree.data.time.TimeSeries;
 
 /**
@@ -46,7 +47,10 @@ public class IncompleteNumbers extends Numbers {
 		protected final HashMap<Integer, Double> cumulativeNumbers = new HashMap<>();
 		protected final HashMap<Integer, Double> projected = new HashMap<>();
 		protected final HashMap<Integer, Double> cumulativeProjected = new HashMap<>();
-		protected final HashMap<Integer, Double> bigR = new HashMap<>();
+		protected final HashMap<Integer, Double> upper = new HashMap<>();
+		protected final HashMap<Integer, Double> lower = new HashMap<>();
+		protected final HashMap<Integer, Double> lowerR = new HashMap<>();
+		protected final HashMap<Integer, Double> upperR = new HashMap<>();
 		protected final HashMap<Integer, Incomplete> ratios = new HashMap<>();
 
 		protected double getNumbers(int day, boolean isProjected) {
@@ -55,6 +59,13 @@ public class IncompleteNumbers extends Numbers {
 			}
 			return numbers.get(day);
 		}
+	}
+
+	public static enum Form {
+		CURRENT_NUMBERS,
+		PROJECTED,
+		LOWER,
+		UPPER,
 	}
 
 	private final HashMap<Integer, DayOfData> allNumbers = new HashMap<>();
@@ -70,34 +81,35 @@ public class IncompleteNumbers extends Numbers {
 		return timing;
 	}
 
-	private static final boolean USE_AVERAGES_FOR_PROJECTIONS = false;
+	public synchronized double getNumbers(int dayOfData, int dayOfType, Form form) {
+		DayOfData daily = allNumbers.get(dayOfData);
 
-	public synchronized double getNumbers(int dayOfData, int dayOfType, boolean projected) {
-		if (projected) {
-			if (USE_AVERAGES_FOR_PROJECTIONS) {
-				/*
-				 * This is something I played around with to counter the
-				 * day-of-week issues with the rolling average system. But while
-				 * it does negate that, it also decreases accuracy by averaging
-				 * in older data.
-				 */
-				int days = 0;
-				double total = 0;
-				for (int _dayOfData = dayOfData - 6; _dayOfData <= dayOfData; _dayOfData++) {
-					double daily = getProjectedNumbers(_dayOfData, dayOfType);
-					if (daily != 0) {
-						total += daily;
-						days++;
-					}
-				}
-				if (days == 0) {
-					return 0;
-				}
-				return total / days;
-			}
-			return getProjectedNumbers(dayOfData, dayOfType);
+		if (daily == null) {
+			return 0;
 		}
-		return getNumbers(dayOfData, dayOfType);
+
+		Double value;
+
+		switch (form) {
+		case CURRENT_NUMBERS:
+			value = daily.numbers.get(dayOfType);
+			break;
+		case LOWER:
+			value = daily.lower.get(dayOfType);
+			break;
+		case PROJECTED:
+			value = daily.projected.get(dayOfType);
+			break;
+		case UPPER:
+			value = daily.upper.get(dayOfType);
+			break;
+		default:
+			throw new RuntimeException("Unknown form " + form);
+		}
+		if (value == null) {
+			return 0;
+		}
+		return value;
 	}
 
 	public synchronized int getFirstDayOfType() {
@@ -120,9 +132,6 @@ public class IncompleteNumbers extends Numbers {
 			dayOfType = dayOfData;
 		}
 		DayOfData daily = allNumbers.get(dayOfData);
-		String dateOfData = CalendarUtils.dayToDate(dayOfData);
-		String dateOfType = CalendarUtils.dayToDate(dayOfType);
-		Double value;
 		if (daily == null) {
 			return 0;
 		}
@@ -132,8 +141,7 @@ public class IncompleteNumbers extends Numbers {
 		return daily.cumulativeNumbers.get(dayOfType);
 	}
 
-	public synchronized double getNumbers(int dayOfData, int dayOfType, boolean projected, Smoothing smoothing) {
-
+	public synchronized double getNumbers(int dayOfData, int dayOfType, Form form, Smoothing smoothing) {
 		int lastDayOfCalc;
 
 		switch (smoothing.getTiming()) {
@@ -149,11 +157,20 @@ public class IncompleteNumbers extends Numbers {
 
 		switch (smoothing.getType()) {
 		case CUMULATIVE:
-			return getCumulativeNumbers(dayOfData, dayOfType, projected);
+			if (form == Form.PROJECTED) {
+				return getCumulativeNumbers(dayOfData, dayOfType, true);
+			} else if (form == Form.CURRENT_NUMBERS) {
+				return getCumulativeNumbers(dayOfData, dayOfType, false);
+			} else {
+				throw new RuntimeException("Cannot count cumulative for " + form);
+			}
 		case AVERAGE:
 		case TOTAL:
-			double sum = getCumulativeNumbers(dayOfData, lastDayOfCalc, projected)
-					- getCumulativeNumbers(dayOfData, lastDayOfCalc - smoothing.getDays(), projected);
+			double sum = 0;
+			for (int d = lastDayOfCalc - smoothing.getDays() + 1; d <= lastDayOfCalc; d++) {
+				sum += getNumbers(dayOfData, d, form);
+			}
+
 			if (smoothing.getType() == Smoothing.Type.AVERAGE) {
 				sum /= smoothing.getDays();
 			}
@@ -162,7 +179,7 @@ public class IncompleteNumbers extends Numbers {
 			double product = 1.0;
 			for (int d = lastDayOfCalc - smoothing.getDays() + 1; d <= lastDayOfCalc; d++) {
 				// unsolvable issue with negative tests here. Analytics...
-				product *= Math.max(getNumbers(dayOfData, d, projected), 0.0);
+				product *= Math.max(getNumbers(dayOfData, d, form), 0.0);
 			}
 			product = Math.pow(product, 1.0 / smoothing.getDays());
 			if (!Double.isFinite(product)) {
@@ -175,7 +192,7 @@ public class IncompleteNumbers extends Numbers {
 		throw new RuntimeException("FAIL");
 	}
 
-	public synchronized Double getBigR(int dayOfData, int dayOfType) {
+	public synchronized Double getBigR(int dayOfData, int dayOfType, boolean upper) {
 		if (dayOfType < firstDayOfType || dayOfType > dayOfData) {
 			return null;
 		}
@@ -189,7 +206,7 @@ public class IncompleteNumbers extends Numbers {
 		double r = 1.0;
 		int RANGE = 5;
 		for (int d = dayOfType - RANGE; d <= dayOfType + RANGE; d++) {
-			Double dailyR = daily.bigR.get(d);
+			Double dailyR = upper ? daily.upperR.get(d) : daily.lowerR.get(d);
 			if (dailyR == null) {
 				return null;
 			}
@@ -200,10 +217,10 @@ public class IncompleteNumbers extends Numbers {
 		return Math.pow(r, 1.0 / count);
 	}
 
-	public synchronized double getNumbers(int dayOfData, int dayOfType, boolean projected, int interval) {
+	public synchronized double getNumbers(int dayOfData, int dayOfType, Form form, int interval) {
 		double numbers = 0;
 		for (int d = 0; d < interval; d++) {
-			numbers += getNumbers(dayOfData, dayOfType - d, projected);
+			numbers += getNumbers(dayOfData, dayOfType - d, form);
 		}
 		return numbers;
 	}
@@ -451,12 +468,87 @@ public class IncompleteNumbers extends Numbers {
 			}
 		}
 
+		int IDEAL_SAMPLES = 30;
+		for (int dayOfData = firstDayOfData; dayOfData <= lastDayOfData; dayOfData++) {
+			DayOfData daily = allNumbers.get(dayOfData);
+			if (daily == null) {
+				continue;
+			}
+			for (int delay = 0; delay <= dayOfData - firstDayOfType; delay++) {
+
+				DescriptiveStatistics stats = new DescriptiveStatistics();
+				Double base = daily.numbers.get(dayOfData - delay);
+				if (base == null) {
+					continue;
+				}
+
+				// minus 1 : cannot use this day of data to create this day of
+				// data
+				for (int dayOfType = firstDayOfData - delay + IDEAL_SAMPLES; dayOfType < lastDayOfData
+						- delay; dayOfType++) {
+					double start = getNumbers(dayOfType + delay, dayOfType);
+					double end = getProjectedNumbers(dayOfData, dayOfType);
+
+					if (start <= 0 || end <= 0) {
+						continue;
+					}
+
+					double scale = end / start;
+
+					stats.addValue(scale);
+				}
+
+				double percentile;
+
+				switch (getType()) {
+				case CASES:
+					percentile = 10;
+					break;
+				case DEATHS:
+					percentile = 30;
+					break;
+				case HOSPITALIZATIONS:
+					percentile = 20;
+					break;
+				case TESTS:
+					percentile = 10;
+					break;
+				default:
+					break;
+				}
+
+				double lowerBound = stats.getPercentile(10);
+				double upperBound = stats.getPercentile(90);
+				int dayOfType = dayOfData - delay;
+
+				if (stats.getN() >= IDEAL_SAMPLES) {
+					daily.upper.put(dayOfType, base * upperBound);
+					daily.lower.put(dayOfType, base * lowerBound);
+				} else {
+					if (delay < 30) {
+						// leave empty
+					} else {
+						// assume no change
+						base = daily.projected.get(dayOfType);
+						daily.upper.put(dayOfType, base);
+						daily.lower.put(dayOfType, base);
+					}
+				}
+
+				if (dayOfData == lastDayOfData && getType() == NumbersType.DEATHS
+						&& getTiming() == NumbersTiming.INFECTION) {
+					System.out.println("Range out of " + stats.getN() + " at delay=" + delay + " = " + lowerBound
+							+ " to " + upperBound + "; max " + stats.getMax());
+					// System.out.println("weighted average: " +
+				}
+			}
+		}
+
 		int SERIAL_INTERVAL = 5;
-
 		// kinda have to do weekly or we hit day-of-week issues
-		int SMOOTHING_INTERVAL = 7;
+		int R_SMOOTHING_INTERVAL = 7;
 
-		Smoothing smoothing = new Smoothing(SMOOTHING_INTERVAL, Smoothing.Type.TOTAL, Smoothing.Timing.SYMMETRIC);
+		Smoothing smoothing = new Smoothing(R_SMOOTHING_INTERVAL, Smoothing.Type.AVERAGE, Smoothing.Timing.SYMMETRIC);
 		for (int dayOfData = firstDayOfData; dayOfData <= lastDayOfData; dayOfData++) {
 			DayOfData daily = allNumbers.get(dayOfData);
 			if (daily == null) {
@@ -464,12 +556,17 @@ public class IncompleteNumbers extends Numbers {
 			}
 
 			for (int dayOfType = firstDayOfType; dayOfType <= dayOfData - SERIAL_INTERVAL; dayOfType++) {
-				double end = getNumbers(dayOfData, dayOfType, true, smoothing);
-				double start = getNumbers(dayOfData, dayOfType - SERIAL_INTERVAL, true, smoothing);
-				if (start != 0 && end != 0) {
-					daily.bigR.put(dayOfType, end / start);
+				double upperEnd = getNumbers(dayOfData, dayOfType, Form.UPPER, smoothing);
+				double upperStart = getNumbers(dayOfData, dayOfType - SERIAL_INTERVAL, Form.UPPER, smoothing);
+				if (upperEnd != 0 && upperStart != 0) {
+					daily.upperR.put(dayOfType, upperEnd / upperStart);
 				}
 
+				double lowerEnd = getNumbers(dayOfData, dayOfType, Form.LOWER, smoothing);
+				double lowerStart = getNumbers(dayOfData, dayOfType - SERIAL_INTERVAL, Form.LOWER, smoothing);
+				if (lowerEnd != 0 && lowerStart != 0) {
+					daily.lowerR.put(dayOfType, lowerEnd / lowerStart);
+				}
 			}
 
 		}
@@ -516,7 +613,13 @@ public class IncompleteNumbers extends Numbers {
 		if (daily.numbers.get(dayOfType) != null && numbers == daily.numbers.get(dayOfType)) {
 			return; // avoid unnecessary first/last days
 		}
-		daily.numbers.put(dayOfType, numbers);
+		if (false && getTiming() == NumbersTiming.INFECTION) {
+			daily.numbers.put(dayOfType, numbers / 2);
+			daily.numbers.put(dayOfType + 1, numbers / 4);
+			daily.numbers.put(dayOfType - 1, numbers / 4);
+		} else {
+			daily.numbers.put(dayOfType, numbers);
+		}
 
 		firstDayOfData = Math.min(firstDayOfData, dayOfData);
 		lastDayOfData = Math.max(lastDayOfData, dayOfData);
