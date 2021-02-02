@@ -346,7 +346,7 @@ public class ColoradoStats {
 						|| line.get(0).equals("Cases of COVID-19 in Colorado by Date of Illness Onset")) {
 					if (line.get(2).equals("Cases")) {
 						int dayOfOnset = CalendarUtils.dateToDay(line.get(1));
-						int dayOfInfection = Math.max(dayOfOnset - 5, 1); // TODO
+						int dayOfInfection = dayOfOnset - 5;
 						int c = Integer.valueOf(line.get(3));
 
 						setFirstDayOfTiming(NumbersTiming.ONSET, dayOfOnset);
