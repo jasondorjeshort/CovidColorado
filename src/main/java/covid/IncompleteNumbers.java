@@ -240,12 +240,12 @@ public class IncompleteNumbers extends Numbers {
 		return i;
 	}
 
-	private Incomplete getIncompletion(int dayOfType, int delay) {
-		if (dayOfType < firstDayOfType || dayOfType > lastDayOfData) {
-			throw new RuntimeException("Uh oh: " + CalendarUtils.dayToDate(dayOfType) + " is not between "
-					+ CalendarUtils.dayToDate(firstDayOfType) + " and " + CalendarUtils.dayToDate(lastDayOfData));
+	private Incomplete getIncompletion(int dayOfData, int delay) {
+		if (dayOfData < firstDayOfData || dayOfData > lastDayOfData) {
+			throw new RuntimeException("Uh oh: " + CalendarUtils.dayToDate(dayOfData) + " is not between "
+					+ CalendarUtils.dayToDate(firstDayOfData) + " and " + CalendarUtils.dayToDate(lastDayOfData));
 		}
-		DayOfData daily = allNumbers.get(dayOfType);
+		DayOfData daily = allNumbers.get(dayOfData);
 		Incomplete incompletion = daily.ratios.get(delay);
 		if (incompletion == null) {
 			incompletion = new Incomplete();
