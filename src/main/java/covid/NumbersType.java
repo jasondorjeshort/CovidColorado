@@ -20,13 +20,15 @@ import java.util.Set;
  * @author jdorje@gmail.com
  */
 public enum NumbersType {
-	CASES(Smoothing.GEOMETRIC_SYMMETRIC_WEEKLY),
-	HOSPITALIZATIONS(Smoothing.GEOMETRIC_SYMMETRIC_13DAY),
-	DEATHS(Smoothing.GEOMETRIC_SYMMETRIC_21DAY),
-	TESTS(Smoothing.GEOMETRIC_SYMMETRIC_WEEKLY);
 
-	NumbersType(Smoothing smoothing) {
+	TESTS(Smoothing.GEOMETRIC_SYMMETRIC_WEEKLY, 100000),
+	CASES(Smoothing.GEOMETRIC_SYMMETRIC_WEEKLY, 10000),
+	HOSPITALIZATIONS(Smoothing.GEOMETRIC_SYMMETRIC_13DAY, 500),
+	DEATHS(Smoothing.GEOMETRIC_SYMMETRIC_21DAY, 100);
+
+	NumbersType(Smoothing smoothing, int highestValue) {
 		this.smoothing = smoothing;
+		this.highestValue = highestValue;
 	}
 
 	public static String name(NumbersType type) {
@@ -65,7 +67,16 @@ public enum NumbersType {
 		return name;
 	}
 
+	public static int getHighest(Set<NumbersType> types) {
+		int highest = 1;
+		for (NumbersType type : types) {
+			highest = Math.max(highest, type.highestValue);
+		}
+		return highest;
+	}
+
 	public final String lowerName = name().toLowerCase();
 	public final String capName = name().substring(0, 1) + name().substring(1).toLowerCase().replaceAll("_", " ");
 	public final Smoothing smoothing;
+	public final int highestValue;
 }

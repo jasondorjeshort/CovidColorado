@@ -46,18 +46,13 @@ public class ChartIncompletes {
 
 	private final ColoradoStats stats;
 
-	private static final double incompleteCutoff = 1.1;
-
 	public Chart buildChart(String folder, String fileName, int dayOfData, Set<NumbersType> types, NumbersTiming timing,
 			boolean logarithmic) {
 		TimeSeriesCollection collection = new TimeSeriesCollection();
 		String verticalAxis = null;
 		StringBuilder title = new StringBuilder();
-		double highest = 1;
 
 		boolean multi = (types.size() > 1);
-		boolean useProjections = true;
-		boolean useExact = (types.size() == 1);
 		int firstDayOfChart = Integer.MAX_VALUE;
 
 		title.append("Colorado ");
@@ -94,12 +89,6 @@ public class ChartIncompletes {
 			if (!numbers.hasData()) {
 				continue;
 			}
-			String desc;
-			if (multi || type.smoothing != Smoothing.NONE) {
-				desc = type.capName + " (" + type.smoothing.getDescription() + ")";
-			} else {
-				desc = type.capName;
-			}
 			TimeSeries lower = new TimeSeries(type.capName + " (lower bound)");
 			TimeSeries upper = new TimeSeries(type.capName + " (upper bound)");
 
@@ -115,13 +104,11 @@ public class ChartIncompletes {
 				double lowerBound = numbers.getNumbers(dayOfData, d, IncompleteNumbers.Form.LOWER, type.smoothing);
 				if (!logarithmic || lowerBound > 0) {
 					lower.add(ddd, lowerBound);
-					highest = Math.max(highest, lowerBound);
 				}
 
 				double upperBound = numbers.getNumbers(dayOfData, d, IncompleteNumbers.Form.UPPER, type.smoothing);
 				if (!logarithmic || upperBound > 0) {
 					upper.add(ddd, upperBound);
-					highest = Math.max(highest, upperBound);
 				}
 			}
 
@@ -148,7 +135,7 @@ public class ChartIncompletes {
 		if (logarithmic) {
 			LogarithmicAxis yAxis = new LogarithmicAxis(verticalAxis);
 			yAxis.setLowerBound(1);
-			yAxis.setUpperBound(200000);
+			yAxis.setUpperBound(NumbersType.getHighest(types));
 			plot.setRangeAxis(yAxis);
 
 			DateAxis xAxis = new DateAxis("Date");
@@ -168,7 +155,7 @@ public class ChartIncompletes {
 			fileName = CalendarUtils.dayToFullDate(dayOfData, '-');
 		}
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), folder + "\\" + fileName + ".png");
-		if (timing == NumbersTiming.INFECTION && types.size() == 4 && logarithmic && dayOfData == stats.getLastDay()) {
+		if (timing == NumbersTiming.INFECTION && types.size() == 3 && logarithmic && dayOfData == stats.getLastDay()) {
 			c.addFileName(Charts.TOP_FOLDER + "\\" + NumbersType.name(types, "-") + "-infection"
 					+ (logarithmic ? "-log" : "-cart") + ".png");
 			c.saveAsPNG();
