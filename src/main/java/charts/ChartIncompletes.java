@@ -21,7 +21,6 @@ import covid.Event;
 import covid.IncompleteNumbers;
 import covid.NumbersTiming;
 import covid.NumbersType;
-import covid.Smoothing;
 
 /**
  * This program is free software: you can redistribute it and/or modify it under
@@ -95,11 +94,6 @@ public class ChartIncompletes {
 			firstDayOfChart = Math.min(firstDayOfChart, numbers.getFirstDayOfType());
 			for (int d = numbers.getFirstDayOfType(); d <= dayOfData; d++) {
 				Day ddd = CalendarUtils.dayToDay(d);
-
-				if (ddd == null) {
-					new Exception("Uh oh: " + d).printStackTrace();
-					continue;
-				}
 
 				double lowerBound = numbers.getNumbers(dayOfData, d, IncompleteNumbers.Form.LOWER, type.smoothing);
 				if (!logarithmic || lowerBound > 0) {

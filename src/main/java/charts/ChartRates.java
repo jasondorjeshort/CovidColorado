@@ -39,8 +39,6 @@ import covid.Smoothing;
  */
 public class ChartRates {
 
-	private static final double incompleteCutoff = 1.21;
-
 	private static final NumbersTiming timing = NumbersTiming.INFECTION;
 
 	public static final String RATES_FOLDER = Charts.FULL_FOLDER + "\\rates";

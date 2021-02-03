@@ -531,13 +531,6 @@ public class IncompleteNumbers extends Numbers {
 						daily.lower.put(dayOfType, base);
 					}
 				}
-
-				if (dayOfData == lastDayOfData && getType() == NumbersType.DEATHS
-						&& getTiming() == NumbersTiming.INFECTION) {
-					System.out.println("Range out of " + stats.getN() + " at delay=" + delay + " = " + lowerBound
-							+ " to " + upperBound + "; max " + stats.getMax());
-					// System.out.println("weighted average: " +
-				}
 			}
 		}
 

@@ -1,15 +1,11 @@
 package charts;
 
 import java.awt.Color;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Set;
-import java.util.function.Function;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.axis.DateAxis;
-import org.jfree.chart.axis.LogarithmicAxis;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
@@ -79,10 +75,6 @@ public class Reproductive {
 
 			for (int dayOfType = FIRST_DAY; dayOfType <= dayOfData; dayOfType++) {
 				Day ddd = CalendarUtils.dayToDay(dayOfType);
-				if (ddd == null) {
-					new Exception("Uh oh: " + dayOfType).printStackTrace();
-					continue;
-				}
 
 				Double upperBound = numbers.getBigR(dayOfData, dayOfType, true);
 				Double lowerBound = numbers.getBigR(dayOfData, dayOfType, false);
