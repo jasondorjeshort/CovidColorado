@@ -284,6 +284,15 @@ public class IncompleteNumbers extends Numbers {
 					+ CalendarUtils.dayToDate(lastDayOfData) + " / " + CalendarUtils.dayToDate(lastDayOfData));
 		}
 
+		for (int dayOfData = firstDayOfData; dayOfData <= lastDayOfData; dayOfData++) {
+			if (allNumbers.get(dayOfData) == null) {
+				new Exception("Null day of data for " + getType() + "-" + getTiming() + " on "
+						+ CalendarUtils.dayToDate(dayOfData)).printStackTrace();
+				DayOfData daily = new DayOfData();
+				allNumbers.put(dayOfData, daily);
+			}
+		}
+
 		if (isCumulative) {
 			// first smooth values so we don't end up with negative daily
 			// values. We can only smooth within an individual day of data;
@@ -427,7 +436,7 @@ public class IncompleteNumbers extends Numbers {
 						}
 						continue;
 					}
-					if (delay > 30 && ratio.samples < 60) {
+					if (delay > 30 && ratio.samples < (dayOfData - firstDayOfData) / 2) {
 						if (dayOfData == logDayOfType + 10 && dayOfType == logDayOfType) {
 							System.out.println("Breaking out with not enough values ");
 						}
@@ -514,11 +523,11 @@ public class IncompleteNumbers extends Numbers {
 					percentile = 10;
 					break;
 				default:
-					break;
+					throw new RuntimeException("uh oh");
 				}
 
-				double lowerBound = stats.getPercentile(10);
-				double upperBound = stats.getPercentile(90);
+				double lowerBound = stats.getPercentile(percentile);
+				double upperBound = stats.getPercentile(100 - percentile);
 				int dayOfType = dayOfData - delay;
 
 				if (stats.getN() >= IDEAL_SAMPLES) {
