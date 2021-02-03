@@ -347,8 +347,12 @@ public class IncompleteNumbers extends Numbers {
 				int dayOfData1 = typeDay + delay;
 				int dayOfData2 = typeDay + delay + 1;
 
-				double numbers1 = getNumbers(dayOfData1, typeDay);
-				double numbers2 = getNumbers(dayOfData2, typeDay);
+				if (dayOfData1 < firstDayOfData || dayOfData2 > lastDayOfData) {
+					continue;
+				}
+
+				double numbers1 = Math.max(getNumbers(dayOfData1, typeDay), 1);
+				double numbers2 = Math.max(getNumbers(dayOfData2, typeDay), 1);
 
 				if (typeDay == logDayOfType) {
 					System.out.println("Numbers about " + CalendarUtils.dayToDate(logDayOfType) + " jumped from "
@@ -356,13 +360,6 @@ public class IncompleteNumbers extends Numbers {
 							+ CalendarUtils.dayToDate(dayOfData2));
 				}
 
-				if (numbers1 <= 0 || numbers2 <= 0 || !Double.isFinite(numbers1) || !Double.isFinite(numbers2)) {
-					if (typeDay == logDayOfType) {
-						System.out.println("Continuing..." + continuing);
-						continuing++;
-					}
-					continue;
-				}
 				double newRatio = numbers2 / numbers1;
 				if (typeDay == logDayOfType) {
 					System.out.println("Not continuing..." + nc + " ...with new ratio " + newRatio + " as " + numbers1
@@ -372,15 +369,6 @@ public class IncompleteNumbers extends Numbers {
 
 				Incomplete incomplete1 = getIncompletion(dayOfData1, delay);
 				Incomplete incomplete2 = getIncompletion(dayOfData2, delay);
-
-				if (incomplete1 == null) {
-					new Exception("Incomplete1 null " + dayOfData1).printStackTrace();
-					continue;
-				}
-				if (incomplete2 == null) {
-					new Exception("Incomplete2 null " + dayOfData2).printStackTrace();
-					continue;
-				}
 
 				incomplete2.samples = incomplete1.samples + 1;
 				double sampleDays = SAMPLE_DAYS + delay;
