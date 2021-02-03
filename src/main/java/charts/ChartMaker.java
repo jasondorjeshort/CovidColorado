@@ -54,10 +54,17 @@ public class ChartMaker {
 		ASync<Void> build = new ASync<>();
 
 		if (false) {
-			build.execute(() -> R.buildReproductiveCharts(noTests));
-			build.execute(() -> ChartRates.buildGIF(stats, "CFR", "Colorado rates by day of infection, ", true, false,
-					false, false));
-			build.execute(() -> incompletes.buildGIF(fullTypes, NumbersTiming.INFECTION, true));
+			for (int dayOfData = stats.getVeryFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
+				NumbersTiming timing = NumbersTiming.INFECTION;
+				boolean logarithmic = true;
+				int _dayOfData = dayOfData;
+				String name = NumbersType.name(fullTypes, "-") + "-" + timing.lowerName
+						+ (logarithmic ? "-log" : "-cart");
+				String folder = Charts.FULL_FOLDER + "\\" + name;
+				build.execute(() -> incompletes.buildChart(folder, null, _dayOfData, fullTypes, NumbersTiming.INFECTION,
+						true));
+			}
+
 			build.complete();
 			return;
 		}
