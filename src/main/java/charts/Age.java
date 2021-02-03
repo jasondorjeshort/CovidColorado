@@ -85,7 +85,7 @@ public class Age {
 		boolean hasData = false;
 
 		double min = Double.MAX_VALUE, max = Double.MIN_VALUE;
-		boolean useExact = types.size() == 1;
+		boolean useExact = false;
 
 		for (NumbersType type : NumbersType.values()) {
 			if (!types.contains(type)) {
@@ -133,7 +133,8 @@ public class Age {
 
 		XYPlot plot = chart.getXYPlot();
 		ValueAxis yAxis = plot.getRangeAxis();
-		// TOOD: maybe???
+		yAxis.setLowerBound(0);
+		yAxis.setUpperBound(42);
 
 		if (timing == NumbersTiming.INFECTION) {
 			Event.addEvents(plot);
