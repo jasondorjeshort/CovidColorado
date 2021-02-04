@@ -141,7 +141,7 @@ public class ColoradoStats {
 	public int getVeryFirstDay() {
 		return veryFirstDay;
 	}
-	
+
 	public int getFirstDayOfData() {
 		return firstCSV;
 	}
