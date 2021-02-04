@@ -58,11 +58,12 @@ public class ChartMaker {
 				NumbersTiming timing = NumbersTiming.INFECTION;
 				boolean logarithmic = true;
 				int _dayOfData = dayOfData;
-				String name = NumbersType.name(fullTypes, "-") + "-" + timing.lowerName
+				String name = NumbersType.name(noTests, "-") + "-" + timing.lowerName
 						+ (logarithmic ? "-log" : "-cart");
 				String folder = Charts.FULL_FOLDER + "\\" + name;
-				build.execute(() -> incompletes.buildChart(folder, null, _dayOfData, fullTypes, NumbersTiming.INFECTION,
-						true));
+				new File(folder).mkdir();
+				build.execute(
+						() -> incompletes.buildChart(folder, null, _dayOfData, noTests, NumbersTiming.INFECTION, true));
 			}
 
 			build.complete();
