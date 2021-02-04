@@ -47,6 +47,8 @@ public class ChartIncompletes {
 
 	private final ColoradoStats stats;
 
+	private static final boolean SHOW_FINALS = true;
+
 	public Chart buildChart(String folder, String fileName, int dayOfData, Set<NumbersType> types, NumbersTiming timing,
 			boolean logarithmic) {
 		YIntervalSeriesCollection collection = new YIntervalSeriesCollection();
@@ -95,10 +97,23 @@ public class ChartIncompletes {
 			}
 			Smoothing smoothing = type.smoothing; // Smoothing.NONE;
 			YIntervalSeries series = new YIntervalSeries(type.capName + " (" + smoothing.getDescription() + ")");
+			YIntervalSeries finals = new YIntervalSeries(type.capName + " (final)");
 
 			firstDayOfChart = Math.min(firstDayOfChart, numbers.getFirstDayOfType());
 			for (int d = numbers.getFirstDayOfType(); d <= dayOfData; d++) {
 				long time = CalendarUtils.dayToTime(d);
+
+				if (SHOW_FINALS && dayOfData != stats.getLastDay()) {
+					Double proj = numbers.getNumbers(stats.getLastDay(), d, IncompleteNumbers.Form.PROJECTED,
+							smoothing);
+
+					if (proj != null) {
+						if (!logarithmic || proj > 0) {
+							finals.add(time, proj, proj, proj);
+						}
+					}
+
+				}
 
 				Double upperBound = numbers.getNumbers(dayOfData, d, IncompleteNumbers.Form.UPPER, smoothing);
 				Double lowerBound = numbers.getNumbers(dayOfData, d, IncompleteNumbers.Form.LOWER, smoothing);
@@ -112,11 +127,18 @@ public class ChartIncompletes {
 			}
 
 			collection.addSeries(series);
-
 			renderer.setSeriesStroke(seriesCount, new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 			renderer.setSeriesPaint(seriesCount, type.color);
 			renderer.setSeriesFillPaint(seriesCount, type.color.darker());
 			seriesCount++;
+
+			if (SHOW_FINALS && dayOfData != stats.getLastDay()) {
+				collection.addSeries(finals);
+				renderer.setSeriesStroke(seriesCount,
+						new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+				renderer.setSeriesPaint(seriesCount, type.color.brighter());
+				seriesCount++;
+			}
 		}
 
 		if (firstDayOfChart >= stats.getLastDay()) {
