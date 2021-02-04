@@ -88,7 +88,7 @@ public class Reproductive {
 				Double upperBound = numbers.getBigR(dayOfData, dayOfType, IncompleteNumbers.Form.UPPER);
 				Double lowerBound = numbers.getBigR(dayOfData, dayOfType, IncompleteNumbers.Form.LOWER);
 				Double proj = numbers.getBigR(dayOfData, dayOfType, IncompleteNumbers.Form.PROJECTED);
-				if (proj == null) {
+				if (proj == null || lowerBound == null || upperBound == null) {
 					continue;
 				}
 
