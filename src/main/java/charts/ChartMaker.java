@@ -7,6 +7,7 @@ import covid.ColoradoStats;
 import covid.IncompleteNumbers;
 import covid.NumbersTiming;
 import covid.NumbersType;
+import covid.Rate;
 import library.ASync;
 
 /**
@@ -41,6 +42,7 @@ public class ChartMaker {
 		new File(Charts.FULL_FOLDER).mkdir();
 		ChartCounty county = new ChartCounty(stats);
 		ChartIncompletes incompletes = new ChartIncompletes(stats);
+		ChartRates rates = new ChartRates(stats);
 		Age age = new Age(stats);
 		Reproductive R = new Reproductive(stats);
 		Finals finals = new Finals(stats);
@@ -74,16 +76,10 @@ public class ChartMaker {
 
 		/* These are just ordered from slowest to fastest */
 
-		build.execute(() -> ChartRates.buildGIF(stats, "rates", "Colorado rates by day of infection, ", true, true,
-				true, true));
-		build.execute(() -> ChartRates.buildGIF(stats, "CFR", "Colorado CFR by day of infection, ", true, false, false,
-				false));
-		build.execute(() -> ChartRates.buildGIF(stats, "CHR", "Colorado CHR by day of infection, ", false, true, false,
-				false));
-		build.execute(() -> ChartRates.buildGIF(stats, "HFR", "Colorado HFR by day of infection, ", false, false, true,
-				false));
-		build.execute(() -> ChartRates.buildGIF(stats, "Positivity", "Colorado positivity by day of infection, ", false,
-				false, false, true));
+		build.execute(() -> rates.buildGIF(Rate.getSet(Rate.values())));
+		for (Rate rate : Rate.values()) {
+			build.execute(() -> rates.buildGIF(Rate.getSet(rate)));
+		}
 
 		build.execute(() -> R.buildReproductiveCharts(noTests));
 		for (NumbersType type : NumbersType.values()) {

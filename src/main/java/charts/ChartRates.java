@@ -1,8 +1,8 @@
 package charts;
 
 import java.awt.BasicStroke;
-import java.awt.Color;
 import java.io.File;
+import java.util.Set;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
@@ -20,7 +20,7 @@ import covid.ColoradoStats;
 import covid.Event;
 import covid.IncompleteNumbers;
 import covid.NumbersTiming;
-import covid.NumbersType;
+import covid.Rate;
 import covid.Smoothing;
 
 /**
@@ -45,107 +45,75 @@ public class ChartRates {
 
 	public static final String RATES_FOLDER = Charts.FULL_FOLDER + "\\rates";
 
-	public static int count(boolean... booleans) {
-		int count = 0;
-		for (boolean b : booleans) {
-			if (b) {
-				count++;
-			}
-		}
-		return count;
+	private final ColoradoStats stats;
+
+	public ChartRates(ColoradoStats stats) {
+		new File(RATES_FOLDER).mkdir();
+		this.stats = stats;
 	}
 
-	private static Chart buildRates(ColoradoStats stats, int dayOfData, String fileName, String title, boolean useCFR,
-			boolean useCHR, boolean useHFR, boolean usePositivity, Integer fixedHeight) {
+	private Chart buildRates(int dayOfData, Set<Rate> rates, String folder) {
 
 		Smoothing smoothing = new Smoothing(13, Smoothing.Type.AVERAGE, Smoothing.Timing.TRAILING);
 
 		DeviationRenderer renderer = new DeviationRenderer(true, false);
+		YIntervalSeriesCollection collection = new YIntervalSeriesCollection();
 		int seriesCount = 0;
 
-		YIntervalSeries cfr = new YIntervalSeries("CFR (deaths / cases)");
-		YIntervalSeries chr = new YIntervalSeries("CHR (hospitalizations / cases)d");
-		YIntervalSeries hfr = new YIntervalSeries("HFR (deaths / hospitalizations)");
-		YIntervalSeries pos = new YIntervalSeries("Positivity (cases / tests)");
-
-		IncompleteNumbers tNumbers = stats.getNumbers(NumbersType.TESTS, timing);
-		IncompleteNumbers cNumbers = stats.getNumbers(NumbersType.CASES, timing);
-		IncompleteNumbers hNumbers = stats.getNumbers(NumbersType.HOSPITALIZATIONS, timing);
-		IncompleteNumbers dNumbers = stats.getNumbers(NumbersType.DEATHS, timing);
+		int height = 0;
 
 		int firstDayOfChart = stats.getVeryFirstDay();
 
-		for (int dayOfInfection = firstDayOfChart; dayOfInfection <= dayOfData; dayOfInfection++) {
-			double testsUpper = tNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.UPPER, smoothing);
-			double testsProj = tNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.PROJECTED,
-					smoothing);
-			double testsLower = tNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.LOWER, smoothing);
+		for (Rate rate : rates) {
+			IncompleteNumbers nNumbers = stats.getNumbers(rate.numerator, timing);
+			IncompleteNumbers dNumbers = stats.getNumbers(rate.denominator, timing);
 
-			double casesUpper = cNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.UPPER, smoothing);
-			double casesProj = cNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.PROJECTED,
-					smoothing);
-			double casesLower = cNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.LOWER, smoothing);
+			System.out.println("Building " + rate.allCapsName + " as " + rate.numerator + " / " + rate.denominator);
 
-			double hospUpper = hNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.UPPER, smoothing);
-			double hospProj = hNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.PROJECTED,
-					smoothing);
-			double hospLower = hNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.LOWER, smoothing);
+			YIntervalSeries series = new YIntervalSeries(rate.description);
 
-			double deathUpper = dNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.UPPER, smoothing);
-			double deathProj = dNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.PROJECTED,
-					smoothing);
-			double deathLower = dNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.LOWER, smoothing);
+			height = Math.max(height, rate.highestValue);
 
-			long time = CalendarUtils.dayToTime(dayOfInfection);
+			for (int dayOfInfection = firstDayOfChart; dayOfInfection <= dayOfData; dayOfInfection++) {
+				double nUpper = nNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.UPPER, smoothing);
+				double nLower = nNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.LOWER, smoothing);
+				double nProj = nNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.PROJECTED,
+						smoothing);
 
-			if (Double.isFinite(casesUpper) && casesProj > 0 && casesLower > 0 && casesUpper > 0) {
-				cfr.add(time, 100.0 * deathProj / casesProj, 100.0 * deathLower / casesUpper,
-						100.0 * deathUpper / casesLower);
+				double dUpper = dNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.UPPER, smoothing);
+				double dLower = dNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.LOWER, smoothing);
+				double dProj = dNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.PROJECTED,
+						smoothing);
 
-				chr.add(time, 100.0 * hospProj / casesProj, 100.0 * hospLower / casesUpper,
-						100.0 * hospUpper / casesLower);
+				long time = CalendarUtils.dayToTime(dayOfInfection);
+
+				if (!Double.isFinite(dUpper) || !Double.isFinite(dLower) || !Double.isFinite(dProj)) {
+					continue;
+				}
+
+				if (dUpper <= 0 || dLower <= 0 || dProj <= 0) {
+					continue;
+				}
+
+				series.add(time, 100 * nProj / dProj, 100 * nLower / dUpper, 100 * nUpper / dLower);
 			}
-			if (Double.isFinite(hospUpper) && hospUpper > 0 && hospLower > 0 && hospProj > 0) {
-				hfr.add(time, 100.0 * deathProj / hospProj, 100.0 * deathLower / hospUpper,
-						100.0 * deathUpper / hospLower);
-			}
 
-			if (Double.isFinite(testsUpper) && testsProj > 0 && testsLower > 0 && testsUpper > 0) {
-				pos.add(time, 100.0 * casesProj / testsProj, 100.0 * casesLower / testsUpper,
-						100.0 * casesUpper / testsLower);
-			}
-		}
-
-		YIntervalSeriesCollection collection = new YIntervalSeriesCollection();
-		if (useCFR) {
-			collection.addSeries(cfr);
+			collection.addSeries(series);
 			renderer.setSeriesStroke(seriesCount, new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-			renderer.setSeriesPaint(seriesCount, Color.black);
-			renderer.setSeriesFillPaint(seriesCount, Color.black.darker());
-			seriesCount++;
-		}
-		if (useHFR) {
-			collection.addSeries(hfr);
-			renderer.setSeriesStroke(seriesCount, new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-			renderer.setSeriesPaint(seriesCount, Color.orange);
-			renderer.setSeriesFillPaint(seriesCount, Color.orange.darker());
-			seriesCount++;
-		}
-		if (useCHR) {
-			collection.addSeries(chr);
-			renderer.setSeriesStroke(seriesCount, new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-			renderer.setSeriesPaint(seriesCount, Color.red);
-			renderer.setSeriesFillPaint(seriesCount, Color.red.darker());
-			seriesCount++;
-		}
-		if (usePositivity) {
-			collection.addSeries(pos);
-			renderer.setSeriesStroke(seriesCount, new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-			renderer.setSeriesPaint(seriesCount, Color.blue);
-			renderer.setSeriesFillPaint(seriesCount, Color.blue.darker());
+			renderer.setSeriesPaint(seriesCount, rate.color);
+			renderer.setSeriesFillPaint(seriesCount, rate.color.darker());
 			seriesCount++;
 		}
 
+		StringBuilder title = new StringBuilder();
+		title.append("Colorado ");
+		if (rates.size() > 1) {
+			title.append("rates");
+		} else {
+			title.append(Rate.allCapsName(rates, ", "));
+		}
+		title.append(" by day of ");
+		title.append(timing.lowerName);
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title + "\n(" + smoothing.getDescription() + ")",
 				"Date of Infection", "Rate (%)", collection);
 
@@ -154,38 +122,24 @@ public class ChartRates {
 		XYPlot plot = chart.getXYPlot();
 		plot.setRenderer(renderer);
 
-		if (fixedHeight != null) {
-			DateAxis xAxis = new DateAxis("Date");
-			xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(firstDayOfChart));
-			xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(Charts.getLastDayForChartDisplay(stats)));
-			plot.setDomainAxis(xAxis);
+		DateAxis xAxis = new DateAxis("Date");
+		xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(firstDayOfChart));
+		xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(Charts.getLastDayForChartDisplay(stats)));
+		plot.setDomainAxis(xAxis);
 
-			ValueAxis yAxis = plot.getRangeAxis();
-			yAxis.setLowerBound(0);
-			yAxis.setUpperBound(fixedHeight);
+		ValueAxis yAxis = plot.getRangeAxis();
+		yAxis.setLowerBound(0);
+		yAxis.setUpperBound(height);
 
-			plot.addDomainMarker(Charts.getTodayMarker(dayOfData));
+		plot.addDomainMarker(Charts.getTodayMarker(dayOfData));
 
-			Event.addEvents(plot);
-		}
+		Event.addEvents(plot);
 
-		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT),
-				RATES_FOLDER + "\\" + fileName + ".png");
+		String fileName = CalendarUtils.dayToFullDate(dayOfData, '-');
+		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), folder + "\\" + fileName + ".png");
 
-		if (timing == NumbersTiming.INFECTION && dayOfData == stats.getLastDay()
-				&& count(useCFR, useHFR, useCHR, usePositivity) == 1) {
-			String name = Charts.TOP_FOLDER + "\\";
-			if (useCFR) {
-				name += "CFR-infection.png";
-			} else if (useHFR) {
-				name += "HFR-infection.png";
-			} else if (useCHR) {
-				name += "CHR-infection.png";
-			} else if (usePositivity) {
-				name += "Positivity-infection.png";
-			} else {
-				throw new RuntimeException("...");
-			}
+		if (timing == NumbersTiming.INFECTION && dayOfData == stats.getLastDay() && rates.size() == 1) {
+			String name = Charts.TOP_FOLDER + "\\" + Rate.allCapsName(rates, "-") + "-" + timing.lowerName + ".png";
 			c.addFileName(name);
 			c.saveAsPNG();
 			c.open();
@@ -199,36 +153,16 @@ public class ChartRates {
 		return Math.max(Charts.getFirstDayForCharts(stats), stats.getFirstDayOfData());
 	}
 
-	public static void buildGIF(ColoradoStats stats, String prefix, String title, boolean useCFR, boolean useCHR,
-			boolean useHFR, boolean usePositivity) {
-
-		new File(RATES_FOLDER).mkdir();
+	public void buildGIF(Set<Rate> rates) {
 
 		AnimatedGifEncoder gif = new AnimatedGifEncoder();
-
-		String fileName = Charts.FULL_FOLDER + "\\" + prefix + ".gif";
+		String thisName = Rate.name(rates, "-");
+		String fileName = RATES_FOLDER + "\\" + thisName + ".gif";
+		String folder = RATES_FOLDER + "\\" + thisName;
+		new File(folder).mkdir();
 		gif.start(fileName);
 		for (int dayOfData = getFirstDayForAnimation(stats); dayOfData <= stats.getLastDay(); dayOfData++) {
-
-			String day = CalendarUtils.dayToDate(dayOfData);
-			String full = CalendarUtils.dayToFullDate(dayOfData, '-');
-			int fixedHeight = 0;
-
-			if (useCFR) {
-				fixedHeight = Math.max(fixedHeight, 10);
-			}
-			if (useCHR) {
-				fixedHeight = Math.max(fixedHeight, 40);
-			}
-			if (useHFR) {
-				fixedHeight = Math.max(fixedHeight, 100);
-			}
-			if (usePositivity) {
-				fixedHeight = Math.max(fixedHeight, 25);
-			}
-
-			Chart c = buildRates(stats, dayOfData, prefix + "-" + full, title + day, useCFR, useCHR, useHFR,
-					usePositivity, fixedHeight);
+			Chart c = buildRates(dayOfData, rates, folder);
 			Charts.setDelay(stats, dayOfData, gif);
 			gif.addFrame(c.getImage());
 		}
