@@ -122,7 +122,7 @@ public class Distribution {
 	}
 
 	private int getFirstDayForAnimation(IncompleteNumbers numbers) {
-		return Math.max(Charts.getFirstDayForCharts(stats), numbers.getFirstDayOfType());
+		return Math.max(Charts.getFirstDayForCharts(stats), numbers.getFirstDayOfData());
 	}
 
 	public Chart buildDistributions(IncompleteNumbers numbers, int dayOfData) {

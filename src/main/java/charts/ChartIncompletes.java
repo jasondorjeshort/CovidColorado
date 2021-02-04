@@ -171,7 +171,7 @@ public class ChartIncompletes {
 	}
 
 	public int getFirstDayForAnimation(NumbersTiming timing) {
-		return Math.max(Charts.getFirstDayForCharts(stats), stats.getFirstDayOfTiming(timing));
+		return Math.max(Charts.getFirstDayForCharts(stats), stats.getFirstDayOfData());
 	}
 
 	public void buildGIF(Set<NumbersType> types, NumbersTiming timing, boolean logarithmic) {

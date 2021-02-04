@@ -196,7 +196,7 @@ public class ChartRates {
 	}
 
 	public static int getFirstDayForAnimation(ColoradoStats stats) {
-		return Math.max(Charts.getFirstDayForCharts(stats), stats.getFirstDayOfTiming(timing));
+		return Math.max(Charts.getFirstDayForCharts(stats), stats.getFirstDayOfData());
 	}
 
 	public static void buildGIF(ColoradoStats stats, String prefix, String title, boolean useCFR, boolean useCHR,
