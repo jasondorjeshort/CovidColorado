@@ -54,16 +54,16 @@ public class ChartMaker {
 		ASync<Void> build = new ASync<>();
 
 		if (false) {
-			for (int dayOfData = stats.getVeryFirstDay(); dayOfData <= stats.getLastDay(); dayOfData++) {
-				NumbersTiming timing = NumbersTiming.INFECTION;
+			Set<NumbersType> types = noTests;
+			NumbersTiming timing = NumbersTiming.INFECTION;
+			for (int dayOfData = stats.getLastDay(); dayOfData >= stats.getVeryFirstDay(); dayOfData--) {
 				boolean logarithmic = true;
 				int _dayOfData = dayOfData;
-				String name = NumbersType.name(noTests, "-") + "-" + timing.lowerName
-						+ (logarithmic ? "-log" : "-cart");
+				String name = NumbersType.name(types, "-") + "-" + timing.lowerName + (logarithmic ? "-log" : "-cart");
 				String folder = Charts.FULL_FOLDER + "\\" + name;
 				new File(folder).mkdir();
 				build.execute(
-						() -> incompletes.buildChart(folder, null, _dayOfData, noTests, NumbersTiming.INFECTION, true));
+						() -> incompletes.buildChart(folder, null, _dayOfData, types, NumbersTiming.INFECTION, true));
 			}
 
 			build.complete();
