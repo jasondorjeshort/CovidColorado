@@ -1,5 +1,6 @@
 package charts;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.io.File;
 import java.util.Set;
@@ -9,11 +10,11 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.data.time.Day;
-import org.jfree.data.time.TimeSeries;
-import org.jfree.data.time.TimeSeriesCollection;
+import org.jfree.chart.renderer.xy.DeviationRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+import org.jfree.data.xy.YIntervalSeries;
+import org.jfree.data.xy.YIntervalSeriesCollection;
 
 import covid.CalendarUtils;
 import covid.ColoradoStats;
@@ -65,7 +66,9 @@ public class Reproductive {
 	 */
 	private Chart buildReproductiveChart(Set<NumbersType> types, int dayOfData) {
 
-		XYSeriesCollection collection = new XYSeriesCollection();
+		YIntervalSeriesCollection collection = new YIntervalSeriesCollection();
+		DeviationRenderer renderer = new DeviationRenderer(true, false);
+		int seriesCount = 0;
 
 		for (NumbersType type : NumbersType.values()) {
 			if (!types.contains(type)) {
@@ -77,22 +80,26 @@ public class Reproductive {
 				throw new RuntimeException("UH OH");
 			}
 
-			XYSeries series = new XYSeries("Based on " + type.capName);
+			YIntervalSeries series = new YIntervalSeries("Based on " + type.capName);
 
 			for (int dayOfType = FIRST_DAY; dayOfType <= dayOfData; dayOfType++) {
 				long time = CalendarUtils.dayToTime(dayOfType);
 
-				Double upperBound = numbers.getBigR(dayOfData, dayOfType, true);
-				Double lowerBound = numbers.getBigR(dayOfData, dayOfType, false);
-				if (upperBound == null || !Double.isFinite(upperBound) || lowerBound == null
-						|| !Double.isFinite(lowerBound)) {
+				Double upperBound = numbers.getBigR(dayOfData, dayOfType, IncompleteNumbers.Form.UPPER);
+				Double lowerBound = numbers.getBigR(dayOfData, dayOfType, IncompleteNumbers.Form.LOWER);
+				Double proj = numbers.getBigR(dayOfData, dayOfType, IncompleteNumbers.Form.PROJECTED);
+				if (proj == null) {
 					continue;
 				}
 
-				series.add(time, upperBound);
-				series.add(time + 1, lowerBound);
+				// TODO: need a projected value here, not just an average
+				series.add(time, proj, lowerBound, upperBound);
 			}
 			collection.addSeries(series);
+			renderer.setSeriesStroke(seriesCount, new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+			renderer.setSeriesPaint(seriesCount, type.color);
+			renderer.setSeriesFillPaint(seriesCount, type.color.darker());
+			seriesCount++;
 		}
 
 		// dataset.addSeries("Cases", series);
@@ -102,6 +109,7 @@ public class Reproductive {
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title, "Date", "R(t)", collection);
 
 		XYPlot plot = chart.getXYPlot();
+		plot.setRenderer(renderer);
 		ValueAxis yAxis = plot.getRangeAxis();
 		yAxis.setLowerBound(0);
 		yAxis.setUpperBound(4);

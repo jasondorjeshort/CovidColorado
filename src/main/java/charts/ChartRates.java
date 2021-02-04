@@ -1,5 +1,7 @@
 package charts;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
 import java.io.File;
 
 import org.jfree.chart.ChartFactory;
@@ -7,11 +9,9 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.data.time.Day;
-import org.jfree.data.time.TimeSeries;
-import org.jfree.data.time.TimeSeriesCollection;
-import org.jfree.data.xy.XYSeries;
-import org.jfree.data.xy.XYSeriesCollection;
+import org.jfree.chart.renderer.xy.DeviationRenderer;
+import org.jfree.data.xy.YIntervalSeries;
+import org.jfree.data.xy.YIntervalSeriesCollection;
 
 import com.madgag.gif.fmsware.AnimatedGifEncoder;
 
@@ -60,10 +60,13 @@ public class ChartRates {
 
 		Smoothing smoothing = new Smoothing(13, Smoothing.Type.AVERAGE, Smoothing.Timing.TRAILING);
 
-		XYSeries cfr = new XYSeries("CFR (deaths / cases)");
-		XYSeries chr = new XYSeries("CHR (hospitalizations / cases)d");
-		XYSeries hfr = new XYSeries("HFR (deaths / hospitalizations)");
-		XYSeries pos = new XYSeries("Positivity (cases / tests)");
+		DeviationRenderer renderer = new DeviationRenderer(true, false);
+		int seriesCount = 0;
+
+		YIntervalSeries cfr = new YIntervalSeries("CFR (deaths / cases)");
+		YIntervalSeries chr = new YIntervalSeries("CHR (hospitalizations / cases)d");
+		YIntervalSeries hfr = new YIntervalSeries("HFR (deaths / hospitalizations)");
+		YIntervalSeries pos = new YIntervalSeries("Positivity (cases / tests)");
 
 		IncompleteNumbers tNumbers = stats.getNumbers(NumbersType.TESTS, timing);
 		IncompleteNumbers cNumbers = stats.getNumbers(NumbersType.CASES, timing);
@@ -74,49 +77,73 @@ public class ChartRates {
 
 		for (int dayOfInfection = firstDayOfChart; dayOfInfection <= dayOfData; dayOfInfection++) {
 			double testsUpper = tNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.UPPER, smoothing);
+			double testsProj = tNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.PROJECTED,
+					smoothing);
 			double testsLower = tNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.LOWER, smoothing);
 
 			double casesUpper = cNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.UPPER, smoothing);
+			double casesProj = cNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.PROJECTED,
+					smoothing);
 			double casesLower = cNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.LOWER, smoothing);
 
 			double hospUpper = hNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.UPPER, smoothing);
+			double hospProj = hNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.PROJECTED,
+					smoothing);
 			double hospLower = hNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.LOWER, smoothing);
 
 			double deathUpper = dNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.UPPER, smoothing);
+			double deathProj = dNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.PROJECTED,
+					smoothing);
 			double deathLower = dNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.LOWER, smoothing);
 
 			long time = CalendarUtils.dayToTime(dayOfInfection);
 
-			if (Double.isFinite(casesUpper) && casesUpper > 0) {
-				cfr.add(time, 100.0 * deathUpper / casesLower);
-				cfr.add(time + 1, 100.0 * deathLower / casesUpper);
+			if (Double.isFinite(casesUpper) && casesProj > 0 && casesLower > 0 && casesUpper > 0) {
+				cfr.add(time, 100.0 * deathProj / casesProj, 100.0 * deathLower / casesUpper,
+						100.0 * deathUpper / casesLower);
 
-				chr.add(time, 100.0 * hospUpper / casesLower);
-				chr.add(time + 1, 100.0 * hospLower / casesUpper);
+				chr.add(time, 100.0 * hospProj / casesProj, 100.0 * hospLower / casesUpper,
+						100.0 * hospUpper / casesLower);
 			}
-			if (Double.isFinite(hospUpper) && hospUpper > 0) {
-				hfr.add(time, 100.0 * deathUpper / hospLower);
-				hfr.add(time + 1, 100.0 * deathLower / hospUpper);
+			if (Double.isFinite(hospUpper) && hospUpper > 0 && hospLower > 0 && hospProj > 0) {
+				hfr.add(time, 100.0 * deathProj / hospProj, 100.0 * deathLower / hospUpper,
+						100.0 * deathUpper / hospLower);
 			}
 
-			if (Double.isFinite(testsUpper) && testsUpper > 0) {
-				pos.add(time, 100.0 * casesUpper / testsLower);
-				pos.add(time + 1, 100.0 * casesLower / testsUpper);
+			if (Double.isFinite(testsUpper) && testsProj > 0 && testsLower > 0 && testsUpper > 0) {
+				pos.add(time, 100.0 * casesProj / testsProj, 100.0 * casesLower / testsUpper,
+						100.0 * casesUpper / testsLower);
 			}
 		}
 
-		XYSeriesCollection collection = new XYSeriesCollection();
+		YIntervalSeriesCollection collection = new YIntervalSeriesCollection();
 		if (useCFR) {
 			collection.addSeries(cfr);
+			renderer.setSeriesStroke(seriesCount, new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+			renderer.setSeriesPaint(seriesCount, Color.black);
+			renderer.setSeriesFillPaint(seriesCount, Color.black.darker());
+			seriesCount++;
 		}
 		if (useHFR) {
 			collection.addSeries(hfr);
+			renderer.setSeriesStroke(seriesCount, new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+			renderer.setSeriesPaint(seriesCount, Color.orange);
+			renderer.setSeriesFillPaint(seriesCount, Color.orange.darker());
+			seriesCount++;
 		}
 		if (useCHR) {
 			collection.addSeries(chr);
+			renderer.setSeriesStroke(seriesCount, new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+			renderer.setSeriesPaint(seriesCount, Color.red);
+			renderer.setSeriesFillPaint(seriesCount, Color.red.darker());
+			seriesCount++;
 		}
 		if (usePositivity) {
 			collection.addSeries(pos);
+			renderer.setSeriesStroke(seriesCount, new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+			renderer.setSeriesPaint(seriesCount, Color.blue);
+			renderer.setSeriesFillPaint(seriesCount, Color.blue.darker());
+			seriesCount++;
 		}
 
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title + "\n(" + smoothing.getDescription() + ")",
@@ -125,6 +152,7 @@ public class ChartRates {
 		// chart.getXYPlot().setRangeAxis(new LogarithmicAxis("Cases"));
 
 		XYPlot plot = chart.getXYPlot();
+		plot.setRenderer(renderer);
 
 		if (fixedHeight != null) {
 			DateAxis xAxis = new DateAxis("Date");

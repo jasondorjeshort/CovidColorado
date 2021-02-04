@@ -50,6 +50,7 @@ public class IncompleteNumbers extends Numbers {
 		protected final HashMap<Integer, Double> upper = new HashMap<>();
 		protected final HashMap<Integer, Double> lower = new HashMap<>();
 		protected final HashMap<Integer, Double> lowerR = new HashMap<>();
+		protected final HashMap<Integer, Double> projR = new HashMap<>();
 		protected final HashMap<Integer, Double> upperR = new HashMap<>();
 		protected final HashMap<Integer, Incomplete> ratios = new HashMap<>();
 
@@ -192,7 +193,7 @@ public class IncompleteNumbers extends Numbers {
 		throw new RuntimeException("FAIL");
 	}
 
-	public synchronized Double getBigR(int dayOfData, int dayOfType, boolean upper) {
+	public synchronized Double getBigR(int dayOfData, int dayOfType, Form form) {
 		if (dayOfType < firstDayOfType || dayOfType > dayOfData) {
 			return null;
 		}
@@ -206,7 +207,21 @@ public class IncompleteNumbers extends Numbers {
 		double r = 1.0;
 		int RANGE = 5;
 		for (int d = dayOfType - RANGE; d <= dayOfType + RANGE; d++) {
-			Double dailyR = upper ? daily.upperR.get(d) : daily.lowerR.get(d);
+			Double dailyR;
+			switch (form) {
+			case CURRENT_NUMBERS:
+			default:
+				throw new RuntimeException("THIS IS IMPOSSIBLE");
+			case LOWER:
+				dailyR = daily.lowerR.get(d);
+				break;
+			case PROJECTED:
+				dailyR = daily.projR.get(d);
+				break;
+			case UPPER:
+				dailyR = daily.upperR.get(d);
+				break;
+			}
 			if (dailyR == null) {
 				return null;
 			}
@@ -546,16 +561,24 @@ public class IncompleteNumbers extends Numbers {
 			}
 
 			for (int dayOfType = firstDayOfType; dayOfType <= dayOfData - SERIAL_INTERVAL; dayOfType++) {
-				double upperEnd = getNumbers(dayOfData, dayOfType, Form.UPPER, smoothing);
-				double upperStart = getNumbers(dayOfData, dayOfType - SERIAL_INTERVAL, Form.UPPER, smoothing);
-				if (upperEnd != 0 && upperStart != 0) {
-					daily.upperR.put(dayOfType, upperEnd / upperStart);
+				double start, end;
+
+				end = getNumbers(dayOfData, dayOfType, Form.UPPER, smoothing);
+				start = getNumbers(dayOfData, dayOfType - SERIAL_INTERVAL, Form.UPPER, smoothing);
+				if (end != 0 && start != 0) {
+					daily.upperR.put(dayOfType, end / start);
 				}
 
-				double lowerEnd = getNumbers(dayOfData, dayOfType, Form.LOWER, smoothing);
-				double lowerStart = getNumbers(dayOfData, dayOfType - SERIAL_INTERVAL, Form.LOWER, smoothing);
-				if (lowerEnd != 0 && lowerStart != 0) {
-					daily.lowerR.put(dayOfType, lowerEnd / lowerStart);
+				end = getNumbers(dayOfData, dayOfType, Form.LOWER, smoothing);
+				start = getNumbers(dayOfData, dayOfType - SERIAL_INTERVAL, Form.LOWER, smoothing);
+				if (end != 0 && start != 0) {
+					daily.lowerR.put(dayOfType, end / start);
+				}
+
+				end = getNumbers(dayOfData, dayOfType, Form.PROJECTED, smoothing);
+				start = getNumbers(dayOfData, dayOfType - SERIAL_INTERVAL, Form.PROJECTED, smoothing);
+				if (end != 0 && start != 0) {
+					daily.projR.put(dayOfType, end / start);
 				}
 			}
 
