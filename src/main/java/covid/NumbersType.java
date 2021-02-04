@@ -1,5 +1,6 @@
 package covid;
 
+import java.awt.Color;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -21,14 +22,15 @@ import java.util.Set;
  */
 public enum NumbersType {
 
-	TESTS(Smoothing.GEOMETRIC_SYMMETRIC_WEEKLY, 100000),
-	CASES(Smoothing.GEOMETRIC_SYMMETRIC_WEEKLY, 10000),
-	HOSPITALIZATIONS(Smoothing.GEOMETRIC_SYMMETRIC_13DAY, 500),
-	DEATHS(Smoothing.GEOMETRIC_SYMMETRIC_21DAY, 100);
+	TESTS(Smoothing.GEOMETRIC_SYMMETRIC_WEEKLY, 100000, Color.YELLOW),
+	CASES(Smoothing.GEOMETRIC_SYMMETRIC_WEEKLY, 10000, Color.BLUE),
+	HOSPITALIZATIONS(Smoothing.GEOMETRIC_SYMMETRIC_13DAY, 500, Color.RED),
+	DEATHS(Smoothing.GEOMETRIC_SYMMETRIC_21DAY, 100, Color.BLACK);
 
-	NumbersType(Smoothing smoothing, int highestValue) {
+	NumbersType(Smoothing smoothing, int highestValue, Color color) {
 		this.smoothing = smoothing;
 		this.highestValue = highestValue;
+		this.color = color;
 	}
 
 	public static String name(NumbersType type) {
@@ -79,4 +81,5 @@ public enum NumbersType {
 	public final String capName = name().substring(0, 1) + name().substring(1).toLowerCase().replaceAll("_", " ");
 	public final Smoothing smoothing;
 	public final int highestValue;
+	public final Color color;
 }
