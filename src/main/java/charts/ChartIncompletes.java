@@ -9,9 +9,12 @@ import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.LogarithmicAxis;
 import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYAreaRenderer;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 
 import com.madgag.gif.fmsware.AnimatedGifEncoder;
 
@@ -47,7 +50,7 @@ public class ChartIncompletes {
 
 	public Chart buildChart(String folder, String fileName, int dayOfData, Set<NumbersType> types, NumbersTiming timing,
 			boolean logarithmic) {
-		TimeSeriesCollection collection = new TimeSeriesCollection();
+		XYSeriesCollection collection = new XYSeriesCollection();
 		String verticalAxis = null;
 		StringBuilder title = new StringBuilder();
 
@@ -88,26 +91,23 @@ public class ChartIncompletes {
 			if (!numbers.hasData()) {
 				continue;
 			}
-			TimeSeries lower = new TimeSeries(type.capName + " (lower bound)");
-			TimeSeries upper = new TimeSeries(type.capName + " (upper bound)");
+			XYSeries series = new XYSeries(type.capName);
 
 			firstDayOfChart = Math.min(firstDayOfChart, numbers.getFirstDayOfType());
 			for (int d = numbers.getFirstDayOfType(); d <= dayOfData; d++) {
-				Day ddd = CalendarUtils.dayToDay(d);
-
-				double lowerBound = numbers.getNumbers(dayOfData, d, IncompleteNumbers.Form.LOWER, type.smoothing);
-				if (!logarithmic || lowerBound > 0) {
-					lower.add(ddd, lowerBound);
-				}
+				long time = CalendarUtils.dayToTime(d);
 
 				double upperBound = numbers.getNumbers(dayOfData, d, IncompleteNumbers.Form.UPPER, type.smoothing);
 				if (!logarithmic || upperBound > 0) {
-					upper.add(ddd, upperBound);
+					series.add(time, upperBound);
+				}
+				double lowerBound = numbers.getNumbers(dayOfData, d, IncompleteNumbers.Form.LOWER, type.smoothing);
+				if (!logarithmic || lowerBound > 0) {
+					series.add(time + 1, lowerBound);
 				}
 			}
 
-			collection.addSeries(lower);
-			collection.addSeries(upper);
+			collection.addSeries(series);
 
 			if (verticalAxis == null) {
 				verticalAxis = type.capName;
@@ -126,6 +126,7 @@ public class ChartIncompletes {
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title.toString(), "Date", verticalAxis, collection);
 
 		XYPlot plot = chart.getXYPlot();
+		//plot.setRenderer(new XYAreaRenderer());
 		if (logarithmic) {
 			LogarithmicAxis yAxis = new LogarithmicAxis(verticalAxis);
 			yAxis.setLowerBound(1);

@@ -12,6 +12,8 @@ import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 
 import covid.CalendarUtils;
 import covid.ColoradoStats;
@@ -56,9 +58,14 @@ public class Reproductive {
 
 	private static final int FIRST_DAY = CalendarUtils.dateToDay("2-14-2020");
 
+	/**
+	 * @param types
+	 * @param dayOfData
+	 * @return
+	 */
 	private Chart buildReproductiveChart(Set<NumbersType> types, int dayOfData) {
 
-		TimeSeriesCollection collection = new TimeSeriesCollection();
+		XYSeriesCollection collection = new XYSeriesCollection();
 
 		for (NumbersType type : NumbersType.values()) {
 			if (!types.contains(type)) {
@@ -70,11 +77,10 @@ public class Reproductive {
 				throw new RuntimeException("UH OH");
 			}
 
-			TimeSeries upper = new TimeSeries("Based on " + type.capName + " upper bound");
-			TimeSeries lower = new TimeSeries("Based on " + type.capName + " lower bound");
+			XYSeries series = new XYSeries("Based on " + type.capName);
 
 			for (int dayOfType = FIRST_DAY; dayOfType <= dayOfData; dayOfType++) {
-				Day ddd = CalendarUtils.dayToDay(dayOfType);
+				long time = CalendarUtils.dayToTime(dayOfType);
 
 				Double upperBound = numbers.getBigR(dayOfData, dayOfType, true);
 				Double lowerBound = numbers.getBigR(dayOfData, dayOfType, false);
@@ -83,11 +89,10 @@ public class Reproductive {
 					continue;
 				}
 
-				upper.add(ddd, upperBound);
-				lower.add(ddd, lowerBound);
+				series.add(time, upperBound);
+				series.add(time + 1, lowerBound);
 			}
-			collection.addSeries(upper);
-			collection.addSeries(lower);
+			collection.addSeries(series);
 		}
 
 		// dataset.addSeries("Cases", series);

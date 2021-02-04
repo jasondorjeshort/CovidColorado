@@ -10,6 +10,8 @@ import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 
 import com.madgag.gif.fmsware.AnimatedGifEncoder;
 
@@ -58,14 +60,10 @@ public class ChartRates {
 
 		Smoothing smoothing = new Smoothing(13, Smoothing.Type.AVERAGE, Smoothing.Timing.TRAILING);
 
-		TimeSeries cfrUpper = new TimeSeries("CFR (deaths / cases) upper bound");
-		TimeSeries cfrLower = new TimeSeries("CFR lower bound");
-		TimeSeries chrUpper = new TimeSeries("CHR (hospitalizations / cases) upper bound");
-		TimeSeries chrLower = new TimeSeries("CHR lower bound");
-		TimeSeries hfrUpper = new TimeSeries("HFR (deaths / hospitalizations) upper bound");
-		TimeSeries hfrLower = new TimeSeries("HFR lower bound");
-		TimeSeries posUpper = new TimeSeries("Positivity (cases / tests) upper bound");
-		TimeSeries posLower = new TimeSeries("Positivity lower bound");
+		XYSeries cfr = new XYSeries("CFR (deaths / cases)");
+		XYSeries chr = new XYSeries("CHR (hospitalizations / cases)d");
+		XYSeries hfr = new XYSeries("HFR (deaths / hospitalizations)");
+		XYSeries pos = new XYSeries("Positivity (cases / tests)");
 
 		IncompleteNumbers tNumbers = stats.getNumbers(NumbersType.TESTS, timing);
 		IncompleteNumbers cNumbers = stats.getNumbers(NumbersType.CASES, timing);
@@ -87,42 +85,38 @@ public class ChartRates {
 			double deathUpper = dNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.UPPER, smoothing);
 			double deathLower = dNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.LOWER, smoothing);
 
-			Day ddd = CalendarUtils.dayToDay(dayOfInfection);
+			long time = CalendarUtils.dayToTime(dayOfInfection);
 
 			if (Double.isFinite(casesUpper) && casesUpper > 0) {
-				cfrUpper.add(ddd, 100.0 * deathUpper / casesLower);
-				cfrLower.add(ddd, 100.0 * deathLower / casesUpper);
+				cfr.add(time, 100.0 * deathUpper / casesLower);
+				cfr.add(time + 1, 100.0 * deathLower / casesUpper);
 
-				chrUpper.add(ddd, 100.0 * hospUpper / casesLower);
-				chrLower.add(ddd, 100.0 * hospLower / casesUpper);
+				chr.add(time, 100.0 * hospUpper / casesLower);
+				chr.add(time + 1, 100.0 * hospLower / casesUpper);
 			}
 			if (Double.isFinite(hospUpper) && hospUpper > 0) {
-				hfrUpper.add(ddd, 100.0 * deathUpper / hospLower);
-				hfrLower.add(ddd, 100.0 * deathLower / hospUpper);
+				hfr.add(time, 100.0 * deathUpper / hospLower);
+				hfr.add(time + 1, 100.0 * deathLower / hospUpper);
 			}
 
 			if (Double.isFinite(testsUpper) && testsUpper > 0) {
-				posUpper.add(ddd, 100.0 * casesUpper / testsLower);
-				posLower.add(ddd, 100.0 * casesLower / testsUpper);
+				pos.add(time, 100.0 * casesUpper / testsLower);
+				pos.add(time + 1, 100.0 * casesLower / testsUpper);
 			}
 		}
 
-		TimeSeriesCollection collection = new TimeSeriesCollection();
+		XYSeriesCollection collection = new XYSeriesCollection();
 		if (useCFR) {
-			collection.addSeries(cfrUpper);
-			collection.addSeries(cfrLower);
+			collection.addSeries(cfr);
 		}
 		if (useHFR) {
-			collection.addSeries(hfrUpper);
-			collection.addSeries(hfrLower);
+			collection.addSeries(hfr);
 		}
 		if (useCHR) {
-			collection.addSeries(chrUpper);
-			collection.addSeries(chrLower);
+			collection.addSeries(chr);
 		}
 		if (usePositivity) {
-			collection.addSeries(posUpper);
-			collection.addSeries(posLower);
+			collection.addSeries(pos);
 		}
 
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title + "\n(" + smoothing.getDescription() + ")",
