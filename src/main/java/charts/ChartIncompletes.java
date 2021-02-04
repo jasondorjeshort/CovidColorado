@@ -100,9 +100,12 @@ public class ChartIncompletes {
 			for (int d = numbers.getFirstDayOfType(); d <= dayOfData; d++) {
 				long time = CalendarUtils.dayToTime(d);
 
-				double upperBound = numbers.getNumbers(dayOfData, d, IncompleteNumbers.Form.UPPER, smoothing);
-				double lowerBound = numbers.getNumbers(dayOfData, d, IncompleteNumbers.Form.LOWER, smoothing);
-				double proj = numbers.getNumbers(dayOfData, d, IncompleteNumbers.Form.PROJECTED, smoothing);
+				Double upperBound = numbers.getNumbers(dayOfData, d, IncompleteNumbers.Form.UPPER, smoothing);
+				Double lowerBound = numbers.getNumbers(dayOfData, d, IncompleteNumbers.Form.LOWER, smoothing);
+				Double proj = numbers.getNumbers(dayOfData, d, IncompleteNumbers.Form.PROJECTED, smoothing);
+				if (proj == null || lowerBound == null || upperBound == null) {
+					continue;
+				}
 				if (!logarithmic || (lowerBound > 0 && proj > 0 && upperBound > 0)) {
 					series.add(time, proj, lowerBound, upperBound);
 				}

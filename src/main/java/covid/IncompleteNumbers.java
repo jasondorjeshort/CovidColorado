@@ -64,7 +64,9 @@ public class IncompleteNumbers extends Numbers {
 
 	public static enum Form {
 		CURRENT_NUMBERS,
+		CUMULATIVE,
 		PROJECTED,
+		CUMULATIVE_PROJECTED,
 		LOWER,
 		UPPER,
 	}
@@ -82,35 +84,53 @@ public class IncompleteNumbers extends Numbers {
 		return timing;
 	}
 
-	public synchronized double getNumbers(int dayOfData, int dayOfType, Form form) {
-		DayOfData daily = allNumbers.get(dayOfData);
+	public synchronized Double getNumbers(int dayOfData, int dayOfType, Form form) {
 
-		if (daily == null) {
-			return 0;
+		if (dayOfType < firstDayOfType || dayOfData < firstDayOfData) {
+			return 0.0;
+		}
+		if (dayOfType > lastDayOfData || dayOfData > lastDayOfData) {
+			return null;
 		}
 
-		Double value;
+		DayOfData daily = allNumbers.get(dayOfData);
 
 		switch (form) {
 		case CURRENT_NUMBERS:
-			value = daily.numbers.get(dayOfType);
-			break;
+			return daily.numbers.get(dayOfType);
 		case LOWER:
-			value = daily.lower.get(dayOfType);
-			break;
+			return daily.lower.get(dayOfType);
 		case PROJECTED:
-			value = daily.projected.get(dayOfType);
-			break;
+			return daily.projected.get(dayOfType);
 		case UPPER:
-			value = daily.upper.get(dayOfType);
-			break;
+			return daily.upper.get(dayOfType);
+		case CUMULATIVE:
+			if (dayOfType < firstDayOfType) {
+				return 0.0;
+			}
+			if (dayOfType > lastDayOfData) {
+				dayOfType = lastDayOfData;
+			}
+			if (daily.cumulativeNumbers.get(dayOfType) == null) {
+				double value = daily.cumulativeNumbers.get(dayOfType - 1) + daily.numbers.get(dayOfType);
+				daily.cumulativeNumbers.put(dayOfType, value);
+			}
+			return daily.cumulativeNumbers.get(dayOfType);
+		case CUMULATIVE_PROJECTED:
+			if (dayOfType < firstDayOfType) {
+				return 0.0;
+			}
+			if (dayOfType > lastDayOfData) {
+				dayOfType = lastDayOfData;
+			}
+			if (daily.cumulativeProjected.get(dayOfType) == null) {
+				double value = daily.cumulativeProjected.get(dayOfType - 1) + daily.projected.get(dayOfType);
+				daily.cumulativeProjected.put(dayOfType, value);
+			}
+			return daily.cumulativeProjected.get(dayOfType);
 		default:
 			throw new RuntimeException("Unknown form " + form);
 		}
-		if (value == null) {
-			return 0;
-		}
-		return value;
 	}
 
 	public synchronized int getFirstDayOfType() {
@@ -125,24 +145,7 @@ public class IncompleteNumbers extends Numbers {
 		return lastDayOfData;
 	}
 
-	public synchronized double getCumulativeNumbers(int dayOfData, int dayOfType, boolean projected) {
-		if (dayOfType < firstDayOfType) {
-			return 0;
-		}
-		if (dayOfType >= dayOfData) {
-			dayOfType = dayOfData;
-		}
-		DayOfData daily = allNumbers.get(dayOfData);
-		if (daily == null) {
-			return 0;
-		}
-		if (projected) {
-			return daily.cumulativeProjected.get(dayOfType);
-		}
-		return daily.cumulativeNumbers.get(dayOfType);
-	}
-
-	public synchronized double getNumbers(int dayOfData, int dayOfType, Form form, Smoothing smoothing) {
+	public synchronized Double getNumbers(int dayOfData, int dayOfType, Form form, Smoothing smoothing) {
 		int lastDayOfCalc;
 
 		switch (smoothing.getTiming()) {
@@ -158,10 +161,10 @@ public class IncompleteNumbers extends Numbers {
 
 		switch (smoothing.getType()) {
 		case CUMULATIVE:
-			if (form == Form.PROJECTED) {
-				return getCumulativeNumbers(dayOfData, dayOfType, true);
-			} else if (form == Form.CURRENT_NUMBERS) {
-				return getCumulativeNumbers(dayOfData, dayOfType, false);
+			if (form == Form.PROJECTED || form == Form.CUMULATIVE_PROJECTED) {
+				return getNumbers(dayOfData, dayOfType, Form.CUMULATIVE_PROJECTED);
+			} else if (form == Form.CURRENT_NUMBERS || form == Form.CUMULATIVE) {
+				return getNumbers(dayOfData, dayOfType, Form.CUMULATIVE);
 			} else {
 				throw new RuntimeException("Cannot count cumulative for " + form);
 			}
@@ -169,7 +172,11 @@ public class IncompleteNumbers extends Numbers {
 		case TOTAL:
 			double sum = 0;
 			for (int d = lastDayOfCalc - smoothing.getDays() + 1; d <= lastDayOfCalc; d++) {
-				sum += getNumbers(dayOfData, d, form);
+				Double v = getNumbers(dayOfData, d, form);
+				if (v == null) {
+					return null;
+				}
+				sum += v;
 			}
 
 			if (smoothing.getType() == Smoothing.Type.AVERAGE) {
@@ -179,8 +186,12 @@ public class IncompleteNumbers extends Numbers {
 		case GEOMETRIC_AVERAGE:
 			double product = 1.0;
 			for (int d = lastDayOfCalc - smoothing.getDays() + 1; d <= lastDayOfCalc; d++) {
+				Double v = getNumbers(dayOfData, d, form);
+				if (v == null) {
+					return null;
+				}
 				// unsolvable issue with negative tests here. Analytics...
-				product *= Math.max(getNumbers(dayOfData, d, form), 0.0);
+				product *= Math.max(v, 0.0);
 			}
 			product = Math.pow(product, 1.0 / smoothing.getDays());
 			if (!Double.isFinite(product)) {
@@ -305,6 +316,18 @@ public class IncompleteNumbers extends Numbers {
 						+ CalendarUtils.dayToDate(dayOfData)).printStackTrace();
 				DayOfData daily = new DayOfData();
 				allNumbers.put(dayOfData, daily);
+			}
+
+			DayOfData daily = allNumbers.get(dayOfData);
+			boolean started = false;
+			for (int dayOfType = lastDayOfData; dayOfType >= firstDayOfType; dayOfType--) {
+				if (daily.numbers.get(dayOfType) == null) {
+					if (started) {
+						daily.numbers.put(dayOfType, 0.0);
+					}
+				} else {
+					started = true;
+				}
 			}
 		}
 
@@ -561,23 +584,23 @@ public class IncompleteNumbers extends Numbers {
 			}
 
 			for (int dayOfType = firstDayOfType; dayOfType <= dayOfData - SERIAL_INTERVAL; dayOfType++) {
-				double start, end;
+				Double start, end;
 
 				end = getNumbers(dayOfData, dayOfType, Form.UPPER, smoothing);
 				start = getNumbers(dayOfData, dayOfType - SERIAL_INTERVAL, Form.UPPER, smoothing);
-				if (end != 0 && start != 0) {
+				if (end != null && start != null && end != 0 && start != 0) {
 					daily.upperR.put(dayOfType, end / start);
 				}
 
 				end = getNumbers(dayOfData, dayOfType, Form.LOWER, smoothing);
 				start = getNumbers(dayOfData, dayOfType - SERIAL_INTERVAL, Form.LOWER, smoothing);
-				if (end != 0 && start != 0) {
+				if (end != null && start != null && end != 0 && start != 0) {
 					daily.lowerR.put(dayOfType, end / start);
 				}
 
 				end = getNumbers(dayOfData, dayOfType, Form.PROJECTED, smoothing);
 				start = getNumbers(dayOfData, dayOfType - SERIAL_INTERVAL, Form.PROJECTED, smoothing);
-				if (end != 0 && start != 0) {
+				if (end != null && start != null && end != 0 && start != 0) {
 					daily.projR.put(dayOfType, end / start);
 				}
 			}
