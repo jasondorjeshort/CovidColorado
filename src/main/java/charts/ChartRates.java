@@ -68,28 +68,28 @@ public class ChartRates {
 			IncompleteNumbers nNumbers = stats.getNumbers(rate.numerator, timing);
 			IncompleteNumbers dNumbers = stats.getNumbers(rate.denominator, timing);
 
-			System.out.println("Building " + rate.allCapsName + " as " + rate.numerator + " / " + rate.denominator);
-
 			YIntervalSeries series = new YIntervalSeries(rate.description);
 
 			height = Math.max(height, rate.highestValue);
 
 			for (int dayOfInfection = firstDayOfChart; dayOfInfection <= dayOfData; dayOfInfection++) {
-				double nUpper = nNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.UPPER, smoothing);
-				double nLower = nNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.LOWER, smoothing);
-				double nProj = nNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.PROJECTED,
+				Double nUpper = nNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.UPPER, smoothing);
+				Double nLower = nNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.LOWER, smoothing);
+				Double nProj = nNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.PROJECTED,
 						smoothing);
-
-				double dUpper = dNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.UPPER, smoothing);
-				double dLower = dNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.LOWER, smoothing);
-				double dProj = dNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.PROJECTED,
-						smoothing);
-
-				long time = CalendarUtils.dayToTime(dayOfInfection);
-
-				if (!Double.isFinite(dUpper) || !Double.isFinite(dLower) || !Double.isFinite(dProj)) {
+				if (nUpper == null || nLower == null || nProj == null) {
 					continue;
 				}
+
+				Double dUpper = dNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.UPPER, smoothing);
+				Double dLower = dNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.LOWER, smoothing);
+				Double dProj = dNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.PROJECTED,
+						smoothing);
+				if (dUpper == null || dLower == null || dProj == null) {
+					continue;
+				}
+
+				long time = CalendarUtils.dayToTime(dayOfInfection);
 
 				if (dUpper <= 0 || dLower <= 0 || dProj <= 0) {
 					continue;
