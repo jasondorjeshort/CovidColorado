@@ -25,7 +25,7 @@ public enum NumbersType {
 	TESTS(Smoothing.GEOMETRIC_SYMMETRIC_WEEKLY, 100000, Color.YELLOW),
 	CASES(Smoothing.GEOMETRIC_SYMMETRIC_WEEKLY, 10000, Color.BLUE),
 	HOSPITALIZATIONS(Smoothing.GEOMETRIC_SYMMETRIC_13DAY, 500, Color.RED),
-	DEATHS(Smoothing.GEOMETRIC_SYMMETRIC_21DAY, 100, Color.BLACK);
+	DEATHS(Smoothing.ALGEBRAIC_SYMMETRIC_21DAY, 100, Color.BLACK);
 
 	NumbersType(Smoothing smoothing, int highestValue, Color color) {
 		this.smoothing = smoothing;
