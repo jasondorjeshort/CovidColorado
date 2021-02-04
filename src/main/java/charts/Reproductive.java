@@ -92,7 +92,6 @@ public class Reproductive {
 					continue;
 				}
 
-				// TODO: need a projected value here, not just an average
 				series.add(time, proj, lowerBound, upperBound);
 			}
 			collection.addSeries(series);
