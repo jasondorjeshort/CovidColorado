@@ -7,7 +7,32 @@ import com.madgag.gif.fmsware.AnimatedGifEncoder;
 import covid.CalendarUtils;
 import covid.ColoradoStats;
 
+/**
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ * 
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <https://www.gnu.org/licenses/>.
+ * 
+ * @author jdorje@gmail.com
+ */
 public abstract class AbstractChart {
+
+	/*
+	 * An "abstract" chart graphs something over all days of the pandemic for
+	 * one day of data. The simplest example is cases by day of infection: we
+	 * can make a graph for every day of all the data available up through that
+	 * day.
+	 * 
+	 * We can then animate this, or only make the latest graphs.
+	 */
 
 	/**
 	 * The "top" folder is a misnamer as a tier 2 folder presumably under the
