@@ -6,6 +6,8 @@ import com.madgag.gif.fmsware.AnimatedGifEncoder;
 
 import covid.CalendarUtils;
 import covid.ColoradoStats;
+import library.ASync;
+import library.MyExecutor;
 
 /**
  * This program is free software: you can redistribute it and/or modify it under
@@ -89,5 +91,20 @@ public abstract class AbstractChart {
 			gif.addFrame(c.getImage());
 		}
 		gif.finish();
+	}
+
+	public void buildChartsOnly(@SuppressWarnings("rawtypes") ASync async) {
+		if (!hasData()) {
+			return;
+		}
+		new File(getSubfolder()).mkdir();
+		for (int dayOfData = getFirstDayForAnimation(); dayOfData <= stats.getLastDay(); dayOfData++) {
+			if (async == null) {
+				buildChart(dayOfData);
+			} else {
+				int _dayOfData = dayOfData;
+				async.execute(() -> buildChart(_dayOfData));
+			}
+		}
 	}
 }
