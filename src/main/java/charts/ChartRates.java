@@ -152,4 +152,9 @@ public class ChartRates extends AbstractChart {
 	public String getName() {
 		return Rate.name(rates, "-");
 	}
+
+	@Override
+	public boolean hasData() {
+		return true;
+	}
 }

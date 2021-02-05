@@ -48,7 +48,12 @@ public abstract class AbstractChart {
 		return getSubfolder() + "\\" + CalendarUtils.dayToFullDate(dayOfData, '-') + ".png";
 	}
 
+	public abstract boolean hasData();
+
 	public void buildAllCharts() {
+		if (!hasData()) {
+			return;
+		}
 		AnimatedGifEncoder gif = new AnimatedGifEncoder();
 		String fileName = topFolder + "\\" + getName() + ".gif";
 		new File(getSubfolder()).mkdir();

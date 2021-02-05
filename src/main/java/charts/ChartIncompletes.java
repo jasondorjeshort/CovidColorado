@@ -92,10 +92,7 @@ public class ChartIncompletes extends AbstractChart {
 			title.append(")");
 		}
 
-		for (NumbersType type : NumbersType.values()) {
-			if (!types.contains(type)) {
-				continue;
-			}
+		for (NumbersType type : types) {
 			IncompleteNumbers numbers = stats.getNumbers(type, timing);
 			if (!numbers.hasData()) {
 				continue;
@@ -193,6 +190,21 @@ public class ChartIncompletes extends AbstractChart {
 	@Override
 	public String getName() {
 		return NumbersType.name(types, "-") + "-" + timing.lowerName + (logarithmic ? "-log" : "-cart");
+	}
+
+	/**
+	 * Some combinations here have no data and this is the easiest way to find
+	 * that out.
+	 */
+	@Override
+	public boolean hasData() {
+		for (NumbersType type : types) {
+			IncompleteNumbers n = stats.getNumbers(type, timing);
+			if (n.hasData()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 }

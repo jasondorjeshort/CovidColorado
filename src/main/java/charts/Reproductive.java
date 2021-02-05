@@ -37,19 +37,17 @@ import covid.NumbersType;
  * 
  * @author jdorje@gmail.com
  */
-public class Reproductive {
+public class Reproductive extends AbstractChart {
 	/*
 	 * Preliminary here.
 	 * 
 	 * This charts the estimated R(t).
 	 */
+	public final Set<NumbersType> types;
 
-	final ColoradoStats stats;
-	final String FOLDER = Charts.FULL_FOLDER + "\\" + "R";
-
-	public Reproductive(ColoradoStats stats) {
-		this.stats = stats;
-		new File(FOLDER).mkdir();
+	public Reproductive(ColoradoStats stats, Set<NumbersType> types) {
+		super(stats, Charts.FULL_FOLDER + "\\" + "R");
+		this.types = types;
 	}
 
 	private static final NumbersTiming TIMING = NumbersTiming.INFECTION;
@@ -57,13 +55,8 @@ public class Reproductive {
 
 	private static final int FIRST_DAY = CalendarUtils.dateToDay("2-14-2020");
 
-	/**
-	 * @param types
-	 * @param dayOfData
-	 * @return
-	 */
-	private Chart buildReproductiveChart(Set<NumbersType> types, int dayOfData) {
-
+	@Override
+	public Chart buildChart(int dayOfData) {
 		YIntervalSeriesCollection collection = new YIntervalSeriesCollection();
 		DeviationRenderer renderer = new DeviationRenderer(true, false);
 		int seriesCount = 0;
@@ -119,8 +112,7 @@ public class Reproductive {
 			Event.addEvents(plot);
 		}
 
-		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT),
-				FOLDER + "\\" + NumbersType.name(types, "-") + ".png");
+		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(dayOfData));
 		if (dayOfData == stats.getLastDay() && types.size() > 1) {
 			c.addFileName(Charts.TOP_FOLDER + "\\R.png");
 			c.saveAsPNG();
@@ -131,26 +123,13 @@ public class Reproductive {
 		return c;
 	}
 
-	/*
-	 * public Chart buildReproductiveCharts(Set<NumbersType> types, int
-	 * dayOfData) { String by = "R-" + numbers.getType().lowerName + "-" +
-	 * numbers.getTiming().lowerName; return buildCasesTimeseriesChart(by,
-	 * CalendarUtils.dayToFullDate(dayOfData), dayOfData, dayOfType ->
-	 * numbers.getBigR(dayOfData, dayOfType), null, by, "?R?", false, 0, false);
-	 * }
-	 */
-
-	public void buildReproductiveChart(Set<NumbersType> types) {
-		buildReproductiveChart(types, stats.getLastDay());
+	@Override
+	public String getName() {
+		return NumbersType.name(types, "-");
 	}
 
-	public int getFirstDayForAnimation() {
-		return Math.max(Charts.getFirstDayForCharts(stats), stats.getVeryFirstDay());
-	}
-
-	public void buildReproductiveCharts(Set<NumbersType> types) {
-		for (int dayOfData = getFirstDayForAnimation(); dayOfData <= stats.getLastDay(); dayOfData++) {
-			buildReproductiveChart(types, dayOfData);
-		}
+	@Override
+	public boolean hasData() {
+		return true;
 	}
 }

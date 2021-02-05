@@ -42,7 +42,6 @@ public class ChartMaker {
 		new File(Charts.FULL_FOLDER).mkdir();
 		ChartCounty county = new ChartCounty(stats);
 		Age age = new Age(stats);
-		Reproductive R = new Reproductive(stats);
 		Finals finals = new Finals(stats);
 		Distribution distribution = new Distribution(stats);
 		Set<NumbersType> fullTypes = NumbersType.getSet();
@@ -79,9 +78,9 @@ public class ChartMaker {
 			build.execute(() -> new ChartRates(stats, Rate.getSet(rate)).buildAllCharts());
 		}
 
-		build.execute(() -> R.buildReproductiveCharts(noTests));
+		build.execute(() -> new Reproductive(stats, noTests).buildAllCharts());
 		for (NumbersType type : NumbersType.values()) {
-			build.execute(() -> R.buildReproductiveCharts(NumbersType.getSet(type)));
+			build.execute(() -> new Reproductive(stats, NumbersType.getSet(type)).buildAllCharts());
 		}
 
 		for (NumbersTiming timing : NumbersTiming.values()) {
