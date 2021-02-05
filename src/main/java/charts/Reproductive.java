@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
@@ -103,6 +104,11 @@ public class Reproductive extends AbstractChart {
 		ValueAxis yAxis = plot.getRangeAxis();
 		yAxis.setLowerBound(0);
 		yAxis.setUpperBound(4);
+
+		DateAxis xAxis = new DateAxis("Date");
+		xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(FIRST_DAY));
+		xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(Charts.getLastDayForChartDisplay(stats)));
+		plot.setDomainAxis(xAxis);
 
 		ValueMarker marker = new ValueMarker(1.0);
 		marker.setPaint(Color.black);
