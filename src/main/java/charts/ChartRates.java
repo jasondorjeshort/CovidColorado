@@ -39,21 +39,20 @@ import covid.Smoothing;
  * 
  * @author jdorje@gmail.com
  */
-public class ChartRates {
+public class ChartRates extends AbstractChart {
 
 	private static final NumbersTiming timing = NumbersTiming.INFECTION;
 
 	public static final String RATES_FOLDER = Charts.FULL_FOLDER + "\\rates";
+	public final Set<Rate> rates;
 
-	private final ColoradoStats stats;
-
-	public ChartRates(ColoradoStats stats) {
-		new File(RATES_FOLDER).mkdir();
-		this.stats = stats;
+	public ChartRates(ColoradoStats stats, Set<Rate> rates) {
+		super(RATES_FOLDER, stats);
+		this.rates = rates;
 	}
 
-	private Chart buildRates(int dayOfData, Set<Rate> rates, String folder) {
-
+	@Override
+	public Chart buildChart(int dayOfData) {
 		Smoothing smoothing = new Smoothing(13, Smoothing.Type.AVERAGE, Smoothing.Timing.TRAILING);
 
 		DeviationRenderer renderer = new DeviationRenderer(true, false);
@@ -136,7 +135,8 @@ public class ChartRates {
 		Event.addEvents(plot);
 
 		String fileName = CalendarUtils.dayToFullDate(dayOfData, '-');
-		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), folder + "\\" + fileName + ".png");
+		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT),
+				getSubfolder() + "\\" + fileName + ".png");
 
 		if (timing == NumbersTiming.INFECTION && dayOfData == stats.getLastDay() && rates.size() == 1) {
 			String name = Charts.TOP_FOLDER + "\\" + Rate.allCapsName(rates, "-") + "-" + timing.lowerName + ".png";
@@ -149,24 +149,8 @@ public class ChartRates {
 		return c;
 	}
 
-	public static int getFirstDayForAnimation(ColoradoStats stats) {
-		return Math.max(Charts.getFirstDayForCharts(stats), stats.getFirstDayOfData());
-	}
-
-	public void buildGIF(Set<Rate> rates) {
-
-		AnimatedGifEncoder gif = new AnimatedGifEncoder();
-		String thisName = Rate.name(rates, "-");
-		String fileName = RATES_FOLDER + "\\" + thisName + ".gif";
-		String folder = RATES_FOLDER + "\\" + thisName;
-		new File(folder).mkdir();
-		gif.start(fileName);
-		for (int dayOfData = getFirstDayForAnimation(stats); dayOfData <= stats.getLastDay(); dayOfData++) {
-			Chart c = buildRates(dayOfData, rates, folder);
-			Charts.setDelay(stats, dayOfData, gif);
-			gif.addFrame(c.getImage());
-		}
-
-		gif.finish();
+	@Override
+	public String getName() {
+		return Rate.name(rates, "-");
 	}
 }

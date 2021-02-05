@@ -42,7 +42,6 @@ public class ChartMaker {
 		new File(Charts.FULL_FOLDER).mkdir();
 		ChartCounty county = new ChartCounty(stats);
 		ChartIncompletes incompletes = new ChartIncompletes(stats);
-		ChartRates rates = new ChartRates(stats);
 		Age age = new Age(stats);
 		Reproductive R = new Reproductive(stats);
 		Finals finals = new Finals(stats);
@@ -76,9 +75,9 @@ public class ChartMaker {
 
 		/* These are just ordered from slowest to fastest */
 
-		build.execute(() -> rates.buildGIF(Rate.getSet(Rate.values())));
+		build.execute(() -> new ChartRates(stats, Rate.getSet(Rate.values())).buildAllCharts());
 		for (Rate rate : Rate.values()) {
-			build.execute(() -> rates.buildGIF(Rate.getSet(rate)));
+			build.execute(() -> new ChartRates(stats, Rate.getSet(rate)).buildAllCharts());
 		}
 
 		build.execute(() -> R.buildReproductiveCharts(noTests));
