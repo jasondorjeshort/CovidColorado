@@ -47,7 +47,7 @@ public class ChartRates extends AbstractChart {
 	public final Set<Rate> rates;
 
 	public ChartRates(ColoradoStats stats, Set<Rate> rates) {
-		super(RATES_FOLDER, stats);
+		super(stats, RATES_FOLDER);
 		this.rates = rates;
 	}
 
@@ -135,8 +135,7 @@ public class ChartRates extends AbstractChart {
 		Event.addEvents(plot);
 
 		String fileName = CalendarUtils.dayToFullDate(dayOfData, '-');
-		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT),
-				getSubfolder() + "\\" + fileName + ".png");
+		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(dayOfData));
 
 		if (timing == NumbersTiming.INFECTION && dayOfData == stats.getLastDay() && rates.size() == 1) {
 			String name = Charts.TOP_FOLDER + "\\" + Rate.allCapsName(rates, "-") + "-" + timing.lowerName + ".png";

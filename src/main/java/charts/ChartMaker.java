@@ -41,7 +41,6 @@ public class ChartMaker {
 		new File(Charts.TOP_FOLDER).mkdir();
 		new File(Charts.FULL_FOLDER).mkdir();
 		ChartCounty county = new ChartCounty(stats);
-		ChartIncompletes incompletes = new ChartIncompletes(stats);
 		Age age = new Age(stats);
 		Reproductive R = new Reproductive(stats);
 		Finals finals = new Finals(stats);
@@ -57,14 +56,14 @@ public class ChartMaker {
 		if (false) {
 			Set<NumbersType> types = noTests;
 			NumbersTiming timing = NumbersTiming.INFECTION;
+			ChartIncompletes chart = new ChartIncompletes(stats, types, timing, true);
 			for (int dayOfData = stats.getLastDay(); dayOfData >= stats.getVeryFirstDay(); dayOfData--) {
 				boolean logarithmic = true;
 				int _dayOfData = dayOfData;
 				String name = NumbersType.name(types, "-") + "-" + timing.lowerName + (logarithmic ? "-log" : "-cart");
 				String folder = Charts.FULL_FOLDER + "\\" + name;
 				new File(folder).mkdir();
-				build.execute(
-						() -> incompletes.buildChart(folder, null, _dayOfData, types, NumbersTiming.INFECTION, true));
+				build.execute(() -> chart.buildChart(_dayOfData));
 			}
 
 			build.complete();
@@ -86,19 +85,19 @@ public class ChartMaker {
 		}
 
 		for (NumbersTiming timing : NumbersTiming.values()) {
-			build.execute(() -> incompletes.buildGIF(noTests, timing, true));
-			build.execute(() -> incompletes.buildGIF(noTests, timing, false));
+			build.execute(() -> new ChartIncompletes(stats, noTests, timing, true).buildAllCharts());
+			build.execute(() -> new ChartIncompletes(stats, noTests, timing, false).buildAllCharts());
 			build.execute(() -> age.buildChart(noTests, timing));
 
-			build.execute(() -> incompletes.buildGIF(fullTypes, timing, true));
-			build.execute(() -> incompletes.buildGIF(fullTypes, timing, false));
+			build.execute(() -> new ChartIncompletes(stats, fullTypes, timing, true).buildAllCharts());
+			build.execute(() -> new ChartIncompletes(stats, fullTypes, timing, false).buildAllCharts());
 			// No point to testing age; it's identical to cases
 
 			for (NumbersType type : NumbersType.values()) {
 				Set<NumbersType> types = NumbersType.getSet(type);
 				IncompleteNumbers numbers = stats.getNumbers(type, timing);
-				build.execute(() -> incompletes.buildGIF(types, timing, true));
-				build.execute(() -> incompletes.buildGIF(types, timing, false));
+				build.execute(() -> new ChartIncompletes(stats, types, timing, true).buildAllCharts());
+				build.execute(() -> new ChartIncompletes(stats, types, timing, false).buildAllCharts());
 				build.execute(() -> distribution.buildDistributions(numbers));
 				build.execute(() -> age.buildChart(types, timing));
 			}

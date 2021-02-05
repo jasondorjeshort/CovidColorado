@@ -4,6 +4,7 @@ import java.io.File;
 
 import com.madgag.gif.fmsware.AnimatedGifEncoder;
 
+import covid.CalendarUtils;
 import covid.ColoradoStats;
 
 public abstract class AbstractChart {
@@ -17,7 +18,7 @@ public abstract class AbstractChart {
 
 	public final ColoradoStats stats;
 
-	public AbstractChart(String topFolder, ColoradoStats stats) {
+	public AbstractChart(ColoradoStats stats, String topFolder) {
 		this.topFolder = topFolder;
 		this.stats = stats;
 		new File(topFolder).mkdir();
@@ -41,6 +42,10 @@ public abstract class AbstractChart {
 
 	public final int getFirstDayForAnimation() {
 		return Math.max(Charts.getFirstDayForCharts(stats), getFirstDayForAnimationBackend());
+	}
+
+	public String getPngName(int dayOfData) {
+		return getSubfolder() + "\\" + CalendarUtils.dayToFullDate(dayOfData, '-') + ".png";
 	}
 
 	public void buildAllCharts() {

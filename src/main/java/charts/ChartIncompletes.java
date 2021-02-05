@@ -40,17 +40,22 @@ import covid.Smoothing;
  * 
  * @author jdorje@gmail.com
  */
-public class ChartIncompletes {
-	public ChartIncompletes(ColoradoStats stats) {
-		this.stats = stats;
-	}
+public class ChartIncompletes extends AbstractChart {
+	public final Set<NumbersType> types;
+	public final NumbersTiming timing;
+	public final boolean logarithmic;
 
-	private final ColoradoStats stats;
+	public ChartIncompletes(ColoradoStats stats, Set<NumbersType> types, NumbersTiming timing, boolean logarithmic) {
+		super(stats, Charts.FULL_FOLDER);
+		this.types = types;
+		this.timing = timing;
+		this.logarithmic = logarithmic;
+	}
 
 	private static final boolean SHOW_FINALS = true;
 
-	public Chart buildChart(String folder, String fileName, int dayOfData, Set<NumbersType> types, NumbersTiming timing,
-			boolean logarithmic) {
+	@Override
+	public Chart buildChart(int dayOfData) {
 		YIntervalSeriesCollection collection = new YIntervalSeriesCollection();
 		StringBuilder title = new StringBuilder();
 
@@ -173,13 +178,9 @@ public class ChartIncompletes {
 			Event.addEvents(plot);
 		}
 
-		if (fileName == null) {
-			fileName = CalendarUtils.dayToFullDate(dayOfData, '-');
-		}
-		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), folder + "\\" + fileName + ".png");
+		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(dayOfData));
 		if (timing == NumbersTiming.INFECTION && types.size() == 3 && logarithmic && dayOfData == stats.getLastDay()) {
-			c.addFileName(Charts.TOP_FOLDER + "\\" + NumbersType.name(types, "-") + "-infection"
-					+ (logarithmic ? "-log" : "-cart") + ".png");
+			c.addFileName(Charts.TOP_FOLDER + "\\" + getName() + ".png");
 			c.saveAsPNG();
 			c.open();
 		} else {
@@ -189,40 +190,9 @@ public class ChartIncompletes {
 		return c;
 	}
 
-	public String buildChart(Set<NumbersType> types, NumbersTiming timing) {
-		String fileName = NumbersType.name(types, "-") + "-" + timing.lowerName;
-		Chart c = buildChart(Charts.FULL_FOLDER, fileName, stats.getLastDay(), types, timing, true);
-		return c.getFileName();
-	}
-
-	public int getFirstDayForAnimation(NumbersTiming timing) {
-		return Math.max(Charts.getFirstDayForCharts(stats), stats.getFirstDayOfData());
-	}
-
-	public void buildGIF(Set<NumbersType> types, NumbersTiming timing, boolean logarithmic) {
-		boolean hasData = false;
-		for (NumbersType type : types) {
-			hasData |= stats.getNumbers(type, timing).hasData();
-		}
-		if (!hasData) {
-			return;
-		}
-		AnimatedGifEncoder gif = new AnimatedGifEncoder();
-		String name = NumbersType.name(types, "-") + "-" + timing.lowerName + (logarithmic ? "-log" : "-cart");
-		String folder = Charts.FULL_FOLDER + "\\" + name;
-		String gifName = Charts.FULL_FOLDER + "\\" + name + ".gif";
-		new File(folder).mkdir();
-		gif.start(gifName);
-		for (int dayOfData = getFirstDayForAnimation(timing); dayOfData <= stats.getLastDay(); dayOfData++) {
-			Chart c = buildChart(folder, null, dayOfData, types, timing, logarithmic);
-			Charts.setDelay(stats, dayOfData, gif);
-			gif.addFrame(c.getImage());
-		}
-		gif.finish();
-	}
-
-	public void buildGIF(NumbersType type, NumbersTiming timing, boolean logarithmic) {
-		buildGIF(NumbersType.getSet(type), timing, logarithmic);
+	@Override
+	public String getName() {
+		return NumbersType.name(types, "-") + "-" + timing.lowerName + (logarithmic ? "-log" : "-cart");
 	}
 
 }
