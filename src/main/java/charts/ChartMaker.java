@@ -43,7 +43,6 @@ public class ChartMaker {
 		ChartCounty county = new ChartCounty(stats);
 		Age age = new Age(stats);
 		Finals finals = new Finals(stats);
-		Distribution distribution = new Distribution(stats);
 		Set<NumbersType> fullTypes = NumbersType.getSet();
 		Set<NumbersType> noTests = NumbersType.getSet(NumbersType.CASES, NumbersType.DEATHS,
 				NumbersType.HOSPITALIZATIONS);
@@ -75,6 +74,7 @@ public class ChartMaker {
 		for (NumbersTiming timing : NumbersTiming.values()) {
 			build.execute(() -> new ChartIncompletes(stats, noTests, timing, true).buildAllCharts());
 			build.execute(() -> new ChartIncompletes(stats, noTests, timing, false).buildAllCharts());
+			build.execute(() -> new NewNumbersChart(stats, noTests, timing).buildAllCharts());
 			build.execute(() -> age.buildChart(noTests, timing));
 
 			build.execute(() -> new ChartIncompletes(stats, fullTypes, timing, true).buildAllCharts());
@@ -83,10 +83,9 @@ public class ChartMaker {
 
 			for (NumbersType type : NumbersType.values()) {
 				Set<NumbersType> types = NumbersType.getSet(type);
-				IncompleteNumbers numbers = stats.getNumbers(type, timing);
 				build.execute(() -> new ChartIncompletes(stats, types, timing, true).buildAllCharts());
 				build.execute(() -> new ChartIncompletes(stats, types, timing, false).buildAllCharts());
-				build.execute(() -> distribution.buildDistributions(numbers));
+				build.execute(() -> new NewNumbersChart(stats, types, timing).buildAllCharts());
 				build.execute(() -> age.buildChart(types, timing));
 			}
 		}
