@@ -59,7 +59,7 @@ public class DelayChart extends AbstractChart {
 		return total;
 	}
 
-	public Chart buildFullChart() {
+	public Chart buildFullChart(int lastDayOfData) {
 		XYSeriesCollection collection = new XYSeriesCollection();
 
 		for (NumbersType type : types) {
@@ -69,15 +69,15 @@ public class DelayChart extends AbstractChart {
 
 			for (int dayOfType = numbers.getFirstDayOfType(); dayOfType <= numbers.getLastDay(); dayOfType++) {
 				for (int dayOfData = dayOfType; dayOfData < dayOfType + interval
-						&& dayOfData <= stats.getLastDay(); dayOfData++) {
+						&& dayOfData <= lastDayOfData; dayOfData++) {
 					int delay = dayOfData - dayOfType;
 					double n1 = numbers.getNumbers(dayOfData, dayOfType);
 					double n2 = numbers.getNumbers(dayOfData - 1, dayOfType);
 					number[delay] += n1 - n2;
 				}
 
-				if (dayOfType + interval <= stats.getLastDay()) {
-					double n1 = numbers.getNumbers(stats.getLastDay(), dayOfType);
+				if (dayOfType + interval <= lastDayOfData) {
+					double n1 = numbers.getNumbers(lastDayOfData, dayOfType);
 					double n2 = numbers.getNumbers(dayOfType + interval - 1, dayOfType);
 					number[interval] += n1 - n2;
 				}
@@ -102,13 +102,16 @@ public class DelayChart extends AbstractChart {
 			}
 		}
 		title.append(";\n data through ");
-		title.append(CalendarUtils.dayToDate(stats.getLastDay()));
+		title.append(CalendarUtils.dayToDate(lastDayOfData));
 		JFreeChart chart = ChartFactory.createXYLineChart(title.toString(), "Date", "Percentage", collection);
 
-		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(stats.getLastDay()));
-		c.saveAsPNG();
-		if (timing == NumbersTiming.INFECTION && types.size() >= 3) {
+		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(lastDayOfData));
+		if (timing == NumbersTiming.INFECTION && types.size() == 3) {
+			c.addFileName(Charts.TOP_FOLDER + "\\delay-" + timing.lowerName + ".png");
+			c.saveAsPNG();
 			c.open();
+		} else {
+			c.saveAsPNG();
 		}
 		return c;
 	}
@@ -117,7 +120,7 @@ public class DelayChart extends AbstractChart {
 	public Chart buildChart(int dayOfType) {
 
 		if (dayOfType == stats.getLastDay()) {
-			return buildFullChart();
+			return buildFullChart(dayOfType);
 		}
 
 		boolean hasData = false;
