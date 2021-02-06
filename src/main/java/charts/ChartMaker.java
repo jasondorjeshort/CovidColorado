@@ -73,6 +73,7 @@ public class ChartMaker {
 		for (NumbersTiming timing : NumbersTiming.values()) {
 			build.execute(() -> new ChartIncompletes(stats, noTests, timing, true).buildAllCharts());
 			build.execute(() -> new ChartIncompletes(stats, noTests, timing, false).buildAllCharts());
+			build.execute(() -> new DelayChart(stats, noTests, timing).buildAllCharts());
 			build.execute(() -> new NewNumbersChart(stats, noTests, timing).buildAllCharts());
 			build.execute(() -> age.buildChart(noTests, timing));
 
@@ -85,6 +86,7 @@ public class ChartMaker {
 				build.execute(() -> new ChartIncompletes(stats, types, timing, true).buildAllCharts());
 				build.execute(() -> new ChartIncompletes(stats, types, timing, false).buildAllCharts());
 				build.execute(() -> new NewNumbersChart(stats, types, timing).buildAllCharts());
+				build.execute(() -> new DelayChart(stats, types, timing).buildAllCharts());
 				build.execute(() -> age.buildChart(types, timing));
 			}
 		}
