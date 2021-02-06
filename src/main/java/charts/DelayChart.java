@@ -62,6 +62,8 @@ public class DelayChart extends AbstractChart {
 	public Chart buildFullChart(int lastDayOfData) {
 		XYSeriesCollection collection = new XYSeriesCollection();
 
+		String category = (types.size() > 1) ? "numbers" : NumbersType.name(types, "");
+
 		for (NumbersType type : types) {
 
 			double[] number = new double[interval + 1];
@@ -94,16 +96,11 @@ public class DelayChart extends AbstractChart {
 
 		StringBuilder title = new StringBuilder();
 		title.append("Time from " + timing.lowerName + " to release of all ");
-		if (types.size() > 1) {
-			title.append("numbers");
-		} else {
-			for (NumbersType type : types) {
-				title.append(type.lowerName);
-			}
-		}
+		title.append(category);
 		title.append(";\n data through ");
 		title.append(CalendarUtils.dayToDate(lastDayOfData));
-		JFreeChart chart = ChartFactory.createXYLineChart(title.toString(), "Date", "Percentage", collection);
+		JFreeChart chart = ChartFactory.createXYLineChart(title.toString(), "Days of delay",
+				"Percentage of " + category + " on this day", collection);
 
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(lastDayOfData));
 		if (timing == NumbersTiming.INFECTION && types.size() == 3) {
