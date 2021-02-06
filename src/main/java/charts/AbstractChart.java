@@ -7,7 +7,6 @@ import com.madgag.gif.fmsware.AnimatedGifEncoder;
 import covid.CalendarUtils;
 import covid.ColoradoStats;
 import library.ASync;
-import library.MyExecutor;
 
 /**
  * This program is free software: you can redistribute it and/or modify it under

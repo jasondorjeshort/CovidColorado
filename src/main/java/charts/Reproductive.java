@@ -2,7 +2,6 @@ package charts;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.io.File;
 import java.util.Set;
 
 import org.jfree.chart.ChartFactory;

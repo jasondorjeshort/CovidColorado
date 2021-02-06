@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.Set;
 
 import covid.ColoradoStats;
-import covid.IncompleteNumbers;
 import covid.NumbersTiming;
 import covid.NumbersType;
 import covid.Rate;

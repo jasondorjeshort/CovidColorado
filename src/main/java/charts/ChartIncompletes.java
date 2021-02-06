@@ -1,7 +1,6 @@
 package charts;
 
 import java.awt.BasicStroke;
-import java.io.File;
 import java.util.Set;
 
 import org.jfree.chart.ChartFactory;
@@ -13,8 +12,6 @@ import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.DeviationRenderer;
 import org.jfree.data.xy.YIntervalSeries;
 import org.jfree.data.xy.YIntervalSeriesCollection;
-
-import com.madgag.gif.fmsware.AnimatedGifEncoder;
 
 import covid.CalendarUtils;
 import covid.ColoradoStats;
