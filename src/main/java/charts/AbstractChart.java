@@ -31,7 +31,8 @@ public abstract class AbstractChart {
 	 * An "abstract" chart graphs something over all days of the pandemic for
 	 * one day of data. The simplest example is cases by day of infection: we
 	 * can make a graph for every day of all the data available up through that
-	 * day.
+	 * day. It can also work the other way: graphing days of data over every day
+	 * of infection.
 	 * 
 	 * We can then animate this, or only make the latest graphs.
 	 */
@@ -61,18 +62,22 @@ public abstract class AbstractChart {
 		return topFolder + "\\" + getName();
 	}
 
-	public abstract Chart buildChart(int dayOfData);
+	public abstract Chart buildChart(int dayOfChart);
 
-	public int getFirstDayForAnimationBackend() {
+	public int getFirstDayOfChart() {
 		return stats.getFirstDayOfData();
 	}
 
-	public final int getFirstDayForAnimation() {
-		return Math.max(Charts.getFirstDayForCharts(stats), getFirstDayForAnimationBackend());
+	public int getLastDayOfChart() {
+		return stats.getLastDay();
 	}
 
-	public String getPngName(int dayOfData) {
-		return getSubfolder() + "\\" + CalendarUtils.dayToFullDate(dayOfData, '-') + ".png";
+	private final int _getFirstDayOfChart() {
+		return Math.max(Charts.getFirstDayForCharts(stats), getFirstDayOfChart());
+	}
+
+	public String getPngName(int dayOfChart) {
+		return getSubfolder() + "\\" + CalendarUtils.dayToFullDate(dayOfChart, '-') + ".png";
 	}
 
 	public abstract boolean hasData();
@@ -85,9 +90,9 @@ public abstract class AbstractChart {
 		String fileName = topFolder + "\\" + getName() + ".gif";
 		new File(getSubfolder()).mkdir();
 		gif.start(fileName);
-		for (int dayOfData = getFirstDayForAnimation(); dayOfData <= stats.getLastDay(); dayOfData++) {
-			Chart c = buildChart(dayOfData);
-			Charts.setDelay(stats, dayOfData, gif);
+		for (int dayOfChart = _getFirstDayOfChart(); dayOfChart <= getLastDayOfChart(); dayOfChart++) {
+			Chart c = buildChart(dayOfChart);
+			Charts.setDelay(stats, dayOfChart, gif);
 			gif.addFrame(c.getImage());
 		}
 		gif.finish();
@@ -98,7 +103,7 @@ public abstract class AbstractChart {
 			return;
 		}
 		new File(getSubfolder()).mkdir();
-		for (int dayOfData = getFirstDayForAnimation(); dayOfData <= stats.getLastDay(); dayOfData++) {
+		for (int dayOfData = _getFirstDayOfChart(); dayOfData <= getLastDayOfChart(); dayOfData++) {
 			if (async == null) {
 				buildChart(dayOfData);
 			} else {
