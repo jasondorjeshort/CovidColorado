@@ -43,7 +43,7 @@ public class DelayChart extends AbstractChart {
 	private final Set<NumbersType> types;
 	private final NumbersTiming timing;
 
-	private final int interval = 30;
+	private final int interval = 60;
 
 	public DelayChart(ColoradoStats stats, Set<NumbersType> types, NumbersTiming timing) {
 		super(stats, Charts.FULL_FOLDER + "\\" + "new-numbers");
@@ -51,10 +51,75 @@ public class DelayChart extends AbstractChart {
 		this.timing = timing;
 	}
 
+	public static double sumArray(double[] array) {
+		double total = 0.0;
+		for (double value : array) {
+			total += value;
+		}
+		return total;
+	}
+
+	public Chart buildFullChart() {
+		XYSeriesCollection collection = new XYSeriesCollection();
+
+		for (NumbersType type : types) {
+
+			double[] number = new double[interval + 1];
+			IncompleteNumbers numbers = stats.getNumbers(type, timing);
+
+			for (int dayOfType = numbers.getFirstDayOfType(); dayOfType <= numbers.getLastDay(); dayOfType++) {
+				for (int dayOfData = dayOfType; dayOfData < dayOfType + interval
+						&& dayOfData <= stats.getLastDay(); dayOfData++) {
+					int delay = dayOfData - dayOfType;
+					double n1 = numbers.getNumbers(dayOfData, dayOfType);
+					double n2 = numbers.getNumbers(dayOfData - 1, dayOfType);
+					number[delay] += n1 - n2;
+				}
+
+				if (dayOfType + interval <= stats.getLastDay()) {
+					double n1 = numbers.getNumbers(stats.getLastDay(), dayOfType);
+					double n2 = numbers.getNumbers(dayOfType + interval - 1, dayOfType);
+					number[interval] += n1 - n2;
+				}
+			}
+
+			XYSeries series = new XYSeries(type.capName);
+			double total = sumArray(number);
+			for (int delay = 0; delay <= interval; delay++) {
+				series.add(delay, number[delay] / total * 100.0);
+			}
+			collection.addSeries(series);
+			System.out.println("Total " + type.lowerName + ": " + total);
+		}
+
+		StringBuilder title = new StringBuilder();
+		title.append("Time from " + timing.lowerName + " to release of all ");
+		if (types.size() > 1) {
+			title.append("numbers");
+		} else {
+			for (NumbersType type : types) {
+				title.append(type.lowerName);
+			}
+		}
+		title.append(";\n data through ");
+		title.append(CalendarUtils.dayToDate(stats.getLastDay()));
+		JFreeChart chart = ChartFactory.createXYLineChart(title.toString(), "Date", "Percentage", collection);
+
+		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(stats.getLastDay()));
+		c.saveAsPNG();
+		if (timing == NumbersTiming.INFECTION && types.size() >= 3) {
+			c.open();
+		}
+		return c;
+	}
+
 	@Override
 	public Chart buildChart(int dayOfType) {
 
-		System.out.println("Building delay chart for " + CalendarUtils.dayToDate(dayOfType));
+		if (dayOfType == stats.getLastDay()) {
+			return buildFullChart();
+		}
+
 		boolean hasData = false;
 
 		XYSeriesCollection collection = new XYSeriesCollection();
@@ -63,7 +128,8 @@ public class DelayChart extends AbstractChart {
 			IncompleteNumbers numbers = stats.getNumbers(type, timing);
 			XYSeries series = new XYSeries(type.capName);
 
-			for (int dayOfData = dayOfType; dayOfData < dayOfType + interval; dayOfData++) {
+			for (int dayOfData = dayOfType; dayOfData < dayOfType + interval
+					&& dayOfData <= stats.getLastDay(); dayOfData++) {
 				int delay = dayOfData - dayOfType;
 				double n1 = numbers.getNumbers(dayOfData, dayOfType);
 				double n2 = numbers.getNumbers(dayOfData - 1, dayOfType);
@@ -101,9 +167,6 @@ public class DelayChart extends AbstractChart {
 
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(dayOfType));
 		c.saveAsPNG();
-		if (dayOfType == stats.getLastDay() - 60 && timing == NumbersTiming.INFECTION && types.size() >= 3) {
-			c.open();
-		}
 		return c;
 	}
 
