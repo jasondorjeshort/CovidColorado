@@ -137,11 +137,10 @@ public class ChartRates extends AbstractChart {
 		if (timing == NumbersTiming.INFECTION && dayOfData == stats.getLastDay() && rates.size() == 1) {
 			String name = Charts.TOP_FOLDER + "\\" + Rate.allCapsName(rates, "-") + "-" + timing.lowerName + ".png";
 			c.addFileName(name);
-			c.saveAsPNG();
 			c.open();
-		} else {
-			c.saveAsPNG();
 		}
+		c.saveAsPNG();
+
 		return c;
 	}
 

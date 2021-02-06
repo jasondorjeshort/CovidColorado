@@ -105,11 +105,9 @@ public class DelayChart extends AbstractChart {
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(lastDayOfData));
 		if (timing == NumbersTiming.INFECTION && types.size() == 3) {
 			c.addFileName(Charts.TOP_FOLDER + "\\delay-" + timing.lowerName + ".png");
-			c.saveAsPNG();
 			c.open();
-		} else {
-			c.saveAsPNG();
 		}
+		c.saveAsPNG();
 		return c;
 	}
 

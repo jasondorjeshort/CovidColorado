@@ -120,11 +120,10 @@ public class Reproductive extends AbstractChart {
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(dayOfData));
 		if (dayOfData == stats.getLastDay() && types.size() > 1) {
 			c.addFileName(Charts.TOP_FOLDER + "\\R.png");
-			c.saveAsPNG();
 			c.open();
-		} else {
-			c.saveAsPNG();
 		}
+		c.saveAsPNG();
+
 		return c;
 	}
 

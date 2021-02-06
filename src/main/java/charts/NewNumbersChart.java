@@ -82,10 +82,10 @@ public class NewNumbersChart extends AbstractChart {
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title.toString(), "Date", "Count", collection);
 
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(dayOfData));
-		c.saveAsPNG();
 		if (dayOfData == stats.getLastDay() && timing == NumbersTiming.INFECTION && types.size() >= 3) {
 			c.open();
 		}
+		c.saveAsPNG();
 		return c;
 	}
 

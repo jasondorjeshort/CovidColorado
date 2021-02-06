@@ -175,12 +175,10 @@ public class ChartIncompletes extends AbstractChart {
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(dayOfData));
 		if (timing == NumbersTiming.INFECTION && types.size() == 3 && logarithmic && dayOfData == stats.getLastDay()) {
 			c.addFileName(Charts.TOP_FOLDER + "\\" + getName() + ".png");
-			c.saveAsPNG();
 			c.open();
-		} else {
-			c.saveAsPNG();
-
 		}
+		c.saveAsPNG();
+
 		return c;
 	}
 

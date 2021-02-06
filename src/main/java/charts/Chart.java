@@ -30,6 +30,8 @@ import org.jfree.chart.encoders.ImageFormat;
 public class Chart {
 	private final HashSet<String> fileNames = new HashSet<>();
 	private BufferedImage image;
+	private boolean openQueued;
+	private boolean saved;
 
 	public Chart(BufferedImage image, String... fileNames) {
 		for (String fileName : fileNames) {
@@ -51,6 +53,11 @@ public class Chart {
 				e.printStackTrace();
 			}
 		}
+		saved = true;
+		if (openQueued) {
+			open();
+			openQueued = false;
+		}
 	}
 
 	public String getFileName() {
@@ -61,6 +68,10 @@ public class Chart {
 	}
 
 	public void open() {
+		if (!saved) {
+			openQueued = true;
+			return;
+		}
 		String fName = null;
 		// Arbitrary trick/hack : open the longest file name since it's probably
 		// the most specific

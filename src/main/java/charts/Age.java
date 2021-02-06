@@ -145,11 +145,9 @@ public class Age {
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), fullFileName);
 		if (false && timing == NumbersTiming.INFECTION && types.size() == 3) {
 			c.addFileName(Charts.TOP_FOLDER + "\\" + fileName);
-			c.saveAsPNG();
 			c.open();
-		} else {
-			c.saveAsPNG();
 		}
+		c.saveAsPNG();
 	}
 
 }
