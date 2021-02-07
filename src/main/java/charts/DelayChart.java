@@ -1,14 +1,17 @@
 package charts;
 
+import java.awt.BasicStroke;
 import java.util.Set;
 
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.data.time.TimeSeries;
-import org.jfree.data.time.TimeSeriesCollection;
+import org.jfree.chart.renderer.xy.DeviationRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+import org.jfree.data.xy.YIntervalSeries;
+import org.jfree.data.xy.YIntervalSeriesCollection;
 
 import covid.CalendarUtils;
 import covid.ColoradoStats;
@@ -59,39 +62,65 @@ public class DelayChart extends AbstractChart {
 		return total;
 	}
 
-	public Chart buildFullChart(int lastDayOfData) {
-		XYSeriesCollection collection = new XYSeriesCollection();
+	boolean cumulative = true;
+
+	@Override
+	public Chart buildChart(int lastDayOfData) {
+
+		YIntervalSeriesCollection collection = new YIntervalSeriesCollection();
+		DeviationRenderer renderer = new DeviationRenderer(true, false);
+		int seriesCount = 0;
 
 		String category = (types.size() > 1) ? "numbers" : NumbersType.name(types, "");
 
 		for (NumbersType type : types) {
-
-			double[] number = new double[interval + 1];
 			IncompleteNumbers numbers = stats.getNumbers(type, timing);
 
-			for (int dayOfType = numbers.getFirstDayOfType(); dayOfType <= numbers.getLastDay(); dayOfType++) {
+			DescriptiveStatistics[] desc = new DescriptiveStatistics[interval + 1];
+			for (int i = 0; i < desc.length; i++) {
+				desc[i] = new DescriptiveStatistics();
+			}
+
+			for (int dayOfType = numbers.getFirstDayOfType(); dayOfType <= numbers.getLastDay()
+					- interval; dayOfType++) {
+				double total = numbers.getNumbers(lastDayOfData, dayOfType);
+				double total2 = 0;
 				for (int dayOfData = dayOfType; dayOfData < dayOfType + interval
 						&& dayOfData <= lastDayOfData; dayOfData++) {
+
 					int delay = dayOfData - dayOfType;
 					double n1 = numbers.getNumbers(dayOfData, dayOfType);
 					double n2 = numbers.getNumbers(dayOfData - 1, dayOfType);
-					number[delay] += n1 - n2;
+					double pct = ((cumulative ? total2 : 0) + n1 - n2) / total;
+					desc[delay].addValue(pct);
+					total2 += n1 - n2;
 				}
 
-				if (dayOfType + interval <= lastDayOfData) {
-					double n1 = numbers.getNumbers(lastDayOfData, dayOfType);
-					double n2 = numbers.getNumbers(dayOfType + interval - 1, dayOfType);
-					number[interval] += n1 - n2;
+				double n1 = numbers.getNumbers(lastDayOfData, dayOfType);
+				double n2 = numbers.getNumbers(dayOfType + interval - 1, dayOfType);
+				double pct = ((cumulative ? total2 : 0) + n1 - n2) / total;
+				desc[interval].addValue(pct);
+				total2 += n1 - n2;
+
+				if (total != total2) {
+					new Exception("Fail totals: " + total + " vs " + total2).printStackTrace();
 				}
 			}
 
-			XYSeries series = new XYSeries(type.capName);
-			double total = sumArray(number);
+			YIntervalSeries series = new YIntervalSeries(type.capName);
 			for (int delay = 0; delay <= interval; delay++) {
-				series.add(delay, number[delay] / total * 100.0);
+				System.out
+						.println("VALUES for " + delay + " out of " + desc[delay].getN() + ": " + desc[delay].getMean()
+								+ "[" + desc[delay].getPercentile(25) + " - " + desc[delay].getPercentile(75));
+				series.add(delay, 100 * desc[delay].getPercentile(50), 100 * desc[delay].getPercentile(25),
+						100 * desc[delay].getPercentile(75));
 			}
+
 			collection.addSeries(series);
-			System.out.println("Total " + type.lowerName + ": " + total);
+			renderer.setSeriesStroke(seriesCount, new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+			renderer.setSeriesPaint(seriesCount, type.color);
+			renderer.setSeriesFillPaint(seriesCount, type.color.darker());
+			seriesCount++;
 		}
 
 		StringBuilder title = new StringBuilder();
@@ -100,10 +129,13 @@ public class DelayChart extends AbstractChart {
 		title.append(";\n data through ");
 		title.append(CalendarUtils.dayToDate(lastDayOfData));
 		JFreeChart chart = ChartFactory.createXYLineChart(title.toString(), "Days of delay",
-				"Percentage of " + category + " on this day", collection);
+				"Percentage of " + category + (cumulative ? " through" : " on") + " this day", collection);
+
+		XYPlot plot = chart.getXYPlot();
+		plot.setRenderer(renderer);
 
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(lastDayOfData));
-		if (timing == NumbersTiming.INFECTION && types.size() == 3) {
+		if (timing == NumbersTiming.INFECTION) {
 			c.addFileName(Charts.TOP_FOLDER + "\\delay-" + timing.lowerName + ".png");
 			c.open();
 		}
@@ -111,13 +143,7 @@ public class DelayChart extends AbstractChart {
 		return c;
 	}
 
-	@Override
-	public Chart buildChart(int dayOfType) {
-
-		if (dayOfType == stats.getLastDay()) {
-			return buildFullChart(dayOfType);
-		}
-
+	public Chart buildOneDayChart(int dayOfType) {
 		boolean hasData = false;
 
 		XYSeriesCollection collection = new XYSeriesCollection();
