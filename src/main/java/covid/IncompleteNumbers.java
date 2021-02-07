@@ -312,8 +312,11 @@ public class IncompleteNumbers extends Numbers {
 
 		for (int dayOfData = firstDayOfData; dayOfData <= lastDayOfData; dayOfData++) {
 			if (allNumbers.get(dayOfData) == null) {
-				new Exception("Null day of data for " + getType() + "-" + getTiming() + " on "
-						+ CalendarUtils.dayToDate(dayOfData)).printStackTrace();
+				/*
+				 * new Exception("Null day of data for " + getType() + "-" +
+				 * getTiming() + " on " +
+				 * CalendarUtils.dayToDate(dayOfData)).printStackTrace();
+				 */
 				DayOfData daily = new DayOfData();
 				allNumbers.put(dayOfData, daily);
 			}
