@@ -49,7 +49,7 @@ public class DelayChart extends AbstractChart {
 	private final int interval = 60;
 
 	public DelayChart(ColoradoStats stats, Set<NumbersType> types, NumbersTiming timing) {
-		super(stats, Charts.FULL_FOLDER + "\\" + "new-numbers");
+		super(stats, Charts.FULL_FOLDER + "\\" + "delay");
 		this.types = types;
 		this.timing = timing;
 	}
