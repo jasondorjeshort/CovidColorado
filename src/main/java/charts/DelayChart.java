@@ -109,9 +109,12 @@ public class DelayChart extends AbstractChart {
 
 			YIntervalSeries series = new YIntervalSeries(type.capName);
 			for (int delay = 0; delay <= interval; delay++) {
-				System.out
-						.println("VALUES for " + delay + " out of " + desc[delay].getN() + ": " + desc[delay].getMean()
-								+ "[" + desc[delay].getPercentile(25) + " - " + desc[delay].getPercentile(75));
+				/*
+				 * System.out .println("VALUES for " + delay + " out of " +
+				 * desc[delay].getN() + ": " + desc[delay].getMean() + "[" +
+				 * desc[delay].getPercentile(25) + " - " +
+				 * desc[delay].getPercentile(75));
+				 */
 				series.add(delay, 100 * desc[delay].getPercentile(50), 100 * desc[delay].getPercentile(25),
 						100 * desc[delay].getPercentile(75));
 			}
@@ -135,7 +138,7 @@ public class DelayChart extends AbstractChart {
 		plot.setRenderer(renderer);
 
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(lastDayOfData));
-		if (timing == NumbersTiming.INFECTION) {
+		if (timing == NumbersTiming.INFECTION && lastDayOfData == stats.getLastDay() && types.size() >= 3) {
 			c.addFileName(Charts.TOP_FOLDER + "\\delay-" + timing.lowerName + ".png");
 			c.open();
 		}
