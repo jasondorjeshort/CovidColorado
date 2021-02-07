@@ -4,8 +4,8 @@ import java.util.Set;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
-import org.jfree.data.time.TimeSeries;
-import org.jfree.data.time.TimeSeriesCollection;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 
 import covid.CalendarUtils;
 import covid.ColoradoStats;
@@ -29,7 +29,7 @@ import covid.NumbersType;
  * 
  * @author jdorje@gmail.com
  */
-public class NewNumbersChart extends AbstractChart {
+public class DailyDelayChart extends AbstractChart {
 
 	/*
 	 * Preliminary here.
@@ -40,36 +40,58 @@ public class NewNumbersChart extends AbstractChart {
 	private final Set<NumbersType> types;
 	private final NumbersTiming timing;
 
-	public NewNumbersChart(ColoradoStats stats, Set<NumbersType> types, NumbersTiming timing) {
-		super(stats, Charts.FULL_FOLDER + "\\" + "new-numbers");
+	private final int interval = 60;
+
+	public DailyDelayChart(ColoradoStats stats, Set<NumbersType> types, NumbersTiming timing) {
+		super(stats, Charts.FULL_FOLDER + "\\" + "daily-delay");
 		this.types = types;
 		this.timing = timing;
 	}
 
-	@Override
-	public Chart buildChart(int dayOfData) {
+	public static double sumArray(double[] array) {
+		double total = 0.0;
+		for (double value : array) {
+			total += value;
+		}
+		return total;
+	}
 
-		TimeSeriesCollection collection = new TimeSeriesCollection();
+	@Override
+	public Chart buildChart(int dayOfType) {
+		boolean hasData = false;
+
+		XYSeriesCollection collection = new XYSeriesCollection();
 
 		for (NumbersType type : types) {
 			IncompleteNumbers numbers = stats.getNumbers(type, timing);
-			TimeSeries series = new TimeSeries(type.capName);
+			XYSeries series = new XYSeries(type.capName);
 
-			for (int dayOfType = numbers.getFirstDayOfType(); dayOfType <= dayOfData; dayOfType++) {
-				Double number = numbers.getNewNumbers(dayOfData, dayOfType);
-
-				if (number == null) {
-					continue;
-				}
-
-				series.add(CalendarUtils.dayToDay(dayOfType), number);
+			for (int dayOfData = dayOfType; dayOfData < dayOfType + interval
+					&& dayOfData <= stats.getLastDay(); dayOfData++) {
+				int delay = dayOfData - dayOfType;
+				double n1 = numbers.getNumbers(dayOfData, dayOfType);
+				double n2 = numbers.getNumbers(dayOfData - 1, dayOfType);
+				series.add(delay, n1 - n2);
 			}
 
-			collection.addSeries(series);
+			if (dayOfType + interval <= stats.getLastDay()) {
+				double n1 = numbers.getNumbers(stats.getLastDay(), dayOfType);
+				double n2 = numbers.getNumbers(dayOfType + interval - 1, dayOfType);
+				series.add(interval, n1 - n2);
+			}
+
+			if (series.getItemCount() > 0) {
+				collection.addSeries(series);
+				hasData = true;
+			}
+		}
+
+		if (!hasData) {
+			return null;
 		}
 
 		StringBuilder title = new StringBuilder();
-		title.append("Date of " + timing.lowerName + " of newly released \n");
+		title.append("Time from " + timing.lowerName + " to release of\n");
 		if (types.size() > 1) {
 			title.append("numbers");
 		} else {
@@ -77,14 +99,11 @@ public class NewNumbersChart extends AbstractChart {
 				title.append(type.lowerName);
 			}
 		}
-		title.append(" for ");
-		title.append(CalendarUtils.dayToDate(dayOfData));
-		JFreeChart chart = ChartFactory.createTimeSeriesChart(title.toString(), "Date", "Count", collection);
+		title.append(" for " + timing.lowerName + " on ");
+		title.append(CalendarUtils.dayToDate(dayOfType));
+		JFreeChart chart = ChartFactory.createXYLineChart(title.toString(), "Date", "Count", collection);
 
-		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(dayOfData));
-		if (dayOfData == stats.getLastDay() && timing == NumbersTiming.INFECTION && types.size() >= 3) {
-			c.open();
-		}
+		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(dayOfType));
 		c.saveAsPNG();
 		return c;
 	}
@@ -94,6 +113,10 @@ public class NewNumbersChart extends AbstractChart {
 		return NumbersType.name(types, "-") + "-" + timing.lowerName;
 	}
 
+	/**
+	 * Some combinations here have no data and this is the easiest way to find
+	 * that out.
+	 */
 	@Override
 	public boolean hasData() {
 		for (NumbersType type : types) {

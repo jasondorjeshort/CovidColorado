@@ -46,7 +46,7 @@ public class Reproductive extends AbstractChart {
 	public final Set<NumbersType> types;
 
 	public Reproductive(ColoradoStats stats, Set<NumbersType> types) {
-		super(stats, Charts.FULL_FOLDER + "\\" + "R");
+		super(stats, Charts.FULL_FOLDER + "\\" + "reproductive");
 		this.types = types;
 	}
 

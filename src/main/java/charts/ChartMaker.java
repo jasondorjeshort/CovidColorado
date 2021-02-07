@@ -40,7 +40,7 @@ public class ChartMaker {
 		new File(Charts.TOP_FOLDER).mkdir();
 		new File(Charts.FULL_FOLDER).mkdir();
 		ChartCounty county = new ChartCounty(stats);
-		Age age = new Age(stats);
+		AverageAge age = new AverageAge(stats);
 		Finals finals = new Finals(stats);
 		Set<NumbersType> fullTypes = NumbersType.getSet();
 		Set<NumbersType> noTests = NumbersType.getSet(NumbersType.CASES, NumbersType.DEATHS,
@@ -73,8 +73,9 @@ public class ChartMaker {
 		for (NumbersTiming timing : NumbersTiming.values()) {
 			build.execute(() -> new ChartIncompletes(stats, noTests, timing, true).buildAllCharts());
 			build.execute(() -> new ChartIncompletes(stats, noTests, timing, false).buildAllCharts());
-			build.execute(() -> new DelayChart(stats, noTests, timing).buildAllCharts());
-			build.execute(() -> new NewNumbersChart(stats, noTests, timing).buildAllCharts());
+			build.execute(() -> new FullDelayChart(stats, noTests, timing).buildAllCharts());
+			build.execute(() -> new DailyAgeChart(stats, noTests, timing).buildAllCharts());
+			build.execute(() -> new DailyDelayChart(stats, noTests, timing).buildAllCharts());
 			build.execute(() -> age.buildChart(noTests, timing));
 
 			build.execute(() -> new ChartIncompletes(stats, fullTypes, timing, true).buildAllCharts());
@@ -85,8 +86,9 @@ public class ChartMaker {
 				Set<NumbersType> types = NumbersType.getSet(type);
 				build.execute(() -> new ChartIncompletes(stats, types, timing, true).buildAllCharts());
 				build.execute(() -> new ChartIncompletes(stats, types, timing, false).buildAllCharts());
-				build.execute(() -> new NewNumbersChart(stats, types, timing).buildAllCharts());
-				build.execute(() -> new DelayChart(stats, types, timing).buildAllCharts());
+				build.execute(() -> new FullDelayChart(stats, types, timing).buildAllCharts());
+				build.execute(() -> new DailyAgeChart(stats, types, timing).buildAllCharts());
+				build.execute(() -> new DailyDelayChart(stats, types, timing).buildAllCharts());
 				build.execute(() -> age.buildChart(types, timing));
 			}
 		}

@@ -8,8 +8,6 @@ import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.DeviationRenderer;
-import org.jfree.data.xy.XYSeries;
-import org.jfree.data.xy.XYSeriesCollection;
 import org.jfree.data.xy.YIntervalSeries;
 import org.jfree.data.xy.YIntervalSeriesCollection;
 
@@ -35,7 +33,7 @@ import covid.NumbersType;
  * 
  * @author jdorje@gmail.com
  */
-public class DelayChart extends AbstractChart {
+public class FullDelayChart extends AbstractChart {
 
 	/*
 	 * Preliminary here.
@@ -48,8 +46,8 @@ public class DelayChart extends AbstractChart {
 
 	private final int interval = 60;
 
-	public DelayChart(ColoradoStats stats, Set<NumbersType> types, NumbersTiming timing) {
-		super(stats, Charts.FULL_FOLDER + "\\" + "delay");
+	public FullDelayChart(ColoradoStats stats, Set<NumbersType> types, NumbersTiming timing) {
+		super(stats, Charts.FULL_FOLDER + "\\" + "full-delay");
 		this.types = types;
 		this.timing = timing;
 	}
@@ -103,7 +101,8 @@ public class DelayChart extends AbstractChart {
 				total2 += n1 - n2;
 
 				if (total != total2) {
-					new Exception("Fail totals: " + total + " vs " + total2).printStackTrace();
+					// new Exception("Fail totals: " + total + " vs " +
+					// total2).printStackTrace();
 				}
 			}
 
@@ -142,57 +141,6 @@ public class DelayChart extends AbstractChart {
 			c.addFileName(Charts.TOP_FOLDER + "\\delay-" + timing.lowerName + ".png");
 			c.open();
 		}
-		c.saveAsPNG();
-		return c;
-	}
-
-	public Chart buildOneDayChart(int dayOfType) {
-		boolean hasData = false;
-
-		XYSeriesCollection collection = new XYSeriesCollection();
-
-		for (NumbersType type : types) {
-			IncompleteNumbers numbers = stats.getNumbers(type, timing);
-			XYSeries series = new XYSeries(type.capName);
-
-			for (int dayOfData = dayOfType; dayOfData < dayOfType + interval
-					&& dayOfData <= stats.getLastDay(); dayOfData++) {
-				int delay = dayOfData - dayOfType;
-				double n1 = numbers.getNumbers(dayOfData, dayOfType);
-				double n2 = numbers.getNumbers(dayOfData - 1, dayOfType);
-				series.add(delay, n1 - n2);
-			}
-
-			if (dayOfType + interval <= stats.getLastDay()) {
-				double n1 = numbers.getNumbers(stats.getLastDay(), dayOfType);
-				double n2 = numbers.getNumbers(dayOfType + interval - 1, dayOfType);
-				series.add(interval, n1 - n2);
-			}
-
-			if (series.getItemCount() > 0) {
-				collection.addSeries(series);
-				hasData = true;
-			}
-		}
-
-		if (!hasData) {
-			return null;
-		}
-
-		StringBuilder title = new StringBuilder();
-		title.append("Time from " + timing.lowerName + " to release of\n");
-		if (types.size() > 1) {
-			title.append("numbers");
-		} else {
-			for (NumbersType type : types) {
-				title.append(type.lowerName);
-			}
-		}
-		title.append(" for " + timing.lowerName + " on ");
-		title.append(CalendarUtils.dayToDate(dayOfType));
-		JFreeChart chart = ChartFactory.createXYLineChart(title.toString(), "Date", "Count", collection);
-
-		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(dayOfType));
 		c.saveAsPNG();
 		return c;
 	}

@@ -34,7 +34,7 @@ import covid.NumbersType;
  * 
  * @author jdorje@gmail.com
  */
-public class Age {
+public class AverageAge {
 
 	/*
 	 * Charts the age of some incomplete numbers.
@@ -57,7 +57,7 @@ public class Age {
 	final String FOLDER = Charts.FULL_FOLDER + "\\" + "age";
 	private final int DAYS = 14;
 
-	public Age(ColoradoStats stats) {
+	public AverageAge(ColoradoStats stats) {
 		this.stats = stats;
 		new File(FOLDER).mkdir();
 	}
