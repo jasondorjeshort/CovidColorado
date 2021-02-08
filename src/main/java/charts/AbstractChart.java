@@ -51,6 +51,14 @@ public abstract class AbstractChart {
 		new File(topFolder).mkdir();
 	}
 
+	// checkFinite
+	public double cF(double value) {
+		if (!Double.isFinite(value)) {
+			new Exception("Infinite value : " + value);
+		}
+		return value;
+	}
+
 	/**
 	 * The (file) name of this chart is used for both the GIF and folder that
 	 * stores the individual charts.
@@ -90,9 +98,15 @@ public abstract class AbstractChart {
 		new File(getSubfolder()).mkdir();
 		gif.start(fileName);
 		for (int dayOfChart = _getFirstDayOfChart(); dayOfChart <= getLastDayOfChart(); dayOfChart++) {
-			Chart c = buildChart(dayOfChart);
-			Charts.setDelay(stats, dayOfChart, gif);
-			gif.addFrame(c.getImage());
+			try {
+				Chart c = buildChart(dayOfChart);
+				Charts.setDelay(stats, dayOfChart, gif);
+				gif.addFrame(c.getImage());
+			} catch (Exception e) {
+				System.out.println("Fail on " + getPngName(dayOfChart));
+				e.printStackTrace();
+				// just continue
+			}
 		}
 		gif.finish();
 	}

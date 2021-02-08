@@ -6,6 +6,8 @@ import java.util.Set;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.DateAxis;
+import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.DeviationRenderer;
 import org.jfree.data.xy.YIntervalSeries;
@@ -114,8 +116,11 @@ public class FullDelayChart extends AbstractChart {
 				 * desc[delay].getPercentile(25) + " - " +
 				 * desc[delay].getPercentile(75));
 				 */
-				series.add(delay, 100 * desc[delay].getPercentile(50), 100 * desc[delay].getPercentile(25),
-						100 * desc[delay].getPercentile(75));
+				if (desc[delay].getN() == 0) {
+					continue;
+				}
+				series.add(delay, 100 * cF(desc[delay].getPercentile(50)), 100 * cF(desc[delay].getPercentile(25)),
+						100 * cF(desc[delay].getPercentile(75)));
 			}
 
 			collection.addSeries(series);
@@ -135,6 +140,14 @@ public class FullDelayChart extends AbstractChart {
 
 		XYPlot plot = chart.getXYPlot();
 		plot.setRenderer(renderer);
+
+		// this actually does make empty graphs for which we need to set these values by hand?
+		ValueAxis xAxis = plot.getDomainAxis();
+		xAxis.setLowerBound(0);
+		xAxis.setUpperBound(interval);
+		ValueAxis yAxis = plot.getRangeAxis();
+		yAxis.setLowerBound(0);
+		yAxis.setUpperBound(120);
 
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(lastDayOfData));
 		if (timing == NumbersTiming.INFECTION && lastDayOfData == stats.getLastDay() && types.size() >= 3) {
