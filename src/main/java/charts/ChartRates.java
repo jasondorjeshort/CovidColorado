@@ -3,6 +3,7 @@ package charts;
 import java.awt.BasicStroke;
 import java.util.Set;
 
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.DateAxis;
@@ -48,6 +49,11 @@ public class ChartRates extends AbstractChart {
 		this.rates = rates;
 	}
 
+	public static final int DELAY = 30;
+	public static final int INTERVAL = 100;
+	public static final double confidence = 80;
+	public static final double sideRange = (100 - confidence) / 2;
+
 	@Override
 	public Chart buildChart(int dayOfData) {
 		Smoothing smoothing = new Smoothing(13, Smoothing.Type.AVERAGE, Smoothing.Timing.TRAILING);
@@ -68,30 +74,35 @@ public class ChartRates extends AbstractChart {
 
 			height = Math.max(height, rate.highestValue);
 
-			for (int dayOfInfection = firstDayOfChart; dayOfInfection <= dayOfData; dayOfInfection++) {
-				Double nUpper = nNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.UPPER, smoothing);
-				Double nLower = nNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.LOWER, smoothing);
-				Double nProj = nNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.PROJECTED,
-						smoothing);
-				if (nUpper == null || nLower == null || nProj == null) {
+			for (int dayOfType = firstDayOfChart; dayOfType <= dayOfData; dayOfType++) {
+				long time = CalendarUtils.dayToTime(dayOfType);
+
+				double numerator = nNumbers.getNumbers(dayOfData, dayOfType, smoothing);
+				double denominator = dNumbers.getNumbers(dayOfData, dayOfType, smoothing);
+				if (numerator == 0 || denominator == 0) {
 					continue;
 				}
 
-				Double dUpper = dNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.UPPER, smoothing);
-				Double dLower = dNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.LOWER, smoothing);
-				Double dProj = dNumbers.getNumbers(dayOfData, dayOfInfection, IncompleteNumbers.Form.PROJECTED,
-						smoothing);
-				if (dUpper == null || dLower == null || dProj == null) {
-					continue;
+				DescriptiveStatistics statistics = new DescriptiveStatistics();
+				int actualDelay = dayOfData - dayOfType;
+				for (int oldDayOfType = dayOfType - DELAY - INTERVAL; oldDayOfType < dayOfType
+						- DELAY; oldDayOfType++) {
+					double n1 = nNumbers.getNumbers(oldDayOfType + actualDelay, oldDayOfType);
+					double n2 = nNumbers.getNumbers(oldDayOfType + actualDelay + DELAY, oldDayOfType);
+
+					double d1 = dNumbers.getNumbers(oldDayOfType + actualDelay, oldDayOfType);
+					double d2 = dNumbers.getNumbers(oldDayOfType + actualDelay + DELAY, oldDayOfType);
+
+					if (n1 == 0 || n2 == 0 || d1 == 0 || d2 == 0) {
+						continue;
+					}
+					statistics.addValue((numerator / denominator) * (n2 / d2) / (n1 / d1));
 				}
 
-				long time = CalendarUtils.dayToTime(dayOfInfection);
+				double upperBound = statistics.getPercentile(100 - sideRange);
+				double lowerBound = statistics.getPercentile(sideRange);
 
-				if (dUpper <= 0 || dLower <= 0 || dProj <= 0) {
-					continue;
-				}
-
-				series.add(time, 100 * nProj / dProj, 100 * nLower / dUpper, 100 * nUpper / dLower);
+				series.add(time, 100 * numerator / denominator, 100 * lowerBound, 100 * upperBound);
 			}
 
 			collection.addSeries(series);
@@ -110,8 +121,12 @@ public class ChartRates extends AbstractChart {
 		}
 		title.append(" by day of ");
 		title.append(timing.lowerName);
-		JFreeChart chart = ChartFactory.createTimeSeriesChart(title + "\n(" + smoothing.getDescription() + ")",
-				"Date of Infection", "Rate (%)", collection);
+		title.append(", ");
+		title.append(smoothing.getDescription());
+		title.append(String.format("\n(central %.0f%% interval for value in %d days based on prev %d days)", confidence,
+				DELAY, INTERVAL));
+		JFreeChart chart = ChartFactory.createTimeSeriesChart(title.toString(), "Date of Infection", "Rate (%)",
+				collection);
 
 		// chart.getXYPlot().setRangeAxis(new LogarithmicAxis("Cases"));
 

@@ -3,6 +3,7 @@ package charts;
 import java.awt.BasicStroke;
 import java.util.Set;
 
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.DateAxis;
@@ -49,7 +50,10 @@ public class ChartIncompletes extends AbstractChart {
 		this.logarithmic = logarithmic;
 	}
 
-	private static final boolean SHOW_FINALS = true;
+	public static final int DELAY = 30;
+	public static final int INTERVAL = 100;
+	public static final double confidence = 80;
+	public static final double sideRange = (100 - confidence) / 2;
 
 	@Override
 	public Chart buildChart(int dayOfData) {
@@ -75,19 +79,13 @@ public class ChartIncompletes extends AbstractChart {
 		title.append(timing.lowerName);
 		title.append(" date as of ");
 		title.append(CalendarUtils.dayToDate(dayOfData));
-		if (logarithmic || !multi) {
-			title.append("\n(");
-			if (logarithmic) {
-				title.append("logarithmic ");
-			}
-			if (types.size() == 1) {
-				for (NumbersType type : types) {
-					title.append(type.lowerName + " ");
-				}
-			}
-			title.delete(title.length() - 1, title.length());
-			title.append(")");
+		if (logarithmic) {
+			title.append(", logarithmic");
+		} else {
+			title.append(", cartesian");
 		}
+		title.append(String.format("\n(central %.0f%% interval for value in %d days based on prev %d days)", confidence,
+				DELAY, INTERVAL));
 
 		for (NumbersType type : types) {
 			IncompleteNumbers numbers = stats.getNumbers(type, timing);
@@ -96,32 +94,35 @@ public class ChartIncompletes extends AbstractChart {
 			}
 			Smoothing smoothing = type.smoothing; // Smoothing.NONE;
 			YIntervalSeries series = new YIntervalSeries(type.capName + " (" + smoothing.getDescription() + ")");
-			YIntervalSeries finals = new YIntervalSeries(type.capName + " (final)");
 
 			firstDayOfChart = Math.min(firstDayOfChart, numbers.getFirstDayOfType());
-			for (int d = numbers.getFirstDayOfType(); d <= dayOfData; d++) {
-				long time = CalendarUtils.dayToTime(d);
+			for (int dayOfType = numbers.getFirstDayOfType(); dayOfType <= dayOfData; dayOfType++) {
+				long time = CalendarUtils.dayToTime(dayOfType);
 
-				if (SHOW_FINALS && dayOfData != stats.getLastDay()) {
-					Double proj = numbers.getNumbers(stats.getLastDay(), d, IncompleteNumbers.Form.PROJECTED,
-							smoothing);
+				double number = numbers.getNumbers(dayOfData, dayOfType, smoothing);
 
-					if (proj != null) {
-						if (!logarithmic || proj > 0) {
-							finals.add(time, proj, proj, proj);
-						}
-					}
-
-				}
-
-				Double upperBound = numbers.getNumbers(dayOfData, d, IncompleteNumbers.Form.UPPER, smoothing);
-				Double lowerBound = numbers.getNumbers(dayOfData, d, IncompleteNumbers.Form.LOWER, smoothing);
-				Double proj = numbers.getNumbers(dayOfData, d, IncompleteNumbers.Form.PROJECTED, smoothing);
-				if (proj == null || lowerBound == null || upperBound == null) {
+				if (number == 0.0) {
 					continue;
 				}
-				if (!logarithmic || (lowerBound > 0 && proj > 0 && upperBound > 0)) {
-					series.add(time, proj, lowerBound, upperBound);
+
+				DescriptiveStatistics statistics = new DescriptiveStatistics();
+				int actualDelay = dayOfData - dayOfType;
+				for (int oldDayOfType = dayOfType - DELAY - INTERVAL; oldDayOfType < dayOfType
+						- DELAY; oldDayOfType++) {
+					double n1 = numbers.getNumbers(oldDayOfType + actualDelay, oldDayOfType);
+					double n2 = numbers.getNumbers(oldDayOfType + actualDelay + DELAY, oldDayOfType);
+
+					if (n1 == 0 || n2 == 0) {
+						continue;
+					}
+					statistics.addValue(number * n2 / n1);
+				}
+
+				double upperBound = statistics.getPercentile(100 - sideRange);
+				double lowerBound = statistics.getPercentile(sideRange);
+
+				if (!logarithmic || (lowerBound > 0 && number > 0 && upperBound > 0)) {
+					series.add(time, number, lowerBound, upperBound);
 				}
 			}
 
@@ -130,14 +131,6 @@ public class ChartIncompletes extends AbstractChart {
 			renderer.setSeriesPaint(seriesCount, type.color);
 			renderer.setSeriesFillPaint(seriesCount, type.color.darker());
 			seriesCount++;
-
-			if (SHOW_FINALS && dayOfData != stats.getLastDay()) {
-				collection.addSeries(finals);
-				renderer.setSeriesStroke(seriesCount,
-						new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-				renderer.setSeriesPaint(seriesCount, type.color.brighter());
-				seriesCount++;
-			}
 		}
 
 		if (firstDayOfChart >= stats.getLastDay()) {

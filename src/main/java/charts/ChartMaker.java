@@ -83,13 +83,12 @@ public class ChartMaker {
 			// No point to testing age; it's identical to cases
 
 			for (NumbersType type : NumbersType.values()) {
-				Set<NumbersType> types = NumbersType.getSet(type);
-				build.execute(() -> new ChartIncompletes(stats, types, timing, true).buildAllCharts());
-				build.execute(() -> new ChartIncompletes(stats, types, timing, false).buildAllCharts());
-				build.execute(() -> new FullDelayChart(stats, types, timing).buildAllCharts());
-				build.execute(() -> new DailyAgeChart(stats, types, timing).buildAllCharts());
-				build.execute(() -> new DailyDelayChart(stats, types, timing).buildAllCharts());
-				build.execute(() -> age.buildChart(types, timing));
+				build.execute(() -> new ChartIncompletes(stats, type.set, timing, true).buildAllCharts());
+				build.execute(() -> new ChartIncompletes(stats, type.set, timing, false).buildAllCharts());
+				build.execute(() -> new FullDelayChart(stats, type.set, timing).buildAllCharts());
+				build.execute(() -> new DailyAgeChart(stats, type.set, timing).buildAllCharts());
+				build.execute(() -> new DailyDelayChart(stats, type.set, timing).buildAllCharts());
+				build.execute(() -> age.buildChart(type.set, timing));
 			}
 		}
 

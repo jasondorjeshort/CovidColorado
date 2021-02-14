@@ -202,32 +202,6 @@ public class ColoradoStats {
 		System.out.println("");
 	}
 
-	public void outputProjections(NumbersType type, NumbersTiming timing) {
-		int dayOfData = getLastDay();
-		int DAYS = 7;
-		for (int dayOfType = getLastDay() - 60; dayOfType <= getLastDay(); dayOfType++) {
-			/*
-			 * double c = getCasesByType(type, timing, dayOfType, dayOfType);
-			 * double week = getCasesInInterval(type, timing, dayOfType,
-			 * dayOfType, 7); System.out.println(type.capName + "," +
-			 * timing.capName + "," + Date.dayToDate(dayOfType) + " => " +
-			 * dayOfType + " => " + c + " => " + week);
-			 */
-
-			// IncompleteNumbers numbers = getNumbers(type, timing);
-
-			double c = getNumbers(type, timing).getProjectedNumbers(dayOfData, dayOfType);
-			double week = getNumbers(type, timing).getNumbers(dayOfData, dayOfType, IncompleteNumbers.Form.PROJECTED,
-					7);
-			double lastWeek = getNumbers(type, timing).getNumbers(dayOfData, dayOfType - DAYS,
-					IncompleteNumbers.Form.PROJECTED, 7);
-			double growth = 100 * Math.pow(week / lastWeek, 1.0 / DAYS) - 100;
-			System.out.println(type.capName + "," + timing.capName + "," + CalendarUtils.dayToDate(dayOfType) + " => "
-					+ dayOfType + " => " + c + " => " + week + " => " + growth + "%");
-
-		}
-	}
-
 	public CountyStats getCountyStats(String countyName) {
 		CountyStats county = counties.get(countyName);
 		if (county == null) {
@@ -620,9 +594,6 @@ public class ColoradoStats {
 			outputDailyStats();
 		}
 		async.complete();
-		if (false) {
-			outputProjections(NumbersType.HOSPITALIZATIONS, NumbersTiming.INFECTION);
-		}
 	}
 
 }

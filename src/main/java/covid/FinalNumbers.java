@@ -73,8 +73,9 @@ public class FinalNumbers extends Numbers {
 		}
 
 		switch (smoothing.getType()) {
-		case CUMULATIVE:
-			return cumulative.get(day);
+		/*
+		 * case CUMULATIVE: return cumulative.get(day);
+		 */
 		case AVERAGE:
 			return getNumbersInInterval(lastDayOfCalc, smoothing.getDays()) / smoothing.getDays();
 		case TOTAL:

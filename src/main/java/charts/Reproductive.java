@@ -4,6 +4,7 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.util.Set;
 
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.DateAxis;
@@ -55,6 +56,11 @@ public class Reproductive extends AbstractChart {
 
 	private static final int FIRST_DAY = CalendarUtils.dateToDay("2-14-2020");
 
+	public static final int DELAY = 30;
+	public static final int INTERVAL = 100;
+	public static final double confidence = 80;
+	public static final double sideRange = (100 - confidence) / 2;
+
 	@Override
 	public Chart buildChart(int dayOfData) {
 		YIntervalSeriesCollection collection = new YIntervalSeriesCollection();
@@ -76,14 +82,29 @@ public class Reproductive extends AbstractChart {
 			for (int dayOfType = FIRST_DAY; dayOfType <= dayOfData; dayOfType++) {
 				long time = CalendarUtils.dayToTime(dayOfType);
 
-				Double upperBound = numbers.getBigR(dayOfData, dayOfType, IncompleteNumbers.Form.UPPER);
-				Double lowerBound = numbers.getBigR(dayOfData, dayOfType, IncompleteNumbers.Form.LOWER);
-				Double proj = numbers.getBigR(dayOfData, dayOfType, IncompleteNumbers.Form.PROJECTED);
-				if (proj == null || lowerBound == null || upperBound == null) {
+				Double reproductive = numbers.getBigR(dayOfData, dayOfType);
+
+				if (reproductive == null || reproductive == 0.0) {
 					continue;
 				}
 
-				series.add(time, proj, lowerBound, upperBound);
+				DescriptiveStatistics statistics = new DescriptiveStatistics();
+				int actualDelay = dayOfData - dayOfType;
+				for (int oldDayOfType = dayOfType - DELAY - INTERVAL; oldDayOfType < dayOfType
+						- DELAY; oldDayOfType++) {
+					Double r1 = numbers.getBigR(oldDayOfType + actualDelay, oldDayOfType);
+					Double r2 = numbers.getBigR(oldDayOfType + actualDelay + DELAY, oldDayOfType);
+
+					if (r1 == null || r2 == null || r1 == 0 || r2 == 0) {
+						continue;
+					}
+					statistics.addValue(reproductive * r2 / r1);
+				}
+
+				double upperBound = statistics.getPercentile(100 - sideRange);
+				double lowerBound = statistics.getPercentile(sideRange);
+
+				series.add(time, reproductive, lowerBound, upperBound);
 			}
 			collection.addSeries(series);
 			renderer.setSeriesStroke(seriesCount, new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
@@ -94,9 +115,12 @@ public class Reproductive extends AbstractChart {
 
 		// dataset.addSeries("Cases", series);
 
-		String title = "Colorado COVID reproductive rate\nthrough " + CalendarUtils.dayToDate(dayOfData);
+		StringBuilder title = new StringBuilder();
+		title.append("Colorado COVID reproductive rate\nthrough " + CalendarUtils.dayToDate(dayOfData));
+		title.append(String.format("\n(central %.0f%% interval for value in %d days based on prev %d days)", confidence,
+				DELAY, INTERVAL));
 
-		JFreeChart chart = ChartFactory.createTimeSeriesChart(title, "Date", "R(t)", collection);
+		JFreeChart chart = ChartFactory.createTimeSeriesChart(title.toString(), "Date", "R(t)", collection);
 
 		XYPlot plot = chart.getXYPlot();
 		plot.setRenderer(renderer);

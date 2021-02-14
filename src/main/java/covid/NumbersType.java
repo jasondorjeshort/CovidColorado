@@ -31,6 +31,7 @@ public enum NumbersType {
 		this.smoothing = smoothing;
 		this.highestValue = highestValue;
 		this.color = color;
+		this.set.add(this);
 	}
 
 	public static String name(NumbersType type) {
@@ -82,4 +83,5 @@ public enum NumbersType {
 	public final Smoothing smoothing;
 	public final int highestValue;
 	public final Color color;
+	public final HashSet<NumbersType> set = new HashSet<>();
 }

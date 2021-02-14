@@ -31,7 +31,7 @@ public enum Rate {
 	POSITIVITY(NumbersType.CASES, NumbersType.TESTS, Color.BLUE, 25, false),
 	CFR(NumbersType.DEATHS, NumbersType.CASES, Color.BLACK, 9, true),
 	CHR(NumbersType.HOSPITALIZATIONS, NumbersType.CASES, Color.RED, 31, true),
-	HFR(NumbersType.DEATHS, NumbersType.HOSPITALIZATIONS, Color.ORANGE, 42, true),;
+	HFR(NumbersType.DEATHS, NumbersType.HOSPITALIZATIONS, Color.ORANGE, 50, true),;
 
 	public final NumbersType numerator, denominator;
 	public final String lowerName = name().toLowerCase();
