@@ -49,11 +49,6 @@ public class ChartRates extends AbstractChart {
 		this.rates = rates;
 	}
 
-	public static final int DELAY = 30;
-	public static final int INTERVAL = 100;
-	public static final double confidence = 80;
-	public static final double sideRange = (100 - confidence) / 2;
-
 	@Override
 	public Chart buildChart(int dayOfData) {
 		Smoothing smoothing = new Smoothing(13, Smoothing.Type.AVERAGE, Smoothing.Timing.TRAILING);

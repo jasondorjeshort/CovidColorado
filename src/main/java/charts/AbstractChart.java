@@ -26,6 +26,11 @@ import library.ASync;
  */
 public abstract class AbstractChart {
 
+	public static final int DELAY = 30;
+	public static final int INTERVAL = 180;
+	public static final double confidence = 80;
+	public static final double sideRange = (100 - confidence) / 2;
+
 	/*
 	 * An "abstract" chart graphs something over all days of the pandemic for
 	 * one day of data. The simplest example is cases by day of infection: we

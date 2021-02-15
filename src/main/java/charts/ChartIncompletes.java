@@ -50,11 +50,6 @@ public class ChartIncompletes extends AbstractChart {
 		this.logarithmic = logarithmic;
 	}
 
-	public static final int DELAY = 30;
-	public static final int INTERVAL = 100;
-	public static final double confidence = 80;
-	public static final double sideRange = (100 - confidence) / 2;
-
 	@Override
 	public Chart buildChart(int dayOfData) {
 		YIntervalSeriesCollection collection = new YIntervalSeriesCollection();
