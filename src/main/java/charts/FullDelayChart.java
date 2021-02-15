@@ -6,7 +6,6 @@ import java.util.Set;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.DeviationRenderer;
@@ -141,7 +140,8 @@ public class FullDelayChart extends AbstractChart {
 		XYPlot plot = chart.getXYPlot();
 		plot.setRenderer(renderer);
 
-		// this actually does make empty graphs for which we need to set these values by hand?
+		// this actually does make empty graphs for which we need to set these
+		// values by hand?
 		ValueAxis xAxis = plot.getDomainAxis();
 		xAxis.setLowerBound(0);
 		xAxis.setUpperBound(interval);
