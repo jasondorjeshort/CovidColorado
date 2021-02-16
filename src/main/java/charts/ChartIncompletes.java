@@ -44,7 +44,7 @@ public class ChartIncompletes extends AbstractChart {
 	public final boolean logarithmic;
 
 	public ChartIncompletes(ColoradoStats stats, Set<NumbersType> types, NumbersTiming timing, boolean logarithmic) {
-		super(stats, Charts.FULL_FOLDER);
+		super(stats, Charts.FULL_FOLDER + "\\" + "numbers");
 		this.types = types;
 		this.timing = timing;
 		this.logarithmic = logarithmic;
