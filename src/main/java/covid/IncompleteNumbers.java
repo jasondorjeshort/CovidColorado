@@ -314,15 +314,9 @@ public class IncompleteNumbers extends Numbers {
 		// run multiple times. Caching could help.
 
 		for (int dayOfData = dayMinimum; dayOfData <= dayMaximum; dayOfData++) {
-			for (int dayOfType = firstDayOfType; dayOfType < dayOfData; dayOfType++) {
-				Double n2 = getNumbers(dayOfData, dayOfType);
-				Double n1 = getNumbers(dayOfData - 1, dayOfType);
-				if (n2 == null) {
-					n2 = 0.0;
-				}
-				if (n1 == null) {
-					n1 = 0.0;
-				}
+			for (int dayOfType = firstDayOfType; dayOfType <= dayOfData; dayOfType++) {
+				double n2 = getNumbers(dayOfData, dayOfType);
+				double n1 = getNumbers(dayOfData - 1, dayOfType);
 				double newNumbers = n2 - n1;
 				numbersSum += newNumbers;
 				daySum += newNumbers * (dayOfData - dayOfType);
