@@ -479,6 +479,26 @@ public class ColoradoStats {
 		}
 	}
 
+	public void calculateReinfections() {
+		NumbersTiming timing = NumbersTiming.REPORTED;
+		NumbersType type = NumbersType.CASES;
+		IncompleteNumbers numbers = getNumbers(type, timing);
+
+		double POP = 5800000;
+		double cumulativeCases = 0;
+		double cumulativeReinfections = 0;
+
+		int dayOfData = getLastDay();
+		for (int dayOfType = numbers.getFirstDayOfType(); dayOfType <= dayOfData; dayOfType++) {
+			cumulativeCases += numbers.getNumbers(dayOfData, dayOfType - 90);
+			double pct = cumulativeCases / POP;
+			double expectation = numbers.getNumbers(dayOfData, dayOfType) * pct;
+			cumulativeReinfections += expectation;
+			System.out.println(
+					"Expectation through " + CalendarUtils.dayToDate(dayOfType) + " : " + cumulativeReinfections);
+		}
+	}
+
 	public ColoradoStats() {
 
 		for (NumbersType type : NumbersType.values()) {

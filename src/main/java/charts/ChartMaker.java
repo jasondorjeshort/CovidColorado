@@ -50,6 +50,9 @@ public class ChartMaker {
 
 		ASync<Void> build = new ASync<>();
 
+		// maybe a chart later
+		build.execute(() -> stats.calculateReinfections());
+
 		if (false) {
 			new ChartIncompletes(stats, noTests, NumbersTiming.INFECTION, true).buildChartsOnly(build);
 			build.complete();
