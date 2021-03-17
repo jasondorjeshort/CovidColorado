@@ -191,6 +191,7 @@ public class ColoradoStats {
 	}
 
 	private static void write(String lead, CSVRecord line) {
+		new Exception("Bad line: " + lead).printStackTrace();
 		if (lead != null) {
 			System.out.print(lead + " : ");
 		}
@@ -494,9 +495,11 @@ public class ColoradoStats {
 			double pct = cumulativeCases / POP;
 			double expectation = numbers.getNumbers(dayOfData, dayOfType) * pct;
 			cumulativeReinfections += expectation;
-			System.out.println(
-					"Expectation through " + CalendarUtils.dayToDate(dayOfType) + " : " + cumulativeReinfections);
 		}
+
+		System.out.println("Expectated retests through " + CalendarUtils.dayToDate(dayOfData) + " : "
+				+ Math.round(cumulativeReinfections));
+		System.out.println("90 days ago: " + CalendarUtils.dayToDate(dayOfData - 90));
 	}
 
 	public ColoradoStats() {
