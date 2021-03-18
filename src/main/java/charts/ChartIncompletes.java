@@ -42,12 +42,15 @@ public class ChartIncompletes extends AbstractChart {
 	public final Set<NumbersType> types;
 	public final NumbersTiming timing;
 	public final boolean logarithmic;
+	public final boolean useSmoothing;
 
-	public ChartIncompletes(ColoradoStats stats, Set<NumbersType> types, NumbersTiming timing, boolean logarithmic) {
+	public ChartIncompletes(ColoradoStats stats, Set<NumbersType> types, NumbersTiming timing, boolean logarithmic,
+			boolean useSmoothing) {
 		super(stats, Charts.FULL_FOLDER + "\\" + "numbers");
 		this.types = types;
 		this.timing = timing;
 		this.logarithmic = logarithmic;
+		this.useSmoothing = useSmoothing;
 	}
 
 	@Override
@@ -79,6 +82,11 @@ public class ChartIncompletes extends AbstractChart {
 		} else {
 			title.append(", cartesian");
 		}
+		if (useSmoothing) {
+			title.append(", smoothed");
+		} else {
+			title.append(", exact");
+		}
 		title.append(String.format("\n(central %.0f%% interval for value in %d days based on prev %d days)", confidence,
 				DELAY, INTERVAL));
 
@@ -87,7 +95,7 @@ public class ChartIncompletes extends AbstractChart {
 			if (!numbers.hasData()) {
 				continue;
 			}
-			Smoothing smoothing = type.smoothing; // Smoothing.NONE;
+			Smoothing smoothing = useSmoothing ? type.smoothing : Smoothing.NONE;
 			YIntervalSeries series = new YIntervalSeries(type.capName + " (" + smoothing.getDescription() + ")");
 
 			firstDayOfChart = Math.min(firstDayOfChart, numbers.getFirstDayOfType());
@@ -172,7 +180,8 @@ public class ChartIncompletes extends AbstractChart {
 
 	@Override
 	public String getName() {
-		return NumbersType.name(types, "-") + "-" + timing.lowerName + (logarithmic ? "-log" : "-cart");
+		return NumbersType.name(types, "-") + "-" + timing.lowerName + (logarithmic ? "-log" : "-cart")
+				+ (useSmoothing ? "-smooth" : "-unsmooth");
 	}
 
 	/**
