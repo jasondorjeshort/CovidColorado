@@ -181,7 +181,7 @@ public class ChartIncompletes extends AbstractChart {
 	@Override
 	public String getName() {
 		return NumbersType.name(types, "-") + "-" + timing.lowerName + (logarithmic ? "-log" : "-cart")
-				+ (useSmoothing ? "-smooth" : "-unsmooth");
+				+ (useSmoothing ? "-smooth" : "-exact");
 	}
 
 	/**
