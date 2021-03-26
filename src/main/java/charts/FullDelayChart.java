@@ -94,17 +94,6 @@ public class FullDelayChart extends AbstractChart {
 					desc[delay].addValue(pct);
 					total2 += n1 - n2;
 				}
-
-				double n1 = numbers.getNumbers(lastDayOfData, dayOfType);
-				double n2 = numbers.getNumbers(dayOfType + interval - 1, dayOfType);
-				double pct = ((cumulative ? total2 : 0) + n1 - n2) / total;
-				desc[interval].addValue(pct);
-				total2 += n1 - n2;
-
-				if (total != total2) {
-					// new Exception("Fail totals: " + total + " vs " +
-					// total2).printStackTrace();
-				}
 			}
 
 			YIntervalSeries series = new YIntervalSeries(type.capName);
