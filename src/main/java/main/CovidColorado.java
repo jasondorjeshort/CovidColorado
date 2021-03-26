@@ -24,7 +24,7 @@ import web.CovidServer;
  * 
  * @author jdorje@gmail.com
  */
-public class Main {
+public class CovidColorado {
 
 	static CovidServer server;
 
