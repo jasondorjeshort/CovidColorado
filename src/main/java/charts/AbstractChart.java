@@ -28,7 +28,7 @@ public abstract class AbstractChart {
 
 	public static final int DELAY = 30;
 	public static final int INTERVAL = 180;
-	public static final double confidence = 80;
+	public static final double confidence = 95;
 	public static final double sideRange = (100 - confidence) / 2;
 
 	/*
