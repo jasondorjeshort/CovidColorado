@@ -3,6 +3,7 @@ package charts;
 import java.awt.BasicStroke;
 import java.util.Set;
 
+import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
@@ -118,11 +119,36 @@ public class ChartIncompletes extends AbstractChart {
 					if (n1 == 0 || n2 == 0) {
 						continue;
 					}
-					statistics.addValue(number * n2 / n1);
+					statistics.addValue(Math.log(n2 / n1));
 				}
 
-				double upperBound = statistics.getPercentile(100 - sideRange);
-				double lowerBound = statistics.getPercentile(sideRange);
+				double upperBound, lowerBound;
+				if (true) {
+					/* Use the actual 2.5% and 97.5% values */
+					upperBound = statistics.getPercentile(100 - sideRange);
+					lowerBound = statistics.getPercentile(sideRange);
+				} else {
+					/*
+					 * Apply a log-normal distribution to smooth these bounds
+					 * out. This assumes log-normal is correct (it probably is)
+					 * but will give a much more consistent result.
+					 * 
+					 * This also hard-codes 2 standard deviations (essentially
+					 * 95%).
+					 * 
+					 * One issue (so maybe normal isn't the right distribution)
+					 * is that the upper 97.5% discrete bound often jumps way up
+					 * after old numbers are increased, but rarely drops. It may
+					 * be asymmetrical.
+					 */
+					double mean = statistics.getMean();
+					double sd = statistics.getStandardDeviation();
+					upperBound = mean + 2 * sd;
+					lowerBound = mean - 2 * sd;
+				}
+
+				upperBound = number * Math.exp(upperBound);
+				lowerBound = number * Math.exp(lowerBound);
 
 				if (!logarithmic || (lowerBound > 0 && number > 0 && upperBound > 0)) {
 					series.add(time, number, lowerBound, upperBound);
