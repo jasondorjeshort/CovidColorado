@@ -32,14 +32,30 @@ public class Event {
 
 			new Event("SoE", "3-10-2020"),
 			// new Event()
-			new Event("SaH", "3-26-2020"), new Event("BLM", "05-28-2020"), new Event("Bars", "06-30-2020"),
-			new Event("Masks", "7-16-2020"), new Event("Snow", "9-9-2020"), new Event("CU/DPS open", "8-24-2020"),
-			// new Event("ENS", "10-25-2020"),
-			new Event("DPS close", "10-30-2020"), new Event("RED", "11-20-2020"),
-			// new Event("Intervention", "11-05-2020")
-			new Event("TG", "11-26-2020"),
+			new Event("SaH", "3-26-2020"),
 
-			new Event("V+5", "12-19-2020"), new Event("C", "12-25-2020"),
+			new Event("BLM", "05-28-2020"),
+
+			new Event("Bars", "06-30-2020"),
+
+			new Event("Masks", "7-16-2020"),
+
+			new Event("❄", "9-9-2020"), // snow
+			new Event("❄", "10-25-2020"), // snow
+			new Event("❄", "2-24-2021"), // snow
+			new Event("❄", "3-12-2021"), // snow
+
+			new Event("CU/DPS open", "8-24-2020"),
+			// new Event("ENS", "10-25-2020"),
+			new Event("DPS close", "10-30-2020"),
+
+			new Event("RED", "11-20-2020"),
+			// new Event("Intervention", "11-05-2020")
+			new Event("TG", "11-26-2020"), // Thanksgiving
+
+			new Event("💉", "12-19-2020"), // vaccine start + 5
+
+			new Event("C", "12-25-2020"), // Christmas
 
 			// new Event(null, "1-10-2021"),
 
