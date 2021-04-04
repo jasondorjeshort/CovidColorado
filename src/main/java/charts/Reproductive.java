@@ -137,7 +137,7 @@ public class Reproductive extends AbstractChart {
 		}
 
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(dayOfData));
-		if (dayOfData == stats.getLastDay() && types.size() > 1) {
+		if (dayOfData == stats.getLastDay() && types.size() == 1 && types.contains(NumbersType.CASES)) {
 			c.addFileName(Charts.TOP_FOLDER + "\\R.png");
 			c.open();
 		}
