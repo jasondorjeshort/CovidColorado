@@ -158,7 +158,7 @@ public class FullDelayChart extends AbstractChart {
 
 	@Override
 	public String getName() {
-		return NumbersType.name(types, "-") + "-" + timing.lowerName + "-" + (cumulative ? "cumulative" : "daily");
+		return "delay-" + NumbersType.name(types, "-") + "-" + timing.lowerName + "-" + (cumulative ? "cumulative" : "daily");
 	}
 
 	/**
