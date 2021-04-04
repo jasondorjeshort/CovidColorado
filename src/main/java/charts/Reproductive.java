@@ -96,8 +96,8 @@ public class Reproductive extends AbstractChart {
 					statistics.addValue(reproductive * r2 / r1);
 				}
 
-				double upperBound = statistics.getPercentile(100 - sideRange);
-				double lowerBound = statistics.getPercentile(sideRange);
+				double upperBound = statistics.getPercentile(topRange);
+				double lowerBound = statistics.getPercentile(bottomRange);
 
 				series.add(time, reproductive, lowerBound, upperBound);
 			}

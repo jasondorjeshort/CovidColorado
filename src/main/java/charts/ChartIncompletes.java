@@ -125,8 +125,8 @@ public class ChartIncompletes extends AbstractChart {
 				double upperBound, lowerBound;
 				if (true) {
 					/* Use the actual 2.5% and 97.5% values */
-					upperBound = statistics.getPercentile(100 - sideRange);
-					lowerBound = statistics.getPercentile(sideRange);
+					upperBound = statistics.getPercentile(topRange);
+					lowerBound = statistics.getPercentile(bottomRange);
 				} else {
 					/*
 					 * Apply a log-normal distribution to smooth these bounds

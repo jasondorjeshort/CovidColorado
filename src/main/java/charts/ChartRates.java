@@ -94,8 +94,8 @@ public class ChartRates extends AbstractChart {
 					statistics.addValue((numerator / denominator) * (n2 / d2) / (n1 / d1));
 				}
 
-				double upperBound = statistics.getPercentile(100 - sideRange);
-				double lowerBound = statistics.getPercentile(sideRange);
+				double upperBound = statistics.getPercentile(topRange);
+				double lowerBound = statistics.getPercentile(bottomRange);
 
 				series.add(time, 100 * numerator / denominator, 100 * lowerBound, 100 * upperBound);
 			}
