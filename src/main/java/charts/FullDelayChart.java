@@ -44,13 +44,14 @@ public class FullDelayChart extends AbstractChart {
 
 	private final Set<NumbersType> types;
 	private final NumbersTiming timing;
-
+	private final boolean cumulative;
 	private final int interval = 60;
 
-	public FullDelayChart(ColoradoStats stats, Set<NumbersType> types, NumbersTiming timing) {
+	public FullDelayChart(ColoradoStats stats, Set<NumbersType> types, NumbersTiming timing, boolean cumulative) {
 		super(stats, Charts.FULL_FOLDER + "\\" + "full-delay");
 		this.types = types;
 		this.timing = timing;
+		this.cumulative = cumulative;
 	}
 
 	public static double sumArray(double[] array) {
@@ -61,8 +62,6 @@ public class FullDelayChart extends AbstractChart {
 		return total;
 	}
 
-	boolean cumulative = true;
-
 	@Override
 	public Chart buildChart(int lastDayOfData) {
 
@@ -71,6 +70,8 @@ public class FullDelayChart extends AbstractChart {
 		int seriesCount = 0;
 
 		String category = (types.size() > 1) ? "numbers" : NumbersType.name(types, "");
+
+		double peak = 0;
 
 		for (NumbersType type : types) {
 			IncompleteNumbers numbers = stats.getNumbers(type, timing);
@@ -107,8 +108,11 @@ public class FullDelayChart extends AbstractChart {
 				if (desc[delay].getN() == 0) {
 					continue;
 				}
-				series.add(delay, 100 * cF(desc[delay].getPercentile(50)), 100 * cF(desc[delay].getPercentile(25)),
-						100 * cF(desc[delay].getPercentile(75)));
+				double middle = 100 * cF(desc[delay].getPercentile(50));
+				double bottom = 100 * cF(desc[delay].getPercentile(25));
+				double top = 100 * cF(desc[delay].getPercentile(75));
+				peak = Math.max(peak, top);
+				series.add(delay, middle, bottom, top);
 			}
 
 			collection.addSeries(series);
@@ -121,6 +125,9 @@ public class FullDelayChart extends AbstractChart {
 		StringBuilder title = new StringBuilder();
 		title.append("Time from " + timing.lowerName + " to release of all ");
 		title.append(category);
+		title.append(";\n");
+		title.append(cumulative ? "Cumulative" : "Daily");
+		title.append(" with median and interquartile ranges");
 		title.append(";\n data through ");
 		title.append(CalendarUtils.dayToDate(lastDayOfData));
 		JFreeChart chart = ChartFactory.createXYLineChart(title.toString(), "Days of delay",
@@ -136,10 +143,12 @@ public class FullDelayChart extends AbstractChart {
 		xAxis.setUpperBound(interval);
 		ValueAxis yAxis = plot.getRangeAxis();
 		yAxis.setLowerBound(0);
-		yAxis.setUpperBound(120);
+		peak = Math.min(peak, 120);
+		yAxis.setUpperBound(peak);
 
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(lastDayOfData));
-		if (timing == NumbersTiming.INFECTION && lastDayOfData == stats.getLastDay() && types.size() >= 3) {
+		if (timing == NumbersTiming.INFECTION && lastDayOfData == stats.getLastDay() && types.size() == 3
+				&& cumulative) {
 			c.addFileName(Charts.TOP_FOLDER + "\\delay-" + timing.lowerName + ".png");
 			c.open();
 		}
@@ -149,7 +158,7 @@ public class FullDelayChart extends AbstractChart {
 
 	@Override
 	public String getName() {
-		return NumbersType.name(types, "-") + "-" + timing.lowerName;
+		return NumbersType.name(types, "-") + "-" + timing.lowerName + "-" + (cumulative ? "cumulative" : "daily");
 	}
 
 	/**

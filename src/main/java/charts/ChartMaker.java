@@ -54,8 +54,7 @@ public class ChartMaker {
 		build.execute(() -> stats.calculateReinfections());
 
 		if (false) {
-			new ChartIncompletes(stats, noTests, NumbersTiming.INFECTION, true, true).buildChartsOnly(build);
-			new ChartIncompletes(stats, noTests, NumbersTiming.INFECTION, true, false).buildChartsOnly(build);
+			new FullDelayChart(stats, noTests, NumbersTiming.INFECTION, true).buildChartsOnly(build);
 			build.complete();
 			return;
 		}
@@ -78,7 +77,8 @@ public class ChartMaker {
 			build.execute(() -> new ChartIncompletes(stats, noTests, timing, true, true).buildAllCharts());
 			build.execute(() -> new ChartIncompletes(stats, noTests, timing, true, false).buildAllCharts());
 			build.execute(() -> new ChartIncompletes(stats, noTests, timing, false, true).buildAllCharts());
-			build.execute(() -> new FullDelayChart(stats, noTests, timing).buildAllCharts());
+			build.execute(() -> new FullDelayChart(stats, noTests, timing, true).buildAllCharts());
+			build.execute(() -> new FullDelayChart(stats, noTests, timing, false).buildAllCharts());
 			build.execute(() -> new DailyAgeChart(stats, noTests, timing).buildAllCharts());
 			build.execute(() -> new DailyDelayChart(stats, noTests, timing).buildAllCharts());
 			build.execute(() -> age.buildChart(noTests, timing));
@@ -92,7 +92,8 @@ public class ChartMaker {
 				build.execute(() -> new ChartIncompletes(stats, type.set, timing, true, true).buildAllCharts());
 				build.execute(() -> new ChartIncompletes(stats, type.set, timing, true, false).buildAllCharts());
 				build.execute(() -> new ChartIncompletes(stats, type.set, timing, false, true).buildAllCharts());
-				build.execute(() -> new FullDelayChart(stats, type.set, timing).buildAllCharts());
+				build.execute(() -> new FullDelayChart(stats, type.set, timing, true).buildAllCharts());
+				build.execute(() -> new FullDelayChart(stats, type.set, timing, false).buildAllCharts());
 				build.execute(() -> new DailyAgeChart(stats, type.set, timing).buildAllCharts());
 				build.execute(() -> new DailyDelayChart(stats, type.set, timing).buildAllCharts());
 				build.execute(() -> age.buildChart(type.set, timing));
