@@ -149,7 +149,7 @@ public class FullDelayChart extends AbstractChart {
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(lastDayOfData));
 		if (timing == NumbersTiming.INFECTION && lastDayOfData == stats.getLastDay() && types.size() == 3
 				&& cumulative) {
-			c.addFileName(Charts.TOP_FOLDER + "\\delay-" + timing.lowerName + ".png");
+			c.addFileName(Charts.TOP_FOLDER + "\\" + getName() + ".png");
 			c.open();
 		}
 		c.saveAsPNG();
