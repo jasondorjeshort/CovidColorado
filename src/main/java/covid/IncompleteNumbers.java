@@ -134,21 +134,7 @@ public class IncompleteNumbers extends Numbers {
 			return null;
 		}
 
-		DayOfData daily = allNumbers.get(dayOfData);
-
-		int count = 0;
-		double r = 1.0;
-		int RANGE = 5;
-		for (int d = dayOfType - RANGE; d <= dayOfType + RANGE; d++) {
-			Double dailyR = daily.R.get(d);
-			if (dailyR == null) {
-				return null;
-			}
-			r *= dailyR;
-			count++;
-		}
-
-		return Math.pow(r, 1.0 / count);
+		return allNumbers.get(dayOfData).R.get(dayOfType);
 	}
 
 	/*
