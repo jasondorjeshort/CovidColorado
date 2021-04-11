@@ -210,7 +210,7 @@ public class IncompleteNumbers extends Numbers {
 		// kinda have to do weekly or we hit day-of-week issues
 		int R_SMOOTHING_INTERVAL = 7;
 
-		Smoothing smoothing = new Smoothing(R_SMOOTHING_INTERVAL, Smoothing.Type.AVERAGE, Smoothing.Timing.SYMMETRIC);
+		Smoothing smoothing = new Smoothing(R_SMOOTHING_INTERVAL, Smoothing.Type.GEOMETRIC_AVERAGE, Smoothing.Timing.SYMMETRIC);
 		for (int dayOfData = firstDayOfData; dayOfData <= lastDayOfData; dayOfData++) {
 			DayOfData daily = allNumbers.get(dayOfData);
 			if (daily == null) {
