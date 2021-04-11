@@ -131,6 +131,7 @@ public class Reproductive extends AbstractChart {
 		ValueMarker marker = new ValueMarker(1.0);
 		marker.setPaint(Color.black);
 		plot.addRangeMarker(marker);
+		plot.addDomainMarker(Charts.getTodayMarker(dayOfData));
 
 		if (SHOW_EVENTS) {
 			Event.addEvents(plot);
