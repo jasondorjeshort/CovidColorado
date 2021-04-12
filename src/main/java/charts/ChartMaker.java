@@ -68,12 +68,8 @@ public class ChartMaker {
 			build.execute(() -> new ChartRates(stats, Rate.getSet(rate)).buildAllCharts());
 		}
 
-		build.execute(() -> new Reproductive(stats, noTests).buildAllCharts());
-		for (NumbersType type : NumbersType.values()) {
-			build.execute(() -> new Reproductive(stats, NumbersType.getSet(type)).buildAllCharts());
-		}
-
 		for (NumbersTiming timing : NumbersTiming.values()) {
+			build.execute(() -> new Reproductive(stats, noTests, timing).buildAllCharts());
 			build.execute(() -> new ChartIncompletes(stats, noTests, timing, true, true).buildAllCharts());
 			build.execute(() -> new ChartIncompletes(stats, noTests, timing, true, false).buildAllCharts());
 			build.execute(() -> new ChartIncompletes(stats, noTests, timing, false, true).buildAllCharts());
@@ -89,6 +85,7 @@ public class ChartMaker {
 			// No point to testing age; it's identical to cases
 
 			for (NumbersType type : NumbersType.values()) {
+				build.execute(() -> new Reproductive(stats, NumbersType.getSet(type), timing).buildAllCharts());
 				build.execute(() -> new ChartIncompletes(stats, type.set, timing, true, true).buildAllCharts());
 				build.execute(() -> new ChartIncompletes(stats, type.set, timing, true, false).buildAllCharts());
 				build.execute(() -> new ChartIncompletes(stats, type.set, timing, false, true).buildAllCharts());

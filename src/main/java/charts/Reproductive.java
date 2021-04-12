@@ -45,13 +45,14 @@ public class Reproductive extends AbstractChart {
 	 * This charts the estimated R(t).
 	 */
 	public final Set<NumbersType> types;
+	public final NumbersTiming timing;
 
-	public Reproductive(ColoradoStats stats, Set<NumbersType> types) {
+	public Reproductive(ColoradoStats stats, Set<NumbersType> types, NumbersTiming timing) {
 		super(stats, Charts.FULL_FOLDER + "\\" + "reproductive");
 		this.types = types;
+		this.timing = timing;
 	}
 
-	private static final NumbersTiming TIMING = NumbersTiming.INFECTION;
 	private static final boolean SHOW_EVENTS = true;
 
 	private static final int FIRST_DAY = CalendarUtils.dateToDay("2-14-2020");
@@ -67,7 +68,7 @@ public class Reproductive extends AbstractChart {
 				continue;
 			}
 
-			IncompleteNumbers numbers = stats.getNumbers(type, TIMING);
+			IncompleteNumbers numbers = stats.getNumbers(type, timing);
 			if (!numbers.hasData()) {
 				throw new RuntimeException("UH OH");
 			}
@@ -111,7 +112,8 @@ public class Reproductive extends AbstractChart {
 		// dataset.addSeries("Cases", series);
 
 		StringBuilder title = new StringBuilder();
-		title.append("Colorado COVID reproductive rate\nthrough " + CalendarUtils.dayToDate(dayOfData));
+		title.append("Colorado COVID reproductive rate by " + timing.lowerName + " date");
+		title.append("\nthrough " + CalendarUtils.dayToDate(dayOfData));
 		title.append(String.format("\n(central %.0f%% interval for value in %d days based on prev %d days)", confidence,
 				DELAY, INTERVAL));
 
@@ -138,7 +140,8 @@ public class Reproductive extends AbstractChart {
 		}
 
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(dayOfData));
-		if (dayOfData == stats.getLastDay() && types.size() == 1 && types.contains(NumbersType.CASES)) {
+		if (dayOfData == stats.getLastDay() && types.size() == 1 && types.contains(NumbersType.CASES)
+				&& timing == NumbersTiming.INFECTION) {
 			c.addFileName(Charts.TOP_FOLDER + "\\R.png");
 			c.open();
 		}
@@ -149,11 +152,17 @@ public class Reproductive extends AbstractChart {
 
 	@Override
 	public String getName() {
-		return NumbersType.name(types, "-");
+		return NumbersType.name(types, "-") + "-" + timing.lowerName;
 	}
 
 	@Override
 	public boolean hasData() {
+		for (NumbersType type : types) {
+			IncompleteNumbers n = stats.getNumbers(type, timing);
+			if (!n.hasData()) {
+				return false;
+			}
+		}
 		return true;
 	}
 }
