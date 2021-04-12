@@ -142,7 +142,7 @@ public class Reproductive extends AbstractChart {
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(dayOfData));
 		if (dayOfData == stats.getLastDay() && types.size() == 1 && types.contains(NumbersType.CASES)
 				&& timing == NumbersTiming.INFECTION) {
-			c.addFileName(Charts.TOP_FOLDER + "\\R.png");
+			c.addFileName(Charts.TOP_FOLDER + "\\" + getName() + ".png");
 			c.open();
 		}
 		c.saveAsPNG();
@@ -152,7 +152,7 @@ public class Reproductive extends AbstractChart {
 
 	@Override
 	public String getName() {
-		return NumbersType.name(types, "-") + "-" + timing.lowerName;
+		return "R-" + NumbersType.name(types, "-") + "-" + timing.lowerName;
 	}
 
 	@Override
