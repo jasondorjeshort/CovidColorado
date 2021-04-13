@@ -61,14 +61,8 @@ public class ChartMaker {
 
 		build.execute(() -> finals.createCumulativeStats());
 
-		/* These are just ordered from slowest to fastest */
-
-		build.execute(() -> new ChartRates(stats, Rate.getSet(Rate.values())).buildAllCharts());
-		for (Rate rate : Rate.values()) {
-			build.execute(() -> new ChartRates(stats, Rate.getSet(rate)).buildAllCharts());
-		}
-
 		for (NumbersTiming timing : NumbersTiming.values()) {
+			build.execute(() -> new ChartRates(stats, Rate.getSet(Rate.values()), timing).buildAllCharts());
 			build.execute(() -> new Reproductive(stats, noTests, timing).buildAllCharts());
 			build.execute(() -> new ChartIncompletes(stats, noTests, timing, true, true).buildAllCharts());
 			build.execute(() -> new ChartIncompletes(stats, noTests, timing, true, false).buildAllCharts());
@@ -84,6 +78,9 @@ public class ChartMaker {
 			build.execute(() -> new ChartIncompletes(stats, fullTypes, timing, false, true).buildAllCharts());
 			// No point to testing age; it's identical to cases
 
+			for (Rate rate : Rate.values()) {
+				build.execute(() -> new ChartRates(stats, Rate.getSet(rate), timing).buildAllCharts());
+			}
 			for (NumbersType type : NumbersType.values()) {
 				build.execute(() -> new Reproductive(stats, NumbersType.getSet(type), timing).buildAllCharts());
 				build.execute(() -> new ChartIncompletes(stats, type.set, timing, true, true).buildAllCharts());

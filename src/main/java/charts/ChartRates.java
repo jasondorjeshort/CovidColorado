@@ -39,14 +39,14 @@ import covid.Smoothing;
  */
 public class ChartRates extends AbstractChart {
 
-	private static final NumbersTiming timing = NumbersTiming.INFECTION;
-
 	public static final String RATES_FOLDER = Charts.FULL_FOLDER + "\\rates";
 	public final Set<Rate> rates;
+	private final NumbersTiming timing;
 
-	public ChartRates(ColoradoStats stats, Set<Rate> rates) {
+	public ChartRates(ColoradoStats stats, Set<Rate> rates, NumbersTiming timing) {
 		super(stats, RATES_FOLDER);
 		this.rates = rates;
+		this.timing = timing;
 	}
 
 	@Override
@@ -145,8 +145,7 @@ public class ChartRates extends AbstractChart {
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(dayOfData));
 
 		if (timing == NumbersTiming.INFECTION && dayOfData == stats.getLastDay() && rates.size() == 1) {
-			String name = Charts.TOP_FOLDER + "\\" + Rate.allCapsName(rates, "-") + "-" + timing.lowerName + ".png";
-			c.addFileName(name);
+			c.addFileName(Charts.TOP_FOLDER + "\\" + getName() + ".png");
 			c.open();
 		}
 		c.saveAsPNG();
@@ -156,7 +155,7 @@ public class ChartRates extends AbstractChart {
 
 	@Override
 	public String getName() {
-		return Rate.name(rates, "-");
+		return Rate.name(rates, "-") + "-" + timing.lowerName;
 	}
 
 	@Override
