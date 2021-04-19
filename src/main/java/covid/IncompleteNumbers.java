@@ -145,6 +145,12 @@ public class IncompleteNumbers extends Numbers {
 		return getNumbers(dayOfData, dayOfType) - getNumbers(dayOfData - 1, dayOfType);
 	}
 
+	// https://wwwnc.cdc.gov/eid/article/26/6/20-0357_article
+	public static double SERIAL_INTERVAL = 3.96;
+
+	// kinda have to do weekly or we hit day-of-week issues
+	public static int R_SMOOTHING_INTERVAL = 7;
+
 	public synchronized boolean build() {
 
 		/**
@@ -206,12 +212,7 @@ public class IncompleteNumbers extends Numbers {
 			isCumulative = false;
 		}
 
-		int SERIAL_INTERVAL = 5;
-		// kinda have to do weekly or we hit day-of-week issues
-		int R_SMOOTHING_INTERVAL = 7;
-
-		Smoothing smoothing = new Smoothing(R_SMOOTHING_INTERVAL, Smoothing.Type.GEOMETRIC_AVERAGE,
-				Smoothing.Timing.SYMMETRIC);
+		Smoothing smoothing = new Smoothing(R_SMOOTHING_INTERVAL, Smoothing.Type.AVERAGE, Smoothing.Timing.TRAILING);
 		for (int dayOfData = firstDayOfData; dayOfData <= lastDayOfData; dayOfData++) {
 			DayOfData daily = allNumbers.get(dayOfData);
 			if (daily == null) {
@@ -219,10 +220,10 @@ public class IncompleteNumbers extends Numbers {
 			}
 
 			for (int dayOfType = firstDayOfType; dayOfType <= dayOfData; dayOfType++) {
-				Double end = getNumbers(dayOfData, dayOfType, smoothing);
-				Double start = getNumbers(dayOfData, dayOfType - SERIAL_INTERVAL, smoothing);
+				Double end = getNumbers(dayOfData, dayOfType + R_SMOOTHING_INTERVAL, smoothing);
+				Double start = getNumbers(dayOfData, dayOfType, smoothing);
 				if (end != null && start != null && end != 0 && start != 0) {
-					daily.R.put(dayOfType, end / start);
+					daily.R.put(dayOfType, Math.pow(end / start, SERIAL_INTERVAL / 7));
 				}
 			}
 		}

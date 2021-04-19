@@ -114,6 +114,9 @@ public class Reproductive extends AbstractChart {
 		StringBuilder title = new StringBuilder();
 		title.append("Colorado COVID reproductive rate by " + timing.lowerName + " date");
 		title.append("\nthrough " + CalendarUtils.dayToDate(dayOfData));
+		title.append("\n");
+		title.append(String.format("%d-day smoothed using %.02f-day serial interval",
+				IncompleteNumbers.R_SMOOTHING_INTERVAL * 2, IncompleteNumbers.SERIAL_INTERVAL));
 		title.append(String.format("\n(central %.0f%% interval for value in %d days based on prev %d days)", confidence,
 				DELAY, INTERVAL));
 
