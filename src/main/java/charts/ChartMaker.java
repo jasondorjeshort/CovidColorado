@@ -45,6 +45,7 @@ public class ChartMaker {
 		Set<NumbersType> fullTypes = NumbersType.getSet();
 		Set<NumbersType> noTests = NumbersType.getSet(NumbersType.CASES, NumbersType.DEATHS,
 				NumbersType.HOSPITALIZATIONS);
+		Set<NumbersType> casesHosps = NumbersType.getSet(NumbersType.CASES, NumbersType.HOSPITALIZATIONS);
 
 		long buildStarted = System.currentTimeMillis();
 
@@ -64,6 +65,7 @@ public class ChartMaker {
 		for (NumbersTiming timing : NumbersTiming.values()) {
 			build.execute(() -> new ChartRates(stats, Rate.getSet(Rate.values()), timing).buildAllCharts());
 			build.execute(() -> new Reproductive(stats, noTests, timing).buildAllCharts());
+			build.execute(() -> new Reproductive(stats, casesHosps, timing).buildAllCharts());
 			build.execute(() -> new ChartIncompletes(stats, noTests, timing, true, true).buildAllCharts());
 			build.execute(() -> new ChartIncompletes(stats, noTests, timing, true, false).buildAllCharts());
 			build.execute(() -> new ChartIncompletes(stats, noTests, timing, false, true).buildAllCharts());
