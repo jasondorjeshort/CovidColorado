@@ -223,7 +223,7 @@ public class IncompleteNumbers extends Numbers {
 				Double end = getNumbers(dayOfData, dayOfType + R_SMOOTHING_INTERVAL, smoothing);
 				Double start = getNumbers(dayOfData, dayOfType, smoothing);
 				if (end != null && start != null && end != 0 && start != 0) {
-					daily.R.put(dayOfType, Math.pow(end / start, SERIAL_INTERVAL / 7));
+					daily.R.put(dayOfType, Math.pow(end / start, SERIAL_INTERVAL / R_SMOOTHING_INTERVAL));
 				}
 			}
 		}
