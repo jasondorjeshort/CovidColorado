@@ -3,7 +3,6 @@ package charts;
 import java.awt.BasicStroke;
 import java.util.Set;
 
-import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
