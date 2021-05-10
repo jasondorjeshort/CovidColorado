@@ -80,6 +80,14 @@ public class Charts {
 		return marker;
 	}
 
+	// median expectation VERSUS current value
+	public static double value(double current, double median) {
+		if (true) {
+			return median;
+		}
+		return current;
+	}
+
 	public static void setDelay(ColoradoStats stats, int dayOfData, AnimatedGifEncoder gif) {
 		if (dayOfData == stats.getLastDay()) {
 			gif.setDelay(5000);

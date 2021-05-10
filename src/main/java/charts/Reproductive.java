@@ -99,8 +99,9 @@ public class Reproductive extends AbstractChart {
 
 				double upperBound = statistics.getPercentile(topRange);
 				double lowerBound = statistics.getPercentile(bottomRange);
+				double median = statistics.getPercentile(50);
 
-				series.add(time, reproductive, lowerBound, upperBound);
+				series.add(time, Charts.value(reproductive, median), lowerBound, upperBound);
 			}
 			collection.addSeries(series);
 			renderer.setSeriesStroke(seriesCount, new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));

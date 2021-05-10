@@ -121,10 +121,11 @@ public class ChartIncompletes extends AbstractChart {
 					statistics.addValue(Math.log(n2 / n1));
 				}
 
-				double upperBound, lowerBound;
+				double upperBound, lowerBound, median;
 				if (true) {
 					/* Use the actual 2.5% and 97.5% values */
 					upperBound = statistics.getPercentile(topRange);
+					median = statistics.getPercentile(50);
 					lowerBound = statistics.getPercentile(bottomRange);
 				} else {
 					/*
@@ -148,9 +149,10 @@ public class ChartIncompletes extends AbstractChart {
 
 				upperBound = number * Math.exp(upperBound);
 				lowerBound = number * Math.exp(lowerBound);
+				median = number * Math.exp(median);
 
 				if (!logarithmic || (lowerBound > 0 && number > 0 && upperBound > 0)) {
-					series.add(time, number, lowerBound, upperBound);
+					series.add(time, Charts.value(number, median), lowerBound, upperBound);
 				}
 			}
 

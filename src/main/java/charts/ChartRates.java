@@ -96,8 +96,10 @@ public class ChartRates extends AbstractChart {
 
 				double upperBound = statistics.getPercentile(topRange);
 				double lowerBound = statistics.getPercentile(bottomRange);
+				double median = statistics.getPercentile(50);
 
-				series.add(time, 100 * numerator / denominator, 100 * lowerBound, 100 * upperBound);
+				series.add(time, 100 * Charts.value(numerator / denominator, median), 100 * lowerBound,
+						100 * upperBound);
 			}
 
 			collection.addSeries(series);
