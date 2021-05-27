@@ -53,11 +53,13 @@ public class Event {
 			// new Event("Intervention", "11-05-2020")
 			new Event("TG", "11-26-2020"), // Thanksgiving
 
-			new Event("💉", "12-19-2020"), // vaccine start + 5
+			new Event("💉", "12-20-2020"), // vaccine start + 6
 
 			new Event("C", "12-25-2020"), // Christmas
 
 			new Event(null, "3-21-2021"),
+
+			new Event("💉", "4-13-2021"), // vaccine start + 11
 
 			// keep this below
 	};
