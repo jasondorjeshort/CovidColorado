@@ -340,6 +340,15 @@ public class ColoradoStats {
 						"Cumulative Number of Hospitalized Cases of COVID-19 in Colorado by Date of Illness Onset")
 						|| line.get(0).equals("Cumulative Number of Hospitalizations by Onset Date")) {
 					int dayOfOnset = CalendarUtils.dateToDay(line.get(1));
+					if (dayOfOnset > CalendarUtils.dateToDay("01-01-2021")) {
+						// Fuck. These numbers are no longer on the same
+						// timescale.
+						double R = 7;
+						double v = dayOfOnset - CalendarUtils.dateToDay("01-01-2021");
+						v *= R / 90;
+						v = Math.min(v, R);
+						dayOfOnset -= Math.round(v);
+					}
 					int dayOfInfection = dayOfOnset - 5;
 					int c = Integer.valueOf(line.get(3));
 
@@ -354,6 +363,15 @@ public class ColoradoStats {
 				} else if (line.get(0).equals("Cumulative Number of Deaths by Onset Date") || line.get(0)
 						.equals("Cumulative Number of Deaths From COVID-19 in Colorado by Date of Illness")) {
 					int dayOfOnset = CalendarUtils.dateToDay(line.get(1));
+					if (dayOfOnset > CalendarUtils.dateToDay("01-01-2021")) {
+						// Fuck. These numbers are no longer on the same
+						// timescale.
+						double R = 7;
+						double v = dayOfOnset - CalendarUtils.dateToDay("01-01-2021");
+						v *= R / 90;
+						v = Math.min(v, R);
+						dayOfOnset -= Math.round(v);
+					}
 					int dayOfInfection = dayOfOnset - 5;
 					int c = Integer.valueOf(line.get(3));
 
