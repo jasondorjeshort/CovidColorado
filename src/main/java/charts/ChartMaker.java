@@ -55,7 +55,12 @@ public class ChartMaker {
 		build.execute(() -> stats.calculateReinfections());
 
 		if (false) {
-			new FullDelayChart(stats, noTests, NumbersTiming.INFECTION, true).buildChartsOnly(build);
+			build.execute(
+					() -> new ChartRates(stats, Rate.getSet(Rate.CFR), NumbersTiming.INFECTION).buildChartsOnly(build));
+			build.execute(
+					() -> new ChartRates(stats, Rate.getSet(Rate.CHR), NumbersTiming.INFECTION).buildChartsOnly(build));
+			build.execute(
+					() -> new ChartRates(stats, Rate.getSet(Rate.HFR), NumbersTiming.INFECTION).buildChartsOnly(build));
 			build.complete();
 			return;
 		}
