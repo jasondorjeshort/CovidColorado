@@ -344,7 +344,7 @@ public class ColoradoStats {
 					if (dayOfInfection > CalendarUtils.dateToDay("01-01-2021")) {
 						// Fuck. These numbers are no longer on the same
 						// timescale.
-						double R = 14;
+						double R = 16;
 						double v = dayOfInfection - CalendarUtils.dateToDay("01-01-2021");
 						v *= R / 180;
 						v = Math.min(v, R);
@@ -367,7 +367,7 @@ public class ColoradoStats {
 					if (dayOfInfection > CalendarUtils.dateToDay("01-01-2021")) {
 						// Fuck. These numbers are no longer on the same
 						// timescale.
-						double R = 18;
+						double R = 16;
 						double v = dayOfInfection - CalendarUtils.dateToDay("01-01-2021");
 						v *= R / 180;
 						v = Math.min(v, R);
