@@ -146,7 +146,7 @@ public class IncompleteNumbers extends Numbers {
 	}
 
 	// https://wwwnc.cdc.gov/eid/article/26/6/20-0357_article
-	public static double SERIAL_INTERVAL = 3.96;
+	public static double SERIAL_INTERVAL = 4;
 
 	public int getReproductiveSmoothingInterval() {
 		return getType().reproductiveSmoothing;
