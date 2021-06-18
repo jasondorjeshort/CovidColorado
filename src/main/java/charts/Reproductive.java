@@ -144,8 +144,9 @@ public class Reproductive extends AbstractChart {
 		}
 
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(dayOfData));
-		if (dayOfData == stats.getLastDay() && types.size() == 2 && types.contains(NumbersType.CASES)
-				&& types.contains(NumbersType.HOSPITALIZATIONS) && timing == NumbersTiming.INFECTION) {
+		if (dayOfData == stats.getLastDay() && types.size() == 3 && types.contains(NumbersType.CASES)
+				&& types.contains(NumbersType.HOSPITALIZATIONS) && types.contains(NumbersType.DEATHS)
+				&& timing == NumbersTiming.INFECTION) {
 			c.addFileName(Charts.TOP_FOLDER + "\\" + getName() + ".png");
 			c.open();
 		}

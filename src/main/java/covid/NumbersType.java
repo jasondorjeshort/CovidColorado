@@ -23,8 +23,8 @@ import java.util.Set;
 public enum NumbersType {
 
 	TESTS(Smoothing.ALGEBRAIC_SYMMETRIC_WEEKLY, 7, 100000, Color.YELLOW),
-	CASES(Smoothing.ALGEBRAIC_SYMMETRIC_WEEKLY, 7, 10000, Color.BLUE),
-	HOSPITALIZATIONS(Smoothing.ALGEBRAIC_SYMMETRIC_WEEKLY, 14, 500, Color.RED),
+	CASES(Smoothing.ALGEBRAIC_SYMMETRIC_WEEKLY, 14, 10000, Color.BLUE),
+	HOSPITALIZATIONS(Smoothing.ALGEBRAIC_SYMMETRIC_WEEKLY, 21, 500, Color.RED),
 	DEATHS(Smoothing.ALGEBRAIC_SYMMETRIC_WEEKLY, 21, 100, Color.BLACK);
 
 	NumbersType(Smoothing smoothing, int reproductiveSmoothing, int highestValue, Color color) {
