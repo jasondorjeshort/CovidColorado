@@ -1,5 +1,6 @@
 package charts;
 
+import java.awt.BasicStroke;
 import java.awt.image.BufferedImage;
 import java.io.File;
 
@@ -7,12 +8,14 @@ import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.LogarithmicAxis;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.DeviationRenderer;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 
 import covid.CalendarUtils;
 import covid.ColoradoStats;
 import covid.CountyStats;
+import covid.NumbersType;
 import covid.Smoothing;
 
 /**
@@ -41,24 +44,49 @@ public class ChartCounty {
 
 	public static final String COUNTY_FOLDER = Charts.FULL_FOLDER + "\\county";
 
-	public BufferedImage buildCountyTimeseriesChart(CountyStats c, boolean log, Smoothing smoothing) {
+	public BufferedImage buildCountyTimeseriesChart(CountyStats c, boolean log) {
+		Smoothing s0 = Smoothing.NONE;
+		Smoothing s1 = Smoothing.AVERAGE_7_DAY;
+		TimeSeriesCollection collection = new TimeSeriesCollection();
 
-		TimeSeries cSeries = new TimeSeries("Cases"), dSeries = new TimeSeries("Deaths");
-		c.getCases().makeTimeSeries(cSeries, smoothing, log);
-		c.getDeaths().makeTimeSeries(dSeries, smoothing, log);
+		DeviationRenderer renderer = new DeviationRenderer(true, false);
+		int seriesCount = 0;
+
+		TimeSeries cSeries0 = new TimeSeries("Cases (" + s0.getDescription() + ")");
+		c.getCases().makeTimeSeries(cSeries0, s0, log);
+		collection.addSeries(cSeries0);
+		renderer.setSeriesStroke(seriesCount, new BasicStroke(0.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+		renderer.setSeriesPaint(seriesCount, NumbersType.CASES.color);
+		renderer.setSeriesFillPaint(seriesCount, NumbersType.CASES.color.darker());
+		seriesCount++;
+
+		TimeSeries cSeries = new TimeSeries("Cases (" + s1.getDescription() + ")");
+		c.getCases().makeTimeSeries(cSeries, s1, log);
+		collection.addSeries(cSeries);
+		renderer.setSeriesStroke(seriesCount, new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+		renderer.setSeriesPaint(seriesCount, NumbersType.CASES.color);
+		renderer.setSeriesFillPaint(seriesCount, NumbersType.CASES.color.darker());
+		seriesCount++;
+
+		TimeSeries dSeries = new TimeSeries("Deaths (" + s1.getDescription() + ")");
+		c.getDeaths().makeTimeSeries(dSeries, s1, log);
+		collection.addSeries(dSeries);
+		renderer.setSeriesStroke(seriesCount, new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+		renderer.setSeriesPaint(seriesCount, NumbersType.DEATHS.color);
+		renderer.setSeriesFillPaint(seriesCount, NumbersType.DEATHS.color.darker());
+		seriesCount++;
 
 		// dataset.addSeries("Cases", series);
 
-		TimeSeriesCollection collection = new TimeSeriesCollection();
-		collection.addSeries(cSeries);
-		collection.addSeries(dSeries);
-		String title = String.format("%s County, %s\n(%s%s)", c.getName(), CalendarUtils.dayToDate(stats.getLastDay()),
-				smoothing.getDescription(), (log ? ", logarithmic" : ""));
-		String verticalAxis = smoothing.getDescription();
+		String title = String.format("%s County, %s%s", c.getName(), CalendarUtils.dayToDate(stats.getLastDay()),
+				(log ? " (logarithmic)" : ""));
+		String verticalAxis = "Daily cases";
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title, "Date", verticalAxis, collection);
 
+		XYPlot plot = chart.getXYPlot();
+		plot.setRenderer(renderer);
+
 		if (log) {
-			XYPlot plot = chart.getXYPlot();
 			LogarithmicAxis yAxis = new LogarithmicAxis(verticalAxis);
 			plot.setRangeAxis(yAxis);
 
@@ -75,8 +103,8 @@ public class ChartCounty {
 	}
 
 	public void createCountyStats(CountyStats county) {
-		buildCountyTimeseriesChart(county, false, Smoothing.TOTAL_7_DAY);
-		buildCountyTimeseriesChart(county, true, Smoothing.TOTAL_7_DAY);
+		buildCountyTimeseriesChart(county, false);
+		buildCountyTimeseriesChart(county, true);
 	}
 
 }
