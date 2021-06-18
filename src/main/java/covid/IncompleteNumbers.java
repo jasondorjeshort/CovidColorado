@@ -148,8 +148,9 @@ public class IncompleteNumbers extends Numbers {
 	// https://wwwnc.cdc.gov/eid/article/26/6/20-0357_article
 	public static double SERIAL_INTERVAL = 3.96;
 
-	// kinda have to do weekly or we hit day-of-week issues
-	public static int R_SMOOTHING_INTERVAL = 7;
+	public int getReproductiveSmoothingInterval() {
+		return getType().reproductiveSmoothing;
+	}
 
 	public synchronized boolean build() {
 
@@ -212,6 +213,7 @@ public class IncompleteNumbers extends Numbers {
 			isCumulative = false;
 		}
 
+		int R_SMOOTHING_INTERVAL = getReproductiveSmoothingInterval();
 		Smoothing smoothing = new Smoothing(R_SMOOTHING_INTERVAL, Smoothing.Type.AVERAGE, Smoothing.Timing.TRAILING);
 		for (int dayOfData = firstDayOfData; dayOfData <= lastDayOfData; dayOfData++) {
 			DayOfData daily = allNumbers.get(dayOfData);

@@ -73,7 +73,8 @@ public class Reproductive extends AbstractChart {
 				throw new RuntimeException("UH OH");
 			}
 
-			YIntervalSeries series = new YIntervalSeries("Based on " + type.capName);
+			YIntervalSeries series = new YIntervalSeries("Based on " + type.capName + ", "
+					+ (numbers.getReproductiveSmoothingInterval() * 2) + "-day smoothing");
 
 			for (int dayOfType = FIRST_DAY; dayOfType <= dayOfData; dayOfType++) {
 				long time = CalendarUtils.dayToTime(dayOfType);
@@ -116,8 +117,7 @@ public class Reproductive extends AbstractChart {
 		title.append("Colorado COVID reproductive rate by " + timing.lowerName + " date");
 		title.append("\nthrough " + CalendarUtils.dayToDate(dayOfData));
 		title.append("\n");
-		title.append(String.format("%d-day smoothed using %.02f-day serial interval",
-				IncompleteNumbers.R_SMOOTHING_INTERVAL * 2, IncompleteNumbers.SERIAL_INTERVAL));
+		title.append(String.format("using %.02f-day serial interval", IncompleteNumbers.SERIAL_INTERVAL));
 		title.append(String.format("\n(central %.0f%% interval for value in %d days based on prev %d days)", confidence,
 				DELAY, INTERVAL));
 
