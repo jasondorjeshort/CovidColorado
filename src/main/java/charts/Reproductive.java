@@ -21,6 +21,7 @@ import covid.Event;
 import covid.IncompleteNumbers;
 import covid.NumbersTiming;
 import covid.NumbersType;
+import covid.Smoothing;
 
 /**
  * This program is free software: you can redistribute it and/or modify it under
@@ -100,6 +101,13 @@ public class Reproductive extends AbstractChart {
 
 				double upperBound = statistics.getPercentile(topRange);
 				double lowerBound = statistics.getPercentile(bottomRange);
+
+				if (dayOfType > dayOfData - 30 && upperBound > Math.E * lowerBound) {
+					// Done with fish! This is a simple metric for when the data
+					// is so uncertain as to not be worth showing.
+					break;
+				}
+
 				double median = statistics.getPercentile(50);
 
 				series.add(time, Charts.value(reproductive, median), lowerBound, upperBound);

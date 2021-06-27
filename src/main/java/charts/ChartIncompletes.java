@@ -149,6 +149,12 @@ public class ChartIncompletes extends AbstractChart {
 
 				upperBound = number * Math.exp(upperBound);
 				lowerBound = number * Math.exp(lowerBound);
+
+				if (smoothing != Smoothing.NONE && dayOfType > dayOfData - 30 && upperBound > Math.E * lowerBound) {
+					// Done with fish! This is a simple metric for when the data
+					// is so uncertain as to not be worth showing.
+					break;
+				}
 				median = number * Math.exp(median);
 
 				if (!logarithmic || (lowerBound > 0 && number > 0 && upperBound > 0)) {
