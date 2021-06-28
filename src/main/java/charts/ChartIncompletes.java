@@ -87,8 +87,14 @@ public class ChartIncompletes extends AbstractChart {
 		} else {
 			title.append(", exact");
 		}
-		title.append(String.format("\n(central %.0f%% interval for value in %d days based on prev %d days)", confidence,
-				DELAY, INTERVAL));
+		title.append("\n(");
+		if (Charts.useMedian()) {
+			title.append("Median");
+		} else {
+			title.append("Current");
+		}
+		title.append(String.format(" and central %.0f%% interval for value in %d days based on prev %d days)",
+				confidence, DELAY, INTERVAL));
 
 		for (NumbersType type : types) {
 			IncompleteNumbers numbers = stats.getNumbers(type, timing);

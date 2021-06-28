@@ -126,8 +126,14 @@ public class Reproductive extends AbstractChart {
 		title.append("\nthrough " + CalendarUtils.dayToDate(dayOfData));
 		title.append("\n");
 		title.append(String.format("using %.02f-day serial interval", IncompleteNumbers.SERIAL_INTERVAL));
-		title.append(String.format("\n(central %.0f%% interval for value in %d days based on prev %d days)", confidence,
-				DELAY, INTERVAL));
+		title.append("\n(");
+		if (Charts.useMedian()) {
+			title.append("Median");
+		} else {
+			title.append("Current");
+		}
+		title.append(String.format(" and central %.0f%% interval for value in %d days based on prev %d days)",
+				confidence, DELAY, INTERVAL));
 
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title.toString(), "Date", "R(t)", collection);
 

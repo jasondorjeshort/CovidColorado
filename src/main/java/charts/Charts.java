@@ -80,9 +80,13 @@ public class Charts {
 		return marker;
 	}
 
+	public static boolean useMedian() {
+		return true;
+	}
+
 	// median expectation VERSUS current value
 	public static double value(double current, double median) {
-		if (true) {
+		if (useMedian()) {
 			return median;
 		}
 		return current;

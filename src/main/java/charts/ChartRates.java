@@ -125,8 +125,14 @@ public class ChartRates extends AbstractChart {
 		title.append(timing.lowerName);
 		title.append(", ");
 		title.append(smoothing.getDescription());
-		title.append(String.format("\n(central %.0f%% interval for value in %d days based on prev %d days)", confidence,
-				DELAY, INTERVAL));
+		title.append("\n(");
+		if (Charts.useMedian()) {
+			title.append("Median");
+		} else {
+			title.append("Current");
+		}
+		title.append(String.format(" and central %.0f%% interval for value in %d days based on prev %d days)",
+				confidence, DELAY, INTERVAL));
 		if (needCaveat) {
 			title.append(String.format("\n(onset/infection timings are shifted starting on Jan 1, 2021)", confidence,
 					DELAY, INTERVAL));
