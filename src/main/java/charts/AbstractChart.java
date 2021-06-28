@@ -27,7 +27,7 @@ import library.ASync;
 public abstract class AbstractChart {
 
 	public static final int DELAY = 30;
-	public static final int INTERVAL = 80; // best work with the 95%
+	public static final int INTERVAL = 160; // best work with the 95%
 	public static final double confidence = 95;
 	public static final double bottomRange = (100 - confidence) / 2;
 	public static final double topRange = 100 - bottomRange;
