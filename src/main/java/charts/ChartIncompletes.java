@@ -164,11 +164,7 @@ public class ChartIncompletes extends AbstractChart {
 				median = number * Math.exp(median);
 
 				if (!logarithmic || (lowerBound > 0 && number > 0 && upperBound > 0)) {
-					if (Math.max(number / median, median / number) > 1.05) {
-						series.add(time, -100000000, lowerBound, upperBound);
-					} else {
-						series.add(time, median, lowerBound, upperBound);
-					}
+					series.add(time, Charts.value(number, median), lowerBound, upperBound);
 				}
 			}
 

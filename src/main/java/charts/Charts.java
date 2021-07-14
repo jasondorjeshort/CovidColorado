@@ -80,16 +80,16 @@ public class Charts {
 		return marker;
 	}
 
-	public static boolean useMedian() {
-		return true;
-	}
-
 	// median expectation VERSUS current value
 	public static double value(double current, double median) {
-		if (useMedian()) {
-			return median;
+		if (Math.max(current / median, median / current) > 1.05) {
+			return Double.NaN;
 		}
-		return current;
+		return median;
+	}
+
+	public static boolean useMedian() {
+		return true;
 	}
 
 	public static void setDelay(ColoradoStats stats, int dayOfData, AnimatedGifEncoder gif) {
