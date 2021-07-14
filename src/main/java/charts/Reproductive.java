@@ -134,8 +134,8 @@ public class Reproductive extends AbstractChart {
 		XYPlot plot = chart.getXYPlot();
 		plot.setRenderer(renderer);
 		ValueAxis yAxis = plot.getRangeAxis();
-		yAxis.setLowerBound(0);
-		yAxis.setUpperBound(4);
+		yAxis.setLowerBound(0.75);
+		yAxis.setUpperBound(1.25);
 
 		DateAxis xAxis = new DateAxis("Date");
 		xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(FIRST_DAY));
