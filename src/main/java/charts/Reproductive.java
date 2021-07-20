@@ -21,7 +21,6 @@ import covid.Event;
 import covid.IncompleteNumbers;
 import covid.NumbersTiming;
 import covid.NumbersType;
-import covid.Smoothing;
 
 /**
  * This program is free software: you can redistribute it and/or modify it under
