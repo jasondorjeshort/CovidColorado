@@ -26,7 +26,7 @@ import library.ASync;
  */
 public abstract class AbstractChart {
 
-	public static final int DELAY = 30;
+	public static final int DELAY = 35; // multiple of 7
 	public static final int INTERVAL = 160; // best work with the 95%
 	public static final double confidence = 95;
 	public static final double bottomRange = (100 - confidence) / 2;
@@ -72,7 +72,7 @@ public abstract class AbstractChart {
 	public abstract String getName();
 
 	public String getSubfolder() {
-		return topFolder + "\\" + getName();
+		return topFolder + "\\" + getName() + "-" + DELAY + "-" + INTERVAL;
 	}
 
 	public abstract Chart buildChart(int dayOfChart);
