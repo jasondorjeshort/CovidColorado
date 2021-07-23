@@ -52,7 +52,7 @@ public class ChartRates extends AbstractChart {
 
 	@Override
 	public Chart buildChart(int dayOfData) {
-		Smoothing smoothing = new Smoothing(30, Smoothing.Type.AVERAGE, Smoothing.Timing.SYMMETRIC);
+		Smoothing smoothing = new Smoothing(28, Smoothing.Type.AVERAGE, Smoothing.Timing.SYMMETRIC);
 
 		DeviationRenderer renderer = new DeviationRenderer(true, false);
 		YIntervalSeriesCollection collection = new YIntervalSeriesCollection();
