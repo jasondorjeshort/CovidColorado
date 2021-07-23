@@ -21,7 +21,7 @@ public class Smoothing {
 	public static final Smoothing NONE = new Smoothing(1, Type.TOTAL, Timing.SYMMETRIC);
 	public static final Smoothing GEOMETRIC_SYMMETRIC_WEEKLY = new Smoothing(7, Type.GEOMETRIC_AVERAGE,
 			Timing.SYMMETRIC);
-	public static final Smoothing GEOMETRIC_SYMMETRIC_13DAY = new Smoothing(13, Type.GEOMETRIC_AVERAGE,
+	public static final Smoothing GEOMETRIC_SYMMETRIC_14DAY = new Smoothing(13, Type.GEOMETRIC_AVERAGE,
 			Timing.SYMMETRIC);
 	public static final Smoothing GEOMETRIC_SYMMETRIC_21DAY = new Smoothing(21, Type.GEOMETRIC_AVERAGE,
 			Timing.SYMMETRIC);
@@ -30,7 +30,7 @@ public class Smoothing {
 	public static final Smoothing TOTAL_14_DAY = new Smoothing(14, Type.TOTAL, Timing.TRAILING);
 	public static final Smoothing AVERAGE_14_DAY = new Smoothing(14, Type.AVERAGE, Timing.TRAILING);
 	public static final Smoothing ALGEBRAIC_SYMMETRIC_WEEKLY = new Smoothing(7, Type.AVERAGE, Timing.SYMMETRIC);
-	public static final Smoothing ALGEBRAIC_SYMMETRIC_13DAY = new Smoothing(13, Type.AVERAGE, Timing.SYMMETRIC);
+	public static final Smoothing ALGEBRAIC_SYMMETRIC_14DAY = new Smoothing(13, Type.AVERAGE, Timing.SYMMETRIC);
 	public static final Smoothing ALGEBRAIC_SYMMETRIC_21DAY = new Smoothing(21, Type.AVERAGE, Timing.SYMMETRIC);
 
 	public enum Type {
