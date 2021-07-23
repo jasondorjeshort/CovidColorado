@@ -153,18 +153,20 @@ public class IncompleteNumbers extends Numbers {
 	}
 
 	public synchronized boolean build() {
-
 		/**
 		 * Fill in empty values
 		 */
 		for (int dayOfData = firstDayOfData; dayOfData <= lastDayOfData; dayOfData++) {
 			if (allNumbers.get(dayOfData) == null) {
-				/*
-				 * new Exception("Null day of data for " + getType() + "-" +
-				 * getTiming() + " on " +
-				 * CalendarUtils.dayToDate(dayOfData)).printStackTrace();
-				 */
-				DayOfData daily = new DayOfData();
+				DayOfData daily = allNumbers.get(dayOfData - 1);
+				if (daily == null) {
+					new Exception("Null day of data for " + getType() + "-" + getTiming() + " on "
+							+ CalendarUtils.dayToDate(dayOfData)).printStackTrace();
+					daily = new DayOfData();
+				} else {
+					System.out.println(
+							"Skipping day " + CalendarUtils.dayToDate(dayOfData) + ", replaced with previous.");
+				}
 				allNumbers.put(dayOfData, daily);
 			}
 
