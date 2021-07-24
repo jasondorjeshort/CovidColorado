@@ -38,6 +38,15 @@ public class IncompleteNumbers extends Numbers {
 	protected class DayOfData {
 		protected final HashMap<Integer, Double> numbers = new HashMap<>();
 		protected final HashMap<Integer, Double> R = new HashMap<>();
+
+		public DayOfData() {
+
+		}
+
+		public DayOfData(DayOfData populate) {
+			populate.numbers.forEach((d, v) -> numbers.put(d, v));
+			populate.R.forEach((d, v) -> R.put(d, v));
+		}
 	}
 
 	private final HashMap<Integer, DayOfData> allNumbers = new HashMap<>();
@@ -164,22 +173,11 @@ public class IncompleteNumbers extends Numbers {
 							+ CalendarUtils.dayToDate(dayOfData)).printStackTrace();
 					daily = new DayOfData();
 				} else {
-					System.out.println(
-							"Skipping day " + CalendarUtils.dayToDate(dayOfData) + ", replaced with previous.");
+					System.out.println("Skipping day " + CalendarUtils.dayToDate(dayOfData) + " on " + getType() + "/"
+							+ getTiming() + ", replaced with previous.");
+					daily = new DayOfData(daily);
 				}
 				allNumbers.put(dayOfData, daily);
-			}
-
-			DayOfData daily = allNumbers.get(dayOfData);
-			boolean started = false;
-			for (int dayOfType = lastDayOfData; dayOfType >= firstDayOfType; dayOfType--) {
-				if (daily.numbers.get(dayOfType) == null) {
-					if (started) {
-						daily.numbers.put(dayOfType, 0.0);
-					}
-				} else {
-					started = true;
-				}
 			}
 		}
 
@@ -215,6 +213,20 @@ public class IncompleteNumbers extends Numbers {
 			isCumulative = false;
 		}
 
+		for (int dayOfData = firstDayOfData; dayOfData <= lastDayOfData; dayOfData++) {
+			DayOfData daily = allNumbers.get(dayOfData);
+			boolean started = false;
+			for (int dayOfType = lastDayOfData; dayOfType >= firstDayOfType; dayOfType--) {
+				if (daily.numbers.get(dayOfType) == null) {
+					if (started) {
+						daily.numbers.put(dayOfType, 0.0);
+					}
+				} else {
+					started = true;
+				}
+			}
+		}
+
 		int R_SMOOTHING_INTERVAL = getReproductiveSmoothingInterval();
 		Smoothing smoothing = new Smoothing(R_SMOOTHING_INTERVAL, Smoothing.Type.AVERAGE, Smoothing.Timing.TRAILING);
 		for (int dayOfData = firstDayOfData; dayOfData <= lastDayOfData; dayOfData++) {
@@ -224,9 +236,9 @@ public class IncompleteNumbers extends Numbers {
 			}
 
 			for (int dayOfType = firstDayOfType; dayOfType <= dayOfData; dayOfType++) {
-				Double end = getNumbers(dayOfData, dayOfType + R_SMOOTHING_INTERVAL, smoothing);
-				Double start = getNumbers(dayOfData, dayOfType, smoothing);
-				if (end != null && start != null && end != 0 && start != 0) {
+				double end = getNumbers(dayOfData, dayOfType + R_SMOOTHING_INTERVAL, smoothing);
+				double start = getNumbers(dayOfData, dayOfType, smoothing);
+				if (end != 0 && start != 0) {
 					daily.R.put(dayOfType, Math.pow(end / start, SERIAL_INTERVAL / R_SMOOTHING_INTERVAL));
 				}
 			}
