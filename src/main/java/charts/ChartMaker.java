@@ -55,16 +55,20 @@ public class ChartMaker {
 		build.execute(() -> stats.calculateReinfections());
 
 		if (false) {
+			build.execute(() -> new ChartIncompletes(stats, fullTypes, NumbersTiming.INFECTION, true, true)
+					.buildChartsOnly(build));
 			build.execute(() -> new ChartIncompletes(stats, noTests, NumbersTiming.INFECTION, true, true)
 					.buildChartsOnly(build));
 			build.execute(() -> new ChartRates(stats, Rate.getSet(Rate.POSITIVITY), NumbersTiming.INFECTION)
 					.buildChartsOnly(build));
-			build.execute(
-					() -> new ChartRates(stats, Rate.getSet(Rate.CFR), NumbersTiming.INFECTION).buildChartsOnly(build));
-			build.execute(
-					() -> new ChartRates(stats, Rate.getSet(Rate.CHR), NumbersTiming.INFECTION).buildChartsOnly(build));
-			build.execute(
-					() -> new ChartRates(stats, Rate.getSet(Rate.HFR), NumbersTiming.INFECTION).buildChartsOnly(build));
+			if (false) {
+				build.execute(() -> new ChartRates(stats, Rate.getSet(Rate.CFR), NumbersTiming.INFECTION)
+						.buildChartsOnly(build));
+				build.execute(() -> new ChartRates(stats, Rate.getSet(Rate.CHR), NumbersTiming.INFECTION)
+						.buildChartsOnly(build));
+				build.execute(() -> new ChartRates(stats, Rate.getSet(Rate.HFR), NumbersTiming.INFECTION)
+						.buildChartsOnly(build));
+			}
 			build.complete();
 			return;
 		}
