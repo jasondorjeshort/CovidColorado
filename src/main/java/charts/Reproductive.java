@@ -55,7 +55,7 @@ public class Reproductive extends AbstractChart {
 
 	private static final boolean SHOW_EVENTS = true;
 
-	private static final int FIRST_DAY = CalendarUtils.dateToDay("2-14-2020");
+	private static final int FIRST_DAY = CalendarUtils.dateToDay("5-1-2021");
 
 	@Override
 	public Chart buildChart(int dayOfData) {

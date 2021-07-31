@@ -53,6 +53,8 @@ public class ChartIncompletes extends AbstractChart {
 		this.useSmoothing = useSmoothing;
 	}
 
+	private static final int FIRST_DAY = CalendarUtils.dateToDay("10-15-2020");
+
 	@Override
 	public Chart buildChart(int dayOfData) {
 		YIntervalSeriesCollection collection = new YIntervalSeriesCollection();
@@ -104,7 +106,7 @@ public class ChartIncompletes extends AbstractChart {
 			Smoothing smoothing = useSmoothing ? type.smoothing : Smoothing.NONE;
 			YIntervalSeries series = new YIntervalSeries(type.capName + " (" + smoothing.getDescription() + ")");
 
-			firstDayOfChart = Math.min(firstDayOfChart, numbers.getFirstDayOfType());
+			firstDayOfChart = Math.min(firstDayOfChart, FIRST_DAY);
 			for (int dayOfType = numbers.getFirstDayOfType(); dayOfType <= dayOfData; dayOfType++) {
 				long time = CalendarUtils.dayToTime(dayOfType);
 
