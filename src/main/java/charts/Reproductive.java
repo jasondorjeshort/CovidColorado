@@ -38,19 +38,14 @@ import covid.NumbersType;
  * 
  * @author jdorje@gmail.com
  */
-public class Reproductive extends AbstractChart {
+public class Reproductive extends TypesTimingChart {
 	/*
 	 * Preliminary here.
 	 * 
 	 * This charts the estimated R(t).
 	 */
-	public final Set<NumbersType> types;
-	public final NumbersTiming timing;
-
 	public Reproductive(ColoradoStats stats, Set<NumbersType> types, NumbersTiming timing) {
-		super(stats, Charts.FULL_FOLDER + "\\" + "reproductive");
-		this.types = types;
-		this.timing = timing;
+		super(stats, Charts.FULL_FOLDER + "\\" + "reproductive", types, timing);
 	}
 
 	private static final boolean SHOW_EVENTS = true;
@@ -89,6 +84,10 @@ public class Reproductive extends AbstractChart {
 				int actualDelay = dayOfData - dayOfType;
 				for (int oldDayOfType = dayOfType - DELAY - INTERVAL; oldDayOfType < dayOfType
 						- DELAY; oldDayOfType++) {
+					if (!numbers.dayHasData(oldDayOfType + actualDelay)
+							|| !numbers.dayHasData(oldDayOfType + actualDelay + DELAY)) {
+						continue;
+					}
 					Double r1 = numbers.getBigR(oldDayOfType + actualDelay, oldDayOfType);
 					Double r2 = numbers.getBigR(oldDayOfType + actualDelay + DELAY, oldDayOfType);
 
@@ -165,16 +164,5 @@ public class Reproductive extends AbstractChart {
 	@Override
 	public String getName() {
 		return "R-" + NumbersType.name(types, "-") + "-" + timing.lowerName;
-	}
-
-	@Override
-	public boolean hasData() {
-		for (NumbersType type : types) {
-			IncompleteNumbers n = stats.getNumbers(type, timing);
-			if (!n.hasData()) {
-				return false;
-			}
-		}
-		return true;
 	}
 }

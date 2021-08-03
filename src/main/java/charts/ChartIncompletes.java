@@ -38,17 +38,13 @@ import covid.Smoothing;
  * 
  * @author jdorje@gmail.com
  */
-public class ChartIncompletes extends AbstractChart {
-	public final Set<NumbersType> types;
-	public final NumbersTiming timing;
+public class ChartIncompletes extends TypesTimingChart {
 	public final boolean logarithmic;
 	public final boolean useSmoothing;
 
 	public ChartIncompletes(ColoradoStats stats, Set<NumbersType> types, NumbersTiming timing, boolean logarithmic,
 			boolean useSmoothing) {
-		super(stats, Charts.FULL_FOLDER + "\\" + "numbers");
-		this.types = types;
-		this.timing = timing;
+		super(stats, Charts.FULL_FOLDER + "\\" + "numbers", types, timing);
 		this.logarithmic = logarithmic;
 		this.useSmoothing = useSmoothing;
 	}
@@ -120,6 +116,10 @@ public class ChartIncompletes extends AbstractChart {
 				int actualDelay = dayOfData - dayOfType;
 				for (int oldDayOfType = dayOfType - DELAY - INTERVAL; oldDayOfType < dayOfType
 						- DELAY; oldDayOfType++) {
+					if (!numbers.dayHasData(oldDayOfType + actualDelay)
+							|| !numbers.dayHasData(oldDayOfType + actualDelay + DELAY)) {
+						continue;
+					}
 					double n1 = numbers.getNumbers(oldDayOfType + actualDelay, oldDayOfType);
 					double n2 = numbers.getNumbers(oldDayOfType + actualDelay + DELAY, oldDayOfType);
 
@@ -223,21 +223,6 @@ public class ChartIncompletes extends AbstractChart {
 	public String getName() {
 		return NumbersType.name(types, "-") + "-" + timing.lowerName + (logarithmic ? "-log" : "-cart")
 				+ (useSmoothing ? "-smooth" : "-exact");
-	}
-
-	/**
-	 * Some combinations here have no data and this is the easiest way to find
-	 * that out.
-	 */
-	@Override
-	public boolean hasData() {
-		for (NumbersType type : types) {
-			IncompleteNumbers n = stats.getNumbers(type, timing);
-			if (n.hasData()) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 }

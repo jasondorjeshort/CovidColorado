@@ -95,6 +95,8 @@ public abstract class AbstractChart {
 
 	public abstract boolean hasData();
 
+	public abstract boolean dayHasData(int dayOfChart);
+
 	public void buildAllCharts() {
 		if (!hasData()) {
 			return;
@@ -104,6 +106,9 @@ public abstract class AbstractChart {
 		new File(getSubfolder()).mkdir();
 		gif.start(fileName);
 		for (int dayOfChart = _getFirstDayOfChart(); dayOfChart <= getLastDayOfChart(); dayOfChart++) {
+			if (!dayHasData(dayOfChart)) {
+				continue;
+			}
 			try {
 				Chart c = buildChart(dayOfChart);
 				Charts.setDelay(stats, dayOfChart, gif);

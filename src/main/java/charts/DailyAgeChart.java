@@ -54,6 +54,10 @@ public class DailyAgeChart extends AbstractChart {
 		for (NumbersType type : types) {
 			IncompleteNumbers numbers = stats.getNumbers(type, timing);
 			TimeSeries series = new TimeSeries(type.capName);
+			
+			if (!numbers.dayHasData(dayOfData)) {
+				continue;
+			}
 
 			for (int dayOfType = numbers.getFirstDayOfType(); dayOfType <= dayOfData; dayOfType++) {
 				Double number = numbers.getNewNumbers(dayOfData, dayOfType);
@@ -99,6 +103,17 @@ public class DailyAgeChart extends AbstractChart {
 		for (NumbersType type : types) {
 			IncompleteNumbers n = stats.getNumbers(type, timing);
 			if (n.hasData()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public boolean dayHasData(int dayOfData) {
+		for (NumbersType type : types) {
+			IncompleteNumbers n = stats.getNumbers(type, timing);
+			if (n.dayHasData(dayOfData)) {
 				return true;
 			}
 		}

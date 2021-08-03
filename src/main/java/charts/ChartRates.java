@@ -181,4 +181,17 @@ public class ChartRates extends AbstractChart {
 	public boolean hasData() {
 		return true;
 	}
+
+	@Override
+	public boolean dayHasData(int dayOfData) {
+		for (Rate rate : rates) {
+			IncompleteNumbers n = stats.getNumbers(rate.numerator, timing);
+			IncompleteNumbers d = stats.getNumbers(rate.denominator, timing);
+			if (n.dayHasData(dayOfData) || d.dayHasData(dayOfData)) {
+				return true;
+			}
+		}
+		return false;
+
+	}
 }

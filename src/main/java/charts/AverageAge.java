@@ -99,7 +99,8 @@ public class AverageAge {
 			TimeSeries ageSeries = new TimeSeries(type.capName);
 			TimeSeries exactSeries = new TimeSeries(type.capName + " (exact)");
 
-			for (int dayOfData = numbers.getFirstDayOfData(); dayOfData <= numbers.getLastDay(); dayOfData++) {
+			for (Integer dayOfData = numbers.getFirstDayOfData(); dayOfData != null; dayOfData = numbers
+					.getNextDayOfData(dayOfData)) {
 				Day ddd = CalendarUtils.dayToDay(dayOfData);
 
 				double age = numbers.getAverageAgeOfNewNumbers(dayOfData, DAYS);

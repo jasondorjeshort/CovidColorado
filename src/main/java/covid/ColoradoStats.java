@@ -609,6 +609,10 @@ public class ColoradoStats {
 			for (NumbersTiming timing : NumbersTiming.values()) {
 				IncompleteNumbers cases = getNumbers(NumbersType.CASES, timing);
 				IncompleteNumbers tests = getNumbers(NumbersType.TESTS, timing);
+				
+				if (!cases.dayHasData(dayOfData) || !tests.dayHasData(dayOfData)) {
+					continue;
+				}
 
 				for (int dayOfTiming = cases.getFirstDayOfType(); dayOfTiming <= dayOfData; dayOfTiming++) {
 					double newCasesOnDay = cases.getNumbers(dayOfData, dayOfTiming)

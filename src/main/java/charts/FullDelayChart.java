@@ -34,7 +34,7 @@ import covid.NumbersType;
  * 
  * @author jdorje@gmail.com
  */
-public class FullDelayChart extends AbstractChart {
+public class FullDelayChart extends TypesTimingChart {
 
 	/*
 	 * Preliminary here.
@@ -42,15 +42,11 @@ public class FullDelayChart extends AbstractChart {
 	 * This charts the distribution of case reporting over time.
 	 */
 
-	private final Set<NumbersType> types;
-	private final NumbersTiming timing;
 	private final boolean cumulative;
 	private final int interval = 60;
 
 	public FullDelayChart(ColoradoStats stats, Set<NumbersType> types, NumbersTiming timing, boolean cumulative) {
-		super(stats, Charts.FULL_FOLDER + "\\" + "full-delay");
-		this.types = types;
-		this.timing = timing;
+		super(stats, Charts.FULL_FOLDER + "\\" + "full-delay", types, timing);
 		this.cumulative = cumulative;
 	}
 
@@ -87,10 +83,16 @@ public class FullDelayChart extends AbstractChart {
 				double total2 = 0;
 				for (int dayOfData = dayOfType; dayOfData < dayOfType + interval
 						&& dayOfData <= lastDayOfData; dayOfData++) {
-
+					if (!numbers.dayHasData(dayOfData)) {
+						continue;
+					}
 					int delay = dayOfData - dayOfType;
 					double n1 = numbers.getNumbers(dayOfData, dayOfType);
-					double n2 = numbers.getNumbers(dayOfData - 1, dayOfType);
+					Integer prev = numbers.getPrevDayOfData(dayOfData);
+					if (prev == null) {
+						continue;
+					}
+					double n2 = numbers.getNumbers(prev, dayOfType);
 					double pct = ((cumulative ? total2 : 0) + n1 - n2) / total;
 					desc[delay].addValue(pct);
 					total2 += n1 - n2;
@@ -162,18 +164,4 @@ public class FullDelayChart extends AbstractChart {
 				+ (cumulative ? "cumulative" : "daily");
 	}
 
-	/**
-	 * Some combinations here have no data and this is the easiest way to find
-	 * that out.
-	 */
-	@Override
-	public boolean hasData() {
-		for (NumbersType type : types) {
-			IncompleteNumbers n = stats.getNumbers(type, timing);
-			if (n.hasData()) {
-				return true;
-			}
-		}
-		return false;
-	}
 }

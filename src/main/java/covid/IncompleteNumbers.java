@@ -66,7 +66,8 @@ public class IncompleteNumbers extends Numbers {
 		DayOfData daily = allNumbers.get(dayOfData);
 
 		if (daily == null) {
-			return 0.0;
+			throw new RuntimeException("No data for day " + CalendarUtils.dayToDate(dayOfData) + " for " + getType()
+					+ " / " + getTiming());
 		}
 
 		Double number = daily.numbers.get(dayOfType);
@@ -82,8 +83,38 @@ public class IncompleteNumbers extends Numbers {
 		return firstDayOfType;
 	}
 
-	public synchronized int getFirstDayOfData() {
+	public synchronized Integer getFirstDayOfData() {
 		return firstDayOfData;
+	}
+
+	public synchronized Integer getNextDayOfData(Integer dayOfData) {
+		if (dayOfData == null) {
+			return null;
+		}
+		do {
+			dayOfData++;
+			if (dayOfData > lastDayOfData) {
+				return null;
+			}
+		} while (!dayHasData(dayOfData));
+		return dayOfData;
+	}
+
+	public synchronized Integer getPrevDayOfData(Integer dayOfData) {
+		if (dayOfData == null) {
+			return null;
+		}
+		do {
+			dayOfData--;
+			if (dayOfData < firstDayOfData) {
+				return null;
+			}
+		} while (!dayHasData(dayOfData));
+		return dayOfData;
+	}
+
+	public synchronized boolean dayHasData(int dayOfData) {
+		return allNumbers.get(dayOfData) != null;
 	}
 
 	public synchronized int getLastDay() {
@@ -151,7 +182,8 @@ public class IncompleteNumbers extends Numbers {
 	 * day-of-data
 	 */
 	public synchronized double getNewNumbers(int dayOfData, int dayOfType) {
-		return getNumbers(dayOfData, dayOfType) - getNumbers(dayOfData - 1, dayOfType);
+		Integer prev = getPrevDayOfData(dayOfData);
+		return getNumbers(dayOfData, dayOfType) - getNumbers(prev, dayOfType);
 	}
 
 	// https://wwwnc.cdc.gov/eid/article/26/6/20-0357_article
@@ -162,30 +194,11 @@ public class IncompleteNumbers extends Numbers {
 	}
 
 	public synchronized boolean build() {
-		/**
-		 * Fill in empty values
-		 */
-		for (int dayOfData = firstDayOfData; dayOfData <= lastDayOfData; dayOfData++) {
-			if (allNumbers.get(dayOfData) == null) {
-				DayOfData daily = allNumbers.get(dayOfData - 1);
-				if (daily == null) {
-					new Exception("Null day of data for " + getType() + "-" + getTiming() + " on "
-							+ CalendarUtils.dayToDate(dayOfData)).printStackTrace();
-					daily = new DayOfData();
-				} else {
-					System.out.println("Skipping day " + CalendarUtils.dayToDate(dayOfData) + " on " + getType() + "/"
-							+ getTiming() + ", replaced with previous.");
-					daily = new DayOfData(daily);
-				}
-				allNumbers.put(dayOfData, daily);
-			}
-		}
-
 		if (isCumulative) {
 			// first smooth values so we don't end up with negative daily
 			// values. We can only smooth within an individual day of data;
 			// negatives can still happen between days of data.
-			for (int dayOfData = firstDayOfData; dayOfData <= lastDayOfData; dayOfData++) {
+			for (Integer dayOfData = getFirstDayOfData(); dayOfData != null; dayOfData = getNextDayOfData(dayOfData)) {
 				double min = 0;
 				DayOfData daily = allNumbers.get(dayOfData);
 				for (int dayOfType = firstDayOfType; dayOfType <= dayOfData; dayOfType++) {
@@ -199,7 +212,7 @@ public class IncompleteNumbers extends Numbers {
 			}
 
 			// TODO: should avoid negatives first
-			for (int dayOfData = firstDayOfData; dayOfData <= lastDayOfData; dayOfData++) {
+			for (Integer dayOfData = getFirstDayOfData(); dayOfData != null; dayOfData = getNextDayOfData(dayOfData)) {
 				double last = 0;
 				DayOfData daily = allNumbers.get(dayOfData);
 				for (int dayOfType = firstDayOfType; dayOfType <= dayOfData; dayOfType++) {
@@ -213,7 +226,7 @@ public class IncompleteNumbers extends Numbers {
 			isCumulative = false;
 		}
 
-		for (int dayOfData = firstDayOfData; dayOfData <= lastDayOfData; dayOfData++) {
+		for (Integer dayOfData = getFirstDayOfData(); dayOfData != null; dayOfData = getNextDayOfData(dayOfData)) {
 			DayOfData daily = allNumbers.get(dayOfData);
 			boolean started = false;
 			for (int dayOfType = lastDayOfData; dayOfType >= firstDayOfType; dayOfType--) {
@@ -229,7 +242,7 @@ public class IncompleteNumbers extends Numbers {
 
 		int R_SMOOTHING_INTERVAL = getReproductiveSmoothingInterval();
 		Smoothing smoothing = new Smoothing(R_SMOOTHING_INTERVAL, Smoothing.Type.AVERAGE, Smoothing.Timing.TRAILING);
-		for (int dayOfData = firstDayOfData; dayOfData <= lastDayOfData; dayOfData++) {
+		for (Integer dayOfData = getFirstDayOfData(); dayOfData != null; dayOfData = getNextDayOfData(dayOfData)) {
 			DayOfData daily = allNumbers.get(dayOfData);
 			if (daily == null) {
 				continue;
@@ -318,9 +331,16 @@ public class IncompleteNumbers extends Numbers {
 		// run multiple times. Caching could help.
 
 		for (int dayOfData = dayMinimum; dayOfData <= dayMaximum; dayOfData++) {
+			if (!dayHasData(dayOfData)) {
+				continue;
+			}
 			for (int dayOfType = firstDayOfType; dayOfType <= dayOfData; dayOfType++) {
 				double n2 = getNumbers(dayOfData, dayOfType);
-				double n1 = getNumbers(dayOfData - 1, dayOfType);
+				Integer prev = getPrevDayOfData(dayOfData);
+				if (prev == null) {
+					continue;
+				}
+				double n1 = getNumbers(prev, dayOfType);
 				double newNumbers = n2 - n1;
 				numbersSum += newNumbers;
 				daySum += newNumbers * (dayOfData - dayOfType);
