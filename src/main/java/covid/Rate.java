@@ -28,7 +28,7 @@ public enum Rate {
 	 * That's basically it. We mostly talk about positivity and CFR, but any
 	 * pair of numbers (NumbersType) could be divided to get a proportion.
 	 */
-	POSITIVITY(NumbersType.CASES, NumbersType.TESTS, Color.BLUE, 25, false),
+	// POSITIVITY(NumbersType.CASES, NumbersType.TESTS, Color.BLUE, 25, false),
 	CFR(NumbersType.DEATHS, NumbersType.CASES, Color.BLACK, 3, true),
 	CHR(NumbersType.HOSPITALIZATIONS, NumbersType.CASES, Color.RED, 31, true),
 	HFR(NumbersType.DEATHS, NumbersType.HOSPITALIZATIONS, Color.ORANGE, 50, true),;
