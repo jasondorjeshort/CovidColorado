@@ -43,7 +43,7 @@ public class ChartRates extends AbstractChart {
 	public static final String RATES_FOLDER = Charts.FULL_FOLDER + "\\rates";
 	public final Set<Rate> rates;
 	private final NumbersTiming timing;
-	
+
 	private final int SMOOTHING_DAYS = 63; // 9 weeks
 
 	public ChartRates(ColoradoStats stats, Set<Rate> rates, NumbersTiming timing) {
@@ -79,6 +79,11 @@ public class ChartRates extends AbstractChart {
 			for (int dayOfType = firstDayOfChart; dayOfType <= dayOfData; dayOfType++) {
 				long time = CalendarUtils.dayToTime(dayOfType);
 
+				if (!nNumbers.dayHasData(dayOfData) || !dNumbers.dayHasData(dayOfData)) {
+					// fairly rare to have one rate not have data while another
+					// does
+					continue;
+				}
 				double numerator = nNumbers.getNumbers(dayOfData, dayOfType, smoothing);
 				double denominator = dNumbers.getNumbers(dayOfData, dayOfType, smoothing);
 				if (numerator == 0 || denominator == 0) {
@@ -87,8 +92,18 @@ public class ChartRates extends AbstractChart {
 
 				DescriptiveStatistics statistics = new DescriptiveStatistics();
 				int actualDelay = dayOfData - dayOfType;
-				for (int oldDayOfType = dayOfType - DELAY - INTERVAL; oldDayOfType < dayOfType
-						- DELAY; oldDayOfType++) {
+				if (DELAY % 7 != 0) {
+					throw new RuntimeException("You really want delay and interval to "
+							+ "be weekly amounts to deal with day-of-week issues.");
+				}
+				for (int count = 0, oldDayOfType = dayOfType - DELAY; count < INTERVAL
+						&& oldDayOfType >= stats.getVeryFirstDay(); oldDayOfType--) {
+					if (!nNumbers.dayHasData(oldDayOfType + actualDelay)
+							|| !nNumbers.dayHasData(oldDayOfType + actualDelay + DELAY)
+							|| !dNumbers.dayHasData(oldDayOfType + actualDelay)
+							|| !dNumbers.dayHasData(oldDayOfType + actualDelay + DELAY)) {
+						continue;
+					}
 					double n1 = nNumbers.getNumbers(oldDayOfType + actualDelay, oldDayOfType);
 					double n2 = nNumbers.getNumbers(oldDayOfType + actualDelay + DELAY, oldDayOfType);
 
@@ -99,6 +114,7 @@ public class ChartRates extends AbstractChart {
 						continue;
 					}
 					statistics.addValue((numerator / denominator) * (n2 / d2) / (n1 / d1));
+					count++;
 				}
 
 				double upperBound = statistics.getPercentile(topRange);

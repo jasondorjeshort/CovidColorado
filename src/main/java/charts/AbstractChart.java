@@ -127,12 +127,15 @@ public abstract class AbstractChart {
 			return;
 		}
 		new File(getSubfolder()).mkdir();
-		for (int dayOfData = _getFirstDayOfChart(); dayOfData <= getLastDayOfChart(); dayOfData++) {
+		for (int dayOfChart = _getFirstDayOfChart(); dayOfChart <= getLastDayOfChart(); dayOfChart++) {
+			if (!dayHasData(dayOfChart)) {
+				continue;
+			}
 			if (async == null) {
-				buildChart(dayOfData);
+				buildChart(dayOfChart);
 			} else {
-				int _dayOfData = dayOfData;
-				async.execute(() -> buildChart(_dayOfData));
+				int _dayOfChart = dayOfChart;
+				async.execute(() -> buildChart(_dayOfChart));
 			}
 		}
 	}

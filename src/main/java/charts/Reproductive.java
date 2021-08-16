@@ -65,7 +65,7 @@ public class Reproductive extends TypesTimingChart {
 
 			IncompleteNumbers numbers = stats.getNumbers(type, timing);
 			if (!numbers.hasData()) {
-				throw new RuntimeException("UH OH");
+				continue;
 			}
 
 			YIntervalSeries series = new YIntervalSeries("Based on " + type.capName + ", "
