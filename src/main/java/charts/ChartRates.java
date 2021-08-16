@@ -43,6 +43,8 @@ public class ChartRates extends AbstractChart {
 	public static final String RATES_FOLDER = Charts.FULL_FOLDER + "\\rates";
 	public final Set<Rate> rates;
 	private final NumbersTiming timing;
+	
+	private final int SMOOTHING_DAYS = 63; // 9 weeks
 
 	public ChartRates(ColoradoStats stats, Set<Rate> rates, NumbersTiming timing) {
 		super(stats, RATES_FOLDER);
@@ -52,7 +54,7 @@ public class ChartRates extends AbstractChart {
 
 	@Override
 	public Chart buildChart(int dayOfData) {
-		Smoothing smoothing = new Smoothing(28, Smoothing.Type.AVERAGE, Smoothing.Timing.SYMMETRIC);
+		Smoothing smoothing = new Smoothing(SMOOTHING_DAYS, Smoothing.Type.AVERAGE, Smoothing.Timing.SYMMETRIC);
 
 		DeviationRenderer renderer = new DeviationRenderer(true, false);
 		YIntervalSeriesCollection collection = new YIntervalSeriesCollection();
