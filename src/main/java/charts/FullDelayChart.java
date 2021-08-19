@@ -71,6 +71,9 @@ public class FullDelayChart extends TypesTimingChart {
 
 		for (NumbersType type : types) {
 			IncompleteNumbers numbers = stats.getNumbers(type, timing);
+			if (!numbers.hasData() || !numbers.dayHasData(lastDayOfData)) {
+				continue;
+			}
 
 			DescriptiveStatistics[] desc = new DescriptiveStatistics[interval + 1];
 			for (int i = 0; i < desc.length; i++) {

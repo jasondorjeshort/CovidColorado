@@ -182,8 +182,9 @@ public class IncompleteNumbers extends Numbers {
 	 * day-of-data
 	 */
 	public synchronized double getNewNumbers(int dayOfData, int dayOfType) {
-		Integer prev = getPrevDayOfData(dayOfData);
-		return getNumbers(dayOfData, dayOfType) - getNumbers(prev, dayOfType);
+		Integer prevDay = getPrevDayOfData(dayOfData);
+		double prevN = prevDay == null ? 0 : getNumbers(prevDay, dayOfType);
+		return getNumbers(dayOfData, dayOfType) - prevN;
 	}
 
 	// https://wwwnc.cdc.gov/eid/article/26/6/20-0357_article

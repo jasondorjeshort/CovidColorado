@@ -44,7 +44,7 @@ public class ChartRates extends AbstractChart {
 	public final Set<Rate> rates;
 	private final NumbersTiming timing;
 
-	private final int SMOOTHING_DAYS = 63; // 9 weeks
+	private final int SMOOTHING_DAYS = 21; // 9 weeks
 
 	public ChartRates(ColoradoStats stats, Set<Rate> rates, NumbersTiming timing) {
 		super(stats, RATES_FOLDER);

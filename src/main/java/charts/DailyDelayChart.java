@@ -66,14 +66,15 @@ public class DailyDelayChart extends AbstractChart {
 			IncompleteNumbers numbers = stats.getNumbers(type, timing);
 			XYSeries series = new XYSeries(type.capName);
 
-			for (int dayOfData = dayOfType; dayOfData < dayOfType + interval
-					&& dayOfData <= stats.getLastDay(); dayOfData++) {
+			for (Integer dayOfData = dayOfType; dayOfData != null
+					&& dayOfData < dayOfType + interval; dayOfData = numbers.getNextDayOfData(dayOfData)) {
 				if (!numbers.dayHasData(dayOfData)) {
 					continue;
 				}
 				int delay = dayOfData - dayOfType;
 				double n1 = numbers.getNumbers(dayOfData, dayOfType);
-				double n2 = numbers.getNumbers(numbers.getPrevDayOfData(dayOfData), dayOfType);
+				Integer prevDay = numbers.getPrevDayOfData(dayOfData);
+				double n2 = prevDay == null ? 0 : numbers.getNumbers(prevDay, dayOfType);
 				series.add(delay, n1 - n2);
 			}
 

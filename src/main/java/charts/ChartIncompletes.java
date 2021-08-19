@@ -96,7 +96,7 @@ public class ChartIncompletes extends TypesTimingChart {
 
 		for (NumbersType type : types) {
 			IncompleteNumbers numbers = stats.getNumbers(type, timing);
-			if (!numbers.hasData()) {
+			if (!numbers.hasData() || !numbers.dayHasData(dayOfData)) {
 				continue;
 			}
 			Smoothing smoothing = useSmoothing ? type.smoothing : Smoothing.NONE;
