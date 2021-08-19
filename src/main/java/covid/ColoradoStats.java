@@ -576,32 +576,39 @@ public class ColoradoStats {
 		 * 
 		 * Imperfect, but it's clearly the "correct" way to approximate it.
 		 */
-		for (int dayOfData = getVeryFirstDay(); dayOfData <= getLastDay(); dayOfData++) {
-			// TODO: should use cumulatives from the incomplete numbers instead?
-			double casesOnDay = dailyCases.getDailyNumbers(dayOfData);
-			if (casesOnDay == 0) {
-				continue;
-			}
-			double testsOnDay = testEncounters.getDailyNumbers(dayOfData);
-			double positivity = casesOnDay / testsOnDay;
-
-			// System.out.println(String.format("%s : %.0f/%.0f = %.2f",
-			// Date.dayToDate(dayOfData), casesOnDay, testsOnDay,
-			// positivity * 100));
-			for (NumbersTiming timing : NumbersTiming.values()) {
-				IncompleteNumbers cases = getNumbers(NumbersType.CASES, timing);
-				IncompleteNumbers tests = getNumbers(NumbersType.TESTS, timing);
-
-				if (!cases.dayHasData(dayOfData) || !tests.dayHasData(dayOfData)) {
+		for (NumbersTiming timing : NumbersTiming.values()) {
+			IncompleteNumbers cases = getNumbers(NumbersType.CASES, timing);
+			IncompleteNumbers tests = getNumbers(NumbersType.TESTS, timing);
+			double cumulativeCases = 0, cumulativeTests = 0;
+			for (Integer dayOfData = getVeryFirstDay(); dayOfData != null; dayOfData = cases
+					.getNextDayOfData(dayOfData)) {
+				// TODO: should use cumulatives from the incomplete numbers
+				// instead?
+				double casesToDay = dailyCases.getCumulativeNumbers(dayOfData);
+				if (casesToDay == cumulativeCases) {
 					continue;
 				}
+				double testsToDay = testEncounters.getCumulativeNumbers(dayOfData);
+				double casesOnDay = casesToDay - cumulativeCases;
+				double testsOnDay = testsToDay - cumulativeTests;
+				double positivity = casesOnDay / testsOnDay;
+				cumulativeCases = casesToDay;
+				cumulativeTests = testsToDay;
 
+				// System.out.println(String.format("%s : %.0f/%.0f = %.2f",
+				// Date.dayToDate(dayOfData), casesOnDay, testsOnDay,
+				// positivity * 100));
 				for (int dayOfTiming = cases.getFirstDayOfType(); dayOfTiming <= dayOfData; dayOfTiming++) {
-					double newCasesOnDay = cases.getNumbers(dayOfData, dayOfTiming)
-							- cases.getNumbers(dayOfData - 1, dayOfTiming);
+					Integer prev = cases.getPrevDayOfData(dayOfData);
+					double prevCases = 0, prevTests = 0;
+					if (prev != null) {
+						prevCases = cases.getNumbers(prev, dayOfTiming);
+						prevTests = tests.getNumbers(prev, dayOfTiming);
+					}
+					double newCasesOnDay = cases.getNumbers(dayOfData, dayOfTiming) - prevCases;
 					double newTestsOnDay = newCasesOnDay / positivity;
 
-					tests.addNumbers(dayOfData, dayOfTiming, tests.getNumbers(dayOfData - 1, dayOfTiming));
+					tests.addNumbers(dayOfData, dayOfTiming, prevTests);
 					tests.addNumbers(dayOfData, dayOfTiming, newTestsOnDay);
 				}
 			}
