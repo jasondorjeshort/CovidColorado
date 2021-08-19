@@ -341,15 +341,6 @@ public class ColoradoStats {
 						|| line.get(0).equals("Cumulative Number of Hospitalizations by Onset Date")) {
 					int dayOfOnset = CalendarUtils.dateToDay(line.get(1));
 					int dayOfInfection = dayOfOnset - 5;
-					if (dayOfInfection > CalendarUtils.dateToDay("01-01-2021")) {
-						// Fuck. These numbers are no longer on the same
-						// timescale.
-						double R = 16;
-						double v = dayOfInfection - CalendarUtils.dateToDay("01-01-2021");
-						v *= R / 180;
-						v = Math.min(v, R);
-						dayOfInfection -= Math.round(v);
-					}
 					int c = Integer.valueOf(line.get(3));
 
 					setFirstDayOfTiming(NumbersTiming.ONSET, dayOfOnset);
@@ -364,15 +355,6 @@ public class ColoradoStats {
 						.equals("Cumulative Number of Deaths From COVID-19 in Colorado by Date of Illness")) {
 					int dayOfOnset = CalendarUtils.dateToDay(line.get(1));
 					int dayOfInfection = dayOfOnset - 5;
-					if (dayOfInfection > CalendarUtils.dateToDay("01-01-2021")) {
-						// Fuck. These numbers are no longer on the same
-						// timescale.
-						double R = 16;
-						double v = dayOfInfection - CalendarUtils.dateToDay("01-01-2021");
-						v *= R / 180;
-						v = Math.min(v, R);
-						dayOfInfection -= Math.round(v);
-					}
 					int c = Integer.valueOf(line.get(3));
 
 					setFirstDayOfTiming(NumbersTiming.ONSET, dayOfOnset);
@@ -609,7 +591,7 @@ public class ColoradoStats {
 			for (NumbersTiming timing : NumbersTiming.values()) {
 				IncompleteNumbers cases = getNumbers(NumbersType.CASES, timing);
 				IncompleteNumbers tests = getNumbers(NumbersType.TESTS, timing);
-				
+
 				if (!cases.dayHasData(dayOfData) || !tests.dayHasData(dayOfData)) {
 					continue;
 				}
