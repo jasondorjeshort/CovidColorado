@@ -114,7 +114,7 @@ public class Charts {
 	}
 
 	public static int getFirstDayForCharts(ColoradoStats stats) {
-		if (false) {
+		if (true) {
 			return stats.getLastDay();
 		}
 		return 0;
