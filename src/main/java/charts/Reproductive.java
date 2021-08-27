@@ -132,8 +132,8 @@ public class Reproductive extends TypesTimingChart {
 		XYPlot plot = chart.getXYPlot();
 		plot.setRenderer(renderer);
 		ValueAxis yAxis = plot.getRangeAxis();
-		yAxis.setLowerBound(0.75);
-		yAxis.setUpperBound(1.25);
+		yAxis.setLowerBound(0.60);
+		yAxis.setUpperBound(1.50);
 
 		DateAxis xAxis = new DateAxis("Date");
 		xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(FIRST_DAY));
