@@ -210,7 +210,7 @@ public class ChartIncompletes extends TypesTimingChart {
 		}
 
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(dayOfData));
-		if (timing == NumbersTiming.INFECTION && types.size() == 3 && logarithmic && dayOfData == stats.getLastDay()) {
+		if (timing == NumbersTiming.ONSET && types.size() == 3 && logarithmic && dayOfData == stats.getLastDay()) {
 			c.addFileName(Charts.TOP_FOLDER + "\\" + getName() + ".png");
 			c.open();
 		}

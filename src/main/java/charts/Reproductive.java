@@ -152,7 +152,7 @@ public class Reproductive extends TypesTimingChart {
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(dayOfData));
 		if (dayOfData == stats.getLastDay() && types.size() == 3 && types.contains(NumbersType.CASES)
 				&& types.contains(NumbersType.HOSPITALIZATIONS) && types.contains(NumbersType.DEATHS)
-				&& timing == NumbersTiming.INFECTION) {
+				&& timing == NumbersTiming.ONSET) {
 			c.addFileName(Charts.TOP_FOLDER + "\\" + getName() + ".png");
 			c.open();
 		}

@@ -179,7 +179,7 @@ public class ChartRates extends AbstractChart {
 		String fileName = CalendarUtils.dayToFullDate(dayOfData, '-');
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(dayOfData));
 
-		if (timing == NumbersTiming.INFECTION && dayOfData == stats.getLastDay() && rates.size() == 1) {
+		if (timing == NumbersTiming.ONSET && dayOfData == stats.getLastDay() && rates.size() == 1) {
 			c.addFileName(Charts.TOP_FOLDER + "\\" + getName() + ".png");
 			c.open();
 		}

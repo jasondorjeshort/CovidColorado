@@ -152,7 +152,7 @@ public class FullDelayChart extends TypesTimingChart {
 		yAxis.setUpperBound(peak);
 
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(lastDayOfData));
-		if (timing == NumbersTiming.INFECTION && lastDayOfData == stats.getLastDay() && types.size() == 3
+		if (timing == NumbersTiming.ONSET && lastDayOfData == stats.getLastDay() && types.size() == 3
 				&& cumulative) {
 			c.addFileName(Charts.TOP_FOLDER + "\\" + getName() + ".png");
 			c.open();

@@ -54,7 +54,7 @@ public class DailyAgeChart extends AbstractChart {
 		for (NumbersType type : types) {
 			IncompleteNumbers numbers = stats.getNumbers(type, timing);
 			TimeSeries series = new TimeSeries(type.capName);
-			
+
 			if (!numbers.dayHasData(dayOfData)) {
 				continue;
 			}
@@ -86,8 +86,8 @@ public class DailyAgeChart extends AbstractChart {
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title.toString(), "Date", "Count", collection);
 
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(dayOfData));
-		if (dayOfData == stats.getLastDay() && timing == NumbersTiming.INFECTION && types.size() >= 3) {
-			c.open();
+		if (dayOfData == stats.getLastDay() && timing == NumbersTiming.ONSET && types.size() >= 3) {
+			// c.open();
 		}
 		c.saveAsPNG();
 		return c;
