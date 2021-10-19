@@ -64,10 +64,7 @@ public class ChartRates extends AbstractChart {
 
 		int firstDayOfChart = stats.getVeryFirstDay();
 
-		boolean needCaveat = false;
 		for (Rate rate : rates) {
-			needCaveat |= (rate.numerator == NumbersType.HOSPITALIZATIONS || rate.numerator == NumbersType.DEATHS)
-					&& (timing == NumbersTiming.INFECTION || timing == NumbersTiming.ONSET);
 
 			IncompleteNumbers nNumbers = stats.getNumbers(rate.numerator, timing);
 			IncompleteNumbers dNumbers = stats.getNumbers(rate.denominator, timing);
@@ -139,10 +136,12 @@ public class ChartRates extends AbstractChart {
 		} else {
 			title.append(Rate.allCapsName(rates, ", "));
 		}
-		title.append(" by day of ");
+		title.append(" ");
 		title.append(timing.lowerName);
-		title.append(", ");
+		title.append(" date, ");
 		title.append(smoothing.getDescription());
+		title.append(" as of ");
+		title.append(CalendarUtils.dayToDate(dayOfData));
 		title.append("\n(");
 		if (Charts.useMedian()) {
 			title.append("Median");
@@ -151,10 +150,8 @@ public class ChartRates extends AbstractChart {
 		}
 		title.append(String.format(" and central %.0f%% interval for value in %d days based on prev %d days)",
 				confidence, DELAY, INTERVAL));
-		if (needCaveat) {
-			title.append(String.format("\n(onset/infection timings are shifted starting on Jan 1, 2021)", confidence,
-					DELAY, INTERVAL));
-		}
+		title.append("\n");
+		title.append(Charts.valueDesc());
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title.toString(), "Date of Infection", "Rate (%)",
 				collection);
 

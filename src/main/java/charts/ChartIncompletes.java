@@ -93,6 +93,8 @@ public class ChartIncompletes extends TypesTimingChart {
 		}
 		title.append(String.format(" and central %.0f%% interval for value in %d days based on prev %d days)",
 				confidence, DELAY, INTERVAL));
+		title.append("\n");
+		title.append(Charts.valueDesc());
 
 		for (NumbersType type : types) {
 			IncompleteNumbers numbers = stats.getNumbers(type, timing);
@@ -210,7 +212,9 @@ public class ChartIncompletes extends TypesTimingChart {
 		}
 
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(dayOfData));
-		if (timing == NumbersTiming.ONSET && types.size() == 3 && logarithmic && dayOfData == stats.getLastDay()) {
+		if (((timing == NumbersTiming.ONSET && types.size() == 3)
+				|| (timing == NumbersTiming.DEATH && types.size() == 1 && useSmoothing)) && logarithmic
+				&& dayOfData == stats.getLastDay()) {
 			c.addFileName(Charts.TOP_FOLDER + "\\" + getName() + ".png");
 			c.open();
 		}

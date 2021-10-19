@@ -116,7 +116,7 @@ public class Reproductive extends TypesTimingChart {
 		StringBuilder title = new StringBuilder();
 		title.append("Colorado COVID reproductive rate by " + timing.lowerName + " date");
 		title.append("\nthrough " + CalendarUtils.dayToDate(dayOfData));
-		title.append("\n");
+		title.append(" ");
 		title.append(String.format("using %.02f-day serial interval", IncompleteNumbers.SERIAL_INTERVAL));
 		title.append("\n(");
 		if (Charts.useMedian()) {
@@ -126,6 +126,8 @@ public class Reproductive extends TypesTimingChart {
 		}
 		title.append(String.format(" and central %.0f%% interval for value in %d days based on prev %d days)",
 				confidence, DELAY, INTERVAL));
+		title.append("\n");
+		title.append(Charts.valueDesc());
 
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title.toString(), "Date", "R(t)", collection);
 
