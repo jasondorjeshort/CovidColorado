@@ -70,9 +70,9 @@ public class Reproductive extends TypesTimingChart {
 
 			YIntervalSeries series = new YIntervalSeries("Based on " + type.capName + ", "
 					+ (numbers.getReproductiveSmoothingInterval() * 2) + "-day smoothing");
+			YIntervalSeries seriesLY = new YIntervalSeries("Last year");
 
 			for (int dayOfType = FIRST_DAY; dayOfType <= dayOfData; dayOfType++) {
-				long time = CalendarUtils.dayToTime(dayOfType);
 
 				Double reproductive = numbers.getBigR(dayOfData, dayOfType);
 
@@ -101,14 +101,28 @@ public class Reproductive extends TypesTimingChart {
 				double lowerBound = statistics.getPercentile(bottomRange);
 
 				double median = statistics.getPercentile(50);
+				double value = Charts.value(reproductive, median);
 
-				series.add(time, Charts.value(reproductive, median), lowerBound, upperBound);
+				long time = CalendarUtils.dayToTime(dayOfType);
+				series.add(time, value, lowerBound, upperBound);
+
+				long timeLY = CalendarUtils.dayToTime(dayOfType + 365);
+				seriesLY.add(timeLY, value, lowerBound, upperBound);
 			}
 			collection.addSeries(series);
 			renderer.setSeriesStroke(seriesCount, new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 			renderer.setSeriesPaint(seriesCount, type.color);
 			renderer.setSeriesFillPaint(seriesCount, type.color.darker());
 			seriesCount++;
+
+			if (types.size() == 1 || true) {
+				collection.addSeries(seriesLY);
+				renderer.setSeriesStroke(seriesCount,
+						new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+				renderer.setSeriesPaint(seriesCount, type.color);
+				renderer.setSeriesFillPaint(seriesCount, type.color.darker());
+				seriesCount++;
+			}
 		}
 
 		// dataset.addSeries("Cases", series);
@@ -139,7 +153,7 @@ public class Reproductive extends TypesTimingChart {
 
 		DateAxis xAxis = new DateAxis("Date");
 		xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(FIRST_DAY));
-		xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(Charts.getLastDayForChartDisplay(stats)));
+		xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(getLastDayForChartDisplay()));
 		plot.setDomainAxis(xAxis);
 
 		ValueMarker marker = new ValueMarker(1.0);

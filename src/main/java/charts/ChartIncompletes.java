@@ -68,6 +68,11 @@ public class ChartIncompletes extends TypesTimingChart {
 	}
 
 	@Override
+	public boolean showLastYear() {
+		return types.size() == 1;
+	}
+
+	@Override
 	public Chart buildChart(int dayOfData) {
 		YIntervalSeriesCollection collection = new YIntervalSeriesCollection();
 		StringBuilder title = new StringBuilder();
@@ -111,7 +116,7 @@ public class ChartIncompletes extends TypesTimingChart {
 		title.append("\n");
 		title.append(Charts.valueDesc());
 
-		int last = Charts.getLastDayForChartDisplay(stats);
+		int last = getLastDayForChartDisplay();
 
 		for (NumbersType type : types) {
 			IncompleteNumbers numbers = stats.getNumbers(type, timing);
@@ -198,7 +203,7 @@ public class ChartIncompletes extends TypesTimingChart {
 			renderer.setSeriesFillPaint(seriesCount, type.color.darker());
 			seriesCount++;
 
-			if (types.size() == 1) {
+			if (showLastYear()) {
 				collection.addSeries(seriesLY);
 				renderer.setSeriesStroke(seriesCount,
 						new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[] { 9 }, 0));

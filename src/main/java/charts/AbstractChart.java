@@ -85,8 +85,30 @@ public abstract class AbstractChart {
 		return stats.getLastDay();
 	}
 
+	private int lastChartsDay(int lastDay) {
+		lastDay -= lastDay % 7;
+		if (showLastYear()) {
+			lastDay += 90;
+		} else {
+			lastDay += 14;
+		}
+		return lastDay;
+	}
+
+	public int getFirstDayForChart() {
+		int last = stats.getLastDay();
+		if (lastChartsDay(last) == lastChartsDay(last - 1)) {
+			return stats.getLastDay();
+		}
+		return 0;
+	}
+
+	public int getLastDayForChartDisplay() {
+		return lastChartsDay(stats.getLastDay());
+	}
+
 	private final int _getFirstDayOfChart() {
-		return Math.max(Charts.getFirstDayForCharts(stats), getFirstDayOfChart());
+		return Math.max(getFirstDayForChart(), getFirstDayOfChart());
 	}
 
 	public String getPngName(int dayOfChart) {
@@ -139,4 +161,10 @@ public abstract class AbstractChart {
 			}
 		}
 	}
+
+	@SuppressWarnings("static-method")
+	public boolean showLastYear() {
+		return false;
+	}
+
 }

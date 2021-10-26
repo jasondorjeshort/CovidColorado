@@ -162,7 +162,7 @@ public class ChartRates extends AbstractChart {
 
 		DateAxis xAxis = new DateAxis("Date");
 		xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(firstDayOfChart));
-		xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(Charts.getLastDayForChartDisplay(stats)));
+		xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(getLastDayForChartDisplay()));
 		plot.setDomainAxis(xAxis);
 
 		ValueAxis yAxis = plot.getRangeAxis();
