@@ -57,7 +57,7 @@ public class DailyDelayChart extends AbstractChart {
 	}
 
 	@Override
-	public Chart buildChart(int dayOfType) {
+	public JFreeChart buildChart(int dayOfType) {
 		boolean hasData = false;
 
 		XYSeriesCollection collection = new XYSeriesCollection();
@@ -105,11 +105,7 @@ public class DailyDelayChart extends AbstractChart {
 		}
 		title.append(" for " + timing.lowerName + " on ");
 		title.append(CalendarUtils.dayToDate(dayOfType));
-		JFreeChart chart = ChartFactory.createXYLineChart(title.toString(), "Date", "Count", collection);
-
-		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(dayOfType));
-		c.saveAsPNG();
-		return c;
+		return ChartFactory.createXYLineChart(title.toString(), "Date", "Count", collection);
 	}
 
 	@Override

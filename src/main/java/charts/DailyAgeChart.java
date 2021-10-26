@@ -47,7 +47,7 @@ public class DailyAgeChart extends AbstractChart {
 	}
 
 	@Override
-	public Chart buildChart(int dayOfData) {
+	public JFreeChart buildChart(int dayOfData) {
 
 		TimeSeriesCollection collection = new TimeSeriesCollection();
 
@@ -83,14 +83,12 @@ public class DailyAgeChart extends AbstractChart {
 		}
 		title.append(" for ");
 		title.append(CalendarUtils.dayToDate(dayOfData));
-		JFreeChart chart = ChartFactory.createTimeSeriesChart(title.toString(), "Date", "Count", collection);
+		return ChartFactory.createTimeSeriesChart(title.toString(), "Date", "Count", collection);
+	}
 
-		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(dayOfData));
-		if (dayOfData == stats.getLastDay() && timing == NumbersTiming.ONSET && types.size() >= 3) {
-			// c.open();
-		}
-		c.saveAsPNG();
-		return c;
+	@Override
+	public boolean publish(int dayOfData) {
+		return dayOfData == stats.getLastDay() && timing == NumbersTiming.ONSET && types.size() >= 3;
 	}
 
 	@Override

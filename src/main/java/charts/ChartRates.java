@@ -18,7 +18,6 @@ import covid.ColoradoStats;
 import covid.Event;
 import covid.IncompleteNumbers;
 import covid.NumbersTiming;
-import covid.NumbersType;
 import covid.Rate;
 import covid.Smoothing;
 
@@ -53,7 +52,7 @@ public class ChartRates extends AbstractChart {
 	}
 
 	@Override
-	public Chart buildChart(int dayOfData) {
+	public JFreeChart buildChart(int dayOfData) {
 		Smoothing smoothing = new Smoothing(SMOOTHING_DAYS, Smoothing.Type.AVERAGE, Smoothing.Timing.SYMMETRIC);
 
 		DeviationRenderer renderer = new DeviationRenderer(true, false);
@@ -173,16 +172,12 @@ public class ChartRates extends AbstractChart {
 
 		Event.addEvents(plot);
 
-		String fileName = CalendarUtils.dayToFullDate(dayOfData, '-');
-		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(dayOfData));
+		return chart;
+	}
 
-		if (timing == NumbersTiming.ONSET && dayOfData == stats.getLastDay() && rates.size() == 1) {
-			c.addFileName(Charts.TOP_FOLDER + "\\" + getName() + ".png");
-			c.open();
-		}
-		c.saveAsPNG();
-
-		return c;
+	@Override
+	public boolean publish(int dayOfData) {
+		return timing == NumbersTiming.ONSET && dayOfData == stats.getLastDay() && rates.size() == 1;
 	}
 
 	@Override

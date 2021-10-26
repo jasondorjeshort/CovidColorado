@@ -51,7 +51,8 @@ public class ChartIncompletes extends TypesTimingChart {
 
 	private static final int FIRST_DAY = CalendarUtils.dateToDay("10-15-2020");
 
-	private boolean publish(int dayOfData) {
+	@Override
+	public boolean publish(int dayOfData) {
 		if (!logarithmic || dayOfData != stats.getLastDay()) {
 			return false;
 		}
@@ -73,7 +74,7 @@ public class ChartIncompletes extends TypesTimingChart {
 	}
 
 	@Override
-	public Chart buildChart(int dayOfData) {
+	public JFreeChart buildChart(int dayOfData) {
 		YIntervalSeriesCollection collection = new YIntervalSeriesCollection();
 		StringBuilder title = new StringBuilder();
 
@@ -240,14 +241,7 @@ public class ChartIncompletes extends TypesTimingChart {
 			Event.addEvents(plot);
 		}
 
-		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(dayOfData));
-		if (publish(dayOfData)) {
-			c.addFileName(Charts.TOP_FOLDER + "\\" + getName() + ".png");
-			c.open();
-		}
-		c.saveAsPNG();
-
-		return c;
+		return chart;
 	}
 
 	@Override

@@ -59,7 +59,7 @@ public class FullDelayChart extends TypesTimingChart {
 	}
 
 	@Override
-	public Chart buildChart(int lastDayOfData) {
+	public JFreeChart buildChart(int lastDayOfData) {
 
 		YIntervalSeriesCollection collection = new YIntervalSeriesCollection();
 		DeviationRenderer renderer = new DeviationRenderer(true, false);
@@ -151,14 +151,12 @@ public class FullDelayChart extends TypesTimingChart {
 		peak = Math.min(peak, 120);
 		yAxis.setUpperBound(peak);
 
-		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(lastDayOfData));
-		if (timing == NumbersTiming.ONSET && lastDayOfData == stats.getLastDay() && types.size() == 3
-				&& cumulative) {
-			c.addFileName(Charts.TOP_FOLDER + "\\" + getName() + ".png");
-			c.open();
-		}
-		c.saveAsPNG();
-		return c;
+		return chart;
+	}
+
+	@Override
+	public boolean publish(int lastDayOfData) {
+		return timing == NumbersTiming.ONSET && lastDayOfData == stats.getLastDay() && types.size() == 3 && cumulative;
 	}
 
 	@Override

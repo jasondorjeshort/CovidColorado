@@ -2,6 +2,8 @@ package charts;
 
 import java.io.File;
 
+import org.jfree.chart.JFreeChart;
+
 import com.madgag.gif.fmsware.AnimatedGifEncoder;
 
 import covid.CalendarUtils;
@@ -75,7 +77,7 @@ public abstract class AbstractChart {
 		return topFolder + "\\" + getName() + "-" + DELAY + "-" + INTERVAL;
 	}
 
-	public abstract Chart buildChart(int dayOfChart);
+	public abstract JFreeChart buildChart(int dayOfChart);
 
 	public int getFirstDayOfChart() {
 		return stats.getFirstDayOfData();
@@ -119,6 +121,23 @@ public abstract class AbstractChart {
 
 	public abstract boolean dayHasData(int dayOfChart);
 
+	@SuppressWarnings({ "static-method", "unused" })
+	public boolean publish(int dayOfChart) {
+		return false;
+	}
+
+	private Chart fullBuildChart(int dayOfChart) {
+		JFreeChart chart = buildChart(dayOfChart);
+		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(dayOfChart));
+		if (publish(dayOfChart)) {
+			c.addFileName(Charts.TOP_FOLDER + "\\" + getName() + ".png");
+			c.open();
+		}
+		c.saveAsPNG();
+
+		return c;
+	}
+
 	public void buildAllCharts() {
 		if (!hasData()) {
 			return;
@@ -132,7 +151,7 @@ public abstract class AbstractChart {
 				continue;
 			}
 			try {
-				Chart c = buildChart(dayOfChart);
+				Chart c = fullBuildChart(dayOfChart);
 				Charts.setDelay(stats, dayOfChart, gif);
 				gif.addFrame(c.getImage());
 			} catch (Exception e) {
@@ -154,10 +173,10 @@ public abstract class AbstractChart {
 				continue;
 			}
 			if (async == null) {
-				buildChart(dayOfChart);
+				fullBuildChart(dayOfChart);
 			} else {
 				int _dayOfChart = dayOfChart;
-				async.execute(() -> buildChart(_dayOfChart));
+				async.execute(() -> fullBuildChart(_dayOfChart));
 			}
 		}
 	}

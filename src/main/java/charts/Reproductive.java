@@ -53,7 +53,7 @@ public class Reproductive extends TypesTimingChart {
 	private static final int FIRST_DAY = CalendarUtils.dateToDay("5-1-2021");
 
 	@Override
-	public Chart buildChart(int dayOfData) {
+	public JFreeChart buildChart(int dayOfData) {
 		YIntervalSeriesCollection collection = new YIntervalSeriesCollection();
 		DeviationRenderer renderer = new DeviationRenderer(true, false);
 		int seriesCount = 0;
@@ -165,16 +165,14 @@ public class Reproductive extends TypesTimingChart {
 			Event.addEvents(plot);
 		}
 
-		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(dayOfData));
-		if (dayOfData == stats.getLastDay() && types.size() == 3 && types.contains(NumbersType.CASES)
-				&& types.contains(NumbersType.HOSPITALIZATIONS) && types.contains(NumbersType.DEATHS)
-				&& timing == NumbersTiming.ONSET) {
-			c.addFileName(Charts.TOP_FOLDER + "\\" + getName() + ".png");
-			c.open();
-		}
-		c.saveAsPNG();
+		return chart;
+	}
 
-		return c;
+	@Override
+	public boolean publish(int dayOfData) {
+		return dayOfData == stats.getLastDay() && types.size() == 3 && types.contains(NumbersType.CASES)
+				&& types.contains(NumbersType.HOSPITALIZATIONS) && types.contains(NumbersType.DEATHS)
+				&& timing == NumbersTiming.ONSET;
 	}
 
 	@Override
