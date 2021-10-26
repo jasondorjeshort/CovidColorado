@@ -117,16 +117,19 @@ public class Charts {
 		return Math.max(v1 / v2, v2 / v1);
 	}
 
+	private static int lastChartsDay(int lastDay) {
+		return lastDay + 7 - lastDay % 7;
+	}
+
 	public static int getFirstDayForCharts(ColoradoStats stats) {
-		if (true) {
+		int last = stats.getLastDay();
+		if (lastChartsDay(last) == lastChartsDay(last - 1)) {
 			return stats.getLastDay();
 		}
 		return 0;
 	}
 
 	public static int getLastDayForChartDisplay(ColoradoStats stats) {
-		// This makes the last day always a saturday
-		int last = stats.getLastDay() + 7 - stats.getLastDay() % 7;
-		return last;
+		return lastChartsDay(stats.getLastDay());
 	}
 }
