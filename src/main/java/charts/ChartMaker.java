@@ -60,6 +60,8 @@ public class ChartMaker {
 						.buildChartsOnly(build));
 				build.execute(() -> new ChartIncompletes(stats, noTests, NumbersTiming.ONSET, true, true)
 						.buildChartsOnly(build));
+				build.execute(() -> new ChartIncompletes(stats, NumbersType.getSet(NumbersType.CASES),
+						NumbersTiming.ONSET, true, true).buildChartsOnly(build));
 			}
 			if (false) {
 				build.execute(

@@ -118,7 +118,7 @@ public class Charts {
 	}
 
 	private static int lastChartsDay(int lastDay) {
-		return lastDay + 7 - lastDay % 7;
+		return lastDay + 90 - lastDay % 7;
 	}
 
 	public static int getFirstDayForCharts(ColoradoStats stats) {
