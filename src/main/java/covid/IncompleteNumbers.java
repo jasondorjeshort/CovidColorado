@@ -350,4 +350,8 @@ public class IncompleteNumbers extends Numbers {
 
 		return daySum / numbersSum;
 	}
+
+	public String getDescription() {
+		return getType().name() + "/" + timing.name();
+	}
 }

@@ -105,6 +105,8 @@ public class ChartIncompletes extends TypesTimingChart {
 			YIntervalSeries series = new YIntervalSeries(type.capName + " (" + smoothing.getDescription() + ")");
 
 			firstDayOfChart = Math.min(firstDayOfChart, FIRST_DAY);
+
+			YIntervalSeries series2020 = new YIntervalSeries(type.capName + " (last year)");
 			for (int dayOfType = numbers.getFirstDayOfType(); dayOfType <= dayOfData; dayOfType++) {
 				long time = CalendarUtils.dayToTime(dayOfType);
 
@@ -170,6 +172,12 @@ public class ChartIncompletes extends TypesTimingChart {
 				if (!logarithmic || (lowerBound > 0 && number > 0 && upperBound > 0)) {
 					series.add(time, Charts.value(number, median), lowerBound, upperBound);
 				}
+
+				int day2020 = dayOfType - 365;
+				// System.out.println(CalendarUtils.dayToDate(dayOfType) + " - "
+				// + CalendarUtils.dayToDate(day2020));
+				double n2020 = numbers.getNumbers(dayOfData, day2020, smoothing);
+				series2020.add(time, n2020, Double.NaN, Double.NaN);
 			}
 
 			collection.addSeries(series);
@@ -177,6 +185,15 @@ public class ChartIncompletes extends TypesTimingChart {
 			renderer.setSeriesPaint(seriesCount, type.color);
 			renderer.setSeriesFillPaint(seriesCount, type.color.darker());
 			seriesCount++;
+
+			if (types.size() == 1) {
+				collection.addSeries(series2020);
+				renderer.setSeriesStroke(seriesCount,
+						new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+				renderer.setSeriesPaint(seriesCount, type.color);
+				renderer.setSeriesFillPaint(seriesCount, type.color.darker());
+				seriesCount++;
+			}
 		}
 
 		if (firstDayOfChart >= stats.getLastDay()) {
