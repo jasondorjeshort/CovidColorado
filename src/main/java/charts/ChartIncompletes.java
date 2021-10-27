@@ -117,7 +117,6 @@ public class ChartIncompletes extends TypesTimingChart {
 		title.append("\n");
 		title.append(Charts.valueDesc());
 
-		int last = getLastDayForChartDisplay();
 
 		for (NumbersType type : types) {
 			IncompleteNumbers numbers = stats.getNumbers(type, timing);
@@ -223,6 +222,7 @@ public class ChartIncompletes extends TypesTimingChart {
 		plot.setRenderer(renderer);
 
 		DateAxis xAxis = new DateAxis("Date");
+		int last = getLastDayForChartDisplay();
 		xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(last - 365));
 		xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(last));
 		plot.setDomainAxis(xAxis);
