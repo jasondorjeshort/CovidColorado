@@ -62,7 +62,7 @@ public class ChartIncompletes extends TypesTimingChart {
 		if (timing == NumbersTiming.DEATH && types.size() == 1 && useSmoothing) {
 			return true;
 		}
-		if (timing == NumbersTiming.ONSET && types.size() == 1 && types.contains(NumbersType.CASES)) {
+		if (timing == NumbersTiming.ONSET && types.size() == 1 && types.contains(NumbersType.CASES) && useSmoothing) {
 			return true;
 		}
 		return false;
@@ -70,7 +70,7 @@ public class ChartIncompletes extends TypesTimingChart {
 
 	@Override
 	public boolean showLastYear() {
-		return types.size() == 1;
+		return types.size() == 1 || useSmoothing;
 	}
 
 	@Override
@@ -116,7 +116,6 @@ public class ChartIncompletes extends TypesTimingChart {
 				confidence, DELAY, INTERVAL));
 		title.append("\n");
 		title.append(Charts.valueDesc());
-
 
 		for (NumbersType type : types) {
 			IncompleteNumbers numbers = stats.getNumbers(type, timing);
@@ -189,11 +188,12 @@ public class ChartIncompletes extends TypesTimingChart {
 				median = number * Math.exp(median);
 
 				if (!logarithmic || (lowerBound > 0 && number > 0 && upperBound > 0)) {
+					double value = Charts.value(number, median);
 					long time = CalendarUtils.dayToTime(dayOfType);
-					series.add(time, Charts.value(number, median), lowerBound, upperBound);
+					series.add(time, value, lowerBound, upperBound);
 
 					long timeLY = CalendarUtils.dayToTime(dayOfType + 365);
-					seriesLY.add(timeLY, Charts.value(number, median), lowerBound, upperBound);
+					seriesLY.add(timeLY, value, value, value);
 				}
 			}
 
