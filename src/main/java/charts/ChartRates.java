@@ -135,7 +135,7 @@ public class ChartRates extends AbstractChart {
 		} else {
 			title.append(Rate.allCapsName(rates, ", "));
 		}
-		title.append(" ");
+		title.append(" by ");
 		title.append(timing.lowerName);
 		title.append(" date, ");
 		title.append(smoothing.getDescription());
