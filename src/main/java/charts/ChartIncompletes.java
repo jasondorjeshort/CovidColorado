@@ -63,7 +63,7 @@ public class ChartIncompletes extends TypesTimingChart {
 			return true;
 		}
 		if (timing == NumbersTiming.ONSET && types.size() == 1 && types.contains(NumbersType.CASES) && useSmoothing) {
-			return true;
+			// return true;
 		}
 		return false;
 	}

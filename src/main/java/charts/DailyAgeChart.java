@@ -87,11 +87,6 @@ public class DailyAgeChart extends AbstractChart {
 	}
 
 	@Override
-	public boolean publish(int dayOfData) {
-		return dayOfData == stats.getLastDay() && timing == NumbersTiming.ONSET && types.size() >= 3;
-	}
-
-	@Override
 	public String getName() {
 		return NumbersType.name(types, "-") + "-" + timing.lowerName;
 	}
