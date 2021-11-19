@@ -115,5 +115,6 @@ public class ChartMaker {
 		build.complete();
 		System.out.println("Built charts in " + (System.currentTimeMillis() - buildStarted) + " ms with "
 				+ build.getExecutions() + " executions.");
+		library.OpenImage.open();
 	}
 }

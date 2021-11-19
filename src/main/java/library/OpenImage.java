@@ -21,7 +21,7 @@ import java.util.LinkedList;
  */
 public class OpenImage {
 
-	private static int opened = 0;
+	private static final LinkedList<String> files = new LinkedList<>();
 
 	/**
 	 * This just opens the given file name (with extension) in irfanview.
@@ -34,23 +34,23 @@ public class OpenImage {
 		if (fileName == null) {
 			return;
 		}
-		if (opened > 10) {
-			new Exception("Cannot open that many " + fileName).printStackTrace();
-			return;
-		}
-		try {
-			LinkedList<String> process = new LinkedList<>();
+		files.add(fileName);
+	}
+
+	public static synchronized void open() {
+		LinkedList<String> process = new LinkedList<>();
+		while (files.size() > 0) {
+			String fileName = files.pop();
+			process.clear();
 			process.add("C:\\Program Files (x86)\\IrfanView\\i_view32.exe");
 			process.add(fileName);
+			System.out.println("Opened " + fileName + ".");
+
 			try {
 				new ProcessBuilder(process).start();
-			} catch (IOException e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			System.out.println("Opened " + fileName + ".");
-			opened++;
-		} catch (Exception e) {
-			e.printStackTrace();
 		}
 	}
 }
