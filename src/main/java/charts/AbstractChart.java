@@ -128,6 +128,10 @@ public abstract class AbstractChart {
 
 	private Chart fullBuildChart(int dayOfChart) {
 		JFreeChart chart = buildChart(dayOfChart);
+		if (chart == null) {
+			new Exception("Null chart for " + getPngName(dayOfChart)).printStackTrace();
+			return null;
+		}
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(dayOfChart));
 		if (publish(dayOfChart)) {
 			c.addFileName(Charts.TOP_FOLDER + "\\" + getName() + ".png");
