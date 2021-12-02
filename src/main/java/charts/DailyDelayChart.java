@@ -79,6 +79,9 @@ public class DailyDelayChart extends AbstractChart {
 			}
 
 			if (dayOfType + interval <= stats.getLastDay()) {
+				if (!numbers.dayHasData(stats.getLastDay()) || !numbers.dayHasData(dayOfType + interval - 1)) {
+					continue;
+				}
 				double n1 = numbers.getNumbers(stats.getLastDay(), dayOfType);
 				double n2 = numbers.getNumbers(dayOfType + interval - 1, dayOfType);
 				series.add(interval, n1 - n2);
