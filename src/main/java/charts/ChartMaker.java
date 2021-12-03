@@ -55,7 +55,10 @@ public class ChartMaker {
 		build.execute(() -> stats.calculateReinfections());
 
 		if (false) {
-			if (true) {
+			build.execute(
+					() -> new ChartIncompletes(stats, noTests, NumbersTiming.ONSET, true, true).buildChartsOnly(build));
+			build.execute(() -> new Reproductive(stats, noTests, NumbersTiming.ONSET).buildChartsOnly(build));
+			if (false) {
 				build.execute(() -> new ChartIncompletes(stats, fullTypes, NumbersTiming.ONSET, true, true)
 						.buildChartsOnly(build));
 				build.execute(() -> new ChartIncompletes(stats, noTests, NumbersTiming.ONSET, true, true)
