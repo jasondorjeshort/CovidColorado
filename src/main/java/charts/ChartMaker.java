@@ -55,9 +55,11 @@ public class ChartMaker {
 		build.execute(() -> stats.calculateReinfections());
 
 		if (false) {
-			build.execute(
-					() -> new ChartIncompletes(stats, noTests, NumbersTiming.ONSET, true, true).buildChartsOnly(build));
-			build.execute(() -> new Reproductive(stats, noTests, NumbersTiming.ONSET).buildChartsOnly(build));
+			if (false) {
+				build.execute(() -> new ChartIncompletes(stats, noTests, NumbersTiming.ONSET, true, true)
+						.buildChartsOnly(build));
+				build.execute(() -> new Reproductive(stats, noTests, NumbersTiming.ONSET).buildChartsOnly(build));
+			}
 			if (false) {
 				build.execute(() -> new ChartIncompletes(stats, fullTypes, NumbersTiming.ONSET, true, true)
 						.buildChartsOnly(build));
@@ -66,13 +68,15 @@ public class ChartMaker {
 				build.execute(() -> new ChartIncompletes(stats, NumbersType.getSet(NumbersType.CASES),
 						NumbersTiming.ONSET, true, true).buildChartsOnly(build));
 			}
-			if (false) {
+			if (true) {
 				build.execute(
 						() -> new ChartRates(stats, Rate.getSet(Rate.CFR), NumbersTiming.ONSET).buildChartsOnly(build));
 				build.execute(
 						() -> new ChartRates(stats, Rate.getSet(Rate.CHR), NumbersTiming.ONSET).buildChartsOnly(build));
 				build.execute(
 						() -> new ChartRates(stats, Rate.getSet(Rate.HFR), NumbersTiming.ONSET).buildChartsOnly(build));
+				build.execute(() -> new ChartRates(stats, Rate.getSet(Rate.POSITIVITY), NumbersTiming.ONSET)
+						.buildChartsOnly(build));
 			}
 			build.complete();
 			return;
