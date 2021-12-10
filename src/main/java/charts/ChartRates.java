@@ -43,8 +43,6 @@ public class ChartRates extends AbstractChart {
 	public final Set<Rate> rates;
 	private final NumbersTiming timing;
 
-	private final int SMOOTHING_DAYS = 21; // 9 weeks
-
 	public ChartRates(ColoradoStats stats, Set<Rate> rates, NumbersTiming timing) {
 		super(stats, RATES_FOLDER);
 		this.rates = rates;
@@ -53,7 +51,6 @@ public class ChartRates extends AbstractChart {
 
 	@Override
 	public JFreeChart buildChart(int dayOfData) {
-		Smoothing smoothing = new Smoothing(SMOOTHING_DAYS, Smoothing.Type.AVERAGE, Smoothing.Timing.SYMMETRIC);
 
 		DeviationRenderer renderer = new DeviationRenderer(true, false);
 		YIntervalSeriesCollection collection = new YIntervalSeriesCollection();
@@ -64,11 +61,12 @@ public class ChartRates extends AbstractChart {
 		int firstDayOfChart = stats.getVeryFirstDay();
 
 		for (Rate rate : rates) {
+			Smoothing smoothing = rate.smoothing;
 
 			IncompleteNumbers nNumbers = stats.getNumbers(rate.numerator, timing);
 			IncompleteNumbers dNumbers = stats.getNumbers(rate.denominator, timing);
 
-			YIntervalSeries series = new YIntervalSeries(rate.description);
+			YIntervalSeries series = new YIntervalSeries(rate.description + " (" + smoothing.getDescription() + ")");
 
 			height = Math.max(height, rate.highestValue);
 
@@ -137,8 +135,7 @@ public class ChartRates extends AbstractChart {
 		}
 		title.append(" by ");
 		title.append(timing.lowerName);
-		title.append(" date, ");
-		title.append(smoothing.getDescription());
+		title.append(" date ");
 		title.append(" as of ");
 		title.append(CalendarUtils.dayToDate(dayOfData));
 		title.append("\n(");

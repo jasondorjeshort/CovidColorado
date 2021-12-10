@@ -28,10 +28,10 @@ public enum Rate {
 	 * That's basically it. We mostly talk about positivity and CFR, but any
 	 * pair of numbers (NumbersType) could be divided to get a proportion.
 	 */
-	POSITIVITY(NumbersType.CASES, NumbersType.TESTS, Color.BLUE, 25, false),
-	CFR(NumbersType.DEATHS, NumbersType.CASES, Color.BLACK, 3, true),
-	CHR(NumbersType.HOSPITALIZATIONS, NumbersType.CASES, Color.RED, 31, true),
-	HFR(NumbersType.DEATHS, NumbersType.HOSPITALIZATIONS, Color.ORANGE, 50, true),;
+	POSITIVITY(NumbersType.CASES, NumbersType.TESTS, Color.BLUE, 20, 7, false),
+	CFR(NumbersType.DEATHS, NumbersType.CASES, Color.BLACK, 3, 35, true),
+	CHR(NumbersType.HOSPITALIZATIONS, NumbersType.CASES, Color.RED, 31, 35, true),
+	HFR(NumbersType.DEATHS, NumbersType.HOSPITALIZATIONS, Color.ORANGE, 50, 35, true),;
 
 	public final NumbersType numerator, denominator;
 	public final String lowerName = name().toLowerCase();
@@ -39,8 +39,10 @@ public enum Rate {
 	public final Color color;
 	public final String capName = name().substring(0, 1) + name().substring(1).toLowerCase().replaceAll("_", " ");
 	public final String description, allCapsName;
+	public final Smoothing smoothing;
 
-	Rate(NumbersType numerator, NumbersType denominator, Color color, int highestValue, boolean allCaps) {
+	Rate(NumbersType numerator, NumbersType denominator, Color color, int highestValue, int smoothingDays,
+			boolean allCaps) {
 		this.numerator = numerator;
 		this.denominator = denominator;
 		this.color = color;
@@ -51,6 +53,7 @@ public enum Rate {
 		} else {
 			allCapsName = capName;
 		}
+		smoothing = new Smoothing(smoothingDays, Smoothing.Type.AVERAGE, Smoothing.Timing.SYMMETRIC);
 	}
 
 	public static Set<Rate> getSet(Rate... rate) {
