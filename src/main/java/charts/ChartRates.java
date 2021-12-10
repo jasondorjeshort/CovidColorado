@@ -135,8 +135,7 @@ public class ChartRates extends AbstractChart {
 		}
 		title.append(" by ");
 		title.append(timing.lowerName);
-		title.append(" date ");
-		title.append(" as of ");
+		title.append(" date as of ");
 		title.append(CalendarUtils.dayToDate(dayOfData));
 		title.append("\n(");
 		if (Charts.useMedian()) {
