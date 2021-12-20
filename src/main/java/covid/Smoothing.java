@@ -29,6 +29,7 @@ public class Smoothing {
 	public static final Smoothing AVERAGE_7_DAY = new Smoothing(7, Type.AVERAGE, Timing.TRAILING);
 	public static final Smoothing TOTAL_14_DAY = new Smoothing(14, Type.TOTAL, Timing.TRAILING);
 	public static final Smoothing AVERAGE_14_DAY = new Smoothing(14, Type.AVERAGE, Timing.TRAILING);
+	public static final Smoothing ALGEBRAIC_SYMMETRIC_3DAY = new Smoothing(3, Type.AVERAGE, Timing.SYMMETRIC);
 	public static final Smoothing ALGEBRAIC_SYMMETRIC_WEEKLY = new Smoothing(7, Type.AVERAGE, Timing.SYMMETRIC);
 	public static final Smoothing ALGEBRAIC_SYMMETRIC_14DAY = new Smoothing(13, Type.AVERAGE, Timing.SYMMETRIC);
 	public static final Smoothing ALGEBRAIC_SYMMETRIC_21DAY = new Smoothing(21, Type.AVERAGE, Timing.SYMMETRIC);
