@@ -87,13 +87,10 @@ public abstract class AbstractChart {
 		return stats.getLastDay();
 	}
 
+	@SuppressWarnings("static-method")
 	private int lastChartsDay(int lastDay) {
 		lastDay -= lastDay % 7;
-		if (showLastYear()) {
-			lastDay += 90;
-		} else {
-			lastDay += 14;
-		}
+		lastDay += 30;
 		return lastDay;
 	}
 
