@@ -223,7 +223,8 @@ public class ChartIncompletes extends TypesTimingChart {
 
 		DateAxis xAxis = new DateAxis("Date");
 		int last = getLastDayForChartDisplay();
-		xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(last - 365));
+		int first = last - 365; // or day-90
+		xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(first));
 		xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(last));
 		plot.setDomainAxis(xAxis);
 
