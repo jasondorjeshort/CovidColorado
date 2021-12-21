@@ -1,6 +1,7 @@
 package charts;
 
 import java.awt.BasicStroke;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
@@ -39,30 +40,37 @@ import covid.Smoothing;
  * @author jdorje@gmail.com
  */
 public class ChartIncompletes extends TypesTimingChart {
-	public final boolean logarithmic;
-	public final boolean useSmoothing;
+	private final HashSet<Flag> flags = new HashSet<>();
 
-	public ChartIncompletes(ColoradoStats stats, Set<NumbersType> types, NumbersTiming timing, boolean logarithmic,
-			boolean useSmoothing) {
+	public ChartIncompletes(ColoradoStats stats, Set<NumbersType> types, NumbersTiming timing, Flag... flags) {
 		super(stats, Charts.FULL_FOLDER + "\\" + "numbers", types, timing);
-		this.logarithmic = logarithmic;
-		this.useSmoothing = useSmoothing;
+		for (Flag flag : flags) {
+			this.flags.add(flag);
+		}
+	}
+
+	private boolean logarithmic() {
+		return flags.contains(Flag.LOGARITHMIC);
+	}
+
+	private boolean smoothed() {
+		return flags.contains(Flag.SMOOTHED);
 	}
 
 	private static final int FIRST_DAY = CalendarUtils.dateToDay("10-15-2020");
 
 	@Override
 	public boolean publish(int dayOfData) {
-		if (!logarithmic || dayOfData != stats.getLastDay()) {
+		if (!logarithmic() || dayOfData != stats.getLastDay()) {
 			return false;
 		}
 		if (timing == NumbersTiming.ONSET && types.size() == 3) {
 			return true;
 		}
-		if (timing == NumbersTiming.DEATH && types.size() == 1 && useSmoothing) {
+		if (timing == NumbersTiming.DEATH && types.size() == 1 && smoothed()) {
 			return true;
 		}
-		if (timing == NumbersTiming.ONSET && types.size() == 1 && types.contains(NumbersType.CASES) && useSmoothing) {
+		if (timing == NumbersTiming.ONSET && types.size() == 1 && types.contains(NumbersType.CASES) && smoothed()) {
 			// return true;
 		}
 		return false;
@@ -70,7 +78,7 @@ public class ChartIncompletes extends TypesTimingChart {
 
 	@Override
 	public boolean showLastYear() {
-		return types.size() == 1 || useSmoothing;
+		return types.size() == 1 || smoothed();
 	}
 
 	@Override
@@ -96,12 +104,12 @@ public class ChartIncompletes extends TypesTimingChart {
 		title.append(timing.lowerName);
 		title.append(" date as of ");
 		title.append(CalendarUtils.dayToDate(dayOfData));
-		if (logarithmic) {
+		if (logarithmic()) {
 			title.append(", logarithmic");
 		} else {
 			title.append(", cartesian");
 		}
-		if (useSmoothing) {
+		if (smoothed()) {
 			title.append(", smoothed");
 		} else {
 			title.append(", exact");
@@ -122,7 +130,7 @@ public class ChartIncompletes extends TypesTimingChart {
 			if (!numbers.hasData() || !numbers.dayHasData(dayOfData)) {
 				continue;
 			}
-			Smoothing smoothing = useSmoothing ? type.smoothing : Smoothing.NONE;
+			Smoothing smoothing = smoothed() ? type.smoothing : Smoothing.NONE;
 			YIntervalSeries series = new YIntervalSeries(type.capName + " (" + smoothing.getDescription() + ")");
 			YIntervalSeries seriesLY = new YIntervalSeries("Last year");
 
@@ -187,7 +195,7 @@ public class ChartIncompletes extends TypesTimingChart {
 				}
 				median = number * Math.exp(median);
 
-				if (!logarithmic || (lowerBound > 0 && number > 0 && upperBound > 0)) {
+				if (!logarithmic() || (lowerBound > 0 && number > 0 && upperBound > 0)) {
 					double value = Charts.value(number, median);
 					long time = CalendarUtils.dayToTime(dayOfType);
 					series.add(time, value, lowerBound, upperBound);
@@ -228,7 +236,7 @@ public class ChartIncompletes extends TypesTimingChart {
 		xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(last));
 		plot.setDomainAxis(xAxis);
 
-		if (logarithmic) {
+		if (logarithmic()) {
 			LogarithmicAxis yAxis = new LogarithmicAxis(verticalAxis);
 			yAxis.setLowerBound(1);
 			yAxis.setUpperBound(NumbersType.getHighest(types));
@@ -247,8 +255,8 @@ public class ChartIncompletes extends TypesTimingChart {
 
 	@Override
 	public String getName() {
-		return NumbersType.name(types, "-") + "-" + timing.lowerName + (logarithmic ? "-log" : "-cart")
-				+ (useSmoothing ? "-smooth" : "-exact");
+		return NumbersType.name(types, "-") + "-" + timing.lowerName + (logarithmic() ? "-log" : "-cart")
+				+ (smoothed() ? "-smooth" : "-exact");
 	}
 
 }
