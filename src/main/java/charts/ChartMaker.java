@@ -75,20 +75,20 @@ public class ChartMaker {
 			build.execute(() -> new ChartRates(stats, Rate.getSet(Rate.values()), timing).buildAllCharts());
 			build.execute(() -> new Reproductive(stats, noTests, timing).buildAllCharts());
 			build.execute(() -> new Reproductive(stats, casesHosps, timing).buildAllCharts());
-			build.execute(() -> new ChartIncompletes(stats, noTests, timing, Flag.LOGARITHMIC, Flag.SMOOTHED)
-					.buildAllCharts());
-			build.execute(() -> new ChartIncompletes(stats, noTests, timing, Flag.LOGARITHMIC).buildAllCharts());
-			build.execute(() -> new ChartIncompletes(stats, noTests, timing, Flag.SMOOTHED).buildAllCharts());
+			build.execute(() -> new ChartIncompletes(stats, noTests, timing, 365, Flag.LOGARITHMIC, Flag.SMOOTHED,
+					Flag.OLD_YEARS).buildAllCharts());
+			build.execute(() -> new ChartIncompletes(stats, noTests, timing, 90, Flag.LOGARITHMIC).buildAllCharts());
+			build.execute(() -> new ChartIncompletes(stats, noTests, timing, 365, Flag.SMOOTHED).buildAllCharts());
 			build.execute(() -> new FullDelayChart(stats, noTests, timing, true).buildAllCharts());
 			build.execute(() -> new FullDelayChart(stats, noTests, timing, false).buildAllCharts());
 			build.execute(() -> new DailyAgeChart(stats, noTests, timing).buildAllCharts());
 			build.execute(() -> new DailyDelayChart(stats, noTests, timing).buildAllCharts());
 			build.execute(() -> age.buildChart(noTests, timing));
 
-			build.execute(() -> new ChartIncompletes(stats, fullTypes, timing, Flag.LOGARITHMIC, Flag.SMOOTHED)
+			build.execute(() -> new ChartIncompletes(stats, fullTypes, timing, 365, Flag.LOGARITHMIC, Flag.SMOOTHED)
 					.buildAllCharts());
-			build.execute(() -> new ChartIncompletes(stats, fullTypes, timing, Flag.SMOOTHED).buildAllCharts());
-			build.execute(() -> new ChartIncompletes(stats, fullTypes, timing, Flag.LOGARITHMIC).buildAllCharts());
+			build.execute(() -> new ChartIncompletes(stats, fullTypes, timing, 365, Flag.SMOOTHED).buildAllCharts());
+			build.execute(() -> new ChartIncompletes(stats, fullTypes, timing, 365, Flag.LOGARITHMIC).buildAllCharts());
 			// No point to testing age; it's identical to cases
 
 			for (Rate rate : Rate.values()) {
@@ -96,10 +96,11 @@ public class ChartMaker {
 			}
 			for (NumbersType type : NumbersType.values()) {
 				build.execute(() -> new Reproductive(stats, NumbersType.getSet(type), timing).buildAllCharts());
-				build.execute(() -> new ChartIncompletes(stats, type.set, timing, Flag.LOGARITHMIC, Flag.SMOOTHED)
-						.buildAllCharts());
-				build.execute(() -> new ChartIncompletes(stats, type.set, timing, Flag.SMOOTHED).buildAllCharts());
-				build.execute(() -> new ChartIncompletes(stats, type.set, timing, Flag.LOGARITHMIC).buildAllCharts());
+				build.execute(() -> new ChartIncompletes(stats, type.set, timing, 365, Flag.LOGARITHMIC, Flag.SMOOTHED,
+						Flag.OLD_YEARS).buildAllCharts());
+				build.execute(() -> new ChartIncompletes(stats, type.set, timing, 365, Flag.SMOOTHED).buildAllCharts());
+				build.execute(
+						() -> new ChartIncompletes(stats, type.set, timing, 365, Flag.LOGARITHMIC).buildAllCharts());
 				build.execute(() -> new FullDelayChart(stats, type.set, timing, true).buildAllCharts());
 				build.execute(() -> new FullDelayChart(stats, type.set, timing, false).buildAllCharts());
 				build.execute(() -> new DailyAgeChart(stats, type.set, timing).buildAllCharts());

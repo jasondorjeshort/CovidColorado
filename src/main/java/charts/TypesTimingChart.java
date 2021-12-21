@@ -12,8 +12,9 @@ public abstract class TypesTimingChart extends AbstractChart {
 	protected final Set<NumbersType> types;
 	protected final NumbersTiming timing;
 
-	public TypesTimingChart(ColoradoStats stats, String topFolder, Set<NumbersType> types, NumbersTiming timing) {
-		super(stats, topFolder);
+	public TypesTimingChart(ColoradoStats stats, String topFolder, Set<NumbersType> types, NumbersTiming timing,
+			Flag... flags) {
+		super(stats, topFolder, flags);
 		this.types = types;
 		this.timing = timing;
 	}

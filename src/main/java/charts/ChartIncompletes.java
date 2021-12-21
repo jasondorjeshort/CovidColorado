@@ -40,24 +40,14 @@ import covid.Smoothing;
  * @author jdorje@gmail.com
  */
 public class ChartIncompletes extends TypesTimingChart {
-	private final HashSet<Flag> flags = new HashSet<>();
 
-	public ChartIncompletes(ColoradoStats stats, Set<NumbersType> types, NumbersTiming timing, Flag... flags) {
-		super(stats, Charts.FULL_FOLDER + "\\" + "numbers", types, timing);
-		for (Flag flag : flags) {
-			this.flags.add(flag);
-		}
+	private final int chartDays;
+
+	public ChartIncompletes(ColoradoStats stats, Set<NumbersType> types, NumbersTiming timing, int chartDays,
+			Flag... flags) {
+		super(stats, Charts.FULL_FOLDER + "\\" + "numbers", types, timing, flags);
+		this.chartDays = chartDays;
 	}
-
-	private boolean logarithmic() {
-		return flags.contains(Flag.LOGARITHMIC);
-	}
-
-	private boolean smoothed() {
-		return flags.contains(Flag.SMOOTHED);
-	}
-
-	private static final int FIRST_DAY = CalendarUtils.dateToDay("10-15-2020");
 
 	@Override
 	public boolean publish(int dayOfData) {
@@ -74,11 +64,6 @@ public class ChartIncompletes extends TypesTimingChart {
 			// return true;
 		}
 		return false;
-	}
-
-	@Override
-	public boolean showLastYear() {
-		return types.size() == 1 || smoothed();
 	}
 
 	@Override
@@ -211,7 +196,7 @@ public class ChartIncompletes extends TypesTimingChart {
 			renderer.setSeriesFillPaint(seriesCount, type.color.darker());
 			seriesCount++;
 
-			if (showLastYear()) {
+			if (oldYears()) {
 				collection.addSeries(seriesLY);
 				renderer.setSeriesStroke(seriesCount,
 						new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[] { 9 }, 0));
@@ -231,7 +216,7 @@ public class ChartIncompletes extends TypesTimingChart {
 
 		DateAxis xAxis = new DateAxis("Date");
 		int last = getLastDayForChartDisplay();
-		int first = last - 365; // or day-90
+		int first = last - chartDays;
 		xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(first));
 		xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(last));
 		plot.setDomainAxis(xAxis);
@@ -255,8 +240,8 @@ public class ChartIncompletes extends TypesTimingChart {
 
 	@Override
 	public String getName() {
-		return NumbersType.name(types, "-") + "-" + timing.lowerName + (logarithmic() ? "-log" : "-cart")
-				+ (smoothed() ? "-smooth" : "-exact");
+		return NumbersType.name(types, "-") + "-" + chartDays + "-" + timing.lowerName + logName() + smoothName()
+				+ yearsName();
 	}
 
 }

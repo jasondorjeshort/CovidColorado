@@ -1,6 +1,7 @@
 package charts;
 
 import java.io.File;
+import java.util.HashSet;
 
 import org.jfree.chart.JFreeChart;
 
@@ -33,6 +34,31 @@ public abstract class AbstractChart {
 	public static final double confidence = 98;
 	public static final double bottomRange = (100 - confidence) / 2;
 	public static final double topRange = 100 - bottomRange;
+	private final HashSet<Flag> flags = new HashSet<>();
+
+	public boolean logarithmic() {
+		return flags.contains(Flag.LOGARITHMIC);
+	}
+
+	public String logName() {
+		return (logarithmic() ? "-log" : "-cart");
+	}
+
+	public boolean smoothed() {
+		return flags.contains(Flag.SMOOTHED);
+	}
+
+	public String smoothName() {
+		return (smoothed() ? "-smooth" : "-exact");
+	}
+
+	public boolean oldYears() {
+		return flags.contains(Flag.OLD_YEARS);
+	}
+
+	public String yearsName() {
+		return (oldYears() ? "-years" : "-year");
+	}
 
 	/*
 	 * An "abstract" chart graphs something over all days of the pandemic for
@@ -53,16 +79,19 @@ public abstract class AbstractChart {
 
 	public final ColoradoStats stats;
 
-	public AbstractChart(ColoradoStats stats, String topFolder) {
+	public AbstractChart(ColoradoStats stats, String topFolder, Flag... flags) {
 		this.topFolder = topFolder;
 		this.stats = stats;
 		new File(topFolder).mkdir();
+		for (Flag flag : flags) {
+			this.flags.add(flag);
+		}
 	}
 
 	// checkFinite
-	public double cF(double value) {
+	public static double cF(double value) {
 		if (!Double.isFinite(value)) {
-			new Exception("Infinite value : " + value);
+			new Exception("Infinite value : " + value).printStackTrace();
 		}
 		return value;
 	}
@@ -180,11 +209,6 @@ public abstract class AbstractChart {
 				async.execute(() -> fullBuildChart(_dayOfChart));
 			}
 		}
-	}
-
-	@SuppressWarnings("static-method")
-	public boolean showLastYear() {
-		return false;
 	}
 
 }
