@@ -50,8 +50,6 @@ public class Reproductive extends TypesTimingChart {
 
 	private static final boolean SHOW_EVENTS = true;
 
-	private static final int FIRST_DAY = CalendarUtils.dateToDay("5-1-2021");
-
 	@Override
 	public JFreeChart buildChart(int dayOfData) {
 		YIntervalSeriesCollection collection = new YIntervalSeriesCollection();
@@ -72,7 +70,7 @@ public class Reproductive extends TypesTimingChart {
 					+ (numbers.getReproductiveSmoothingInterval() * 2) + "-day smoothing");
 			YIntervalSeries seriesLY = new YIntervalSeries("Last year");
 
-			for (int dayOfType = FIRST_DAY; dayOfType <= dayOfData; dayOfType++) {
+			for (int dayOfType = numbers.getFirstDayOfType(); dayOfType <= dayOfData; dayOfType++) {
 
 				Double reproductive = numbers.getBigR(dayOfData, dayOfType);
 
@@ -115,7 +113,7 @@ public class Reproductive extends TypesTimingChart {
 			renderer.setSeriesFillPaint(seriesCount, type.color.darker());
 			seriesCount++;
 
-			if (types.size() == 1 || true) {
+			if (types.size() == 1) {
 				collection.addSeries(seriesLY);
 				renderer.setSeriesStroke(seriesCount,
 						new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
@@ -149,11 +147,13 @@ public class Reproductive extends TypesTimingChart {
 		plot.setRenderer(renderer);
 		ValueAxis yAxis = plot.getRangeAxis();
 		yAxis.setLowerBound(0.60);
-		yAxis.setUpperBound(1.50);
+		yAxis.setUpperBound(3);
 
 		DateAxis xAxis = new DateAxis("Date");
-		xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(FIRST_DAY));
-		xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(getLastDayForChartDisplay()));
+		int last = getLastDayForChartDisplay();
+		int first = last - 180;
+		xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(first));
+		xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(last));
 		plot.setDomainAxis(xAxis);
 
 		ValueMarker marker = new ValueMarker(1.0);
