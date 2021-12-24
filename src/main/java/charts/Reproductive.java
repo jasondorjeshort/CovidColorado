@@ -151,7 +151,7 @@ public class Reproductive extends TypesTimingChart {
 
 		DateAxis xAxis = new DateAxis("Date");
 		int last = getLastDayForChartDisplay();
-		int first = last - 180;
+		int first = last - 180; // stats.getVeryFirstDay();
 		xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(first));
 		xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(last));
 		plot.setDomainAxis(xAxis);
