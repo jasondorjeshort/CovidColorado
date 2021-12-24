@@ -33,42 +33,30 @@ public class ChartMaker {
 
 	public ChartMaker(ColoradoStats stats) {
 		this.stats = stats;
+		county = new ChartCounty(stats);
+		finals = new Finals(stats);
+		age = new AverageAge(stats);
 	}
 
-	public void buildCharts() {
-		// folders must be at very top
-		new File(Charts.TOP_FOLDER).mkdir();
-		new File(Charts.FULL_FOLDER).mkdir();
-		ChartCounty county = new ChartCounty(stats);
-		AverageAge age = new AverageAge(stats);
-		Finals finals = new Finals(stats);
-		Set<NumbersType> fullTypes = NumbersType.getSet();
-		Set<NumbersType> noTests = NumbersType.getSet(NumbersType.CASES, NumbersType.DEATHS,
-				NumbersType.HOSPITALIZATIONS);
-		Set<NumbersType> casesHosps = NumbersType.getSet(NumbersType.CASES, NumbersType.HOSPITALIZATIONS);
+	ASync<Void> build = new ASync<>();
+	Set<NumbersType> noTests = NumbersType.getSet(NumbersType.CASES, NumbersType.DEATHS, NumbersType.HOSPITALIZATIONS);
+	Finals finals;
+	Set<NumbersType> fullTypes = NumbersType.getSet();
+	Set<NumbersType> casesHosps = NumbersType.getSet(NumbersType.CASES, NumbersType.HOSPITALIZATIONS);
+	ChartCounty county;
+	AverageAge age;
 
-		long buildStarted = System.currentTimeMillis();
-
-		ASync<Void> build = new ASync<>();
-
-		// maybe a chart later
-		build.execute(() -> stats.calculateReinfections());
-
+	private void fastBuild() {
+		new Reproductive(stats, noTests, NumbersTiming.ONSET).buildChartsOnly(build);
 		if (false) {
-			if (true) {
-				build.execute(
-						() -> new ChartRates(stats, Rate.getSet(Rate.CFR), NumbersTiming.ONSET).buildChartsOnly(build));
-				build.execute(
-						() -> new ChartRates(stats, Rate.getSet(Rate.CHR), NumbersTiming.ONSET).buildChartsOnly(build));
-				build.execute(
-						() -> new ChartRates(stats, Rate.getSet(Rate.HFR), NumbersTiming.ONSET).buildChartsOnly(build));
-				build.execute(() -> new ChartRates(stats, Rate.getSet(Rate.POSITIVITY), NumbersTiming.ONSET)
-						.buildChartsOnly(build));
-			}
-			build.complete();
-			return;
+			new ChartRates(stats, Rate.getSet(Rate.CFR), NumbersTiming.ONSET).buildChartsOnly(build);
+			new ChartRates(stats, Rate.getSet(Rate.CHR), NumbersTiming.ONSET).buildChartsOnly(build);
+			new ChartRates(stats, Rate.getSet(Rate.HFR), NumbersTiming.ONSET).buildChartsOnly(build);
+			new ChartRates(stats, Rate.getSet(Rate.POSITIVITY), NumbersTiming.ONSET).buildChartsOnly(build);
 		}
+	}
 
+	private void fullBuild() {
 		build.execute(() -> finals.createCumulativeStats());
 
 		for (NumbersTiming timing : NumbersTiming.values()) {
@@ -110,6 +98,23 @@ public class ChartMaker {
 		}
 
 		stats.getCounties().forEach((key, value) -> build.execute(() -> county.createCountyStats(value)));
+	}
+
+	public void buildCharts() {
+		// folders must be at very top
+		new File(Charts.TOP_FOLDER).mkdir();
+		new File(Charts.FULL_FOLDER).mkdir();
+
+		long buildStarted = System.currentTimeMillis();
+
+		// maybe a chart later
+		build.execute(() -> stats.calculateReinfections());
+
+		if (true) {
+			fastBuild();
+		} else {
+			fullBuild();
+		}
 		build.complete();
 		System.out.println("Built charts in " + (System.currentTimeMillis() - buildStarted) + " ms with "
 				+ build.getExecutions() + " executions.");
