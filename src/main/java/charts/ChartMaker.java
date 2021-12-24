@@ -110,7 +110,7 @@ public class ChartMaker {
 		// maybe a chart later
 		build.execute(() -> stats.calculateReinfections());
 
-		if (true) {
+		if (false) {
 			fastBuild();
 		} else {
 			fullBuild();
