@@ -98,9 +98,9 @@ public class Charts {
 
 	public static void setDelay(ColoradoStats stats, int dayOfData, AnimatedGifEncoder gif) {
 		if (dayOfData == stats.getLastDay()) {
-			gif.setDelay(5000);
+			gif.setDelay(1000);
 		} else if (dayOfData + 10 >= stats.getLastDay()) {
-			gif.setDelay(500);
+			gif.setDelay(200);
 		} else {
 			gif.setDelay(50);
 		}

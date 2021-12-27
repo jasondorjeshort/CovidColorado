@@ -143,7 +143,7 @@ public class AverageAge {
 
 		String fileName = NumbersType.name(types, "-") + "-" + timing.lowerName + ".png";
 		String fullFileName = FOLDER + "\\" + fileName;
-		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), fullFileName);
+		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), stats.getLastDay(), fullFileName);
 		if (false && timing == NumbersTiming.INFECTION && types.size() == 3) {
 			c.addFileName(Charts.TOP_FOLDER + "\\" + fileName);
 			c.open();

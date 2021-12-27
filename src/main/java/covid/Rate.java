@@ -30,7 +30,7 @@ public enum Rate {
 	 */
 	POSITIVITY(NumbersType.CASES, NumbersType.TESTS, Color.BLUE, 20, 7, false),
 	CFR(NumbersType.DEATHS, NumbersType.CASES, Color.BLACK, 3, 7, true),
-	CHR(NumbersType.HOSPITALIZATIONS, NumbersType.CASES, Color.RED, 31, 7, true),
+	CHR(NumbersType.HOSPITALIZATIONS, NumbersType.CASES, Color.RED, 15, 7, true),
 	HFR(NumbersType.DEATHS, NumbersType.HOSPITALIZATIONS, Color.ORANGE, 50, 7, true),;
 
 	public final NumbersType numerator, denominator;

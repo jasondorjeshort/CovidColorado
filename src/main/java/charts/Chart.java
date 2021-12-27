@@ -32,11 +32,13 @@ public class Chart {
 	private BufferedImage image;
 	private boolean openQueued;
 	private boolean saved;
+	public final int dayOfChart;
 
-	public Chart(BufferedImage image, String... fileNames) {
+	public Chart(BufferedImage image, int dayOfChart, String... fileNames) {
 		for (String fileName : fileNames) {
 			this.fileNames.add(fileName);
 		}
+		this.dayOfChart = dayOfChart;
 		this.image = image;
 	}
 

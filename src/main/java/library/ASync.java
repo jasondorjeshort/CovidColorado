@@ -20,12 +20,13 @@ public class ASync<V> {
 	 * @param func
 	 *            The code.
 	 */
-	public void submit(Callable<V> func) {
+	public Future<V> submit(Callable<V> func) {
 		Future<V> future = MyExecutor.submitCode(func);
 		synchronized (this) {
 			exec.add(future);
 			executions++;
 		}
+		return future;
 	}
 
 	/**

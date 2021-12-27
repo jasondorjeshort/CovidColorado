@@ -113,7 +113,8 @@ public class Finals {
 
 		}
 
-		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), folder + "\\" + fileName + ".png");
+		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), dayOfData,
+				folder + "\\" + fileName + ".png");
 		c.saveAsPNG();
 		if (dayOfData == stats.getLastDay()) {
 			// c.open();

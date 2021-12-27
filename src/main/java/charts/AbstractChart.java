@@ -2,6 +2,8 @@ package charts;
 
 import java.io.File;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.concurrent.Future;
 
 import org.jfree.chart.JFreeChart;
 
@@ -96,6 +98,8 @@ public abstract class AbstractChart {
 		return value;
 	}
 
+	private static final int GIF_DAYS = 21;
+
 	/**
 	 * The (file) name of this chart is used for both the GIF and folder that
 	 * stores the individual charts.
@@ -126,7 +130,7 @@ public abstract class AbstractChart {
 	public int getFirstDayForChart() {
 		int last = stats.getLastDay();
 		if (lastChartsDay(last) == lastChartsDay(last - 1)) {
-			return stats.getLastDay();
+			return stats.getLastDay() - GIF_DAYS;
 		}
 		return 0;
 	}
@@ -158,7 +162,7 @@ public abstract class AbstractChart {
 			new Exception("Null chart for " + getPngName(dayOfChart)).printStackTrace();
 			return null;
 		}
-		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), getPngName(dayOfChart));
+		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), dayOfChart, getPngName(dayOfChart));
 		if (publish(dayOfChart)) {
 			c.addFileName(Charts.TOP_FOLDER + "\\" + getName() + ".png");
 			c.open();
@@ -176,14 +180,17 @@ public abstract class AbstractChart {
 		String fileName = topFolder + "\\" + getName() + ".gif";
 		new File(getSubfolder()).mkdir();
 		gif.start(fileName);
-		for (int dayOfChart = _getFirstDayOfChart(); dayOfChart <= getLastDayOfChart(); dayOfChart++) {
+		int last = getLastDayOfChart();
+		for (int dayOfChart = _getFirstDayOfChart(); dayOfChart <= last; dayOfChart++) {
 			if (!dayHasData(dayOfChart)) {
 				continue;
 			}
 			try {
 				Chart c = fullBuildChart(dayOfChart);
-				Charts.setDelay(stats, dayOfChart, gif);
-				gif.addFrame(c.getImage());
+				if (dayOfChart + GIF_DAYS > last) {
+					Charts.setDelay(stats, dayOfChart, gif);
+					gif.addFrame(c.getImage());
+				}
 			} catch (Exception e) {
 				System.out.println("Fail on " + getPngName(dayOfChart));
 				e.printStackTrace();
@@ -193,22 +200,45 @@ public abstract class AbstractChart {
 		gif.finish();
 	}
 
-	public void buildChartsOnly(@SuppressWarnings("rawtypes") ASync async) {
+	public void buildChartsOnly(ASync<Chart> async) {
 		if (!hasData()) {
 			return;
 		}
+		if (async == null) {
+			buildAllCharts();
+			return;
+		}
 		new File(getSubfolder()).mkdir();
-		for (int dayOfChart = _getFirstDayOfChart(); dayOfChart <= getLastDayOfChart(); dayOfChart++) {
+		LinkedList<Future<Chart>> gifs = new LinkedList<>();
+		int last = getLastDayOfChart();
+		for (int dayOfChart = _getFirstDayOfChart(); dayOfChart <= last; dayOfChart++) {
 			if (!dayHasData(dayOfChart)) {
 				continue;
 			}
-			if (async == null) {
-				fullBuildChart(dayOfChart);
-			} else {
-				int _dayOfChart = dayOfChart;
-				async.execute(() -> fullBuildChart(_dayOfChart));
+			int _dayOfChart = dayOfChart;
+			Future<Chart> future = async.submit(() -> fullBuildChart(_dayOfChart));
+			if (dayOfChart + GIF_DAYS > last) {
+				gifs.add(future);
 			}
 		}
+		async.execute(() -> {
+			AnimatedGifEncoder gif = new AnimatedGifEncoder();
+			String fileName = topFolder + "\\" + getName() + ".gif";
+			gif.start(fileName);
+
+			for (Future<Chart> future : gifs) {
+				Chart c;
+				try {
+					c = future.get();
+				} catch (Exception e) {
+					e.printStackTrace();
+					continue;
+				}
+				Charts.setDelay(stats, c.dayOfChart, gif);
+				gif.addFrame(c.getImage());
+			}
+			gif.finish();
+		});
 	}
 
 }
