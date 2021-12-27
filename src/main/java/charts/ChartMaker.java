@@ -38,7 +38,7 @@ public class ChartMaker {
 		age = new AverageAge(stats);
 	}
 
-	ASync<Void> build = new ASync<>();
+	ASync<Chart> build = new ASync<>();
 	Set<NumbersType> noTests = NumbersType.getSet(NumbersType.CASES, NumbersType.DEATHS, NumbersType.HOSPITALIZATIONS);
 	Finals finals;
 	Set<NumbersType> fullTypes = NumbersType.getSet();
