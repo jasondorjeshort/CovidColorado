@@ -47,8 +47,10 @@ public class ChartMaker {
 	AverageAge age;
 
 	private void fastBuild() {
-		new Reproductive(stats, noTests, NumbersTiming.ONSET).buildChartsOnly(build);
 		if (false) {
+			new Reproductive(stats, noTests, NumbersTiming.ONSET).buildChartsOnly(build);
+		}
+		if (true) {
 			new ChartRates(stats, Rate.getSet(Rate.CFR), NumbersTiming.ONSET).buildChartsOnly(build);
 			new ChartRates(stats, Rate.getSet(Rate.CHR), NumbersTiming.ONSET).buildChartsOnly(build);
 			new ChartRates(stats, Rate.getSet(Rate.HFR), NumbersTiming.ONSET).buildChartsOnly(build);
