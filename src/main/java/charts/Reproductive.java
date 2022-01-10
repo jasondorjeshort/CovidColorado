@@ -146,8 +146,8 @@ public class Reproductive extends TypesTimingChart {
 		XYPlot plot = chart.getXYPlot();
 		plot.setRenderer(renderer);
 		ValueAxis yAxis = plot.getRangeAxis();
-		yAxis.setLowerBound(0.60);
-		yAxis.setUpperBound(3);
+		yAxis.setLowerBound(0.70);
+		yAxis.setUpperBound(1.70);
 
 		DateAxis xAxis = new DateAxis("Date");
 		int last = getLastDayForChartDisplay();
