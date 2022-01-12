@@ -33,7 +33,7 @@ public abstract class AbstractChart {
 
 	public static final int DELAY = 28; // multiple of 7
 	public static final int INTERVAL = 200; // best work with the 98%
-	public static final double confidence = 80;
+	public static final double confidence = 90;
 	public static final double bottomRange = (100 - confidence) / 2;
 	public static final double topRange = 100 - bottomRange;
 	private final HashSet<Flag> flags = new HashSet<>();

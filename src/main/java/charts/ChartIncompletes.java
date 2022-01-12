@@ -172,10 +172,10 @@ public class ChartIncompletes extends TypesTimingChart {
 				upperBound = number * Math.exp(upperBound);
 				lowerBound = number * Math.exp(lowerBound);
 
-				if (smoothing != Smoothing.NONE && dayOfType > dayOfData - 30 && upperBound > Math.E * lowerBound) {
+				if (smoothing != Smoothing.NONE && upperBound > 10 * lowerBound) {
 					// Done with fish! This is a simple metric for when the data
 					// is so uncertain as to not be worth showing.
-					// break;
+					break;
 				}
 				median = number * Math.exp(median);
 
