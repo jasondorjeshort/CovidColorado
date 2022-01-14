@@ -110,12 +110,13 @@ public class FullDelayChart extends TypesTimingChart {
 				 * desc[delay].getPercentile(25) + " - " +
 				 * desc[delay].getPercentile(75));
 				 */
-				if (desc[delay].getN() == 0) {
+				double middle = 100 * desc[delay].getPercentile(50);
+				double bottom = 100 * desc[delay].getPercentile(25);
+				double top = 100 * desc[delay].getPercentile(75);
+
+				if (!Double.isFinite(middle) || !Double.isFinite(bottom) || !Double.isFinite(top)) {
 					continue;
 				}
-				double middle = 100 * cF(desc[delay].getPercentile(50));
-				double bottom = 100 * cF(desc[delay].getPercentile(25));
-				double top = 100 * cF(desc[delay].getPercentile(75));
 				peak = Math.max(peak, top);
 				series.add(delay, middle, bottom, top);
 			}
