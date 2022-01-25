@@ -34,8 +34,8 @@ public abstract class AbstractChart {
 	public static final int DELAY = 28; // multiple of 7
 	public static final int INTERVAL = 200; // best work with the 98%
 	public static final double confidence = 90;
-	public static final double bottomRange = (100 - confidence) / 2;
-	public static final double topRange = 100 - bottomRange;
+	public static final double bottomRange = 50 - confidence / 2;
+	public static final double topRange = 50 + confidence / 2;
 	private final HashSet<Flag> flags = new HashSet<>();
 
 	public boolean logarithmic() {
@@ -159,7 +159,8 @@ public abstract class AbstractChart {
 	private Chart fullBuildChart(int dayOfChart) {
 		JFreeChart chart = buildChart(dayOfChart);
 		if (chart == null) {
-			new Exception("Null chart for " + getPngName(dayOfChart)).printStackTrace();
+			// new Exception("Null chart for " +
+			// getPngName(dayOfChart)).printStackTrace();
 			return null;
 		}
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), dayOfChart, getPngName(dayOfChart));
