@@ -43,21 +43,26 @@ public class ChartMaker {
 	Finals finals;
 	Set<NumbersType> fullTypes = NumbersType.getSet();
 	Set<NumbersType> casesHosps = NumbersType.getSet(NumbersType.CASES, NumbersType.HOSPITALIZATIONS);
+	Set<NumbersType> cases = NumbersType.getSet(NumbersType.CASES);
 	ChartCounty county;
 	AverageAge age;
 
 	private void fastBuild() {
+		NumbersTiming timing = NumbersTiming.ONSET;
 		if (true) {
+			build.execute(() -> new ChartIncompletes(stats, cases, timing, 90, Flag.LOGARITHMIC).buildAllCharts());
+		}
+		if (false) {
 			build.execute(() -> finals.createCumulativeStats());
 		}
 		if (false) {
-			new Reproductive(stats, noTests, NumbersTiming.ONSET).buildChartsOnly(build);
+			new Reproductive(stats, noTests, timing).buildChartsOnly(build);
 		}
 		if (false) {
-			new ChartRates(stats, Rate.getSet(Rate.CFR), NumbersTiming.ONSET).buildChartsOnly(build);
-			new ChartRates(stats, Rate.getSet(Rate.CHR), NumbersTiming.ONSET).buildChartsOnly(build);
-			new ChartRates(stats, Rate.getSet(Rate.HFR), NumbersTiming.ONSET).buildChartsOnly(build);
-			new ChartRates(stats, Rate.getSet(Rate.POSITIVITY), NumbersTiming.ONSET).buildChartsOnly(build);
+			new ChartRates(stats, Rate.getSet(Rate.CFR), timing).buildChartsOnly(build);
+			new ChartRates(stats, Rate.getSet(Rate.CHR), timing).buildChartsOnly(build);
+			new ChartRates(stats, Rate.getSet(Rate.HFR), timing).buildChartsOnly(build);
+			new ChartRates(stats, Rate.getSet(Rate.POSITIVITY), timing).buildChartsOnly(build);
 		}
 	}
 
