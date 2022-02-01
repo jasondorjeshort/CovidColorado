@@ -32,8 +32,8 @@ import library.ASync;
 public abstract class AbstractChart {
 
 	public static final int DELAY = 28; // multiple of 7
-	public static final int INTERVAL = 200; // best work with the 98%
-	public static final double confidence = 90;
+	public static final int INTERVAL = 80; // best work with the 98%
+	public static final double confidence = 95;
 	public static final double bottomRange = 50 - confidence / 2;
 	public static final double topRange = 50 + confidence / 2;
 	private final HashSet<Flag> flags = new HashSet<>();
