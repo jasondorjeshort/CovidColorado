@@ -1,12 +1,10 @@
 package main;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import charts.ChartMaker;
 import covid.ColoradoStats;
 import library.MyExecutor;
-import web.CovidServer;
 
 /**
  * This program is free software: you can redistribute it and/or modify it under
@@ -26,8 +24,6 @@ import web.CovidServer;
  */
 public class CovidColorado {
 
-	static CovidServer server;
-
 	public static void main(String[] args) {
 		long time = System.currentTimeMillis();
 		ColoradoStats stats = new ColoradoStats();
@@ -37,17 +33,7 @@ public class CovidColorado {
 		ChartMaker charts = new ChartMaker(stats);
 		charts.buildCharts();
 
-		if (false) {
-			try {
-				server = new CovidServer();
-			} catch (IOException e) {
-				e.printStackTrace();
-				MyExecutor.awaitTermination(1, TimeUnit.DAYS);
-				System.exit(0);
-			}
-		} else {
-			MyExecutor.awaitTermination(1, TimeUnit.DAYS);
-		}
+		MyExecutor.awaitTermination(1, TimeUnit.DAYS);
 
 		System.out.println("Exiting in " + (System.currentTimeMillis() - time) / 1000.0 + " s.");
 	}
