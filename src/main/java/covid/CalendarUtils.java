@@ -28,7 +28,7 @@ import org.jfree.data.time.Day;
  */
 public class CalendarUtils {
 
-	public static final double YEAR_LENGTH = 365.24217;
+	public static final double YEAR = 365.24217;
 
 	public static Calendar dateToCalendar(String date) {
 		String[] split = date.split("[/-]");

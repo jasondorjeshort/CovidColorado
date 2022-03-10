@@ -185,10 +185,10 @@ public class ChartIncompletes extends TypesTimingChart {
 					long time = CalendarUtils.dayToTime(dayOfType);
 					series2022.add(time, value, lowerBound, upperBound);
 
-					long timeLY = CalendarUtils.dayToTime(dayOfType + 365.24);
+					long timeLY = CalendarUtils.dayToTime(dayOfType + CalendarUtils.YEAR);
 					series2021.add(timeLY, value, value, value);
 
-					long timeLLY = CalendarUtils.dayToTime(dayOfType + 365.24 * 2);
+					long timeLLY = CalendarUtils.dayToTime(dayOfType + CalendarUtils.YEAR * 2);
 					series2020.add(timeLLY, value, value, value);
 				}
 			}
@@ -202,14 +202,14 @@ public class ChartIncompletes extends TypesTimingChart {
 			if (oldYears()) {
 				collection.addSeries(series2021);
 				renderer.setSeriesStroke(seriesCount,
-						new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[] { 9 }, 0));
+						new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[] { 3 }, 0));
 				renderer.setSeriesPaint(seriesCount, type.color.darker());
 				renderer.setSeriesFillPaint(seriesCount, type.color.darker().darker());
 				seriesCount++;
 
 				collection.addSeries(series2020);
 				renderer.setSeriesStroke(seriesCount,
-						new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[] { 18 }, 0));
+						new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[] { 6 }, 0));
 				renderer.setSeriesPaint(seriesCount, type.color.darker());
 				renderer.setSeriesFillPaint(seriesCount, type.color.darker().darker());
 				seriesCount++;
@@ -226,8 +226,9 @@ public class ChartIncompletes extends TypesTimingChart {
 
 		DateAxis xAxis = new DateAxis("Date");
 		if (oldYears()) {
-			xAxis.setMinimumDate(CalendarUtils.dateToJavaDate("1/1/2022"));
-			xAxis.setMaximumDate(CalendarUtils.dateToJavaDate("1/1/2023"));
+			double y2022 = CalendarUtils.dateToDay("1/1/2022");
+			xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(y2022));
+			xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(y2022 + CalendarUtils.YEAR));
 		} else {
 			int last = getLastDayForChartDisplay();
 			int first = last - chartDays;

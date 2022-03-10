@@ -66,12 +66,14 @@ public class ChartRates extends AbstractChart {
 			IncompleteNumbers nNumbers = stats.getNumbers(rate.numerator, timing);
 			IncompleteNumbers dNumbers = stats.getNumbers(rate.denominator, timing);
 
-			YIntervalSeries series = new YIntervalSeries(rate.description + " (" + smoothing.getDescription() + ")");
+			YIntervalSeries series2022 = new YIntervalSeries(
+					rate.description + " (" + smoothing.getDescription() + ", 2022)");
+			YIntervalSeries series2021 = new YIntervalSeries("2021");
+			YIntervalSeries series2020 = new YIntervalSeries("2020");
 
 			height = Math.max(height, rate.highestValue);
 
 			for (int dayOfType = firstDayOfChart; dayOfType <= dayOfData; dayOfType++) {
-				long time = CalendarUtils.dayToTime(dayOfType);
 
 				if (!nNumbers.dayHasData(dayOfData) || !dNumbers.dayHasData(dayOfData)) {
 					// fairly rare to have one rate not have data while another
@@ -115,12 +117,28 @@ public class ChartRates extends AbstractChart {
 				double lowerBound = statistics.getPercentile(bottomRange);
 				double median = statistics.getPercentile(50);
 
-				series.add(time, 100 * Charts.value(numerator / denominator, median), 100 * lowerBound,
-						100 * upperBound);
+				double value = 100 * Charts.value(numerator / denominator, median);
+				series2022.add(CalendarUtils.dayToTime(dayOfType), value, 100 * lowerBound, 100 * upperBound);
+				series2021.add(CalendarUtils.dayToTime(dayOfType + CalendarUtils.YEAR), value, value, value);
+				series2020.add(CalendarUtils.dayToTime(dayOfType + 2 * CalendarUtils.YEAR), value, value, value);
 			}
 
-			collection.addSeries(series);
+			collection.addSeries(series2022);
 			renderer.setSeriesStroke(seriesCount, new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+			renderer.setSeriesPaint(seriesCount, rate.color);
+			renderer.setSeriesFillPaint(seriesCount, rate.color.darker());
+			seriesCount++;
+
+			collection.addSeries(series2021);
+			renderer.setSeriesStroke(seriesCount,
+					new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[] { 3 }, 0));
+			renderer.setSeriesPaint(seriesCount, rate.color);
+			renderer.setSeriesFillPaint(seriesCount, rate.color.darker());
+			seriesCount++;
+
+			collection.addSeries(series2020);
+			renderer.setSeriesStroke(seriesCount,
+					new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[] { 6 }, 0));
 			renderer.setSeriesPaint(seriesCount, rate.color);
 			renderer.setSeriesFillPaint(seriesCount, rate.color.darker());
 			seriesCount++;
@@ -156,10 +174,9 @@ public class ChartRates extends AbstractChart {
 		plot.setRenderer(renderer);
 
 		DateAxis xAxis = new DateAxis("Date");
-		int last = getLastDayForChartDisplay();
-		int first = last - 180; // or firstDayOfChart
-		xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(first));
-		xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(last));
+		double y2022 = CalendarUtils.dateToDay("1/1/2022");
+		xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(y2022));
+		xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(y2022 + CalendarUtils.YEAR));
 		plot.setDomainAxis(xAxis);
 
 		ValueAxis yAxis = plot.getRangeAxis();
