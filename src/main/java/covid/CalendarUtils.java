@@ -28,6 +28,8 @@ import org.jfree.data.time.Day;
  */
 public class CalendarUtils {
 
+	public static final double YEAR_LENGTH = 365.24217;
+
 	public static Calendar dateToCalendar(String date) {
 		String[] split = date.split("[/-]");
 
@@ -70,11 +72,11 @@ public class CalendarUtils {
 		return (int) ((time + MILLIS_PER_DAY / 2) / MILLIS_PER_DAY);
 	}
 
-	public static long dayToTime(int day) {
-		return MILLIS_PER_DAY * day + MILLIS_PER_DAY / 2;
+	public static long dayToTime(double day) {
+		return Math.round(MILLIS_PER_DAY * day + MILLIS_PER_DAY / 2);
 	}
 
-	public static String dayToDate(int day) {
+	public static String dayToDate(double day) {
 		long time = dayToTime(day);
 		Calendar cal = Calendar.getInstance();
 		cal.setTimeInMillis(time);
@@ -86,25 +88,29 @@ public class CalendarUtils {
 				cal.get(Calendar.YEAR));
 	}
 
-	public static Calendar dayToCalendar(int day) {
+	public static Calendar dayToCalendar(double day) {
 		long time = dayToTime(day);
 		Calendar cal = Calendar.getInstance();
 		cal.setTimeInMillis(time);
 		return cal;
 	}
 
-	public static java.util.Date dayToJavaDate(int day) {
+	public static java.util.Date dayToJavaDate(double day) {
 		return dayToCalendar(day).getTime();
 	}
 
-	public static String dayToFullDate(int day, char sep) {
+	public static java.util.Date dateToJavaDate(String date) {
+		return dayToCalendar(dateToDay(date)).getTime();
+	}
+
+	public static String dayToFullDate(double day, char sep) {
 		Calendar cal = dayToCalendar(day);
 
 		return String.format("%d%c%02d%c%02d", cal.get(Calendar.YEAR), sep, cal.get(Calendar.MONTH) + 1, sep,
 				cal.get(Calendar.DAY_OF_MONTH));
 	}
 
-	public static String dayToFullDate(int day) {
+	public static String dayToFullDate(double day) {
 		return dayToFullDate(day, '-');
 	}
 
