@@ -230,7 +230,7 @@ public class ChartIncompletes extends TypesTimingChart {
 			xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(y2022));
 			xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(y2022 + CalendarUtils.YEAR));
 		} else {
-			int last = getLastDayForChartDisplay();
+			int last = stats.getLastDay();
 			int first = last - chartDays;
 			xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(first));
 			xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(last));
