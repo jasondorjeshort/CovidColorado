@@ -29,9 +29,9 @@ public enum Rate {
 	 * pair of numbers (NumbersType) could be divided to get a proportion.
 	 */
 	POSITIVITY(NumbersType.CASES, NumbersType.TESTS, Color.BLUE, 50, 7, false),
-	CFR(NumbersType.DEATHS, NumbersType.CASES, Color.BLACK, 3, 7, true),
-	CHR(NumbersType.HOSPITALIZATIONS, NumbersType.CASES, Color.RED, 15, 7, true),
-	HFR(NumbersType.DEATHS, NumbersType.HOSPITALIZATIONS, Color.ORANGE, 50, 7, true),;
+	CFR(NumbersType.DEATHS, NumbersType.CASES, Color.BLACK, 3, 14, true),
+	CHR(NumbersType.HOSPITALIZATIONS, NumbersType.CASES, Color.RED, 15, 14, true),
+	HFR(NumbersType.DEATHS, NumbersType.HOSPITALIZATIONS, Color.ORANGE, 50, 14, true),;
 
 	public final NumbersType numerator, denominator;
 	public final String lowerName = name().toLowerCase();
