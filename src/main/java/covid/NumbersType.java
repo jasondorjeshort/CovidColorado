@@ -22,10 +22,10 @@ import java.util.Set;
  */
 public enum NumbersType {
 
-	TESTS(Smoothing.ALGEBRAIC_SYMMETRIC_WEEKLY, 7, 100000, Color.YELLOW),
-	CASES(Smoothing.ALGEBRAIC_SYMMETRIC_WEEKLY, 7, 20000, Color.BLUE),
-	HOSPITALIZATIONS(Smoothing.ALGEBRAIC_SYMMETRIC_14DAY, 14, 500, Color.RED),
-	DEATHS(Smoothing.ALGEBRAIC_SYMMETRIC_14DAY, 14, 100, Color.BLACK);
+	TESTS(Smoothing.ALGEBRAIC_SYMMETRIC_WEEKLY, 14, 100000, Color.YELLOW),
+	CASES(Smoothing.ALGEBRAIC_SYMMETRIC_WEEKLY, 14, 20000, Color.BLUE),
+	HOSPITALIZATIONS(Smoothing.ALGEBRAIC_SYMMETRIC_14DAY, 21, 500, Color.RED),
+	DEATHS(Smoothing.ALGEBRAIC_SYMMETRIC_14DAY, 28, 100, Color.BLACK);
 
 	NumbersType(Smoothing smoothing, int reproductiveSmoothing, int highestValue, Color color) {
 		this.smoothing = smoothing;

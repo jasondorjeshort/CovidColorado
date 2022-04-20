@@ -126,10 +126,10 @@ public class Reproductive extends TypesTimingChart {
 		// dataset.addSeries("Cases", series);
 
 		StringBuilder title = new StringBuilder();
-		title.append("Colorado COVID reproductive rate by " + timing.lowerName + " date");
+		title.append(String.format("Colorado COVID growth rate per %.01f days\n", IncompleteNumbers.SERIAL_INTERVAL));
 		title.append("\nthrough " + CalendarUtils.dayToDate(dayOfData));
 		title.append(" ");
-		title.append(String.format("using %.02f-day serial interval", IncompleteNumbers.SERIAL_INTERVAL));
+		title.append("by " + timing.lowerName + " date");
 		title.append("\n(");
 		if (Charts.useMedian()) {
 			title.append("Median");
@@ -146,8 +146,8 @@ public class Reproductive extends TypesTimingChart {
 		XYPlot plot = chart.getXYPlot();
 		plot.setRenderer(renderer);
 		ValueAxis yAxis = plot.getRangeAxis();
-		yAxis.setLowerBound(0.70);
-		yAxis.setUpperBound(1.70);
+		yAxis.setLowerBound(0.50);
+		yAxis.setUpperBound(2.00);
 
 		DateAxis xAxis = new DateAxis("Date");
 		int last = getLastDayForChartDisplay();
