@@ -4,6 +4,8 @@ import java.util.Set;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.DateAxis;
+import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 
@@ -83,7 +85,18 @@ public class DailyAgeChart extends AbstractChart {
 		}
 		title.append(" for ");
 		title.append(CalendarUtils.dayToDate(dayOfData));
-		return ChartFactory.createTimeSeriesChart(title.toString(), "Date", "Count", collection);
+		JFreeChart chart = ChartFactory.createTimeSeriesChart(title.toString(), "Date", "Count", collection);
+
+		XYPlot plot = chart.getXYPlot();
+
+		DateAxis xAxis = new DateAxis("Date");
+		int last = stats.getLastDay();
+		int first = last - 180;
+		xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(first));
+		xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(last));
+		plot.setDomainAxis(xAxis);
+
+		return chart;
 	}
 
 	@Override
