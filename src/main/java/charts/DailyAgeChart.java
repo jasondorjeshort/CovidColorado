@@ -58,10 +58,11 @@ public class DailyAgeChart extends AbstractChart {
 		if (timing == NumbersTiming.ONSET && types.size() == 3) {
 			return true;
 		}
+		if (timing == NumbersTiming.DEATH && types.size() == 1 && types.contains(NumbersType.DEATHS)) {
+			return true;
+		}
 		return false;
 	}
-
-	public static final int AGE_INTERVAL = 7;
 
 	@Override
 	public JFreeChart buildChart(int dayOfData) {
@@ -70,19 +71,28 @@ public class DailyAgeChart extends AbstractChart {
 		DeviationRenderer renderer = new DeviationRenderer(true, false);
 		int seriesCount = 0;
 
+		int AGE_INTERVAL = (timing == NumbersTiming.DEATH) ? 1 : 7;
+
 		for (NumbersType type : types) {
 			IncompleteNumbers numbers = stats.getNumbers(type, timing);
 
-			if (!numbers.dayHasData(dayOfData) || !numbers.dayHasData(dayOfData - AGE_INTERVAL)) {
+			if (!numbers.dayHasData(dayOfData)) {
 				continue;
+			}
+
+			while (!numbers.dayHasData(dayOfData - AGE_INTERVAL)) {
+				AGE_INTERVAL++;
+				if (dayOfData - AGE_INTERVAL < numbers.getFirstDayOfType()) {
+					continue;
+				}
 			}
 
 			double total = 0;
 			for (int dayOfType = numbers.getFirstDayOfType(); dayOfType <= dayOfData; dayOfType++) {
-				total += numbers.getNewNumbers(dayOfData, dayOfType, 7);
+				total += numbers.getNewNumbers(dayOfData, dayOfType, AGE_INTERVAL);
 			}
 			if (total <= 0) {
-				continue;
+				total = 1; // will be all zeroes but this makes division work
 			}
 			TimeSeries series = new TimeSeries(String.format("%s (%,d)", type.capName, Math.round(total)));
 			for (int dayOfType = numbers.getFirstDayOfType(); dayOfType <= dayOfData; dayOfType++) {
