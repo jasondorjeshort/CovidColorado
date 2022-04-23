@@ -109,6 +109,7 @@ public class DailyAgeChart extends AbstractChart {
 		title.append(" (%) \n");
 		title.append(String.format("from %s to %s", CalendarUtils.dayToDate(dayOfData - AGE_INTERVAL),
 				CalendarUtils.dayToDate(dayOfData)));
+		title.append("\nNote: numbers can be removed or moved and will show as negative");
 
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title.toString(), "Date", "Count", collection);
 
