@@ -181,10 +181,12 @@ public class IncompleteNumbers extends Numbers {
 	 * Returns the new numbers for this day-of-type that appeared on the given
 	 * day-of-data
 	 */
-	public synchronized double getNewNumbers(int dayOfData, int dayOfType) {
-		Integer prevDay = getPrevDayOfData(dayOfData);
-		double prevN = prevDay == null ? 0 : getNumbers(prevDay, dayOfType);
-		return getNumbers(dayOfData, dayOfType) - prevN;
+	public synchronized double getNewNumbers(int dayOfData, int dayOfType, int interval) {
+		int prevDay = dayOfData - interval;
+		if (!dayHasData(dayOfData) || !dayHasData(dayOfData - interval)) {
+			throw new RuntimeException("No data here; handle this in the caller.");
+		}
+		return getNumbers(dayOfData, dayOfType) - getNumbers(prevDay, dayOfType);
 	}
 
 	// https://wwwnc.cdc.gov/eid/article/26/6/20-0357_article

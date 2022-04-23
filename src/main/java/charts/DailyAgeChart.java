@@ -49,6 +49,14 @@ public class DailyAgeChart extends AbstractChart {
 	}
 
 	@Override
+	public boolean publish(int dayOfData) {
+		if (timing == NumbersTiming.ONSET && types.size() == 3) {
+			return true;
+		}
+		return false;
+	}
+
+	@Override
 	public JFreeChart buildChart(int dayOfData) {
 
 		TimeSeriesCollection collection = new TimeSeriesCollection();
@@ -62,7 +70,7 @@ public class DailyAgeChart extends AbstractChart {
 			}
 
 			for (int dayOfType = numbers.getFirstDayOfType(); dayOfType <= dayOfData; dayOfType++) {
-				Double number = numbers.getNewNumbers(dayOfData, dayOfType);
+				Double number = numbers.getNewNumbers(dayOfData, dayOfType, 7);
 
 				if (number == null) {
 					continue;
