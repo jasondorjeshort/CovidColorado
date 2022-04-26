@@ -72,6 +72,7 @@ public class DailyAgeChart extends AbstractChart {
 		int seriesCount = 0;
 
 		int AGE_INTERVAL = (timing == NumbersTiming.DEATH) ? 1 : 7;
+		boolean usePercentages = types.size() > 1;
 
 		for (NumbersType type : types) {
 			IncompleteNumbers numbers = stats.getNumbers(type, timing);
@@ -97,7 +98,10 @@ public class DailyAgeChart extends AbstractChart {
 			TimeSeries series = new TimeSeries(String.format("%s (%,d)", type.capName, Math.round(total)));
 			for (int dayOfType = numbers.getFirstDayOfType(); dayOfType <= dayOfData; dayOfType++) {
 				double number = numbers.getNewNumbers(dayOfData, dayOfType, AGE_INTERVAL);
-				series.add(CalendarUtils.dayToDay(dayOfType), 100.0 * number / total);
+				if (usePercentages) {
+					number = 100 * number / total;
+				}
+				series.add(CalendarUtils.dayToDay(dayOfType), number);
 			}
 
 			collection.addSeries(series);
@@ -116,7 +120,10 @@ public class DailyAgeChart extends AbstractChart {
 				title.append(type.lowerName);
 			}
 		}
-		title.append(" (%) \n");
+		if (usePercentages) {
+			title.append(" (%)");
+		}
+		title.append("\n");
 		title.append(String.format("from %s to %s", CalendarUtils.dayToDate(dayOfData - AGE_INTERVAL),
 				CalendarUtils.dayToDate(dayOfData)));
 		title.append("\nNote: numbers can be removed or moved and will show as negative");
