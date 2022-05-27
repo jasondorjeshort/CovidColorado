@@ -71,7 +71,9 @@ public class DailyAgeChart extends AbstractChart {
 		DeviationRenderer renderer = new DeviationRenderer(true, false);
 		int seriesCount = 0;
 
-		int AGE_INTERVAL = (timing == NumbersTiming.DEATH) ? 1 : 7;
+		// deaths are released randomly, cases are dumped in backfill every 14
+		// days
+		int AGE_INTERVAL = (timing == NumbersTiming.DEATH) ? 7 : 14;
 		boolean usePercentages = types.size() > 1;
 
 		for (NumbersType type : types) {
