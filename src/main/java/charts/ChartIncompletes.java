@@ -56,7 +56,7 @@ public class ChartIncompletes extends TypesTimingChart {
 		if (timing == NumbersTiming.ONSET && types.size() == 3) {
 			return true;
 		}
-		if (timing == NumbersTiming.REPORTED && types.size() == 1 && types.contains(NumbersType.CASES)) {
+		if (timing == NumbersTiming.REPORTED && types.size() == 1 && types.contains(NumbersType.CASES) && smoothed()) {
 			return true;
 		}
 		if (timing == NumbersTiming.DEATH && types.size() == 1 && smoothed()) {
