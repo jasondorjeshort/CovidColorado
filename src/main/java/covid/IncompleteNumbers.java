@@ -66,8 +66,10 @@ public class IncompleteNumbers extends Numbers {
 		DayOfData daily = allNumbers.get(dayOfData);
 
 		if (daily == null) {
-			throw new RuntimeException("No data for day " + CalendarUtils.dayToDate(dayOfData) + " for " + getType()
-					+ " / " + getTiming());
+			new Exception(
+					"No data for day " + CalendarUtils.dayToDate(dayOfData) + " for " + getType() + " / " + getTiming())
+							.printStackTrace();
+			return 0.0;
 		}
 
 		Double number = daily.numbers.get(dayOfType);
