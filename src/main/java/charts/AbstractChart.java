@@ -128,6 +128,9 @@ public abstract class AbstractChart {
 	}
 
 	public int getFirstDayForChart() {
+		if (true) {
+			return stats.getLastDay();
+		}
 		int last = stats.getLastDay();
 		if (lastChartsDay(last) == lastChartsDay(last - 1)) {
 			return stats.getLastDay() - GIF_DAYS;
@@ -156,6 +159,9 @@ public abstract class AbstractChart {
 		return false;
 	}
 
+	static int charts = 0;
+	static Object chartsLock = new Object();
+
 	private Chart fullBuildChart(int dayOfChart) {
 		JFreeChart chart = buildChart(dayOfChart);
 		if (chart == null) {
@@ -163,12 +169,20 @@ public abstract class AbstractChart {
 			// getPngName(dayOfChart)).printStackTrace();
 			return null;
 		}
+
 		Chart c = new Chart(chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT), dayOfChart, getPngName(dayOfChart));
 		if (publish(dayOfChart)) {
 			c.addFileName(Charts.TOP_FOLDER + "\\" + getName() + ".png");
 			c.open();
 		}
 		c.saveAsPNG();
+		int cc;
+		synchronized (chartsLock) {
+			cc = ++charts;
+		}
+		if (cc % 1000 == 0) {
+			System.out.println("Built " + cc + " charts.");
+		}
 
 		return c;
 	}
