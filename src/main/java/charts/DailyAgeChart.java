@@ -83,7 +83,8 @@ public class DailyAgeChart extends AbstractChart {
 				continue;
 			}
 
-			while (!numbers.dayHasData(dayOfData - AGE_INTERVAL)) {
+			while (!numbers.dayHasData(dayOfData - AGE_INTERVAL)
+					&& dayOfData - AGE_INTERVAL > stats.getVeryFirstDay()) {
 				AGE_INTERVAL++;
 				if (dayOfData - AGE_INTERVAL < numbers.getFirstDayOfType()) {
 					continue;
