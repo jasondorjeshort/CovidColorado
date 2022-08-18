@@ -4,6 +4,7 @@ import java.awt.BasicStroke;
 import java.util.Set;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.DateAxis;
@@ -122,6 +123,8 @@ public class ChartIncompletes extends TypesTimingChart {
 			YIntervalSeries series2021 = new YIntervalSeries("2021");
 			YIntervalSeries series2020 = new YIntervalSeries("2020");
 
+			SimpleRegression fit35 = new SimpleRegression();
+
 			for (int dayOfType = numbers.getFirstDayOfType(); dayOfType <= dayOfData; dayOfType++) {
 
 				double number = numbers.getNumbers(dayOfData, dayOfType, smoothing);
@@ -144,7 +147,11 @@ public class ChartIncompletes extends TypesTimingChart {
 					if (n1 == 0 || n2 == 0) {
 						continue;
 					}
+
 					statistics.addValue(Math.log(n2 / n1));
+					if (dayOfType >= dayOfData - 35) {
+						fit35.addData(dayOfType, Math.log(number * n2 / n1));
+					}
 				}
 
 				double upperBound, lowerBound, median;
@@ -201,6 +208,21 @@ public class ChartIncompletes extends TypesTimingChart {
 			renderer.setSeriesPaint(seriesCount, type.color);
 			renderer.setSeriesFillPaint(seriesCount, type.color.darker());
 			seriesCount++;
+
+			if (type == NumbersType.CASES) {
+				YIntervalSeries seriesFit = new YIntervalSeries(String.format("Fit %d day, r=%.3f; curr=%d", 35,
+						fit35.getSlope(), Math.round(Math.exp(fit35.predict(dayOfData)))));
+				for (int dayOfType = dayOfData - 35; dayOfType <= dayOfData + 14; dayOfType++) {
+					double value = Math.exp(fit35.predict(dayOfType));
+					seriesFit.add(CalendarUtils.dayToTime(dayOfType), value, value, value);
+				}
+				collection.addSeries(seriesFit);
+				renderer.setSeriesStroke(seriesCount,
+						new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+				renderer.setSeriesPaint(seriesCount, type.color.darker());
+				renderer.setSeriesFillPaint(seriesCount, type.color.darker().darker());
+				seriesCount++;
+			}
 
 			if (oldYears()) {
 				collection.addSeries(series2021);
