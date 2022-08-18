@@ -118,9 +118,13 @@ public class ChartRates extends AbstractChart {
 				double median = statistics.getPercentile(50);
 
 				double value = 100 * Charts.value(numerator / denominator, median);
-				series2022.add(CalendarUtils.dayToTime(dayOfType), value, 100 * lowerBound, 100 * upperBound);
-				series2021.add(CalendarUtils.dayToTime(dayOfType + CalendarUtils.YEAR), value, value, value);
-				series2020.add(CalendarUtils.dayToTime(dayOfType + 2 * CalendarUtils.YEAR), value, value, value);
+				if (rate == Rate.POSITIVITY && timing == NumbersTiming.ONSET) {
+					series2022.add(CalendarUtils.dayToTime(dayOfType), value, value, value);
+				} else {
+					series2022.add(CalendarUtils.dayToTime(dayOfType), value, 100 * lowerBound, 100 * upperBound);
+					series2020.add(CalendarUtils.dayToTime(dayOfType + 2 * CalendarUtils.YEAR), value, value, value);
+					series2021.add(CalendarUtils.dayToTime(dayOfType + CalendarUtils.YEAR), value, value, value);
+				}
 			}
 
 			collection.addSeries(series2022);
