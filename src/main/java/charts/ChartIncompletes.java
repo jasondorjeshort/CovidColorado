@@ -123,7 +123,9 @@ public class ChartIncompletes extends TypesTimingChart {
 			YIntervalSeries series2021 = new YIntervalSeries("2021");
 			YIntervalSeries series2020 = new YIntervalSeries("2020");
 
-			SimpleRegression fit35 = new SimpleRegression();
+			int regressionDays = 42, regressionExtraDays = 14;
+			int firstRegressionDay = dayOfData - regressionDays;
+			SimpleRegression fit = new SimpleRegression();
 
 			for (int dayOfType = numbers.getFirstDayOfType(); dayOfType <= dayOfData; dayOfType++) {
 
@@ -149,8 +151,8 @@ public class ChartIncompletes extends TypesTimingChart {
 					}
 
 					statistics.addValue(Math.log(n2 / n1));
-					if (dayOfType >= dayOfData - 35) {
-						fit35.addData(dayOfType, Math.log(number * n2 / n1));
+					if (dayOfType >= firstRegressionDay) {
+						fit.addData(dayOfType - firstRegressionDay, Math.log(number * n2 / n1));
 					}
 				}
 
@@ -209,20 +211,18 @@ public class ChartIncompletes extends TypesTimingChart {
 			renderer.setSeriesFillPaint(seriesCount, type.color.darker());
 			seriesCount++;
 
-			if (type == NumbersType.CASES) {
-				YIntervalSeries seriesFit = new YIntervalSeries(String.format("Fit %d day, r=%.3f; curr=%d", 35,
-						fit35.getSlope(), Math.round(Math.exp(fit35.predict(dayOfData)))));
-				for (int dayOfType = dayOfData - 35; dayOfType <= dayOfData + 14; dayOfType++) {
-					double value = Math.exp(fit35.predict(dayOfType));
-					seriesFit.add(CalendarUtils.dayToTime(dayOfType), value, value, value);
-				}
-				collection.addSeries(seriesFit);
-				renderer.setSeriesStroke(seriesCount,
-						new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-				renderer.setSeriesPaint(seriesCount, type.color.darker());
-				renderer.setSeriesFillPaint(seriesCount, type.color.darker().darker());
-				seriesCount++;
+			YIntervalSeries seriesFit = new YIntervalSeries(String.format("Fit %d day, r=%.3f; curr=%d", 35,
+					fit.getSlope(), Math.round(Math.exp(fit.predict(regressionDays)))));
+			for (int i = 0; i < regressionDays + regressionExtraDays; i++) {
+				double value = Math.exp(fit.predict(i));
+				double c = Math.exp(fit.getSlopeConfidenceInterval(0.95) * i);
+				seriesFit.add(CalendarUtils.dayToTime(firstRegressionDay + i), value, value, value);
 			}
+			collection.addSeries(seriesFit);
+			renderer.setSeriesStroke(seriesCount, new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+			renderer.setSeriesPaint(seriesCount, type.color.darker());
+			renderer.setSeriesFillPaint(seriesCount, type.color.darker().darker());
+			seriesCount++;
 
 			if (oldYears()) {
 				collection.addSeries(series2021);
