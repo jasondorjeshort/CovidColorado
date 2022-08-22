@@ -70,7 +70,7 @@ public class ChartIncompletes extends TypesTimingChart {
 	}
 
 	@Override
-	public JFreeChart buildChart(int dayOfData) {
+	public JFreeChart buildChart(final int dayOfData) {
 		YIntervalSeriesCollection collection = new YIntervalSeriesCollection();
 		StringBuilder title = new StringBuilder();
 
@@ -113,6 +113,8 @@ public class ChartIncompletes extends TypesTimingChart {
 		title.append("\n");
 		title.append(Charts.valueDesc());
 
+		boolean log = false;
+
 		for (NumbersType type : types) {
 			IncompleteNumbers numbers = stats.getNumbers(type, timing);
 			if (!numbers.hasData() || !numbers.dayHasData(dayOfData)) {
@@ -127,12 +129,30 @@ public class ChartIncompletes extends TypesTimingChart {
 			int firstRegressionDay = dayOfData - regressionDays;
 			SimpleRegression fit = new SimpleRegression();
 
+			if (log) {
+				System.out.println("Day of data " + CalendarUtils.dayToDate(dayOfData));
+				System.out.println("FirstRegressionDay " + CalendarUtils.dayToDate(firstRegressionDay));
+			}
+
+			boolean done = false;
 			for (int dayOfType = numbers.getFirstDayOfType(); dayOfType <= dayOfData; dayOfType++) {
 
+				int dayCount = 0;
 				double number = numbers.getNumbers(dayOfData, dayOfType, smoothing);
 
 				if (number == 0.0) {
+					if (log) {
+						System.out.println("Skipping on " + CalendarUtils.dayToDate(dayOfType) + " out of "
+								+ CalendarUtils.dayToDate(dayOfData));
+					}
 					continue;
+				}
+
+				if (dayOfType >= firstRegressionDay) {
+					if (log) {
+						System.out.println("Running on " + CalendarUtils.dayToDate(dayOfType) + "/" + dayOfType
+								+ " out of " + CalendarUtils.dayToDate(dayOfData) + "/" + dayOfData);
+					}
 				}
 
 				DescriptiveStatistics statistics = new DescriptiveStatistics();
@@ -153,6 +173,13 @@ public class ChartIncompletes extends TypesTimingChart {
 					statistics.addValue(Math.log(n2 / n1));
 					if (dayOfType >= firstRegressionDay) {
 						fit.addData(dayOfType - firstRegressionDay, Math.log(number * n2 / n1));
+						dayCount++;
+					}
+				}
+
+				if (dayOfType >= firstRegressionDay || dayCount > 0) {
+					if (log) {
+						System.out.println("For " + CalendarUtils.dayToDate(dayOfType) + ", count = " + dayCount);
 					}
 				}
 
@@ -186,9 +213,10 @@ public class ChartIncompletes extends TypesTimingChart {
 				lowerBound = number * Math.exp(lowerBound);
 
 				if (smoothing != Smoothing.NONE && upperBound > 10 * lowerBound) {
-					// Done with fish! This is a simple metric for when the data
-					// is so uncertain as to not be worth showing.
-					break;
+					done = true;
+				}
+				if (done) {
+					continue;
 				}
 				median = number * Math.exp(median);
 
@@ -213,9 +241,25 @@ public class ChartIncompletes extends TypesTimingChart {
 
 			YIntervalSeries seriesFit = new YIntervalSeries(String.format("Fit %d day, r=%.3f; curr=%d", 35,
 					fit.getSlope(), Math.round(Math.exp(fit.predict(regressionDays)))));
+			double err = fit.getInterceptStdErr() * 1.96; // Z(.95) = 1.96
+			if (log) {
+				System.out.println("REGR: n=" + fit.getN());
+				System.out.println("REGR: R=" + fit.getR());
+				System.out.println("Error: " + err);
+			}
+			err = Math.exp(err);
+			if (log) {
+				System.out.println("e^Error: " + err);
+			}
 			for (int i = 0; i < regressionDays + regressionExtraDays; i++) {
 				double value = Math.exp(fit.predict(i));
 				double c = Math.exp(fit.getSlopeConfidenceInterval(0.95) * i);
+				// System.out.println("C for i=" + i + " is " + c);
+				double lower = value / err / c;
+				double upper = value * err * c;
+
+				// something's wrong with the confidence interval here.
+
 				seriesFit.add(CalendarUtils.dayToTime(firstRegressionDay + i), value, value, value);
 			}
 			collection.addSeries(seriesFit);
