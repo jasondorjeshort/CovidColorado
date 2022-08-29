@@ -128,14 +128,11 @@ public abstract class AbstractChart {
 	}
 
 	public int getFirstDayForChart() {
-		if (true) {
-			return stats.getLastDay();
-		}
 		int last = stats.getLastDay();
 		if (lastChartsDay(last) == lastChartsDay(last - 1)) {
 			return stats.getLastDay() - GIF_DAYS;
 		}
-		return 0;
+		return stats.getLastDay() - GIF_DAYS;
 	}
 
 	public int getLastDayForChartDisplay() {
