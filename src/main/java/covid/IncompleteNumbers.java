@@ -186,7 +186,7 @@ public class IncompleteNumbers extends Numbers {
 	public synchronized double getNewNumbers(int dayOfData, int dayOfType, int interval) {
 		int prevDay = dayOfData - interval;
 		if (!dayHasData(dayOfData) || !dayHasData(dayOfData - interval)) {
-			throw new RuntimeException("No data here for " + getType() + "/" + timing +"; handle this in the caller.");
+			throw new RuntimeException("No data here for " + getType() + "/" + timing + "; handle this in the caller.");
 		}
 		return getNumbers(dayOfData, dayOfType) - getNumbers(prevDay, dayOfType);
 	}
