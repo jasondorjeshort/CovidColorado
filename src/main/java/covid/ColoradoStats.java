@@ -41,7 +41,7 @@ public class ColoradoStats {
 	private int firstDayOfDeath = Integer.MAX_VALUE;
 
 	private static String csvFileName(int day) {
-		return String.format("H:\\Downloads\\CovidColoradoCSV\\covid19_case_summary_%s.csv",
+		return String.format("C:\\Users\\jdorj\\Downloads\\CovidColoradoCSV\\covid19_case_summary_%s.csv",
 				CalendarUtils.dayToFullDate(day, '-'));
 	}
 
