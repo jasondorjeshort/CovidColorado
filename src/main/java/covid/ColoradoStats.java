@@ -40,8 +40,13 @@ public class ColoradoStats {
 	private int firstDayOfReporting = Integer.MAX_VALUE;
 	private int firstDayOfDeath = Integer.MAX_VALUE;
 
-	private static String csvFileName(int day) {
+	private static String oldCsvFileName(int day) {
 		return String.format("C:\\Users\\jdorj\\Downloads\\CovidColoradoCSV\\covid19_case_summary_%s.csv",
+				CalendarUtils.dayToFullDate(day, '-'));
+	}
+
+	private static String newCsvFileName(int day) {
+		return String.format("C:\\Users\\jdorj\\Downloads\\CovidColoradoCSV\\covid19_cases_demographics_tests_%s.csv",
 				CalendarUtils.dayToFullDate(day, '-'));
 	}
 
@@ -274,13 +279,18 @@ public class ColoradoStats {
 		System.out.println("");
 	}
 
-	private HashSet<String> keySet = new HashSet<>();
+	private HashSet<String> oldCsvMissingLines = new HashSet<>(), newCsvMissingLines = new HashSet<>();
 
 	private final Charset charset = Charset.forName("US-ASCII");
 
-	public void readCSV(int dayOfData) {
-		String fname = csvFileName(dayOfData);
-		File f = new File(fname);
+	public boolean readOldCsv(int dayOfData) {
+		File f = null;
+		String fname = oldCsvFileName(dayOfData);
+		f = new File(fname);
+
+		if (!f.exists()) {
+			return false;
+		}
 		try (CSVParser csv = CSVParser.parse(f, charset, CSVFormat.DEFAULT)) {
 			synchronized (this) {
 				lastDay = Math.max(dayOfData, lastDay);
@@ -459,17 +469,21 @@ public class ColoradoStats {
 					// TODO
 				} else if (line.get(0).equals("Number of Deaths From COVID-19 in Colorado by Date of Death - By Day")) {
 					// redundant
-				} else if (line.get(0).equals("Cases of COVID-19 Reported in Colorado by Age Group")
+				} else if (line.get(0).equalsIgnoreCase("NA")
+						|| line.get(0).equals("Cases of COVID-19 Reported in Colorado by Age Group")
 						|| line.get(0).equals("Case Counts by Age Group")
 						|| line.get(0).equals("Case Rates Per 100,000 People in Colorado by County")
 						|| line.get(0).equals("Total Testing Rate Per 100,000 People in Colorado by County")
 						|| line.get(0).equals(
 								"Cases of COVID-19 Reported in Colorado by Age Group, Hospitalization, and Outcome")) {
 					// ignored?
+
 				} else {
-					if (!keySet.contains(line.get(0))) {
-						keySet.add(line.get(0));
-						write(CalendarUtils.dayToDate(dayOfData), line);
+					synchronized (oldCsvMissingLines) {
+						if (!oldCsvMissingLines.contains(line.get(0))) {
+							oldCsvMissingLines.add(line.get(0));
+							write(CalendarUtils.dayToDate(dayOfData), line);
+						}
 					}
 				}
 			}
@@ -477,6 +491,18 @@ public class ColoradoStats {
 			System.out.println("Read " + fname);
 		} catch (IOException e1) {
 			System.out.println("Failed to read " + fname);
+			return false;
+		}
+		return true;
+	}
+
+	public boolean readNewCsv(int dayOfData) {
+		return false; // TODO
+	}
+
+	public void readCsv(int dayOfData) {
+		if (!readOldCsv(dayOfData)) {
+			readNewCsv(dayOfData);
 		}
 	}
 
@@ -503,7 +529,6 @@ public class ColoradoStats {
 	}
 
 	public ColoradoStats() {
-
 		for (NumbersType type : NumbersType.values()) {
 			setNumbers(type, new FinalNumbers(type));
 			for (NumbersTiming timing : NumbersTiming.values()) {
@@ -519,9 +544,24 @@ public class ColoradoStats {
 		ASync<Void> async = new ASync<>();
 		for (int dayOfData = firstCSV; dayOfData <= currentDay; dayOfData++) {
 			int _dayOfData = dayOfData;
-			async.execute(() -> readCSV(_dayOfData));
+			async.execute(() -> readCsv(_dayOfData));
 		}
 		async.complete();
+
+		if (oldCsvMissingLines.size() > 0) {
+			System.out.println("Missing lines of old CSV: " + oldCsvMissingLines.size());
+			for (String s : oldCsvMissingLines) {
+				System.out.print("> " + s);
+			}
+			System.exit(1);
+		}
+		if (newCsvMissingLines.size() > 0) {
+			System.out.println("Missing lines of new CSV: " + oldCsvMissingLines.size());
+			for (String s : newCsvMissingLines) {
+				System.out.print("> " + s);
+			}
+			System.exit(1);
+		}
 
 		long time = System.nanoTime();
 
@@ -552,8 +592,9 @@ public class ColoradoStats {
 		 * calculated from public data, and must use some third number.
 		 */
 		int firstDayOfEncounters = testEncounters.getFirstDay();
-		double ratio = testEncounters.getCumulativeNumbers(firstDayOfEncounters)
-				/ peopleTested.getCumulativeNumbers(firstDayOfEncounters);
+		double t = testEncounters.getCumulativeNumbers(firstDayOfEncounters);
+		double pt = peopleTested.getCumulativeNumbers(firstDayOfEncounters);
+		double ratio = t / pt;
 		for (int dayOfData = peopleTested.getFirstDay(); dayOfData < firstDayOfEncounters; dayOfData++) {
 			double people = peopleTested.getCumulativeNumbers(dayOfData);
 
