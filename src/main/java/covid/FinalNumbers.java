@@ -105,7 +105,9 @@ public class FinalNumbers extends Numbers {
 		}
 		Double numbersForDay = cumulative.get(day);
 		if (numbersForDay == null) {
-			throw new RuntimeException("Uh oh: null day! On " + day + " + versus " + firstDay + "-" + lastDay);
+			new Exception("Uh oh: null day! On " + day + " + versus " + firstDay + "-" + lastDay).printStackTrace();
+			System.exit(1);
+			return 0;
 		}
 		return numbersForDay;
 	}
