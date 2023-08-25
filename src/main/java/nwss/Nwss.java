@@ -14,6 +14,7 @@ import charts.Chart;
 import charts.ChartSewage;
 import covid.CalendarUtils;
 import library.ASync;
+import nwss.Sewage.Type;
 
 public class Nwss {
 
@@ -28,13 +29,13 @@ public class Nwss {
 	private HashMap<String, Sewage> plantSewage = new HashMap<>();
 	private HashMap<String, Sewage> countySewage = new HashMap<>();
 	private HashMap<String, Sewage> stateSewage = new HashMap<>();
-	private Sewage countrySewage = new Sewage("United States");
+	private Sewage countrySewage = new Sewage(Type.COUNTRY, "United States");
 
-	private static Sewage getIdSewage(String id, HashMap<String, Sewage> source) {
+	private static Sewage getIdSewage(Type type, String id, HashMap<String, Sewage> source) {
 		synchronized (source) {
 			Sewage sewage = source.get(id);
 			if (sewage == null) {
-				sewage = new Sewage(id);
+				sewage = new Sewage(type, id);
 				source.put(id, sewage);
 			}
 			return sewage;
@@ -42,16 +43,22 @@ public class Nwss {
 	}
 
 	private Sewage getPlantSewage(String plantId) {
-		return getIdSewage(plantId, plantSewage);
+		return getIdSewage(Type.PLANT, plantId, plantSewage);
 	}
 
-	private Sewage getCountySewage(String countyId) {
+	private Sewage getCountySewage(String county, String state) {
+		String countyId = state + "-" + county;
 		System.out.println("Getting county sewage " + countyId);
-		return getIdSewage(countyId, countySewage);
+		Sewage s = getIdSewage(Type.COUNTY, countyId, countySewage);
+		s.setCounty(county);
+		s.setState(state);
+		return s;
 	}
 
 	private Sewage getStateSewage(String stateId) {
-		return getIdSewage(stateId, stateSewage);
+		Sewage s = getIdSewage(Type.STATE, stateId, stateSewage);
+		s.setState(stateId);
+		return s;
 	}
 
 	double scaleFactor = 1E6;
@@ -145,8 +152,7 @@ public class Nwss {
 			if (c != null) {
 				String[] counties = sewage.getCounty().split(",");
 				for (String county : counties) {
-					String countyId = sewage.getState() + "-" + county;
-					getCountySewage(countyId).includeSewage(sewage, 1.0 / counties.length);
+					getCountySewage(county, sewage.getState()).includeSewage(sewage, 1.0 / counties.length);
 				}
 			}
 		});

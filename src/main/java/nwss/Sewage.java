@@ -12,6 +12,14 @@ public class Sewage {
 
 	private int firstDay = Integer.MAX_VALUE, lastDay = Integer.MIN_VALUE;
 
+	public enum Type {
+		PLANT,
+		COUNTY,
+		STATE,
+		COUNTRY;
+	}
+
+	public final Type type;
 	public final String id;
 	private String smoothing;
 	private String state, county;
@@ -23,7 +31,8 @@ public class Sewage {
 	private Integer population;
 	private int plantId;
 
-	public Sewage(String plantName) {
+	public Sewage(Type type, String plantName) {
+		this.type = type;
 		this.id = plantName;
 	}
 
@@ -66,7 +75,7 @@ public class Sewage {
 			}
 
 			Double pop = entry.getPop();
-			if (pop != null && popo != null && pop < popo / 2.0) {
+			if (pop != null && popo != null && pop < popo * 0.5) {
 				continue;
 			}
 

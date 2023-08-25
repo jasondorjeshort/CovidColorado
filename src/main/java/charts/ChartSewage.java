@@ -60,9 +60,30 @@ public class ChartSewage {
 
 		// dataset.addSeries("Cases", series);
 
-		String title = String.format("Plant %d, %s%s\n%s / %s county / %,d line pop", sewage.getPlantId(),
-				CalendarUtils.dayToDate(sewage.getLastDay()), (log ? " (logarithmic)" : ""), sewage.getState(),
-				sewage.getCounty(), sewage.getPopulation());
+		String title;
+		String logS = (log ? " (log)" : "");
+		switch (sewage.type) {
+		case COUNTRY:
+			title = String.format("%s, %s\n %,d line pop", sewage.id, CalendarUtils.dayToDate(sewage.getLastDay()),
+					sewage.getPopulation());
+			break;
+		case COUNTY:
+			title = String.format("%s county, %s\n%s / %,d line pop", sewage.getCounty(), sewage.getState(),
+					CalendarUtils.dayToDate(sewage.getLastDay()), sewage.getPopulation());
+			break;
+		case PLANT:
+			title = String.format("Plant %d, %s\n%s / %s county / %,d line pop", sewage.getPlantId(),
+					CalendarUtils.dayToDate(sewage.getLastDay()), sewage.getState(), sewage.getCounty(),
+					sewage.getPopulation());
+			break;
+		case STATE:
+			title = String.format("%s through %s\n%,d line pop", sewage.getState(),
+					CalendarUtils.dayToDate(sewage.getLastDay()), sewage.getPopulation(), sewage.getState());
+			break;
+		default:
+			title = null;
+			break;
+		}
 		String verticalAxis = "Millions of copies per mL";
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title, "Date", verticalAxis, collection);
 
