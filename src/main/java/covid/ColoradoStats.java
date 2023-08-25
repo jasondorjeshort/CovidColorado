@@ -496,6 +496,15 @@ public class ColoradoStats {
 		return true;
 	}
 
+	public static boolean fullyMatches(CSVRecord line, String... lineMatch) {
+		for (int i = 0; i < lineMatch.length; i++) {
+			if (!lineMatch[i].equals(line.get(i))) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	public boolean readNewCsv(int dayOfData) {
 		File f = null;
 		String fname = newCsvFileName(dayOfData);
@@ -707,6 +716,8 @@ public class ColoradoStats {
 					} else {
 						write(null, line);
 					}
+				} else if (fullyMatches(line, "section", "category", "description", "date", "metric", "value")) {
+
 				} else {
 					synchronized (newCsvMissingLines) {
 						if (!newCsvMissingLines.contains(line.get(0))) {
@@ -843,40 +854,42 @@ public class ColoradoStats {
 		 * 
 		 * Imperfect, but it's clearly the "correct" way to approximate it.
 		 */
-		for (NumbersTiming timing : NumbersTiming.values()) {
-			IncompleteNumbers cases = getNumbers(NumbersType.CASES, timing);
-			IncompleteNumbers tests = getNumbers(NumbersType.TESTS, timing);
-			double cumulativeCases = 0, cumulativeTests = 0;
-			for (Integer dayOfData = getVeryFirstDay(); dayOfData != null; dayOfData = cases
-					.getNextDayOfData(dayOfData)) {
-				// TODO: should use cumulatives from the incomplete numbers
-				// instead?
-				double casesToDay = dailyCases.getCumulativeNumbers(dayOfData);
-				if (casesToDay == cumulativeCases) {
-					continue;
-				}
-				double testsToDay = testEncounters.getCumulativeNumbers(dayOfData);
-				double casesOnDay = casesToDay - cumulativeCases;
-				double testsOnDay = testsToDay - cumulativeTests;
-				double positivity = casesOnDay / testsOnDay;
-				cumulativeCases = casesToDay;
-				cumulativeTests = testsToDay;
-
-				// System.out.println(String.format("%s : %.0f/%.0f = %.2f",
-				// Date.dayToDate(dayOfData), casesOnDay, testsOnDay,
-				// positivity * 100));
-				for (int dayOfTiming = cases.getFirstDayOfType(); dayOfTiming <= dayOfData; dayOfTiming++) {
-					Integer prev = cases.getPrevDayOfData(dayOfData);
-					double prevCases = 0, prevTests = 0;
-					if (prev != null) {
-						prevCases = cases.getNumbers(prev, dayOfTiming);
-						prevTests = tests.getNumbers(prev, dayOfTiming);
+		if (false) {
+			for (NumbersTiming timing : NumbersTiming.values()) {
+				IncompleteNumbers cases = getNumbers(NumbersType.CASES, timing);
+				IncompleteNumbers tests = getNumbers(NumbersType.TESTS, timing);
+				double cumulativeCases = 0, cumulativeTests = 0;
+				for (Integer dayOfData = getVeryFirstDay(); dayOfData != null; dayOfData = cases
+						.getNextDayOfData(dayOfData)) {
+					// TODO: should use cumulatives from the incomplete numbers
+					// instead?
+					double casesToDay = dailyCases.getCumulativeNumbers(dayOfData);
+					if (casesToDay == cumulativeCases) {
+						continue;
 					}
-					double newCasesOnDay = cases.getNumbers(dayOfData, dayOfTiming) - prevCases;
-					double newTestsOnDay = newCasesOnDay / positivity;
+					double testsToDay = testEncounters.getCumulativeNumbers(dayOfData);
+					double casesOnDay = casesToDay - cumulativeCases;
+					double testsOnDay = testsToDay - cumulativeTests;
+					double positivity = casesOnDay / testsOnDay;
+					cumulativeCases = casesToDay;
+					cumulativeTests = testsToDay;
 
-					tests.addNumbers(dayOfData, dayOfTiming, prevTests);
-					tests.addNumbers(dayOfData, dayOfTiming, newTestsOnDay);
+					// System.out.println(String.format("%s : %.0f/%.0f = %.2f",
+					// Date.dayToDate(dayOfData), casesOnDay, testsOnDay,
+					// positivity * 100));
+					for (int dayOfTiming = cases.getFirstDayOfType(); dayOfTiming <= dayOfData; dayOfTiming++) {
+						Integer prev = cases.getPrevDayOfData(dayOfData);
+						double prevCases = 0, prevTests = 0;
+						if (prev != null) {
+							prevCases = cases.getNumbers(prev, dayOfTiming);
+							prevTests = tests.getNumbers(prev, dayOfTiming);
+						}
+						double newCasesOnDay = cases.getNumbers(dayOfData, dayOfTiming) - prevCases;
+						double newTestsOnDay = newCasesOnDay / positivity;
+
+						tests.addNumbers(dayOfData, dayOfTiming, prevTests);
+						tests.addNumbers(dayOfData, dayOfTiming, newTestsOnDay);
+					}
 				}
 			}
 		}
