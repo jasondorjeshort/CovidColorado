@@ -49,21 +49,7 @@ public class ChartMaker {
 
 	private void fastBuild() {
 		NumbersTiming timing = NumbersTiming.ONSET;
-		if (true) {
-			build.execute(() -> new ChartIncompletes(stats, cases, timing, 90, Flag.LOGARITHMIC).buildAllCharts());
-		}
-		if (false) {
-			build.execute(() -> finals.createCumulativeStats());
-		}
-		if (false) {
-			new Reproductive(stats, noTests, timing).buildChartsOnly(build);
-		}
-		if (false) {
-			new ChartRates(stats, Rate.getSet(Rate.CFR), timing).buildChartsOnly(build);
-			new ChartRates(stats, Rate.getSet(Rate.CHR), timing).buildChartsOnly(build);
-			new ChartRates(stats, Rate.getSet(Rate.HFR), timing).buildChartsOnly(build);
-			new ChartRates(stats, Rate.getSet(Rate.POSITIVITY), timing).buildChartsOnly(build);
-		}
+		build.execute(() -> new ChartIncompletes(stats, cases, timing, 90, Flag.LOGARITHMIC).buildAllCharts());
 	}
 
 	private void fullBuild() {
@@ -120,7 +106,7 @@ public class ChartMaker {
 		// maybe a chart later
 		build.execute(() -> stats.calculateReinfections());
 
-		if (false) {
+		if (true) {
 			fastBuild();
 		} else {
 			fullBuild();
