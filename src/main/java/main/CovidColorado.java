@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 import charts.ChartMaker;
 import covid.ColoradoStats;
 import library.MyExecutor;
+import nwss.Nwss;
 
 /**
  * This program is free software: you can redistribute it and/or modify it under
@@ -24,7 +25,7 @@ import library.MyExecutor;
  */
 public class CovidColorado {
 
-	public static void main(String[] args) {
+	public static void old(@SuppressWarnings("unused") String[] args) {
 		long time = System.currentTimeMillis();
 		ColoradoStats stats = new ColoradoStats();
 
@@ -34,6 +35,20 @@ public class CovidColorado {
 		charts.buildCharts();
 
 		MyExecutor.awaitTermination(1, TimeUnit.DAYS);
+		MyExecutor.shutdown();
+
+		System.out.println("Exiting in " + (System.currentTimeMillis() - time) / 1000.0 + " s.");
+	}
+
+	public static void main(String[] args) {
+		long time = System.currentTimeMillis();
+
+		Nwss nwss = new Nwss();
+		nwss.read();
+		nwss.build();
+
+		MyExecutor.awaitTermination(1, TimeUnit.DAYS);
+		MyExecutor.shutdown();
 
 		System.out.println("Exiting in " + (System.currentTimeMillis() - time) / 1000.0 + " s.");
 	}
