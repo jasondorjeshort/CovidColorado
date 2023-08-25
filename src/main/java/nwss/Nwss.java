@@ -26,45 +26,47 @@ public class Nwss {
 	private final Charset charset = Charset.forName("US-ASCII");
 
 	private HashMap<String, Sewage> plantSewage = new HashMap<>();
+	private HashMap<String, Sewage> countySewage = new HashMap<>();
 	private HashMap<String, Sewage> stateSewage = new HashMap<>();
 	private Sewage countrySewage = new Sewage("United States");
 
-	private Sewage getPlantSewage(String plant) {
-		synchronized (plantSewage) {
-			Sewage sewage = plantSewage.get(plant);
+	private static Sewage getIdSewage(String id, HashMap<String, Sewage> source) {
+		synchronized (source) {
+			Sewage sewage = source.get(id);
 			if (sewage == null) {
-				sewage = new Sewage(plant);
-				plantSewage.put(plant, sewage);
+				sewage = new Sewage(id);
+				source.put(id, sewage);
 			}
 			return sewage;
 		}
 	}
 
-	private Sewage getStateSewage(String state) {
-		synchronized (stateSewage) {
-			Sewage sewage = stateSewage.get(state);
-			if (sewage == null) {
-				sewage = new Sewage(state);
-				sewage.setState(state);
-				stateSewage.put(state, sewage);
-			}
-			return sewage;
-		}
+	private Sewage getPlantSewage(String plantId) {
+		return getIdSewage(plantId, plantSewage);
+	}
+
+	private Sewage getCountySewage(String countyId) {
+		System.out.println("Getting county sewage " + countyId);
+		return getIdSewage(countyId, countySewage);
+	}
+
+	private Sewage getStateSewage(String stateId) {
+		return getIdSewage(stateId, stateSewage);
 	}
 
 	double scaleFactor = 1E6;
 
 	public void readSewage() {
-		URL url = null;
-		try {
-			url = new URL("https://data.cdc.gov/api/views/g653-rqe2/rows.csv?accessType=DOWNLOAD");
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-			System.exit(0);
-		}
+		File f = new File(CSV_NAME);
+		/*
+		 * URL url = null; try { url = new URL(
+		 * "https://data.cdc.gov/api/views/g653-rqe2/rows.csv?accessType=DOWNLOAD"
+		 * ); } catch (MalformedURLException e) { e.printStackTrace();
+		 * System.exit(0); }
+		 */
 
 		double maxNumber = 0;
-		try (CSVParser csv = CSVParser.parse(url, charset, CSVFormat.DEFAULT)) {
+		try (CSVParser csv = CSVParser.parse(f, charset, CSVFormat.DEFAULT)) {
 			for (CSVRecord line : csv) {
 				String plant = line.get(0);
 				if (plant.equalsIgnoreCase("key_plot_id")) {
@@ -90,6 +92,12 @@ public class Nwss {
 
 	public void readLocations() {
 		File f = new File(CSV2_NAME);
+		/*
+		 * URL url = null; try { url = new URL(
+		 * "https://data.cdc.gov/api/views/2ew6-ywp6/rows.csv?accessType=DOWNLOAD"
+		 * ); } catch (MalformedURLException e) { e.printStackTrace();
+		 * System.exit(0); }
+		 */
 
 		try (CSVParser csv = CSVParser.parse(f, charset, CSVFormat.DEFAULT)) {
 			int lines = 0;
@@ -131,16 +139,29 @@ public class Nwss {
 		build.complete();
 
 		plantSewage.forEach((plantId, sewage) -> {
-			getStateSewage(sewage.getState()).includeSewage(sewage);
-			countrySewage.includeSewage(sewage);
+			getStateSewage(sewage.getState()).includeSewage(sewage, 1.0);
+			countrySewage.includeSewage(sewage, 1.0);
+			String c = sewage.getCounty();
+			if (c != null) {
+				String[] counties = sewage.getCounty().split(",");
+				for (String county : counties) {
+					String countyId = sewage.getState() + "-" + county;
+					getCountySewage(countyId).includeSewage(sewage, 1.0 / counties.length);
+				}
+			}
 		});
 	}
 
 	public void build() {
 		ASync<Chart> build = new ASync<>();
 		ChartSewage sew = new ChartSewage();
-		plantSewage.forEach((plantId, sewage) -> build.execute(() -> sew.createSewage(sewage)));
-		stateSewage.forEach((stateId, sewage) -> build.execute(() -> sew.createSewage(sewage)));
+		plantSewage.forEach((id, sewage) -> build.execute(() -> sew.createSewage(sewage)));
+		countySewage.forEach((id, sewage) -> {
+
+			System.out.println("Making county for " + id);
+			build.execute(() -> sew.createSewage(sewage));
+		});
+		stateSewage.forEach((id, sewage) -> build.execute(() -> sew.createSewage(sewage)));
 		sew.createSewage(countrySewage);
 		build.complete();
 		library.OpenImage.open();

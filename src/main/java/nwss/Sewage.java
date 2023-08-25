@@ -55,12 +55,21 @@ public class Sewage {
 	}
 
 	public synchronized void makeTimeSeries(TimeSeries series, boolean isLogarithmic) {
-		for (int day = firstDay; day <= lastDay; day++) {
-			DaySewage entry = entries.get(day);
-
+		Integer popo = getPopulation();
+		for (int day = getFirstDay(); day <= getLastDay(); day++) {
+			DaySewage entry;
+			synchronized (this) {
+				entry = entries.get(day);
+			}
 			if (entry == null) {
 				continue;
 			}
+
+			Double pop = entry.getPop();
+			if (pop != null && popo != null && pop < popo / 2.0) {
+				continue;
+			}
+
 			double number = entry.getSewage();
 			if (!isLogarithmic || number > 0) {
 				series.add(CalendarUtils.dayToDay(day), number);
@@ -100,11 +109,16 @@ public class Sewage {
 		this.plantId = plantId;
 	}
 
-	public void includeSewage(Sewage sewage) {
+	public void includeSewage(Sewage sewage, double popMultiplier) {
 		Integer pop = sewage.getPopulation();
 		if (pop == null) {
 			new Exception("Uhhh no pop on " + sewage.id).printStackTrace();
 			return;
+		}
+		synchronized (this) {
+			if (population == null) {
+				population = 0;
+			}
 		}
 		for (int day = sewage.getFirstDay(); day <= sewage.getLastDay(); day++) {
 			DaySewage ds1, ds2;
@@ -123,8 +137,12 @@ public class Sewage {
 				includeDay(day);
 			}
 
-			ds2.addDay(ds1, pop);
+			ds2.addDay(ds1, pop * popMultiplier + 0.5);
 
+			int dayPop = (int) Math.round(ds2.getPop());
+			synchronized (this) {
+				population = Math.max(population, dayPop);
+			}
 		}
 	}
 

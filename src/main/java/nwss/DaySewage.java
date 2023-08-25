@@ -8,7 +8,7 @@ public class DaySewage {
 	 * then it's the weighted sewage total, aka sewage * pop
 	 */
 	private double sewageTot;
-	private Integer pop;
+	private Double pop;
 
 	public DaySewage(double sewage) {
 		this.sewageTot = sewage;
@@ -17,10 +17,14 @@ public class DaySewage {
 
 	public DaySewage() {
 		this.sewageTot = 0;
-		this.pop = 0;
+		this.pop = 0.0;
+	}
+	
+	public Double getPop() {
+		return pop;
 	}
 
-	public void addDay(DaySewage day, int dayPop) {
+	public void addDay(DaySewage day, double dayPop) {
 		double daySewage;
 		synchronized (day) {
 			if (day.pop != null) {

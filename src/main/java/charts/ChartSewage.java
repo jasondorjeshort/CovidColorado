@@ -36,6 +36,7 @@ import nwss.Sewage;
 public class ChartSewage {
 
 	public ChartSewage() {
+		new File(Charts.FULL_FOLDER).mkdir();
 		new File(SEWAGE_FOLDER).mkdir();
 	}
 
@@ -49,9 +50,9 @@ public class ChartSewage {
 		DeviationRenderer renderer = new DeviationRenderer(true, false);
 		int seriesCount = 0;
 
-		TimeSeries cSeries0 = new TimeSeries("Sewage");
-		sewage.makeTimeSeries(cSeries0, log);
-		collection.addSeries(cSeries0);
+		TimeSeries series = new TimeSeries("Sewage");
+		sewage.makeTimeSeries(series, log);
+		collection.addSeries(series);
 		renderer.setSeriesStroke(seriesCount, new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		renderer.setSeriesPaint(seriesCount, NumbersType.CASES.color);
 		renderer.setSeriesFillPaint(seriesCount, NumbersType.CASES.color.darker());
@@ -78,15 +79,17 @@ public class ChartSewage {
 			// plot.setDomainAxis(xAxis);
 		}
 
-		String fileName = sewage.getState() + "-" + sewage.getPlantId() + "-" + (log ? "log" : "cart");
+		String fileName = sewage.id + "-" + (log ? "log" : "cart");
 		BufferedImage image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT);
 		Charts.saveBufferedImageAsPNG(SEWAGE_FOLDER, fileName, image);
 
-		if (sewage.getPlantId() == 252 || sewage.id.equalsIgnoreCase("United States")) {
-			library.OpenImage.openImage(SEWAGE_FOLDER + "//" + fileName + ".png");
+		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
+
+		if (sewage.id.equalsIgnoreCase("United States") || sewage.id.equalsIgnoreCase("Colorado-Denver")) {
+			library.OpenImage.openImage(fileName);
 		}
 
-		System.out.println("Created : " + sewage.id + " => " + SEWAGE_FOLDER + fileName);
+		System.out.println("Created : " + sewage.id + " for " + series.getItemCount() + " => " + fileName);
 		return image;
 	}
 
