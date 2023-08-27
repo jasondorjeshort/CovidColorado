@@ -110,6 +110,7 @@ public class ChartSewage {
 		if (sewage.id.equalsIgnoreCase("Colorado-Denver")
 				|| sewage.id.equalsIgnoreCase("NWSS_co_251_Treatment plant_raw wastewater")
 				|| sewage.id.equalsIgnoreCase("NWSS_co_252_Treatment plant_raw wastewater")
+				|| sewage.id.equalsIgnoreCase("Colorado")
 				|| sewage.type.equals(Type.COUNTRY)) {
 			library.OpenImage.openImage(fileName);
 		}
