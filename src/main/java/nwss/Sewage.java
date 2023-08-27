@@ -146,7 +146,7 @@ public class Sewage {
 				includeDay(day);
 			}
 
-			ds2.addDay(ds1, pop * popMultiplier + 0.5);
+			ds2.addDay(ds1, pop * popMultiplier);
 
 			int dayPop = (int) Math.round(ds2.getPop());
 			synchronized (this) {
