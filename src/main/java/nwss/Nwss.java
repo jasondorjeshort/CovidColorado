@@ -64,16 +64,19 @@ public class Nwss {
 	double scaleFactor = 1E6;
 
 	public void readSewage() {
-		File f = new File(CSV_NAME);
-		/*
-		 * URL url = null; try { url = new URL(
-		 * "https://data.cdc.gov/api/views/g653-rqe2/rows.csv?accessType=DOWNLOAD"
-		 * ); } catch (MalformedURLException e) { e.printStackTrace();
-		 * System.exit(0); }
-		 */
+
+		URL url = null;
+		try {
+			url = new File(CSV_NAME).toURI().toURL();
+			// url = new
+			// URL("https://data.cdc.gov/api/views/g653-rqe2/rows.csv?accessType=DOWNLOAD");
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+			System.exit(0);
+		}
 
 		double maxNumber = 0;
-		try (CSVParser csv = CSVParser.parse(f, charset, CSVFormat.DEFAULT)) {
+		try (CSVParser csv = CSVParser.parse(url, charset, CSVFormat.DEFAULT)) {
 			for (CSVRecord line : csv) {
 				String plant = line.get(0);
 				if (plant.equalsIgnoreCase("key_plot_id")) {
@@ -98,15 +101,18 @@ public class Nwss {
 	}
 
 	public void readLocations() {
-		File f = new File(CSV2_NAME);
-		/*
-		 * URL url = null; try { url = new URL(
-		 * "https://data.cdc.gov/api/views/2ew6-ywp6/rows.csv?accessType=DOWNLOAD"
-		 * ); } catch (MalformedURLException e) { e.printStackTrace();
-		 * System.exit(0); }
-		 */
 
-		try (CSVParser csv = CSVParser.parse(f, charset, CSVFormat.DEFAULT)) {
+		URL url = null;
+		try {
+			url = new File(CSV2_NAME).toURI().toURL();
+			// url = new
+			// URL("https://data.cdc.gov/api/views/2ew6-ywp6/rows.csv?accessType=DOWNLOAD");
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+			System.exit(0);
+		}
+
+		try (CSVParser csv = CSVParser.parse(url, charset, CSVFormat.DEFAULT)) {
 			int lines = 0;
 			for (CSVRecord line : csv) {
 				if (lines++ == 0) {
