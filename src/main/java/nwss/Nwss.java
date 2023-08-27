@@ -48,7 +48,6 @@ public class Nwss {
 
 	private Sewage getCountySewage(String county, String state) {
 		String countyId = state + "-" + county;
-		System.out.println("Getting county sewage " + countyId);
 		Sewage s = getIdSewage(Type.COUNTY, countyId, countySewage);
 		s.setCounty(county);
 		s.setState(state);
@@ -168,11 +167,7 @@ public class Nwss {
 		ASync<Chart> build = new ASync<>();
 		ChartSewage sew = new ChartSewage();
 		plantSewage.forEach((id, sewage) -> build.execute(() -> sew.createSewage(sewage)));
-		countySewage.forEach((id, sewage) -> {
-
-			System.out.println("Making county for " + id);
-			build.execute(() -> sew.createSewage(sewage));
-		});
+		countySewage.forEach((id, sewage) -> build.execute(() -> sew.createSewage(sewage)));
 		stateSewage.forEach((id, sewage) -> build.execute(() -> sew.createSewage(sewage)));
 		sew.createSewage(countrySewage);
 		build.complete();

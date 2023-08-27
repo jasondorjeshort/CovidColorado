@@ -16,6 +16,7 @@ import covid.CalendarUtils;
 import covid.NumbersType;
 import covid.Smoothing;
 import nwss.Sewage;
+import nwss.Sewage.Type;
 
 /**
  * This program is free software: you can redistribute it and/or modify it under
@@ -106,11 +107,15 @@ public class ChartSewage {
 
 		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
 
-		if (sewage.id.equalsIgnoreCase("United States") || sewage.id.equalsIgnoreCase("Colorado-Denver")) {
+		if (sewage.id.equalsIgnoreCase("Colorado-Denver")
+				|| sewage.id.equalsIgnoreCase("NWSS_co_251_Treatment plant_raw wastewater")
+				|| sewage.id.equalsIgnoreCase("NWSS_co_252_Treatment plant_raw wastewater")
+				|| sewage.type.equals(Type.COUNTRY)) {
 			library.OpenImage.openImage(fileName);
 		}
 
-		System.out.println("Created : " + sewage.id + " for " + series.getItemCount() + " => " + fileName);
+		// System.out.println("Created : " + sewage.id + " for " +
+		// series.getItemCount() + " => " + fileName);
 		return image;
 	}
 
