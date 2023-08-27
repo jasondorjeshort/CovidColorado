@@ -19,7 +19,7 @@ public class DaySewage {
 		this.sewageTot = 0;
 		this.pop = 0.0;
 	}
-	
+
 	public Double getPop() {
 		return pop;
 	}
@@ -34,7 +34,7 @@ public class DaySewage {
 		}
 
 		synchronized (this) {
-			sewageTot += daySewage * pop;
+			sewageTot += daySewage * dayPop;
 			pop += dayPop;
 		}
 	}
