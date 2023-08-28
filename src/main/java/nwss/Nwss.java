@@ -88,6 +88,14 @@ public class Nwss {
 					continue;
 				}
 				Double number = Double.valueOf(num);
+				if (number == null || number.isInfinite() || number <= 0) {
+					/*
+					 * If using a geometric system we'd need to skip these,
+					 * easiest place is here though hackery. If using algebraic
+					 * then we do want to include the zeroes.
+					 */
+					// continue;
+				}
 				Sewage sewage = getPlantSewage(plant);
 				sewage.setSmoothing(line.get(3));
 				maxNumber = Math.max(number, maxNumber);

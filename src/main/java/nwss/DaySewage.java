@@ -8,43 +8,46 @@ public class DaySewage {
 	 * then it's the weighted sewage total, aka sewage * pop
 	 */
 	private double sewageTot;
-	private Double pop;
+	private Double effPop;
+	private Double realPop;
 
 	public DaySewage(double sewage) {
 		this.sewageTot = sewage;
-		this.pop = null;
+		this.effPop = this.realPop = null;
 	}
 
 	public DaySewage() {
-		this.sewageTot = 0;
-		this.pop = 0.0;
+		this.sewageTot = 0.0;
+		this.effPop = this.realPop = 0.0;
 	}
 
 	public Double getPop() {
-		return pop;
+		return realPop;
 	}
 
-	public void addDay(DaySewage day, double dayPop) {
+	public void addDay(DaySewage day, double dayPop, double weighting) {
 		double daySewage;
 		synchronized (day) {
-			if (day.pop != null) {
+			if (day.effPop != null) {
 				new Exception("Uh oh.").printStackTrace();
 			}
 			daySewage = day.sewageTot;
 		}
 
+		double ePop = dayPop * weighting;
 		synchronized (this) {
-			sewageTot += daySewage * dayPop;
-			pop += dayPop;
+			sewageTot += ePop * daySewage;
+			effPop += ePop;
+			realPop += dayPop;
 		}
 	}
 
 	public double getSewage() {
 		synchronized (this) {
-			if (Objects.equals(pop, 0)) {
-				return 0;
+			if (Objects.equals(effPop, 0.0)) {
+				return 1;
 			}
-			return pop == null ? sewageTot : sewageTot / pop;
+			return effPop == null ? sewageTot : sewageTot / effPop;
 		}
 	}
 }

@@ -75,8 +75,8 @@ public class Sewage {
 			}
 
 			Double pop = entry.getPop();
-			if (pop != null && popo != null && pop < popo * 0.5) {
-				continue;
+			if (pop != null && popo != null && pop < popo * 0.75 && day > getLastDay() - 21) {
+				break;
 			}
 
 			double number = entry.getSewage();
@@ -118,6 +118,16 @@ public class Sewage {
 		this.plantId = plantId;
 	}
 
+	public synchronized int getNextZero(int startDay) {
+		for (int day = startDay; day <= lastDay; day++) {
+			DaySewage ds = entries.get(day);
+			if (ds == null || ds.getSewage() <= 0) {
+				return day;
+			}
+		}
+		return lastDay + 1;
+	}
+
 	public void includeSewage(Sewage sewage, double popMultiplier) {
 		Integer pop = sewage.getPopulation();
 		if (pop == null) {
@@ -129,13 +139,21 @@ public class Sewage {
 				population = 0;
 			}
 		}
-		for (int day = sewage.getFirstDay(); day <= sewage.getLastDay(); day++) {
+		int sFirstDay = sewage.getFirstDay(), sLastDay = sewage.getLastDay();
+		int lastZero = sFirstDay - 1, nextZero = sewage.getNextZero(sFirstDay);
+		for (int day = sFirstDay; day <= sLastDay; day++) {
 			DaySewage ds1, ds2;
 			synchronized (sewage) {
 				ds1 = sewage.entries.get(day);
 			}
 			if (ds1 == null) {
+				lastZero = day;
 				continue;
+			}
+
+			if (ds1.getSewage() == 0.0) {
+				lastZero = day;
+				System.out.println("Uh oh 0 on " + sewage.id + " for " + CalendarUtils.dayToDate(day));
 			}
 			synchronized (this) {
 				ds2 = entries.get(day);
@@ -146,7 +164,12 @@ public class Sewage {
 				includeDay(day);
 			}
 
-			ds2.addDay(ds1, pop * popMultiplier);
+			if (day > nextZero) {
+				nextZero = sewage.getNextZero(day);
+			}
+			double startMultiplier = Math.min(Math.pow((day - lastZero) / 182.0, 2.0), 1.0);
+			double endMultiplier = Math.min(Math.pow((nextZero - day) / 21.0, 2.0), 1.0);
+			ds2.addDay(ds1, pop * popMultiplier, startMultiplier * endMultiplier);
 
 			int dayPop = (int) Math.round(ds2.getPop());
 			synchronized (this) {
