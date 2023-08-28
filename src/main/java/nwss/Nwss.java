@@ -56,6 +56,7 @@ public class Nwss {
 
 	private Sewage getStateSewage(String stateId) {
 		Sewage s = getIdSewage(Type.STATE, stateId, stateSewage);
+		ChartSewage.reportState(stateId);
 		s.setState(stateId);
 		return s;
 	}
