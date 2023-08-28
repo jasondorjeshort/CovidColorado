@@ -1,5 +1,6 @@
 package nwss;
 
+import java.util.Collection;
 import java.util.HashMap;
 
 import org.jfree.data.time.TimeSeries;
@@ -21,6 +22,7 @@ public class Sewage {
 
 	public final Type type;
 	public final String id;
+	private double normalizer = 1;
 	private String smoothing;
 	private String state, county;
 
@@ -81,7 +83,7 @@ public class Sewage {
 
 			double number = entry.getSewage();
 			if (!isLogarithmic || number > 0) {
-				series.add(CalendarUtils.dayToDay(day), number);
+				series.add(CalendarUtils.dayToDay(day), number * normalizer);
 			}
 		}
 	}
@@ -141,6 +143,7 @@ public class Sewage {
 		}
 		int sFirstDay = sewage.getFirstDay(), sLastDay = sewage.getLastDay();
 		int lastZero = sFirstDay - 1, nextZero = sewage.getNextZero(sFirstDay);
+		double norm = sewage.normalizer;
 		for (int day = sFirstDay; day <= sLastDay; day++) {
 			DaySewage ds1, ds2;
 			synchronized (sewage) {
@@ -152,8 +155,7 @@ public class Sewage {
 			}
 
 			if (ds1.getSewage() == 0.0) {
-				lastZero = day;
-				System.out.println("Uh oh 0 on " + sewage.id + " for " + CalendarUtils.dayToDate(day));
+				// lastZero = day;
 			}
 			synchronized (this) {
 				ds2 = entries.get(day);
@@ -169,7 +171,7 @@ public class Sewage {
 			}
 			double startMultiplier = Math.min(Math.pow((day - lastZero) / 182.0, 2.0), 1.0);
 			double endMultiplier = Math.min(Math.pow((nextZero - day) / 21.0, 2.0), 1.0);
-			ds2.addDay(ds1, pop * popMultiplier, startMultiplier * endMultiplier);
+			ds2.addDay(ds1, norm, pop * popMultiplier, startMultiplier * endMultiplier);
 
 			int dayPop = (int) Math.round(ds2.getPop());
 			synchronized (this) {

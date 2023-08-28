@@ -25,7 +25,7 @@ public class DaySewage {
 		return realPop;
 	}
 
-	public void addDay(DaySewage day, double dayPop, double weighting) {
+	public void addDay(DaySewage day, double normalizer, double dayPop, double weighting) {
 		double daySewage;
 		synchronized (day) {
 			if (day.effPop != null) {
@@ -33,6 +33,7 @@ public class DaySewage {
 			}
 			daySewage = day.sewageTot;
 		}
+		daySewage *= normalizer;
 
 		double ePop = dayPop * weighting;
 		synchronized (this) {
