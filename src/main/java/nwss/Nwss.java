@@ -91,6 +91,9 @@ public class Nwss {
 				if (number == null || number.isInfinite()) {
 					continue;
 				}
+				if (number < 0) {
+					number = 0.0;
+				}
 				if (number <= 0) {
 					/*
 					 * If using a geometric system we'd need to skip these,
@@ -161,9 +164,9 @@ public class Nwss {
 		build.execute(() -> readLocations());
 		build.complete();
 
+		countrySewage.buildCountry(plantSewage.values());
 		plantSewage.forEach((plantId, sewage) -> {
 			getStateSewage(sewage.getState()).includeSewage(sewage, 1.0);
-			countrySewage.includeSewage(sewage, 1.0);
 			String c = sewage.getCounty();
 			if (c != null) {
 				String[] counties = sewage.getCounty().split(",");
