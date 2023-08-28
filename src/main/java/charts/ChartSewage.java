@@ -3,6 +3,7 @@ package charts;
 import java.awt.BasicStroke;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.Objects;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
@@ -43,7 +44,7 @@ public class ChartSewage {
 
 	public static final String SEWAGE_FOLDER = Charts.FULL_FOLDER + "\\nwss";
 
-	public BufferedImage buildSewageTimeseriesChart(Sewage sewage, boolean log) {
+	public static BufferedImage buildSewageTimeseriesChart(Sewage sewage, boolean log) {
 		Smoothing s0 = Smoothing.NONE;
 		Smoothing s1 = Smoothing.AVERAGE_7_DAY;
 		TimeSeriesCollection collection = new TimeSeriesCollection();
@@ -107,10 +108,8 @@ public class ChartSewage {
 
 		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
 
-		if (sewage.id.equalsIgnoreCase("Colorado-Denver")
-				|| sewage.id.equalsIgnoreCase("NWSS_co_251_Treatment plant_raw wastewater")
-				|| sewage.id.equalsIgnoreCase("NWSS_co_252_Treatment plant_raw wastewater")
-				|| sewage.id.equalsIgnoreCase("Colorado")
+		if (sewage.id.equalsIgnoreCase("Colorado-Denver") || sewage.id.equalsIgnoreCase("Colorado")
+				|| Objects.equals(sewage.plantId, 251) || Objects.equals(sewage.plantId, 252)
 				|| sewage.type.equals(Type.COUNTRY)) {
 			library.OpenImage.openImage(fileName);
 		}
@@ -120,7 +119,7 @@ public class ChartSewage {
 		return image;
 	}
 
-	public void createSewage(Sewage sewage) {
+	public static void createSewage(Sewage sewage) {
 		// buildSewageTimeseriesChart(sewage, false);
 		buildSewageTimeseriesChart(sewage, true);
 	}
