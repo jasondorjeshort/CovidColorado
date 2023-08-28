@@ -179,11 +179,10 @@ public class Nwss {
 
 	public void build() {
 		ASync<Chart> build = new ASync<>();
-		ChartSewage sew = new ChartSewage();
-		plantSewage.forEach((id, sewage) -> build.execute(() -> sew.createSewage(sewage)));
-		countySewage.forEach((id, sewage) -> build.execute(() -> sew.createSewage(sewage)));
-		stateSewage.forEach((id, sewage) -> build.execute(() -> sew.createSewage(sewage)));
-		sew.createSewage(countrySewage);
+		plantSewage.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
+		countySewage.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
+		stateSewage.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
+		ChartSewage.createSewage(countrySewage);
 		build.complete();
 		library.OpenImage.open();
 	}
