@@ -39,15 +39,21 @@ public class ChartSewage {
 	public static final String SEWAGE_FOLDER = Charts.FULL_FOLDER + "\\nwss";
 	public static final String PLANTS = "plants";
 	public static final String STATES = "states";
+	public static final String COUNTIES = "counties";
 	public static final String STATES_FOLDER = SEWAGE_FOLDER + "\\" + STATES;
+	public static final String COUNTIES_FOLDER = SEWAGE_FOLDER + "\\" + COUNTIES;
 	public static final String PLANT_FOLDER = SEWAGE_FOLDER + "\\" + PLANTS;
 
-	public static void reportState(String state) {
+	public static void mkdirs() {
 		new File(Charts.FULL_FOLDER).mkdir();
 		new File(SEWAGE_FOLDER).mkdir();
 		new File(PLANT_FOLDER).mkdir();
 		new File(STATES_FOLDER).mkdir();
-		new File(STATES_FOLDER + "\\" + state).mkdir();
+		new File(COUNTIES_FOLDER).mkdir();
+	}
+
+	public static void reportState(String state) {
+		new File(COUNTIES_FOLDER + "\\" + state).mkdir();
 	}
 
 	public static BufferedImage buildSewageTimeseriesChart(Sewage sewage, boolean log) {
@@ -76,7 +82,7 @@ public class ChartSewage {
 		case COUNTY:
 			title = String.format("%s county, %s\n%s / %,d line pop", sewage.getCounty(), sewage.getState(),
 					CalendarUtils.dayToDate(sewage.getLastDay()), sewage.getPopulation());
-			fileName = STATES + "\\" + sewage.getState() + "\\" + sewage.getCounty();
+			fileName = COUNTIES + "\\" + sewage.getState() + "\\" + sewage.getCounty();
 			break;
 		case PLANT:
 			title = String.format("Plant %d, %s\n%s / %s county / %,d line pop", sewage.getPlantId(),
@@ -87,7 +93,7 @@ public class ChartSewage {
 		case STATE:
 			title = String.format("%s through %s\n%,d line pop", sewage.getState(),
 					CalendarUtils.dayToDate(sewage.getLastDay()), sewage.getPopulation(), sewage.getState());
-			fileName = STATES + "\\" + sewage.getState() + "\\" + sewage.getState();
+			fileName = STATES + "\\" + sewage.getState();
 			break;
 		default:
 			title = null;

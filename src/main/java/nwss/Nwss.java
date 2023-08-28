@@ -56,7 +56,6 @@ public class Nwss {
 
 	private Sewage getStateSewage(String stateId) {
 		Sewage s = getIdSewage(Type.STATE, stateId, stateSewage);
-		ChartSewage.reportState(stateId);
 		s.setState(stateId);
 		return s;
 	}
@@ -179,6 +178,8 @@ public class Nwss {
 	}
 
 	public void build() {
+		ChartSewage.mkdirs();
+		stateSewage.forEach((id, sewage) -> ChartSewage.reportState(id));
 		ASync<Chart> build = new ASync<>();
 		plantSewage.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
 		countySewage.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));

@@ -5,7 +5,6 @@ import java.util.HashMap;
 
 import org.jfree.data.time.TimeSeries;
 
-import charts.ChartSewage;
 import covid.CalendarUtils;
 
 public class Sewage {
