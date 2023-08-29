@@ -78,8 +78,8 @@ public class Sewage {
 			}
 
 			Double pop = entry.getPop();
-			if (pop != null && popo != null && pop < popo * 0.75 && day > getLastDay() - 21) {
-				// break;
+			if (pop != null && popo != null && pop < popo / 20 && day > getLastDay() - 21) {
+				break;
 			}
 
 			double number = entry.getSewage();
