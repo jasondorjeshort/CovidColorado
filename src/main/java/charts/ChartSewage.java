@@ -62,7 +62,9 @@ public class ChartSewage {
 		DeviationRenderer renderer = new DeviationRenderer(true, false);
 		int seriesCount = 0;
 
-		TimeSeries series = new TimeSeries("Sewage");
+		String name = sewage.getPlantId() == 0 ? String.format("Combined (%,d plants)", sewage.getNumPlants())
+				: String.format("Plant %d (%,d pop)", sewage.getPlantId(), sewage.getPopulation());
+		TimeSeries series = new TimeSeries(name);
 		sewage.makeTimeSeries(series, log);
 		collection.addSeries(series);
 		renderer.setSeriesStroke(seriesCount, new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));

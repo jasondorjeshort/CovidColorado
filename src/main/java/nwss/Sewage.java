@@ -9,6 +9,7 @@ import covid.CalendarUtils;
 
 public class Sewage {
 
+	private int numPlants = 0;
 	private final HashMap<Integer, DaySewage> entries = new HashMap<>();
 
 	private int firstDay = Integer.MAX_VALUE, lastDay = Integer.MIN_VALUE;
@@ -118,6 +119,12 @@ public class Sewage {
 
 	public synchronized void setPlantId(int plantId) {
 		this.plantId = plantId;
+		numPlants = 1;
+	}
+
+	private synchronized void clear() {
+		numPlants = 0;
+		entries.clear();
 	}
 
 	public synchronized int getNextZero(int startDay) {
@@ -140,6 +147,7 @@ public class Sewage {
 			if (population == null) {
 				population = 0;
 			}
+			numPlants++;
 		}
 		int sFirstDay = sewage.getFirstDay(), sLastDay = sewage.getLastDay();
 		int lastZero = sFirstDay - 1, nextZero = sewage.getNextZero(sFirstDay);
@@ -211,9 +219,7 @@ public class Sewage {
 
 	@SuppressWarnings("unused")
 	private void normalizeFromCDC(Collection<Sewage> plants) {
-		synchronized (this) {
-			entries.clear();
-		}
+		clear();
 		plants.forEach(p -> {
 			if (p.id.startsWith("CDC")) {
 				System.out.println("Fixing baseline from " + p.id);
@@ -238,6 +244,10 @@ public class Sewage {
 		return sewage;
 	}
 
+	public synchronized int getNumPlants() {
+		return numPlants;
+	}
+
 	/*
 	 * CDC numbers claim to be normalized, but the scales differ by up to 100.
 	 * This makes averaging nigh on impossible, big problem. So I just normalize
@@ -247,20 +257,13 @@ public class Sewage {
 	 */
 	@SuppressWarnings("unused")
 	private void normalizeFull(Collection<Sewage> plants) {
-
-		synchronized (this) {
-			entries.clear();
-		}
+		clear();
 		plants.forEach(p -> includeSewage(p, 1.0));
 		double area = getTotalSewage(firstDay, lastDay);
 
-		synchronized (this) {
-			entries.clear();
-		}
 		for (int i = 0; i < 2000; i++) {
-			synchronized (this) {
-				entries.clear();
-			}
+
+			clear();
 			plants.forEach(p -> includeSewage(p, 1.0));
 			plants.forEach(p -> p.buildNormalizer(this));
 
@@ -298,9 +301,7 @@ public class Sewage {
 	public void buildCountry(Collection<Sewage> plants) {
 		normalizeFull(plants);
 
-		synchronized (this) {
-			entries.clear();
-		}
+		clear();
 		plants.forEach(p -> includeSewage(p, 1.0));
 
 		while (entries.get(firstDay).getSewage() > entries.get(firstDay + 1).getSewage()) {
