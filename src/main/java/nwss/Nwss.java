@@ -24,7 +24,7 @@ public class Nwss {
 	private static final String CSV2_NAME = "C:\\Users\\jdorj\\Downloads\\"
 			+ "NWSS_Public_SARS-CoV-2_Wastewater_Metric_Data.csv";
 
-	private final Charset charset = Charset.forName("US-ASCII");
+	private static final Charset CHARSET = Charset.forName("US-ASCII");
 
 	private HashMap<String, Sewage> plantSewage = new HashMap<>();
 	private HashMap<String, Sewage> countySewage = new HashMap<>();
@@ -75,7 +75,7 @@ public class Nwss {
 		}
 
 		double maxNumber = 0;
-		try (CSVParser csv = CSVParser.parse(url, charset, CSVFormat.DEFAULT)) {
+		try (CSVParser csv = CSVParser.parse(url, CHARSET, CSVFormat.DEFAULT)) {
 			for (CSVRecord line : csv) {
 				String plant = line.get(0);
 				if (plant.equalsIgnoreCase("key_plot_id")) {
@@ -125,7 +125,7 @@ public class Nwss {
 			System.exit(0);
 		}
 
-		try (CSVParser csv = CSVParser.parse(url, charset, CSVFormat.DEFAULT)) {
+		try (CSVParser csv = CSVParser.parse(url, CHARSET, CSVFormat.DEFAULT)) {
 			int lines = 0;
 			for (CSVRecord line : csv) {
 				if (lines++ == 0) {
