@@ -187,14 +187,12 @@ public class Nwss {
 		ChartSewage.mkdirs();
 		stateSewage.forEach((id, sewage) -> ChartSewage.reportState(id));
 		ASync<Chart> build = new ASync<>();
-		// plantSewage.forEach((id, sewage) -> build.execute(() ->
-		// ChartSewage.createSewage(sewage)));
-		// countySewage.forEach((id, sewage) -> build.execute(() ->
-		// ChartSewage.createSewage(sewage)));
-		// stateSewage.forEach((id, sewage) -> build.execute(() ->
-		// ChartSewage.createSewage(sewage)));
-		ChartSewage.createSewage(countrySewage);
-		ChartSewage.buildSewageTimeseriesChart(countrySewage, variants, true);
+		build.execute(() -> ChartSewage.createSewage(countrySewage));
+		build.execute(() -> ChartSewage.buildSewageTimeseriesChart(countrySewage, variants, true));
+		build.execute(() -> ChartSewage.buildSewageTimeseriesChart(countrySewage, variants, false));
+		plantSewage.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
+		countySewage.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
+		stateSewage.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
 		build.complete();
 		library.OpenImage.open();
 	}

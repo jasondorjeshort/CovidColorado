@@ -1,5 +1,6 @@
 package nwss;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 
@@ -146,7 +147,8 @@ public class Sewage {
 		}
 
 		String name = variant.replaceAll("nextcladePangoLineage:", "");
-		TimeSeries series = new TimeSeries(String.format("%s (r=%.3f)", name, fit.getSlope()));
+		TimeSeries series = new TimeSeries(
+				String.format("%s (%+.0f%%/week)", name, 100.0 * (Math.exp(7.0 * fit.getSlope()) - 1)));
 		int first = Math.max(getFirstDay(), voc.getFirstDay());
 		series.add(CalendarUtils.dayToDay(first), Math.exp(fit.predict(first)));
 		int last = getLastDay() + 28;
@@ -154,11 +156,12 @@ public class Sewage {
 		return series;
 	}
 
-	public synchronized TimeSeries makeRegressionTS(Voc voc) {
+	public synchronized TimeSeries makeRegressionTS(Voc voc, ArrayList<String> variants) {
 		final int fitLastDay = Math.min(getLastDay(), voc.getLastDay());
 		final int fitFirstDay = Math.max(getFirstDay(), voc.getFirstDay());
 		HashMap<String, SimpleRegression> fits = new HashMap<>();
-		Collection<String> variants = voc.getVariants();
+		HashMap<String, Double> finals = new HashMap<>();
+		int tsLastDay = getLastDay() + 28;
 		for (String variant : variants) {
 			final SimpleRegression fit = new SimpleRegression();
 			for (int day = fitFirstDay; day <= fitLastDay; day++) {
@@ -182,10 +185,13 @@ public class Sewage {
 			}
 
 			fits.put(variant, fit);
+			finals.put(variant, Math.exp(fits.get(variant).predict(tsLastDay)));
 		}
 
+		variants.sort((v1, v2) -> -Double.compare(finals.get(v1), finals.get(v2)));
+
 		TimeSeries series = new TimeSeries(String.format("Collective fit"));
-		for (int day = fitFirstDay; day <= getLastDay() + 28; day++) {
+		for (int day = fitFirstDay; day <= tsLastDay; day++) {
 			double number = 0.0;
 			for (String variant : variants) {
 				if (fits.get(variant) == null) {

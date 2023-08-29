@@ -140,11 +140,10 @@ public class Voc {
 			sb.append(")");
 		}
 		System.out.println(sb.toString());
-
 	}
 
 	public synchronized ArrayList<String> getVariants() {
-		return variantList;
+		return new ArrayList<>(variantList);
 	}
 
 	public double getPrevalence(int day, String variant) {

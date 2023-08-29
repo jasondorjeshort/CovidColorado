@@ -3,6 +3,7 @@ package charts;
 import java.awt.BasicStroke;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.ArrayList;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
@@ -140,18 +141,20 @@ public class ChartSewage {
 		return image;
 	}
 
-	public static BufferedImage buildSewageTimeseriesChart(Sewage sewage, Voc voc, boolean log) {
+	public static BufferedImage buildSewageTimeseriesChart(Sewage sewage, Voc voc, boolean fit) {
 		TimeSeriesCollection collection = new TimeSeriesCollection();
-
-		System.out.println("Building sewage ts.");
 
 		DeviationRenderer renderer = new DeviationRenderer(true, false);
 		int seriesCount = 0;
+		TimeSeries series;
 
-		TimeSeries series = sewage.makeRegressionTS(voc);
-		collection.addSeries(series);
-		renderer.setSeriesStroke(seriesCount, new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-		seriesCount++;
+		ArrayList<String> variants = voc.getVariants();
+		if (fit) {
+			series = sewage.makeRegressionTS(voc, variants);
+			collection.addSeries(series);
+			renderer.setSeriesStroke(seriesCount, new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+			seriesCount++;
+		}
 
 		series = new TimeSeries("Actual");
 		sewage.makeTimeSeries(series);
@@ -159,9 +162,14 @@ public class ChartSewage {
 		renderer.setSeriesStroke(seriesCount, new BasicStroke(4.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		seriesCount++;
 
-		for (String variant : voc.getVariants()) {
-
-			if (false) {
+		for (String variant : variants) {
+			if (fit) {
+				series = sewage.makeRegressionTS(voc, variant);
+				collection.addSeries(series);
+				renderer.setSeriesStroke(seriesCount,
+						new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+				seriesCount++;
+			} else {
 				series = new TimeSeries(variant);
 				sewage.makeTimeSeries(series, voc, variant);
 				collection.addSeries(series);
@@ -169,11 +177,6 @@ public class ChartSewage {
 						new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 				seriesCount++;
 			}
-
-			series = sewage.makeRegressionTS(voc, variant);
-			collection.addSeries(series);
-			renderer.setSeriesStroke(seriesCount, new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-			seriesCount++;
 		}
 
 		// dataset.addSeries("Cases", series);
@@ -205,46 +208,38 @@ public class ChartSewage {
 			title = null;
 			break;
 		}
-		fileName += "-" + (log ? "log" : "cart") + "-voc";
+		fileName += "-log-" + (fit ? "fit" : "voc");
 		String verticalAxis = "Millions of copies per mL";
-		System.out.println("Creating chart...");
 
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title, "Date", verticalAxis, collection);
-		System.out.println("...done Creating chart...");
 
 		XYPlot plot = chart.getXYPlot();
 		plot.setRenderer(renderer);
 
-		if (log) {
-			LogarithmicAxis yAxis = new LogarithmicAxis(verticalAxis);
-			plot.setRangeAxis(yAxis);
-			double bound = yAxis.getUpperBound() / 1000.0;
-			if (yAxis.getLowerBound() < bound) {
-				yAxis.setLowerBound(bound);
-			}
-
-			ValueAxis xAxis = plot.getDomainAxis();
-			bound = CalendarUtils.dayToTime(voc.getFirstDay());
-			if (xAxis.getLowerBound() < bound) {
-				xAxis.setLowerBound(bound);
-			}
-			bound = CalendarUtils.dayToTime(sewage.getLastDay() + 28);
-			if (xAxis.getUpperBound() > bound) {
-				xAxis.setUpperBound(bound);
-			}
+		LogarithmicAxis yAxis = new LogarithmicAxis(verticalAxis);
+		plot.setRangeAxis(yAxis);
+		double bound = yAxis.getUpperBound() / 1000.0;
+		if (yAxis.getLowerBound() < bound) {
+			yAxis.setLowerBound(bound);
 		}
 
-		System.out.println("Building chart...");
+		ValueAxis xAxis = plot.getDomainAxis();
+		bound = CalendarUtils.dayToTime(voc.getFirstDay());
+		if (xAxis.getLowerBound() < bound) {
+			xAxis.setLowerBound(bound);
+		}
+		if (fit) {
+			bound = CalendarUtils.dayToTime(sewage.getLastDay() + 28);
+			xAxis.setUpperBound(bound);
+		}
+
 		BufferedImage image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT);
-		System.out.println("Done building chart...");
 		Charts.saveBufferedImageAsPNG(SEWAGE_FOLDER, fileName, image);
-		System.out.println("Done saving chart...");
 
 		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
 
 		library.OpenImage.openImage(fileName);
-
-		System.out.println("Saved it.");
+		library.OpenImage.open();
 
 		// System.out.println("Created : " + sewage.id + " for " +
 		// series.getItemCount() + " => " + fileName);
