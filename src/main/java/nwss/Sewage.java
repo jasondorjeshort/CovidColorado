@@ -3,8 +3,10 @@ package nwss;
 import java.util.Collection;
 import java.util.HashMap;
 
+import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.jfree.data.time.TimeSeries;
 
+import Variants.Voc;
 import covid.CalendarUtils;
 
 public class Sewage {
@@ -66,7 +68,7 @@ public class Sewage {
 		includeDay(day);
 	}
 
-	public synchronized void makeTimeSeries(TimeSeries series, boolean isLogarithmic) {
+	public synchronized void makeTimeSeries(TimeSeries series) {
 		Integer popo = getPopulation();
 		for (int day = getFirstDay(); day <= getLastDay(); day++) {
 			DaySewage entry;
@@ -78,15 +80,124 @@ public class Sewage {
 			}
 
 			Double pop = entry.getPop();
-			if (pop != null && popo != null && pop < popo / 20 && day > getLastDay() - 21) {
+			if (pop != null && popo != null && pop < popo / 4.0 && day > getLastDay() - 21) {
 				break;
 			}
 
 			double number = entry.getSewage();
-			if (!isLogarithmic || number > 0) {
-				series.add(CalendarUtils.dayToDay(day), number * normalizer);
+			number *= normalizer;
+			if (number <= 0) {
+				number = 1E-6;
 			}
+			series.add(CalendarUtils.dayToDay(day), number);
 		}
+	}
+
+	public synchronized void makeTimeSeries(TimeSeries series, Voc voc, String variant) {
+		for (int day = Math.max(getFirstDay(), voc.getFirstDay()); day <= getLastDay()
+				&& day <= voc.getLastDay(); day++) {
+			DaySewage entry;
+			synchronized (this) {
+				entry = entries.get(day);
+			}
+			if (entry == null) {
+				continue;
+			}
+
+			Double pop = entry.getPop();
+
+			double number = entry.getSewage();
+			number *= normalizer;
+			if (number <= 0) {
+				number = 1E-6;
+			}
+
+			number *= voc.getPrevalence(day, variant);
+			if (number <= 0) {
+				number = 1E-12;
+			}
+
+			series.add(CalendarUtils.dayToDay(day), number);
+		}
+	}
+
+	public synchronized TimeSeries makeRegressionTS(Voc voc, String variant) {
+		final SimpleRegression fit = new SimpleRegression();
+		final int fitLastDay = Math.min(getLastDay(), voc.getLastDay());
+		final int fitFirstDay = Math.max(getFirstDay(), voc.getFirstDay());
+		for (int day = fitFirstDay; day <= fitLastDay; day++) {
+			DaySewage entry;
+			synchronized (this) {
+				entry = entries.get(day);
+			}
+			if (entry == null) {
+				continue;
+			}
+
+			double number = entry.getSewage();
+			number *= normalizer;
+
+			number *= voc.getPrevalence(day, variant);
+			if (number <= 0) {
+				continue;
+			}
+
+			fit.addData(day, Math.log(number));
+		}
+
+		String name = variant.replaceAll("nextcladePangoLineage:", "");
+		TimeSeries series = new TimeSeries(String.format("%s (r=%.3f)", name, fit.getSlope()));
+		int first = Math.max(getFirstDay(), voc.getFirstDay());
+		series.add(CalendarUtils.dayToDay(first), Math.exp(fit.predict(first)));
+		int last = getLastDay() + 28;
+		series.add(CalendarUtils.dayToDay(last), Math.exp(fit.predict(last)));
+		return series;
+	}
+
+	public synchronized TimeSeries makeRegressionTS(Voc voc) {
+		final int fitLastDay = Math.min(getLastDay(), voc.getLastDay());
+		final int fitFirstDay = Math.max(getFirstDay(), voc.getFirstDay());
+		HashMap<String, SimpleRegression> fits = new HashMap<>();
+		Collection<String> variants = voc.getVariants();
+		for (String variant : variants) {
+			final SimpleRegression fit = new SimpleRegression();
+			for (int day = fitFirstDay; day <= fitLastDay; day++) {
+				DaySewage entry;
+				synchronized (this) {
+					entry = entries.get(day);
+				}
+				if (entry == null) {
+					continue;
+				}
+
+				double number = entry.getSewage();
+				number *= normalizer;
+
+				number *= voc.getPrevalence(day, variant);
+				if (number <= 0) {
+					continue;
+				}
+
+				fit.addData(day, Math.log(number));
+			}
+
+			fits.put(variant, fit);
+		}
+
+		TimeSeries series = new TimeSeries(String.format("Collective fit"));
+		for (int day = fitFirstDay; day <= getLastDay() + 28; day++) {
+			double number = 0.0;
+			for (String variant : variants) {
+				if (fits.get(variant) == null) {
+					System.out.println("Impossible variant : " + variant);
+					continue;
+				}
+				number += Math.exp(fits.get(variant).predict(day));
+			}
+			series.add(CalendarUtils.dayToDay(day), number);
+		}
+
+		return series;
 	}
 
 	public synchronized String getState() {

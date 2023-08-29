@@ -3,16 +3,17 @@ package charts;
 import java.awt.BasicStroke;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.Objects;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.LogarithmicAxis;
+import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.DeviationRenderer;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 
+import Variants.Voc;
 import covid.CalendarUtils;
 import covid.NumbersType;
 import nwss.Sewage;
@@ -64,8 +65,9 @@ public class ChartSewage {
 
 		String name = sewage.getPlantId() == 0 ? String.format("Combined (%,d plants)", sewage.getNumPlants())
 				: String.format("Plant %d (%,d pop)", sewage.getPlantId(), sewage.getPopulation());
+
 		TimeSeries series = new TimeSeries(name);
-		sewage.makeTimeSeries(series, log);
+		sewage.makeTimeSeries(series);
 		collection.addSeries(series);
 		renderer.setSeriesStroke(seriesCount, new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		renderer.setSeriesPaint(seriesCount, NumbersType.CASES.color);
@@ -111,11 +113,12 @@ public class ChartSewage {
 		if (log) {
 			LogarithmicAxis yAxis = new LogarithmicAxis(verticalAxis);
 			plot.setRangeAxis(yAxis);
+			double lowerBound = yAxis.getUpperBound() / 1000.0;
+			if (yAxis.getLowerBound() < lowerBound) {
+				yAxis.setLowerBound(lowerBound);
+			}
 
-			// DateAxis xAxis = new DateAxis("Date");
-			// xAxis.setMinimumDate(CalendarUtils.dayToJavaDate(stats.getFirstDayOfCumulative()));
-			// xAxis.setMaximumDate(CalendarUtils.dayToJavaDate(stats.getLastDay()));
-			// plot.setDomainAxis(xAxis);
+			// plot.getDomainAxis().setLowerBound(CalendarUtils.dateToTime("5-1-2023"));
 		}
 
 		BufferedImage image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT);
@@ -123,11 +126,125 @@ public class ChartSewage {
 
 		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
 
-		if (sewage.id.equalsIgnoreCase("Colorado-Denver") || sewage.id.equalsIgnoreCase("Colorado")
-				|| Objects.equals(sewage.plantId, 251) || Objects.equals(sewage.plantId, 252)
-				|| sewage.type.equals(Type.COUNTRY)) {
+		if (// sewage.id.equalsIgnoreCase("Colorado-Denver") ||
+			// sewage.id.equalsIgnoreCase("Colorado")
+			// || Objects.equals(sewage.plantId, 251) ||
+			// Objects.equals(sewage.plantId, 252)
+			// ||
+		sewage.type.equals(Type.COUNTRY)) {
 			library.OpenImage.openImage(fileName);
 		}
+
+		// System.out.println("Created : " + sewage.id + " for " +
+		// series.getItemCount() + " => " + fileName);
+		return image;
+	}
+
+	public static BufferedImage buildSewageTimeseriesChart(Sewage sewage, Voc voc, boolean log) {
+		TimeSeriesCollection collection = new TimeSeriesCollection();
+
+		System.out.println("Building sewage ts.");
+
+		DeviationRenderer renderer = new DeviationRenderer(true, false);
+		int seriesCount = 0;
+
+		TimeSeries series = sewage.makeRegressionTS(voc);
+		collection.addSeries(series);
+		renderer.setSeriesStroke(seriesCount, new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+		seriesCount++;
+
+		series = new TimeSeries("Actual");
+		sewage.makeTimeSeries(series);
+		collection.addSeries(series);
+		renderer.setSeriesStroke(seriesCount, new BasicStroke(4.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+		seriesCount++;
+
+		for (String variant : voc.getVariants()) {
+
+			if (false) {
+				series = new TimeSeries(variant);
+				sewage.makeTimeSeries(series, voc, variant);
+				collection.addSeries(series);
+				renderer.setSeriesStroke(seriesCount,
+						new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+				seriesCount++;
+			}
+
+			series = sewage.makeRegressionTS(voc, variant);
+			collection.addSeries(series);
+			renderer.setSeriesStroke(seriesCount, new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+			seriesCount++;
+		}
+
+		// dataset.addSeries("Cases", series);
+
+		String fileName = sewage.id;
+		String title;
+		switch (sewage.type) {
+		case COUNTRY:
+			title = String.format("%s, %s\n %,d line pop", sewage.id, CalendarUtils.dayToDate(sewage.getLastDay()),
+					sewage.getPopulation());
+			break;
+		case COUNTY:
+			title = String.format("%s county, %s\n%s / %,d line pop", sewage.getCounty(), sewage.getState(),
+					CalendarUtils.dayToDate(sewage.getLastDay()), sewage.getPopulation());
+			fileName = COUNTIES + "\\" + sewage.getState() + "\\" + sewage.getCounty();
+			break;
+		case PLANT:
+			title = String.format("Plant %d, %s\n%s / %s county / %,d line pop", sewage.getPlantId(),
+					CalendarUtils.dayToDate(sewage.getLastDay()), sewage.getState(), sewage.getCounty(),
+					sewage.getPopulation());
+			fileName = PLANTS + "\\" + sewage.id;
+			break;
+		case STATE:
+			title = String.format("%s through %s\n%,d line pop", sewage.getState(),
+					CalendarUtils.dayToDate(sewage.getLastDay()), sewage.getPopulation(), sewage.getState());
+			fileName = STATES + "\\" + sewage.getState();
+			break;
+		default:
+			title = null;
+			break;
+		}
+		fileName += "-" + (log ? "log" : "cart") + "-voc";
+		String verticalAxis = "Millions of copies per mL";
+		System.out.println("Creating chart...");
+
+		JFreeChart chart = ChartFactory.createTimeSeriesChart(title, "Date", verticalAxis, collection);
+		System.out.println("...done Creating chart...");
+
+		XYPlot plot = chart.getXYPlot();
+		plot.setRenderer(renderer);
+
+		if (log) {
+			LogarithmicAxis yAxis = new LogarithmicAxis(verticalAxis);
+			plot.setRangeAxis(yAxis);
+			double bound = yAxis.getUpperBound() / 1000.0;
+			if (yAxis.getLowerBound() < bound) {
+				yAxis.setLowerBound(bound);
+			}
+
+			ValueAxis xAxis = plot.getDomainAxis();
+			bound = CalendarUtils.dayToTime(voc.getFirstDay());
+			if (xAxis.getLowerBound() < bound) {
+				xAxis.setLowerBound(bound);
+			}
+			bound = CalendarUtils.dayToTime(sewage.getLastDay() + 28);
+			if (xAxis.getUpperBound() > bound) {
+				xAxis.setUpperBound(bound);
+			}
+		}
+
+		System.out.println("Building chart...");
+		BufferedImage image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT);
+		System.out.println("Done building chart...");
+		Charts.saveBufferedImageAsPNG(SEWAGE_FOLDER, fileName, image);
+		System.out.println("Done saving chart...");
+
+		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
+
+		library.OpenImage.openImage(fileName);
+
+		System.out.println("Saved it.");
 
 		// System.out.println("Created : " + sewage.id + " for " +
 		// series.getItemCount() + " => " + fileName);

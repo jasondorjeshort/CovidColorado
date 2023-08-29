@@ -10,6 +10,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
+import Variants.Voc;
 import charts.Chart;
 import charts.ChartSewage;
 import covid.CalendarUtils;
@@ -160,10 +161,13 @@ public class Nwss {
 		}
 	}
 
+	private Voc variants;
+
 	public void read() {
 		ASync<Chart> build = new ASync<>();
 		build.execute(() -> readSewage());
 		build.execute(() -> readLocations());
+		build.execute(() -> variants = new Voc());
 		build.complete();
 
 		countrySewage.buildCountry(plantSewage.values());
@@ -183,10 +187,14 @@ public class Nwss {
 		ChartSewage.mkdirs();
 		stateSewage.forEach((id, sewage) -> ChartSewage.reportState(id));
 		ASync<Chart> build = new ASync<>();
-		plantSewage.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
-		countySewage.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
-		stateSewage.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
+		// plantSewage.forEach((id, sewage) -> build.execute(() ->
+		// ChartSewage.createSewage(sewage)));
+		// countySewage.forEach((id, sewage) -> build.execute(() ->
+		// ChartSewage.createSewage(sewage)));
+		// stateSewage.forEach((id, sewage) -> build.execute(() ->
+		// ChartSewage.createSewage(sewage)));
 		ChartSewage.createSewage(countrySewage);
+		ChartSewage.buildSewageTimeseriesChart(countrySewage, variants, true);
 		build.complete();
 		library.OpenImage.open();
 	}
