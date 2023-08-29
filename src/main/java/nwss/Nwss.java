@@ -76,11 +76,13 @@ public class Nwss {
 
 		double maxNumber = 0;
 		try (CSVParser csv = CSVParser.parse(url, CHARSET, CSVFormat.DEFAULT)) {
+			int records = 0;
 			for (CSVRecord line : csv) {
-				String plant = line.get(0);
-				if (plant.equalsIgnoreCase("key_plot_id")) {
+				if (records++ == 0) {
 					continue;
 				}
+
+				String plant = line.get(0);
 				String date = line.get(1);
 				int day = CalendarUtils.dateToDay(date);
 				String num = line.get(2);
@@ -126,9 +128,9 @@ public class Nwss {
 		}
 
 		try (CSVParser csv = CSVParser.parse(url, CHARSET, CSVFormat.DEFAULT)) {
-			int lines = 0;
+			int records = 0;
 			for (CSVRecord line : csv) {
-				if (lines++ == 0) {
+				if (records++ == 0) {
 					continue;
 				}
 
