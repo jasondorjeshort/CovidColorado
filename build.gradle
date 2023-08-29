@@ -34,20 +34,20 @@ repositories {
 }
 
 dependencies {
-    // This dependency is exported to consumers, that is to say found on their compile classpath.
-    api 'org.apache.commons:commons-math3:3.6.1'
+    // https://search.maven.org/artifact/org.apache.commons/commons-math3
+    implementation 'org.apache.commons:commons-math3:3.6.1'
 
-    // This dependency is used internally, and not exposed to consumers on their own compile classpath.
-    implementation 'com.google.guava:guava:31.1-jre'
+    // https://central.sonatype.com/artifact/com.google.guava/guava/
+    implementation 'com.google.guava:guava:32.1.2-jre'
     
-    implementation 'org.jfree:jfreechart:1.5.3'
-
-    // Use JUnit test framework
-    testImplementation 'junit:junit:4.13.2'
+    // https://central.sonatype.com/artifact/org.jfree/jfreechart/1.5.4
+    implementation 'org.jfree:jfreechart:1.5.4'
     
+    // https://central.sonatype.com/artifact/com.madgag/animated-gif-lib/1.4
     implementation 'com.madgag:animated-gif-lib:1.4'
     
-    implementation 'org.apache.commons:commons-csv:1.9.0'
+    // https://central.sonatype.com/artifact/org.apache.commons/commons-csv/1.10.0
+    implementation 'org.apache.commons:commons-csv:1.10.0'
     
     // implementation 'com.gitee.l0km:nanohttpd:2.3.4'
 }
