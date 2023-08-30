@@ -175,12 +175,15 @@ public class Nwss {
 
 		countrySewage.buildCountry(plantSewage.values());
 		plantSewage.forEach((plantId, sewage) -> {
-			getStateSewage(sewage.getState()).includeSewage(sewage, 1.0);
-			String c = sewage.getCounty();
-			if (c != null) {
-				String[] counties = sewage.getCounty().split(",");
-				for (String county : counties) {
-					getCountySewage(county, sewage.getState()).includeSewage(sewage, 1.0 / counties.length);
+			String state = sewage.getState();
+			if (state != null) {
+				getStateSewage(state).includeSewage(sewage, 1.0);
+				String c = sewage.getCounty();
+				if (c != null) {
+					String[] counties = sewage.getCounty().split(",");
+					for (String county : counties) {
+						getCountySewage(county, state).includeSewage(sewage, 1.0 / counties.length);
+					}
 				}
 			}
 		});
