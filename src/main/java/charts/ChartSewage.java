@@ -90,8 +90,12 @@ public class ChartSewage {
 			fileName = COUNTIES + "\\" + sewage.getState() + "\\" + sewage.getCounty();
 			break;
 		case PLANT:
-			title += String.format("Plant %d - %s county, %s (%,d line pop)", sewage.getPlantId(), sewage.getCounty(),
-					sewage.getState(), sewage.getPopulation());
+			if (sewage.getPlantId() == 0) {
+				title += "(no metadata for this plant)";
+			} else {
+				title += String.format("Plant %d - %s county, %s (%,d line pop)", sewage.getPlantId(),
+						sewage.getCounty(), sewage.getState(), sewage.getPopulation());
+			}
 			fileName = PLANTS + "\\" + sewage.id;
 			break;
 		case STATE:
