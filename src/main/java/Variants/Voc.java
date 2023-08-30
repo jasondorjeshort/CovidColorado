@@ -20,8 +20,12 @@ public class Voc {
 
 	public static String OTHERS = "others";
 
-	public Voc() {
-		this(CSV_NAME);
+	public static Voc create() {
+		File f = new File(CSV_NAME);
+		if (f.exists()) {
+			return new Voc(f);
+		}
+		return null;
 	}
 
 	public static class DayVariants {
@@ -74,9 +78,7 @@ public class Voc {
 		return lastDay;
 	}
 
-	public Voc(String csvName) {
-		File f = new File(csvName);
-
+	public Voc(File f) {
 		HashSet<String> variantSet = new HashSet<>();
 		try (CSVParser csv = CSVParser.parse(f, CHARSET, CSVFormat.DEFAULT)) {
 			int records = 0;

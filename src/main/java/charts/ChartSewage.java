@@ -4,6 +4,7 @@ import java.awt.BasicStroke;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Objects;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
@@ -127,12 +128,9 @@ public class ChartSewage {
 
 		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
 
-		if (// sewage.id.equalsIgnoreCase("Colorado-Denver") ||
-			// sewage.id.equalsIgnoreCase("Colorado")
-			// || Objects.equals(sewage.plantId, 251) ||
-			// Objects.equals(sewage.plantId, 252)
-			// ||
-		sewage.type.equals(Type.COUNTRY)) {
+		if (sewage.id.equalsIgnoreCase("Colorado-Denver") || sewage.id.equalsIgnoreCase("Colorado")
+				|| Objects.equals(sewage.plantId, 251) || Objects.equals(sewage.plantId, 252)
+				|| sewage.type.equals(Type.COUNTRY)) {
 			library.OpenImage.openImage(fileName);
 		}
 
@@ -156,7 +154,7 @@ public class ChartSewage {
 			seriesCount++;
 		}
 
-		series = new TimeSeries("Actual");
+		series = new TimeSeries(fit ? "Actual" : "Sewage");
 		sewage.makeTimeSeries(series);
 		collection.addSeries(series);
 		renderer.setSeriesStroke(seriesCount, new BasicStroke(4.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
@@ -218,7 +216,7 @@ public class ChartSewage {
 
 		LogarithmicAxis yAxis = new LogarithmicAxis(verticalAxis);
 		plot.setRangeAxis(yAxis);
-		double bound = yAxis.getUpperBound() / 1000.0;
+		double bound = yAxis.getUpperBound() / 10000.0;
 		if (yAxis.getLowerBound() < bound) {
 			yAxis.setLowerBound(bound);
 		}

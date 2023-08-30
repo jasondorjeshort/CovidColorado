@@ -64,12 +64,15 @@ public class Nwss {
 	double scaleFactor = 1E6;
 
 	public void readSewage() {
-
 		URL url = null;
+		File f = new File(CSV_NAME);
+
 		try {
-			url = new File(CSV_NAME).toURI().toURL();
-			// url = new
-			// URL("https://data.cdc.gov/api/views/g653-rqe2/rows.csv?accessType=DOWNLOAD");
+			if (f.exists()) {
+				url = new File(CSV_NAME).toURI().toURL();
+			} else {
+				url = new URL("https://data.cdc.gov/api/views/g653-rqe2/rows.csv?accessType=DOWNLOAD");
+			}
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 			System.exit(0);
@@ -167,7 +170,7 @@ public class Nwss {
 		ASync<Chart> build = new ASync<>();
 		build.execute(() -> readSewage());
 		build.execute(() -> readLocations());
-		build.execute(() -> variants = new Voc());
+		build.execute(() -> variants = Voc.create());
 		build.complete();
 
 		countrySewage.buildCountry(plantSewage.values());
@@ -188,8 +191,10 @@ public class Nwss {
 		stateSewage.forEach((id, sewage) -> ChartSewage.reportState(id));
 		ASync<Chart> build = new ASync<>();
 		build.execute(() -> ChartSewage.createSewage(countrySewage));
-		build.execute(() -> ChartSewage.buildSewageTimeseriesChart(countrySewage, variants, true));
-		build.execute(() -> ChartSewage.buildSewageTimeseriesChart(countrySewage, variants, false));
+		if (variants != null) {
+			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(countrySewage, variants, true));
+			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(countrySewage, variants, false));
+		}
 		plantSewage.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
 		countySewage.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
 		stateSewage.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
