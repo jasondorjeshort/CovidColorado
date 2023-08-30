@@ -79,30 +79,26 @@ public class ChartSewage {
 		// dataset.addSeries("Cases", series);
 
 		String fileName = sewage.id;
-		String title;
+		String title = "Covid in sewage, " + CalendarUtils.dayToDate(sewage.getLastDay()) + "\n";
 		switch (sewage.type) {
 		case COUNTRY:
-			title = String.format("%s, %s\n %,d line pop", sewage.id, CalendarUtils.dayToDate(sewage.getLastDay()),
-					sewage.getPopulation());
+			title += String.format("%s (%,d line pop)", sewage.id, sewage.getPopulation());
 			break;
 		case COUNTY:
-			title = String.format("%s county, %s\n%s / %,d line pop", sewage.getCounty(), sewage.getState(),
-					CalendarUtils.dayToDate(sewage.getLastDay()), sewage.getPopulation());
+			title += String.format("%s county, %s (%,d line pop)", sewage.getCounty(), sewage.getState(),
+					sewage.getPopulation());
 			fileName = COUNTIES + "\\" + sewage.getState() + "\\" + sewage.getCounty();
 			break;
 		case PLANT:
-			title = String.format("Plant %d, %s\n%s / %s county / %,d line pop", sewage.getPlantId(),
-					CalendarUtils.dayToDate(sewage.getLastDay()), sewage.getState(), sewage.getCounty(),
-					sewage.getPopulation());
+			title += String.format("Plant %d - %s county, %s (%,d line pop)", sewage.getPlantId(), sewage.getCounty(),
+					sewage.getState(), sewage.getPopulation());
 			fileName = PLANTS + "\\" + sewage.id;
 			break;
 		case STATE:
-			title = String.format("%s through %s\n%,d line pop", sewage.getState(),
-					CalendarUtils.dayToDate(sewage.getLastDay()), sewage.getPopulation(), sewage.getState());
+			title += String.format("%s (%,d line pop)", sewage.getState(), sewage.getPopulation());
 			fileName = STATES + "\\" + sewage.getState();
 			break;
 		default:
-			title = null;
 			break;
 		}
 		fileName += "-" + (log ? "log" : "cart");
