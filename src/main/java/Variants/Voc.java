@@ -130,6 +130,7 @@ public class Voc {
 
 		System.out.println(String.format("%,d total variants", variantList.size() - 1));
 		StringBuilder sb = new StringBuilder();
+		StringBuilder sb2 = new StringBuilder();
 		for (String variant : variantList) {
 			if (variant.equals(Voc.OTHERS)) {
 				continue;
@@ -140,8 +141,17 @@ public class Voc {
 			sb.append("!(");
 			sb.append(variant);
 			sb.append(")");
+
+			if (sb2.length() > 0) {
+				sb2.append(",");
+			}
+			sb2.append("\"");
+			sb2.append(variant.replaceAll("nextcladePangoLineage:", ""));
+			sb2.append("\"");
 		}
 		System.out.println(sb.toString());
+		System.out.println(sb2.toString());
+
 	}
 
 	public synchronized ArrayList<String> getVariants() {
