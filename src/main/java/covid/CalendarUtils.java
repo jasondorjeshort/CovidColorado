@@ -89,7 +89,10 @@ public class CalendarUtils {
 	}
 
 	public static Calendar dayToCalendar(double day) {
-		long time = dayToTime(day);
+		return timeToCalendar(dayToTime(day));
+	}
+
+	public static Calendar timeToCalendar(long time) {
 		Calendar cal = Calendar.getInstance();
 		cal.setTimeInMillis(time);
 		return cal;
