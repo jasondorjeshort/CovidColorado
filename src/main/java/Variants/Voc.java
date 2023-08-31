@@ -45,8 +45,14 @@ public class Voc {
 						others -= prev;
 					}
 					if (others < 0) {
-						new Exception("Big fail negative others " + others + " on " + CalendarUtils.dayToDate(day))
-								.printStackTrace();
+						/*
+						 * Ideally others can just be zero, but due to rounding
+						 * it could then be slightly negative.
+						 */
+						if (others < -1E-15) {
+							new Exception("Big fail negative others " + others + " on " + CalendarUtils.dayToDate(day))
+									.printStackTrace();
+						}
 						others = 0.0;
 					}
 					variants.put(OTHERS, others);
