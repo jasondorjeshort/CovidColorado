@@ -257,7 +257,7 @@ public class Sewage {
 	public void includeSewage(Sewage sewage, double popMultiplier) {
 		Integer pop = sewage.getPopulation();
 		if (pop == null) {
-			new Exception("Uhhh no pop on " + sewage.id).printStackTrace();
+			// new Exception("Uhhh no pop on " + sewage.id).printStackTrace();
 			return;
 		}
 		synchronized (this) {
