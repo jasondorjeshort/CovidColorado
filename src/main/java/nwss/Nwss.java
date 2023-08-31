@@ -19,10 +19,10 @@ import nwss.Sewage.Type;
 
 public class Nwss {
 
-	private static final String CSV_NAME = "C:\\Users\\jdorj\\Downloads\\"
+	public static final String CSV_NAME = "C:\\Users\\jdorj\\Downloads\\"
 			+ "NWSS_Public_SARS-CoV-2_Concentration_in_Wastewater_Data.csv";
 
-	private static final String CSV2_NAME = "C:\\Users\\jdorj\\Downloads\\"
+	public static final String CSV2_NAME = "C:\\Users\\jdorj\\Downloads\\"
 			+ "NWSS_Public_SARS-CoV-2_Wastewater_Metric_Data.csv";
 
 	private static final Charset CHARSET = Charset.forName("US-ASCII");
@@ -121,11 +121,14 @@ public class Nwss {
 
 	public void readLocations() {
 
+		File f = new File(CSV2_NAME);
 		URL url = null;
 		try {
-			url = new File(CSV2_NAME).toURI().toURL();
-			// url = new
-			// URL("https://data.cdc.gov/api/views/2ew6-ywp6/rows.csv?accessType=DOWNLOAD");
+			if (f.exists()) {
+				url = f.toURI().toURL();
+			} else {
+				url = new URL("https://data.cdc.gov/api/views/2ew6-ywp6/rows.csv?accessType=DOWNLOAD");
+			}
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 			System.exit(0);
