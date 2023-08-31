@@ -65,7 +65,7 @@ public class ChartSewage {
 		DeviationRenderer renderer = new DeviationRenderer(true, false);
 		int seriesCount = 0;
 
-		String name = sewage.getPlantId() == 0 ? String.format("Combined (%,d plants)", sewage.getNumPlants())
+		String name = sewage.getPlantId() == 0 ? String.format("Combined sewage (%,d plants)", sewage.getNumPlants())
 				: String.format("Plant %d (%,d pop)", sewage.getPlantId(), sewage.getPopulation());
 
 		TimeSeries series = new TimeSeries(name);
@@ -105,8 +105,9 @@ public class ChartSewage {
 		default:
 			break;
 		}
+		title += "\nSource: CDC/NWSS";
 		fileName += "-" + (log ? "log" : "cart");
-		String verticalAxis = "Millions of copies per mL";
+		String verticalAxis = "Arbitrary sewage units";
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title, "Date", verticalAxis, collection);
 
 		XYPlot plot = chart.getXYPlot();
@@ -207,7 +208,8 @@ public class ChartSewage {
 			break;
 		}
 		fileName += "-log-" + (fit ? "fit" : "voc");
-		String verticalAxis = "Millions of copies per mL";
+		title += "\nSource: CDC/NWSS, Cov-Spectrum";
+		String verticalAxis = "Arbitrary sewage units";
 
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title, "Date", verticalAxis, collection);
 
