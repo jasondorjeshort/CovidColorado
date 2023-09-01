@@ -177,6 +177,7 @@ public class Nwss {
 		build.execute(() -> variants = Voc.create());
 		VariantSet vs = new VariantSet();
 		vs.getCovSpectrumLink();
+		vs.getCovSpectrumLink2();
 		build.complete();
 
 		countrySewage.buildCountry(plantSewage.values());
