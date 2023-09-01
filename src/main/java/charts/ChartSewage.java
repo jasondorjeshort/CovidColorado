@@ -140,7 +140,7 @@ public class ChartSewage {
 		return image;
 	}
 
-	public static BufferedImage buildSewageTimeseriesChart(Sewage sewage, Voc voc, boolean fit) {
+	public static BufferedImage buildSewageTimeseriesChart(Sewage sewage, Voc voc, boolean exact, boolean fit) {
 		TimeSeriesCollection collection = new TimeSeriesCollection();
 
 		DeviationRenderer renderer = new DeviationRenderer(true, false);
@@ -168,7 +168,8 @@ public class ChartSewage {
 				renderer.setSeriesStroke(seriesCount,
 						new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 				seriesCount++;
-			} else {
+			}
+			if (exact) {
 				series = new TimeSeries(variant.replaceAll("nextcladePangoLineage:", ""));
 				sewage.makeTimeSeries(series, voc, variant);
 				collection.addSeries(series);
@@ -207,7 +208,7 @@ public class ChartSewage {
 			title = null;
 			break;
 		}
-		fileName += "-log-" + (fit ? "fit" : "voc");
+		fileName += "-log-voc" + (fit ? "-fit" : "") + (exact ? "-exact" : "");
 		title += "\nSource: CDC/NWSS, Cov-Spectrum";
 		String verticalAxis = "Arbitrary sewage units";
 
@@ -218,7 +219,7 @@ public class ChartSewage {
 
 		LogarithmicAxis yAxis = new LogarithmicAxis(verticalAxis);
 		plot.setRangeAxis(yAxis);
-		yAxis.setUpperBound(1000);
+		// yAxis.setUpperBound(1000);
 		yAxis.setLowerBound(0.1);
 		/*
 		 * double bound = yAxis.getUpperBound() / 10000.0; if

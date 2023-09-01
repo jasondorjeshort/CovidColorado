@@ -171,13 +171,14 @@ public class Nwss {
 	private Voc variants;
 
 	public void read() {
+		VariantSet vs = new VariantSet(VariantSet.APRIL_1, VariantSet.TODAY, VariantSet.APRIL_TO_SEPTEMBER_VARIANTS);
+		vs.getCovSpectrumLink();
+		vs.getCovSpectrumLink2();
+
 		ASync<Chart> build = new ASync<>();
 		build.execute(() -> readSewage());
 		build.execute(() -> readLocations());
 		build.execute(() -> variants = Voc.create());
-		VariantSet vs = new VariantSet("2023-04-01", VariantSet.FLIP_VARIANTS);
-		vs.getCovSpectrumLink();
-		vs.getCovSpectrumLink2();
 		build.complete();
 
 		countrySewage.buildCountry(plantSewage.values());
@@ -202,12 +203,16 @@ public class Nwss {
 		ASync<Chart> build = new ASync<>();
 		build.execute(() -> ChartSewage.createSewage(countrySewage));
 		if (variants != null) {
-			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(countrySewage, variants, true));
-			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(countrySewage, variants, false));
+			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(countrySewage, variants, true, false));
+			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(countrySewage, variants, true, true));
+			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(countrySewage, variants, false, true));
 		}
-		plantSewage.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
-		countySewage.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
-		stateSewage.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
+		// plantSewage.forEach((id, sewage) -> build.execute(() ->
+		// ChartSewage.createSewage(sewage)));
+		// countySewage.forEach((id, sewage) -> build.execute(() ->
+		// ChartSewage.createSewage(sewage)));
+		// stateSewage.forEach((id, sewage) -> build.execute(() ->
+		// ChartSewage.createSewage(sewage)));
 		build.complete();
 		library.OpenImage.open();
 	}
