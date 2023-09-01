@@ -218,13 +218,15 @@ public class ChartSewage {
 
 		LogarithmicAxis yAxis = new LogarithmicAxis(verticalAxis);
 		plot.setRangeAxis(yAxis);
-		double bound = yAxis.getUpperBound() / 10000.0;
-		if (yAxis.getLowerBound() < bound) {
-			yAxis.setLowerBound(bound);
-		}
+		yAxis.setUpperBound(1000);
+		yAxis.setLowerBound(0.1);
+		/*
+		 * double bound = yAxis.getUpperBound() / 10000.0; if
+		 * (yAxis.getLowerBound() < bound) { yAxis.setLowerBound(bound); }
+		 */
 
 		ValueAxis xAxis = plot.getDomainAxis();
-		bound = CalendarUtils.dayToTime(voc.getFirstDay());
+		double bound = CalendarUtils.dayToTime(voc.getFirstDay());
 		if (xAxis.getLowerBound() < bound) {
 			xAxis.setLowerBound(bound);
 		}
