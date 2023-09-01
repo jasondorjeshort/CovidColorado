@@ -169,7 +169,7 @@ public class ChartSewage {
 						new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 				seriesCount++;
 			} else {
-				series = new TimeSeries(variant);
+				series = new TimeSeries(variant.replaceAll("nextcladePangoLineage:", ""));
 				sewage.makeTimeSeries(series, voc, variant);
 				collection.addSeries(series);
 				renderer.setSeriesStroke(seriesCount,
