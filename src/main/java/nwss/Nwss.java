@@ -175,7 +175,7 @@ public class Nwss {
 		build.execute(() -> readSewage());
 		build.execute(() -> readLocations());
 		build.execute(() -> variants = Voc.create());
-		VariantSet vs = new VariantSet();
+		VariantSet vs = new VariantSet("2023-04-01", VariantSet.FLIP_VARIANTS);
 		vs.getCovSpectrumLink();
 		vs.getCovSpectrumLink2();
 		build.complete();

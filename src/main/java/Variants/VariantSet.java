@@ -28,6 +28,10 @@ public class VariantSet {
 			put("bq", "B.1.1.529.5.3.1.1.1.1");
 			put("fk", "B.1.1.529.2.75.3.4.1.1.1.1.17");
 			put("ch", "B.1.1.529.2.75.3.4.1.1");
+			put("hk", "XBB.1.9.2.5.1.1");
+			put("gk", "XBB.1.5.70");
+			put("gw", "XBB.1.19.1");
+			put("dv", "B.1.1.529.2.75.3.4.1.1.1.1.1");
 
 			for (String key : keySet()) {
 				put(key, get(key).toLowerCase());
@@ -35,21 +39,34 @@ public class VariantSet {
 		}
 	};
 
-	private String[] variants = new String[] { "xbb.1.5", "xbb.1.16", "xbb.1.16.6", "eg.5.1", "eg.5.1.1", "xbb.1.16.1",
-			"xbb.1.22", "fl.1.5.1", "gj.1.2", "xbb.2.3", "xbb.1.5.10", "xbb.1.5.72", "fu.1", "xbb.1.16.11", "eg.6.1",
-			"xbb.1.9.1", "eg.5.1.3", "ge.1", "xbb.2.3.2", "eg.5.1.4", "fl.4", "xbb.1.5.49", "xbb.1.42.2", "xbb.1.9.2",
-			"eg.1", "hf.1", "hv.1", "fd.1.1", "fu.2.1", "HH.1", "fu.2", "fe.1.2", "he.1", "eg.5.2", "eg.5.1.6",
-			"xbb.1.16.2", "fl.15", "xbb.1.5.77", "hz.1", "xbb.2.3.8", "fl.2", "bq.1", "xbb.1", "fk.1.1", "ch.1.1" };
-	private String[] variantsFull = new String[variants.length];
-	private String[] variantQueries = new String[variants.length];
-	private String[] variantDisplay = new String[variants.length];
+	public static final String[] MY_VARIANTS = new String[] { "xbb.1.5", "xbb.1.16", "xbb.1.16.6", "eg.5.1", "eg.5.1.1",
+			"xbb.1.16.1", "xbb.1.22", "fl.1.5.1", "gj.1.2", "xbb.2.3", "xbb.1.5.10", "xbb.1.5.72", "fu.1",
+			"xbb.1.16.11", "eg.6.1", "xbb.1.9.1", "eg.5.1.3", "ge.1", "xbb.2.3.2", "eg.5.1.4", "fl.4", "xbb.1.5.49",
+			"xbb.1.42.2", "xbb.1.9.2", "eg.1", "hf.1", "hv.1", "fd.1.1", "fu.2.1", "HH.1", "fu.2", "fe.1.2", "he.1",
+			"eg.5.2", "eg.5.1.6", "xbb.1.16.2", "fl.15", "xbb.1.5.77", "hz.1", "xbb.2.3.8", "fl.2", "bq.1", "xbb.1",
+			"fk.1.1", "ch.1.1" };
+	public static final String[] FLIP_VARIANTS = new String[] { "GK.2", "GK.1", "XBB.1.5.70", "GK.1.3", "GK.1.1",
+			"GK.3", "DV.7.1",  "GK.3.1", "HK.3", "GW.5"
 
-	private String startDay = "2023-04-01";
+	};
+
+	private final String[] variants;
+	private String[] variantsFull;
+	private String[] variantQueries;
+	private String[] variantDisplay;
+
+	private final String startDay;
 	private Calendar endCal = CalendarUtils.timeToCalendar(System.currentTimeMillis());
 	private String endDay = String.format("%d-%02d-%02d", endCal.get(Calendar.YEAR), endCal.get(Calendar.MONTH) + 1,
 			endCal.get(Calendar.DAY_OF_MONTH));
 
-	public VariantSet() {
+	public VariantSet(String startDay, String... variants) {
+		this.startDay = startDay;
+		this.variants = variants;
+		variantsFull = new String[variants.length];
+		variantQueries = new String[variants.length];
+		variantDisplay = new String[variants.length];
+
 		Arrays.sort(variants, (s1, s2) -> s1.compareTo(s2));
 		boolean exit = false;
 		for (int i = 0; i < variants.length; i++) {
