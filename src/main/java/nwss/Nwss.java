@@ -10,6 +10,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
+import Variants.VariantSet;
 import Variants.Voc;
 import charts.Chart;
 import charts.ChartSewage;
@@ -174,6 +175,8 @@ public class Nwss {
 		build.execute(() -> readSewage());
 		build.execute(() -> readLocations());
 		build.execute(() -> variants = Voc.create());
+		VariantSet vs = new VariantSet();
+		vs.getCovSpectrumLink();
 		build.complete();
 
 		countrySewage.buildCountry(plantSewage.values());
