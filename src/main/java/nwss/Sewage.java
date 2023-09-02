@@ -182,10 +182,6 @@ public class Sewage {
 
 		variants.sort((v1, v2) -> -Double.compare(prevalence.get(v1), prevalence.get(v2)));
 
-		for (String last : variants) {
-			System.out.println("CP: " + last + " : " + prevalence.get(last));
-		}
-
 		return prevalence;
 	}
 

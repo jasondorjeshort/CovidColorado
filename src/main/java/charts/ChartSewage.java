@@ -271,7 +271,6 @@ public class ChartSewage {
 		for (String variant : variants) {
 			double prevalence = prev.get(variant);
 			prevalence = Math.log(prevalence) / Math.log(10);
-			System.out.println("Adding " + variant + " as " + prev.get(variant));
 			dataset.addValue(prevalence, variant, "Prevalence");
 		}
 
