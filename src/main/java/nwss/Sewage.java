@@ -265,6 +265,10 @@ public class Sewage {
 		return population;
 	}
 
+	public synchronized double getNormalizer() {
+		return normalizer;
+	}
+
 	public synchronized void setPopulation(int population) {
 		this.population = population;
 	}

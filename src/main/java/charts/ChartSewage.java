@@ -77,7 +77,8 @@ public class ChartSewage {
 		int seriesCount = 0;
 
 		String name = sewage.getPlantId() == 0 ? String.format("Combined sewage (%,d plants)", sewage.getNumPlants())
-				: String.format("Plant %d (%,d pop)", sewage.getPlantId(), sewage.getPopulation());
+				: String.format("Plant %d (%,d pop, %.2f normalizer)", sewage.getPlantId(), sewage.getPopulation(),
+						sewage.getNormalizer());
 
 		TimeSeries series = new TimeSeries(name);
 		sewage.makeTimeSeries(series);
