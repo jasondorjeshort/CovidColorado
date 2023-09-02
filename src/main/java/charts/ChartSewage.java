@@ -1,17 +1,28 @@
 package charts;
 
 import java.awt.BasicStroke;
+import java.awt.Font;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Objects;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.LogarithmicAxis;
 import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.labels.CategoryItemLabelGenerator;
+import org.jfree.chart.labels.ItemLabelAnchor;
+import org.jfree.chart.labels.ItemLabelPosition;
+import org.jfree.chart.labels.StandardCategoryItemLabelGenerator;
+import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.category.CategoryItemRenderer;
 import org.jfree.chart.renderer.xy.DeviationRenderer;
+import org.jfree.chart.ui.TextAnchor;
+import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 
@@ -246,6 +257,55 @@ public class ChartSewage {
 
 		// System.out.println("Created : " + sewage.id + " for " +
 		// series.getItemCount() + " => " + fileName);
+		return image;
+	}
+
+	public static BufferedImage buildSewageCumulativeChart(Sewage sewage, Voc voc) {
+
+		ArrayList<String> variants = voc.getVariants();
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		Map<String, Double> prev = sewage.getCumulativePrevalence(voc, variants);
+
+		for (String variant : variants) {
+			double prevalence = prev.get(variant);
+			prevalence = Math.log(prevalence) / Math.log(10);
+			System.out.println("Adding " + variant + " as " + prev.get(variant));
+			dataset.addValue(prevalence, variant, "Prevalence");
+		}
+
+		JFreeChart chart = ChartFactory.createBarChart("Cumulative prevalence", null, "Combined sewage (powers of 10)",
+				dataset, PlotOrientation.HORIZONTAL, true, true, false);
+
+		// https://stackoverflow.com/questions/7155294/jfreechart-bar-graph-labels
+		/*
+		 * StackedBarRenderer renderer = new StackedBarRenderer(false);
+		 * renderer.setBaseItemLabelGenerator(new
+		 * StandardCategoryItemLabelGenerator());
+		 * renderer.setBaseItemLabelsVisible(true);
+		 * chart.getCategoryPlot().setRenderer(renderer);`
+		 */
+		CategoryItemRenderer renderer = chart.getCategoryPlot().getRenderer();
+		// CategoryItemLabelGenerator labelGenerator =
+		// renderer.getDefaultItemLabelGenerator();
+
+		CategoryItemLabelGenerator generator = new StandardCategoryItemLabelGenerator("{2}",
+				NumberFormat.getInstance());
+		renderer.setDefaultItemLabelGenerator(generator);
+		renderer.setDefaultItemLabelFont(new Font("SansSerif", Font.PLAIN, 12));
+		renderer.setDefaultItemLabelsVisible(true);
+		renderer.setDefaultPositiveItemLabelPosition(
+				new ItemLabelPosition(ItemLabelAnchor.CENTER, TextAnchor.CENTER, TextAnchor.CENTER, -0 / 2));
+
+		BufferedImage image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT);
+
+		String fileName = sewage.id + "-cumulative";
+		Charts.saveBufferedImageAsPNG(SEWAGE_FOLDER, fileName, image);
+		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
+
+		library.OpenImage.openImage(fileName);
+		library.OpenImage.open();
+
 		return image;
 	}
 

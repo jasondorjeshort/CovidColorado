@@ -156,26 +156,65 @@ public class Sewage {
 		return series;
 	}
 
+	public int getFirstDay(Voc voc) {
+		return Math.max(getFirstDay(), voc.getFirstDay());
+	}
+
+	public int getLastDay(Voc voc) {
+		return Math.min(getLastDay(), voc.getLastDay());
+	}
+
+	public synchronized HashMap<String, Double> getCumulativePrevalence(Voc voc, ArrayList<String> variants) {
+		HashMap<String, Double> prevalence = new HashMap<>();
+
+		int vFirstDay = getFirstDay(voc), vLastDay = getLastDay(voc);
+		for (String variant : variants) {
+			double number = 0;
+			for (int day = vFirstDay; day <= vLastDay; day++) {
+				Double prev = getSewageNormalized(day);
+				if (prev == null) {
+					continue;
+				}
+				number += prev * voc.getPrevalence(day, variant);
+			}
+			prevalence.put(variant, number);
+		}
+
+		variants.sort((v1, v2) -> -Double.compare(prevalence.get(v1), prevalence.get(v2)));
+
+		for (String last : variants) {
+			System.out.println("CP: " + last + " : " + prevalence.get(last));
+		}
+
+		return prevalence;
+	}
+
+	public Double getSewageNormalized(int day) {
+		DaySewage entry;
+		double n;
+		synchronized (this) {
+			entry = entries.get(day);
+			n = normalizer;
+		}
+		if (entry == null) {
+			return null;
+		}
+		return entry.getSewage() * n;
+	}
+
 	public synchronized TimeSeries makeRegressionTS(Voc voc, ArrayList<String> variants) {
-		final int fitLastDay = Math.min(getLastDay(), voc.getLastDay());
-		final int fitFirstDay = Math.max(getFirstDay(), voc.getFirstDay());
+		final int fitFirstDay = getFirstDay(voc);
+		final int fitLastDay = getLastDay(voc);
 		HashMap<String, SimpleRegression> fits = new HashMap<>();
 		HashMap<String, Double> finals = new HashMap<>();
 		int tsLastDay = getLastDay() + 28;
 		for (String variant : variants) {
 			final SimpleRegression fit = new SimpleRegression();
 			for (int day = fitFirstDay; day <= fitLastDay; day++) {
-				DaySewage entry;
-				synchronized (this) {
-					entry = entries.get(day);
-				}
-				if (entry == null) {
+				Double number = getSewageNormalized(day);
+				if (number == null) {
 					continue;
 				}
-
-				double number = entry.getSewage();
-				number *= normalizer;
-
 				number *= voc.getPrevalence(day, variant);
 				if (number <= 0) {
 					continue;

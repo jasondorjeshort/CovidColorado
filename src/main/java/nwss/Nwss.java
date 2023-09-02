@@ -206,6 +206,7 @@ public class Nwss {
 			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(countrySewage, variants, true, false));
 			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(countrySewage, variants, true, true));
 			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(countrySewage, variants, false, true));
+			build.execute(() -> ChartSewage.buildSewageCumulativeChart(countrySewage, variants));
 		}
 		// plantSewage.forEach((id, sewage) -> build.execute(() ->
 		// ChartSewage.createSewage(sewage)));
