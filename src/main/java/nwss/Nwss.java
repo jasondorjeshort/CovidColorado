@@ -63,10 +63,17 @@ public class Nwss {
 	}
 
 	double scaleFactor = 1E6;
+	private static long HOUR = 60 * 60 * 1000;
 
 	public void readSewage() {
 		URL url = null;
 		File f = new File(CSV_NAME);
+
+		if (f.exists() && System.currentTimeMillis() - f.lastModified() > 16 * HOUR) {
+			System.out.println(
+					"Deleting sewage file, age " + (System.currentTimeMillis() - f.lastModified()) / HOUR + "h.");
+			f.delete();
+		}
 
 		try {
 			if (f.exists()) {
@@ -121,8 +128,13 @@ public class Nwss {
 	}
 
 	public void readLocations() {
-
 		File f = new File(CSV2_NAME);
+
+		if (f.exists() && System.currentTimeMillis() - f.lastModified() > 168 * HOUR) {
+			System.out.println(
+					"Deleting meta file, age " + (System.currentTimeMillis() - f.lastModified()) / HOUR + "h.");
+			f.delete();
+		}
 		URL url = null;
 		try {
 			if (f.exists()) {
