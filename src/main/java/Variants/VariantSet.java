@@ -35,6 +35,7 @@ public class VariantSet {
 			put("fy", "xbb.1.22.1");
 			put("gy", "XBB.1.16.2");
 			put("eu", "XBB.1.5.26");
+			put("ba", "b.1.1.529");
 
 			for (String key : keySet()) {
 				put(key, get(key).toLowerCase());
@@ -65,8 +66,13 @@ public class VariantSet {
 			"xbb.1.5.77", "fd.4", "gj.1.2", "he.1", "eg.4", "eg.5.1", "xbb.1.5.28", "xbb.1.5.69", "xbb.1.5.100",
 			"xbb.1.5.67" };
 
+	// https://cov-spectrum.org/explore/United%20States/AllSamples/AllTimes/variants?variantQuery=nextcladePangoLineage%3Ab.1*%26%21nextcladePangoLineage%3Ab.1.617.2*%26%21nextcladePangoLineage%3Aba*%26%21nextcladePangoLineage%3Ab.1.1.7*%26%21nextcladePangoLineage%3Ab.1.427*%26%21nextcladePangoLineage%3Ab.1.429*%26%21nextcladePangoLineage%3Ab.1.351*%26%21nextcladePangoLineage%3Ap.1*%26%21nextcladePangoLineage%3Ab.1.525*%26%21nextcladePangoLineage%3Ab.1.526*%26%21nextcladePangoLineage%3Ab.1.617.1*%26%21nextcladePangoLineage%3Ap.2*&variantQuery1=nextcladePangoLineage%3Ab.1.617.2*&variantQuery2=nextcladePangoLineage%3Aba.1*&variantQuery3=nextcladePangoLineage%3Aba.2*%26%21nextcladePangoLineage%3Aba.2.12.1*%26%21nextcladePangoLineage%3Aba.2.75*%26%21nextcladePangoLineage%3Aba.2.86*&variantQuery4=nextcladePangoLineage%3Aba.2.75*&variantQuery5=%28nextcladePangoLineage%3Aba.4*%7CnextcladePangoLineage%3Aba.5*%29%26%21S%3A346%26%21nextcladePangoLineage%3Abq.1*&variantQuery6=nextcladePangoLineage%3Abq.1*&variantQuery7=nextcladePangoLineage%3Axbb*%26%21S%3A456&variantQuery8=%28nextcladePangoLineage%3Aba.4*%7CnextcladePangoLineage%3Aba.5*%29%26S%3A346%26%21nextcladePangoLineage%3Abq.1*&variantQuery9=nextcladePangoLineage%3Axbb*%26S%3A456&variantQuery10=nextcladePangoLineage%3Ab.1.1.7*%7CnextcladePangoLineage%3Ab.1.351*%7CnextcladePangoLineage%3Ap.1*%7CnextcladePangoLineage%3Ab.1.525*%7CnextcladePangoLineage%3Ab.1.526*%7CnextcladePangoLineage%3Ab.1.617.1*%7CnextcladePangoLineage%3Ap.2*&variantQuery11=nextcladePangoLineage%3Ab.1.427*%7CnextcladePangoLineage%3Ab.1.429*&variantQuery12=nextcladePangoLineage%3Aba.2.12.1*&analysisMode=CompareEquals&
+	public static final String[] ALL_TIME_VARIANTS = { "b.1", "b.1.617.2", "ba.1", "ba.2", "ba.2.75", "xbb", "ba.5",
+			"ba.4", "bq.1" };
+
 	public static final String APRIL_1 = "2023-04-01";
 	public static final String JUNE_15 = "2023-06-15";
+	public static final String PANDEMIC_START = "2020-01-06";
 
 	private final String[] variants;
 	private String[] variantsFull;
@@ -105,7 +111,7 @@ public class VariantSet {
 				}
 			}
 
-			if (!variantsFull[i].startsWith("xbb.") & !variantsFull[i].startsWith("b.")) {
+			if (!variantsFull[i].startsWith("xbb") & !variantsFull[i].startsWith("b.")) {
 				System.out.println("Missing: " + variantsFull[i]);
 				exit = true;
 			}
