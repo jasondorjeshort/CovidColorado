@@ -36,6 +36,7 @@ public class VariantSet {
 			put("gy", "XBB.1.16.2");
 			put("eu", "XBB.1.5.26");
 			put("ba", "b.1.1.529");
+			put("gn", "XBB.1.5.73");
 
 			for (String key : keySet()) {
 				put(key, get(key).toLowerCase());
@@ -54,7 +55,7 @@ public class VariantSet {
 			"xbb.1.5.72", "fl.4", "eg.5.1.3", "xbb.1.5.49", "eg.1", "xbb.1.16.11", "xbb.2.3.2", "ge.1", "eg.5.1.4",
 			"xbb.1.42.2", "he.1", "fd.1.1", "fu.2", "hf.1", "eg.5.2", "fu.2.1", "xbb.1.22", "fl.2", "eg.6.1",
 			"xbb.1.9.2", "hh.1", "fe.1.2", "xbb.1.16.2", "hz.1", "fl.15", "eg.5.1.6", "xbb.2.3.8", "xbb.1.5.77", "gk.2",
-			"gy.5", "fk.1.1", "fy.5", "eg.5.2.1", "xbb.1.5.28", "xbb.2.3.3" };
+			"gy.5", "fk.1.1", "fy.5", "eg.5.2.1", "xbb.1.5.28", "xbb.2.3.3", "gn.1", "xbb.1.5.37", "xbb.1.16.15" };
 	public static final String[] FLIP_VARIANTS = new String[] { "GK.2", "GK.1", "XBB.1.5.70", "GK.1.3", "GK.1.1",
 			"GK.3", "DV.7.1", "GK.3.1", "HK.3", "GW.5" };
 
