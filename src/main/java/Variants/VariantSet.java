@@ -54,8 +54,8 @@ public class VariantSet {
 			"xbb.1.16.1", "eg.5.1", "xbb.1.16.6", "xbb.2.3", "gj.1.2", "xbb.1.5.10", "fl.1.5.1", "xbb.1.9.1", "fu.1",
 			"xbb.1.5.72", "fl.4", "eg.5.1.3", "xbb.1.5.49", "eg.1", "xbb.1.16.11", "xbb.2.3.2", "ge.1", "eg.5.1.4",
 			"xbb.1.42.2", "he.1", "fd.1.1", "fu.2", "hf.1", "eg.5.2", "fu.2.1", "xbb.1.22", "fl.2", "eg.6.1",
-			"xbb.1.9.2", "hh.1", "fe.1.2", "xbb.1.16.2", "hz.1", "fl.15", "eg.5.1.6", "xbb.2.3.8", "xbb.1.5.77", "gk.2",
-			"gy.5", "fk.1.1", "fy.5", "eg.5.2.1", "xbb.1.5.28", "xbb.2.3.3", "gn.1", "xbb.1.5.37", "xbb.1.16.15" };
+			"xbb.1.9.2", "hh.1", "fe.1", "xbb.1.16.2", "hz.1", "fl.15", "eg.5.1.6", "xbb.2.3.8", "xbb.1.5.77", "gk.2",
+			"gy.5", "fy.5", "eg.5.2.1", "xbb.1.5.28", "xbb.2.3.3", "gn.1", "xbb.1.16.15", "xbb.1.41", "ch.1.1" };
 	public static final String[] FLIP_VARIANTS = new String[] { "GK.2", "GK.1", "XBB.1.5.70", "GK.1.3", "GK.1.1",
 			"GK.3", "DV.7.1", "GK.3.1", "HK.3", "GW.5" };
 
@@ -157,7 +157,8 @@ public class VariantSet {
 		sb.append("/variants?analysisMode=CompareEquals&");
 
 		for (int i = 0; i < variants.length; i++) {
-			System.out.println(variants[i] + " => " + variantsFull[i] + " => " + variantQueries[i]);
+			// System.out.println(variants[i] + " => " + variantsFull[i] + " =>
+			// " + variantQueries[i]);
 			sb.append("variantQuery");
 			if (i > 0) {
 				sb.append(String.valueOf(i));
@@ -172,7 +173,7 @@ public class VariantSet {
 		return sb.toString();
 	}
 
-	public String getCovSpectrumLink2() {
+	public String getCovSpectrumLink2(boolean all) {
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < variants.length; i++) {
 			if (sb.length() > 0) {
@@ -180,6 +181,9 @@ public class VariantSet {
 			}
 			sb.append("!nextcladePangoLineage:");
 			sb.append(variants[i]);
+			if (all) {
+				sb.append("*");
+			}
 		}
 
 		System.out.println(sb.toString());
