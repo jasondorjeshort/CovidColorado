@@ -110,7 +110,7 @@ public class Nwss {
 	double scaleFactor = 1E6;
 
 	public void readSewage() {
-		File f = ensureFileUpdated(CSV1, URL1, 16);
+		File f = ensureFileUpdated(CSV1, URL1, 4);
 
 		double maxNumber = 0;
 		try (CSVParser csv = CSVParser.parse(f, CHARSET, CSVFormat.DEFAULT)) {
@@ -154,7 +154,7 @@ public class Nwss {
 	}
 
 	public void readLocations() {
-		File f = ensureFileUpdated(CSV2, URL2, 168);
+		File f = ensureFileUpdated(CSV2, URL2, 24);
 
 		try (CSVParser csv = CSVParser.parse(f, CHARSET, CSVFormat.DEFAULT)) {
 			int records = 0;
