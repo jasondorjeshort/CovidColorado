@@ -18,7 +18,6 @@ import org.jfree.chart.ui.TextAnchor;
 
 import com.madgag.gif.fmsware.AnimatedGifEncoder;
 
-import colorado.ColoradoStats;
 import covid.CalendarUtils;
 import covid.DailyTracker;
 
