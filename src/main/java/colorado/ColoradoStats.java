@@ -12,6 +12,7 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
 import covid.CalendarUtils;
+import covid.DailyTracker;
 import library.ASync;
 
 /**
@@ -30,7 +31,12 @@ import library.ASync;
  * 
  * @author jdorje@gmail.com
  */
-public class ColoradoStats {
+public class ColoradoStats extends DailyTracker {
+
+	/*
+	 * DailyTracker tracks days of data -> first day is the first available CSV,
+	 * last day is the last one.
+	 */
 
 	private static final int firstCSV = CalendarUtils.dateToDay("3-17-2020");
 
@@ -63,8 +69,6 @@ public class ColoradoStats {
 	 * 
 	 * 
 	 */
-
-	int lastDay;
 
 	private final IncompleteNumbers[] incompleteNumbers = new IncompleteNumbers[NumbersType.values().length
 			* NumbersTiming.values().length];
@@ -192,10 +196,6 @@ public class ColoradoStats {
 		firstDayOfCumulative = Math.min(firstDayOfCumulative, day);
 	}
 
-	public int getLastDay() {
-		return lastDay;
-	}
-
 	private static void write(String lead, CSVRecord line) {
 		new Exception("Bad line: " + lead).printStackTrace();
 		if (lead != null) {
@@ -232,6 +232,7 @@ public class ColoradoStats {
 	}
 
 	public void outputDailyStats() {
+		int lastDay = getLastDay();
 		int t = lastDay, y = lastDay - 1, w = lastDay - 7;
 		String today = CalendarUtils.dayToDate(lastDay);
 		String lastWeek = CalendarUtils.dayToDate(w);
@@ -293,9 +294,7 @@ public class ColoradoStats {
 			return false;
 		}
 		try (CSVParser csv = CSVParser.parse(f, charset, CSVFormat.DEFAULT)) {
-			synchronized (this) {
-				lastDay = Math.max(dayOfData, lastDay);
-			}
+			includeDay(dayOfData);
 
 			for (CSVRecord line : csv) {
 				int number;
@@ -515,9 +514,7 @@ public class ColoradoStats {
 			return false;
 		}
 		try (CSVParser csv = CSVParser.parse(f, charset, CSVFormat.DEFAULT)) {
-			synchronized (this) {
-				lastDay = Math.max(dayOfData, lastDay);
-			}
+			includeDay(dayOfData);
 
 			for (CSVRecord line : csv) {
 				int number;

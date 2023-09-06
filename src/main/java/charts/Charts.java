@@ -20,6 +20,7 @@ import com.madgag.gif.fmsware.AnimatedGifEncoder;
 
 import colorado.ColoradoStats;
 import covid.CalendarUtils;
+import covid.DailyTracker;
 
 /**
  * This program is free software: you can redistribute it and/or modify it under
@@ -96,7 +97,7 @@ public class Charts {
 		return true;
 	}
 
-	public static void setDelay(ColoradoStats stats, int dayOfData, AnimatedGifEncoder gif) {
+	public static void setDelay(DailyTracker stats, int dayOfData, AnimatedGifEncoder gif) {
 		if (dayOfData == stats.getLastDay()) {
 			gif.setDelay(1000);
 		} else if (dayOfData + 10 >= stats.getLastDay()) {
