@@ -6,6 +6,7 @@ import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.ui.TextAnchor;
 
+import charts.Charts;
 import covid.CalendarUtils;
 
 /**

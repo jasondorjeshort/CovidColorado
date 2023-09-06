@@ -1,4 +1,4 @@
-package colorado;
+package charts;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -18,6 +18,7 @@ import org.jfree.chart.ui.TextAnchor;
 
 import com.madgag.gif.fmsware.AnimatedGifEncoder;
 
+import colorado.ColoradoStats;
 import covid.CalendarUtils;
 
 /**

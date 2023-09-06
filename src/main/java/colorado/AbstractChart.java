@@ -9,6 +9,8 @@ import org.jfree.chart.JFreeChart;
 
 import com.madgag.gif.fmsware.AnimatedGifEncoder;
 
+import charts.Chart;
+import charts.Charts;
 import covid.CalendarUtils;
 import library.ASync;
 
