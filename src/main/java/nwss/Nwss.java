@@ -12,13 +12,13 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
-import Variants.VariantSet;
-import Variants.Voc;
 import charts.Chart;
 import charts.ChartSewage;
 import covid.CalendarUtils;
 import library.ASync;
 import nwss.Sewage.Type;
+import variants.VariantSet;
+import variants.Voc;
 
 public class Nwss {
 

@@ -27,10 +27,10 @@ import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 
-import Variants.Voc;
 import covid.CalendarUtils;
 import nwss.Sewage;
 import nwss.Sewage.Type;
+import variants.Voc;
 
 /**
  * This program is free software: you can redistribute it and/or modify it under
