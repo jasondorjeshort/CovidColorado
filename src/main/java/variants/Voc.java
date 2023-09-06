@@ -11,8 +11,9 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
 import covid.CalendarUtils;
+import covid.DailyTracker;
 
-public class Voc {
+public class Voc extends DailyTracker {
 
 	private static final String CSV_NAME = "C:\\Users\\jdorj\\Downloads\\" + "VariantComparisonTimeDistributionPlot"
 			+ ".csv";
@@ -68,21 +69,6 @@ public class Voc {
 	private final HashMap<Integer, DayVariants> entries = new HashMap<>();
 	private HashMap<String, Double> variantTot = new HashMap<>();
 	private final ArrayList<String> variantList = new ArrayList<>();
-
-	private int firstDay = Integer.MAX_VALUE, lastDay = Integer.MIN_VALUE;
-
-	private synchronized void includeDay(int day) {
-		firstDay = Math.min(day, firstDay);
-		lastDay = Math.max(day, lastDay);
-	}
-
-	public synchronized int getFirstDay() {
-		return firstDay;
-	}
-
-	public synchronized int getLastDay() {
-		return lastDay;
-	}
 
 	public Voc(File f) {
 		HashSet<String> variantSet = new HashSet<>();

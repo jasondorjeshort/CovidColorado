@@ -8,14 +8,13 @@ import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.jfree.data.time.TimeSeries;
 
 import covid.CalendarUtils;
+import covid.DailyTracker;
 import variants.Voc;
 
-public class Sewage {
+public class Sewage extends DailyTracker {
 
 	private int numPlants = 0;
 	private final HashMap<Integer, DaySewage> entries = new HashMap<>();
-
-	private int firstDay = Integer.MAX_VALUE, lastDay = Integer.MIN_VALUE;
 
 	public enum Type {
 		PLANT,
@@ -48,19 +47,6 @@ public class Sewage {
 
 	public synchronized String getSmoothing() {
 		return smoothing;
-	}
-
-	public synchronized int getFirstDay() {
-		return firstDay;
-	}
-
-	public synchronized int getLastDay() {
-		return lastDay;
-	}
-
-	private synchronized void includeDay(int day) {
-		firstDay = Math.min(day, firstDay);
-		lastDay = Math.max(day, lastDay);
 	}
 
 	public synchronized void addEntry(int day, double value) {
@@ -326,6 +312,7 @@ public class Sewage {
 	}
 
 	public synchronized int getNextZero(int startDay) {
+		int lastDay = getLastDay();
 		for (int day = startDay; day <= lastDay; day++) {
 			DaySewage ds = entries.get(day);
 			if (ds == null || ds.getSewage() <= 0) {
@@ -390,6 +377,7 @@ public class Sewage {
 		oldNormalizer = normalizer;
 
 		double ours = 0, base = 0;
+		int firstDay = getFirstDay(), lastDay = getLastDay();
 		for (int day = firstDay; day < lastDay; day++) {
 			DaySewage ds1, ds2;
 
@@ -457,6 +445,7 @@ public class Sewage {
 	private void normalizeFull(Collection<Sewage> plants) {
 		clear();
 		plants.forEach(p -> includeSewage(p, 1.0));
+		int firstDay = getFirstDay(), lastDay = getLastDay();
 		double area = getTotalSewage(firstDay, lastDay);
 
 		for (int i = 0; i < 2000; i++) {
@@ -502,6 +491,7 @@ public class Sewage {
 		clear();
 		plants.forEach(p -> includeSewage(p, 1.0));
 
+		int firstDay = getFirstDay();
 		while (entries.get(firstDay).getSewage() > entries.get(firstDay + 1).getSewage()) {
 			firstDay++;
 		}
