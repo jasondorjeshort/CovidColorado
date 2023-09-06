@@ -1,4 +1,4 @@
-package charts;
+package colorado;
 
 import java.awt.BasicStroke;
 import java.util.Set;
@@ -14,12 +14,6 @@ import org.jfree.data.xy.YIntervalSeries;
 import org.jfree.data.xy.YIntervalSeriesCollection;
 
 import covid.CalendarUtils;
-import covid.ColoradoStats;
-import covid.Event;
-import covid.IncompleteNumbers;
-import covid.NumbersTiming;
-import covid.Rate;
-import covid.Smoothing;
 
 /**
  * This program is free software: you can redistribute it and/or modify it under

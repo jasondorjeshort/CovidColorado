@@ -27,6 +27,7 @@ import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 
+import colorado.Charts;
 import covid.CalendarUtils;
 import nwss.Sewage;
 import nwss.Sewage.Type;

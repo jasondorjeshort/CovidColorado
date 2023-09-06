@@ -1,4 +1,4 @@
-package charts;
+package colorado;
 
 public enum Flag {
 	LOGARITHMIC,

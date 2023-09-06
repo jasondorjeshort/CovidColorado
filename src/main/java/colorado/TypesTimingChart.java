@@ -1,11 +1,6 @@
-package charts;
+package colorado;
 
 import java.util.Set;
-
-import covid.ColoradoStats;
-import covid.IncompleteNumbers;
-import covid.NumbersTiming;
-import covid.NumbersType;
 
 public abstract class TypesTimingChart extends AbstractChart {
 

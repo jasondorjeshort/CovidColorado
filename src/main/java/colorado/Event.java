@@ -1,4 +1,4 @@
-package covid;
+package colorado;
 
 import java.awt.Color;
 
@@ -6,7 +6,7 @@ import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.ui.TextAnchor;
 
-import charts.Charts;
+import covid.CalendarUtils;
 
 /**
  * This program is free software: you can redistribute it and/or modify it under

@@ -1,4 +1,4 @@
-package charts;
+package colorado;
 
 import java.awt.BasicStroke;
 import java.awt.image.BufferedImage;
@@ -13,10 +13,6 @@ import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 
 import covid.CalendarUtils;
-import covid.ColoradoStats;
-import covid.CountyStats;
-import covid.NumbersType;
-import covid.Smoothing;
 
 /**
  * This program is free software: you can redistribute it and/or modify it under

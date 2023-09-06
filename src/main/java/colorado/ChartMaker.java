@@ -1,12 +1,8 @@
-package charts;
+package colorado;
 
 import java.io.File;
 import java.util.Set;
 
-import covid.ColoradoStats;
-import covid.NumbersTiming;
-import covid.NumbersType;
-import covid.Rate;
 import library.ASync;
 
 /**

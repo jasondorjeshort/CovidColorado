@@ -1,4 +1,4 @@
-package charts;
+package colorado;
 
 import java.io.File;
 import java.util.HashSet;
@@ -10,7 +10,6 @@ import org.jfree.chart.JFreeChart;
 import com.madgag.gif.fmsware.AnimatedGifEncoder;
 
 import covid.CalendarUtils;
-import covid.ColoradoStats;
 import library.ASync;
 
 /**

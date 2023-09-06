@@ -1,9 +1,7 @@
-package main;
+package colorado;
 
 import java.util.concurrent.TimeUnit;
 
-import charts.ChartMaker;
-import covid.ColoradoStats;
 import library.MyExecutor;
 import nwss.Nwss;
 

@@ -1,4 +1,4 @@
-package charts;
+package colorado;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedOutputStream;

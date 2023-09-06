@@ -1,4 +1,4 @@
-package covid;
+package colorado;
 
 import java.awt.Color;
 import java.util.HashSet;
