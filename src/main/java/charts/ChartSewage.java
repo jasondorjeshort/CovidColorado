@@ -1,6 +1,7 @@
 package charts;
 
 import java.awt.BasicStroke;
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -28,7 +29,6 @@ import org.jfree.data.time.TimeSeriesCollection;
 
 import Variants.Voc;
 import covid.CalendarUtils;
-import covid.NumbersType;
 import nwss.Sewage;
 import nwss.Sewage.Type;
 
@@ -70,23 +70,37 @@ public class ChartSewage {
 		new File(COUNTIES_FOLDER + "\\" + state).mkdir();
 	}
 
-	public static BufferedImage buildSewageTimeseriesChart(Sewage sewage, boolean log) {
+	public static int lastInflection = CalendarUtils.dateToDay("6-16-2023");
+
+	public static BufferedImage buildSewageTimeseriesChart(Sewage sewage, boolean log, boolean fit) {
+
+		if (sewage.getLastDay() < sewage.getFirstDay()) {
+			System.out.println("Zero data for " + sewage.id);
+			return null;
+		}
+
 		TimeSeriesCollection collection = new TimeSeriesCollection();
 
 		DeviationRenderer renderer = new DeviationRenderer(true, false);
 		int seriesCount = 0;
 
-		String name = sewage.getPlantId() == 0 ? String.format("Combined sewage (%,d plants)", sewage.getNumPlants())
-				: String.format("Plant %d (%,d pop, %.2f normalizer)", sewage.getPlantId(), sewage.getPopulation(),
-						sewage.getNormalizer());
-
-		TimeSeries series = new TimeSeries(name);
-		sewage.makeTimeSeries(series);
-		collection.addSeries(series);
+		collection.addSeries(sewage.makeTimeSeries(null));
 		renderer.setSeriesStroke(seriesCount, new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-		renderer.setSeriesPaint(seriesCount, NumbersType.CASES.color);
-		renderer.setSeriesFillPaint(seriesCount, NumbersType.CASES.color.darker());
+		renderer.setSeriesPaint(seriesCount, Color.BLUE);
+		renderer.setSeriesFillPaint(seriesCount, Color.BLUE.darker());
 		seriesCount++;
+
+		if (fit) {
+			TimeSeries series2 = sewage.makeFitSeries(lastInflection);
+			if (series2 != null) {
+				collection.addSeries(series2);
+				renderer.setSeriesStroke(seriesCount,
+						new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+				renderer.setSeriesPaint(seriesCount, Color.RED);
+				renderer.setSeriesFillPaint(seriesCount, Color.RED.darker());
+				seriesCount++;
+			}
+		}
 
 		// dataset.addSeries("Cases", series);
 
@@ -167,8 +181,7 @@ public class ChartSewage {
 			seriesCount++;
 		}
 
-		series = new TimeSeries(fit ? "Actual" : "Sewage");
-		sewage.makeTimeSeries(series);
+		series = sewage.makeTimeSeries(fit ? "Actual" : "Sewage");
 		collection.addSeries(series);
 		renderer.setSeriesStroke(seriesCount, new BasicStroke(4.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		seriesCount++;
@@ -289,13 +302,15 @@ public class ChartSewage {
 		// CategoryItemLabelGenerator labelGenerator =
 		// renderer.getDefaultItemLabelGenerator();
 
-		CategoryItemLabelGenerator generator = new StandardCategoryItemLabelGenerator("{2}",
-				NumberFormat.getInstance());
-		renderer.setDefaultItemLabelGenerator(generator);
-		renderer.setDefaultItemLabelFont(new Font("SansSerif", Font.PLAIN, 12));
-		renderer.setDefaultItemLabelsVisible(true);
-		renderer.setDefaultPositiveItemLabelPosition(
-				new ItemLabelPosition(ItemLabelAnchor.CENTER, TextAnchor.CENTER, TextAnchor.CENTER, -0 / 2));
+		if (false) {
+			CategoryItemLabelGenerator generator = new StandardCategoryItemLabelGenerator("{2}",
+					NumberFormat.getInstance());
+			renderer.setDefaultItemLabelGenerator(generator);
+			renderer.setDefaultItemLabelFont(new Font("SansSerif", Font.PLAIN, 12));
+			renderer.setDefaultItemLabelsVisible(true);
+			renderer.setDefaultPositiveItemLabelPosition(
+					new ItemLabelPosition(ItemLabelAnchor.CENTER, TextAnchor.CENTER, TextAnchor.CENTER, -0 / 2));
+		}
 
 		BufferedImage image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT);
 
@@ -311,7 +326,7 @@ public class ChartSewage {
 
 	public static void createSewage(Sewage sewage) {
 		// buildSewageTimeseriesChart(sewage, false);
-		buildSewageTimeseriesChart(sewage, true);
+		buildSewageTimeseriesChart(sewage, true, true);
 	}
 
 }

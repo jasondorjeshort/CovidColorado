@@ -69,7 +69,13 @@ public class Sewage {
 		includeDay(day);
 	}
 
-	public synchronized void makeTimeSeries(TimeSeries series) {
+	public synchronized TimeSeries makeTimeSeries(String name) {
+		if (name == null) {
+			name = getPlantId() == 0 ? String.format("Combined sewage (%,d plants)", getNumPlants())
+					: String.format("Plant %d (%,d pop, %.2f normalizer)", getPlantId(), getPopulation(),
+							getNormalizer());
+		}
+		TimeSeries series = new TimeSeries(name);
 		Integer popo = getPopulation();
 		for (int day = getFirstDay(); day <= getLastDay(); day++) {
 			DaySewage entry;
@@ -92,6 +98,42 @@ public class Sewage {
 			}
 			series.add(CalendarUtils.dayToDay(day), number);
 		}
+		return series;
+	}
+
+	public synchronized TimeSeries makeFitSeries(int fFirstDay) {
+		final SimpleRegression fit = new SimpleRegression();
+		fFirstDay = Math.max(fFirstDay, getFirstDay());
+		int fLastDay = getLastDay();
+		if (fFirstDay >= fLastDay) {
+			return null;
+		}
+		for (int day = fFirstDay; day <= fLastDay; day++) {
+			DaySewage entry;
+			synchronized (this) {
+				entry = entries.get(day);
+			}
+			if (entry == null) {
+				continue;
+			}
+
+			double number = entry.getSewage();
+			number *= normalizer;
+			fit.addData(day, Math.log(number));
+		}
+
+		TimeSeries series = new TimeSeries(
+				String.format("%s (%+.0f%%/week)", "Fit", 100.0 * (Math.exp(7.0 * fit.getSlope()) - 1)));
+		try {
+			series.add(CalendarUtils.dayToDay(fFirstDay), Math.exp(fit.predict(fFirstDay)));
+			series.add(CalendarUtils.dayToDay(fLastDay), Math.exp(fit.predict(fLastDay)));
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println("First: " + fFirstDay);
+			System.out.println("Last: " + fLastDay);
+			System.out.println("ID: " + id);
+		}
+		return series;
 	}
 
 	public synchronized void makeTimeSeries(TimeSeries series, Voc voc, String variant) {
