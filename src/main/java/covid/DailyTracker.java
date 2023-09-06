@@ -3,17 +3,24 @@ package covid;
 public class DailyTracker {
 
 	private int firstDay = Integer.MAX_VALUE, lastDay = Integer.MIN_VALUE;
+	private final Object lock = new Object();
 
-	public synchronized int getFirstDay() {
-		return firstDay;
+	public int getFirstDay() {
+		synchronized (lock) {
+			return firstDay;
+		}
 	}
 
-	public synchronized int getLastDay() {
-		return lastDay;
+	public int getLastDay() {
+		synchronized (lock) {
+			return lastDay;
+		}
 	}
 
-	public synchronized void includeDay(int day) {
-		firstDay = Math.min(day, firstDay);
-		lastDay = Math.max(day, lastDay);
+	public void includeDay(int day) {
+		synchronized (lock) {
+			firstDay = Math.min(day, firstDay);
+			lastDay = Math.max(day, lastDay);
+		}
 	}
 }
