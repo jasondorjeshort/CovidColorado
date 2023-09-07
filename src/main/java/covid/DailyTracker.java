@@ -11,6 +11,12 @@ public class DailyTracker {
 		}
 	}
 
+	public void bumpFirstDay() {
+		synchronized (lock) {
+			firstDay++;
+		}
+	}
+
 	public int getLastDay() {
 		synchronized (lock) {
 			return lastDay;
@@ -21,6 +27,18 @@ public class DailyTracker {
 		synchronized (lock) {
 			firstDay = Math.min(day, firstDay);
 			lastDay = Math.max(day, lastDay);
+		}
+	}
+
+	public boolean hasDays() {
+		synchronized (lock) {
+			return lastDay >= firstDay;
+		}
+	}
+
+	public int numDays() {
+		synchronized (lock) {
+			return Math.max(lastDay - firstDay + 1, 0);
 		}
 	}
 }

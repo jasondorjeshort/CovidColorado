@@ -1,7 +1,6 @@
-package nwss;
+package sewage;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 
 import org.apache.commons.math3.stat.regression.SimpleRegression;
@@ -9,57 +8,28 @@ import org.jfree.data.time.TimeSeries;
 
 import covid.CalendarUtils;
 import covid.DailyTracker;
+import nwss.DaySewage;
 import variants.Voc;
 
-public class Sewage extends DailyTracker {
-
-	private int numPlants = 0;
-	private final HashMap<Integer, DaySewage> entries = new HashMap<>();
-
-	public enum Type {
-		PLANT,
-		COUNTY,
-		STATE,
-		COUNTRY;
-	}
-
-	public final Type type;
-	public final String id;
-	private double normalizer = 1, oldNormalizer = 1;
-	private String smoothing;
-	private String state, county;
+public abstract class Abstract extends DailyTracker {
 
 	/*
 	 * If population is included it applies to the entire day set. If null then
 	 * each day set should have its own.
 	 */
 	private Integer population;
-	public int plantId;
 
-	public Sewage(Type type, String plantName) {
-		this.type = type;
-		this.id = plantName;
-	}
+	private final HashMap<Integer, DaySewage> entries = new HashMap<>();
 
-	public synchronized void setSmoothing(String smoothing) {
-		this.smoothing = smoothing;
-	}
+	public abstract String getTSName();
 
-	public synchronized String getSmoothing() {
-		return smoothing;
-	}
+	public abstract String getChartFilename();
 
-	public synchronized void addEntry(int day, double value) {
-		DaySewage entry = new DaySewage(value);
-		entries.put(day, entry);
-		includeDay(day);
-	}
+	public abstract String getTitleLine();
 
 	public synchronized TimeSeries makeTimeSeries(String name) {
 		if (name == null) {
-			name = getPlantId() == 0 ? String.format("Combined sewage (%,d plants)", getNumPlants())
-					: String.format("Plant %d (%,d pop, %.2f normalizer)", getPlantId(), getPopulation(),
-							getNormalizer());
+			name = getTSName();
 		}
 		TimeSeries series = new TimeSeries(name);
 		Integer popo = getPopulation();
@@ -78,13 +48,18 @@ public class Sewage extends DailyTracker {
 			}
 
 			double number = entry.getSewage();
-			number *= normalizer;
+			number *= getNormalizer();
 			if (number <= 0) {
 				number = 1E-6;
 			}
 			series.add(CalendarUtils.dayToDay(day), number);
 		}
 		return series;
+	}
+
+	@SuppressWarnings("static-method")
+	public double getNormalizer() {
+		return 1.0;
 	}
 
 	public synchronized TimeSeries makeFitSeries(int fFirstDay) {
@@ -104,7 +79,7 @@ public class Sewage extends DailyTracker {
 			}
 
 			double number = entry.getSewage();
-			number *= normalizer;
+			number *= getNormalizer();
 			fit.addData(day, Math.log(number));
 		}
 
@@ -117,7 +92,6 @@ public class Sewage extends DailyTracker {
 			e.printStackTrace();
 			System.out.println("First: " + fFirstDay);
 			System.out.println("Last: " + fLastDay);
-			System.out.println("ID: " + id);
 		}
 		return series;
 	}
@@ -136,7 +110,7 @@ public class Sewage extends DailyTracker {
 			Double pop = entry.getPop();
 
 			double number = entry.getSewage();
-			number *= normalizer;
+			number *= getNormalizer();
 			if (number <= 0) {
 				number = 1E-6;
 			}
@@ -164,7 +138,7 @@ public class Sewage extends DailyTracker {
 			}
 
 			double number = entry.getSewage();
-			number *= normalizer;
+			number *= getNormalizer();
 
 			number *= voc.getPrevalence(day, variant);
 			if (number <= 0) {
@@ -218,12 +192,38 @@ public class Sewage extends DailyTracker {
 		double n;
 		synchronized (this) {
 			entry = entries.get(day);
-			n = normalizer;
+			n = getNormalizer();
 		}
 		if (entry == null) {
 			return null;
 		}
 		return entry.getSewage() * n;
+	}
+
+	public void addEntry(int day, double value) {
+		DaySewage entry = new DaySewage(value);
+		synchronized (this) {
+			entries.put(day, entry);
+		}
+		includeDay(day);
+	}
+
+	public synchronized DaySewage getOrCreateMultiEntry(int day) {
+		DaySewage ds = getEntry(day);
+		if (ds == null) {
+			ds = new DaySewage();
+			entries.put(day, ds);
+			includeDay(day);
+		}
+		return ds;
+	}
+
+	public synchronized DaySewage getEntry(int day) {
+		return entries.get(day);
+	}
+
+	public synchronized void clear() {
+		entries.clear();
 	}
 
 	public synchronized TimeSeries makeRegressionTS(Voc voc, ArrayList<String> variants) {
@@ -269,46 +269,12 @@ public class Sewage extends DailyTracker {
 		return series;
 	}
 
-	public synchronized String getState() {
-		return state;
-	}
-
-	public synchronized void setState(String state) {
-		this.state = state;
-	}
-
-	public synchronized String getCounty() {
-		return county;
-	}
-
-	public synchronized void setCounty(String county) {
-		this.county = county;
-	}
-
 	public synchronized Integer getPopulation() {
 		return population;
 	}
 
-	public synchronized double getNormalizer() {
-		return normalizer;
-	}
-
 	public synchronized void setPopulation(int population) {
 		this.population = population;
-	}
-
-	public synchronized int getPlantId() {
-		return plantId;
-	}
-
-	public synchronized void setPlantId(int plantId) {
-		this.plantId = plantId;
-		numPlants = 1;
-	}
-
-	private synchronized void clear() {
-		numPlants = 0;
-		entries.clear();
 	}
 
 	public synchronized int getNextZero(int startDay) {
@@ -322,103 +288,6 @@ public class Sewage extends DailyTracker {
 		return lastDay + 1;
 	}
 
-	public void includeSewage(Sewage sewage, double popMultiplier) {
-		Integer pop = sewage.getPopulation();
-		if (pop == null) {
-			// new Exception("Uhhh no pop on " + sewage.id).printStackTrace();
-			return;
-		}
-		synchronized (this) {
-			if (population == null) {
-				population = 0;
-			}
-			numPlants++;
-		}
-		int sFirstDay = sewage.getFirstDay(), sLastDay = sewage.getLastDay();
-		int lastZero = sFirstDay - 1, nextZero = sewage.getNextZero(sFirstDay);
-		double norm = sewage.normalizer;
-		for (int day = sFirstDay; day <= sLastDay; day++) {
-			DaySewage ds1, ds2;
-			synchronized (sewage) {
-				ds1 = sewage.entries.get(day);
-			}
-			if (ds1 == null) {
-				lastZero = day;
-				continue;
-			}
-
-			if (ds1.getSewage() == 0.0) {
-				// lastZero = day;
-			}
-			synchronized (this) {
-				ds2 = entries.get(day);
-				if (ds2 == null) {
-					ds2 = new DaySewage();
-					entries.put(day, ds2);
-				}
-				includeDay(day);
-			}
-
-			if (day > nextZero) {
-				nextZero = sewage.getNextZero(day);
-			}
-			double startMultiplier = Math.min(Math.pow((day - lastZero) / 182.0, 2.0), 1.0);
-			double endMultiplier = Math.min(Math.pow((nextZero - day) / 14.0, 2.0), 1.0);
-			ds2.addDay(ds1, norm, pop * popMultiplier, startMultiplier * endMultiplier);
-
-			int dayPop = (int) Math.round(ds2.getPop());
-			synchronized (this) {
-				population = Math.max(population, dayPop);
-			}
-		}
-	}
-
-	public void buildNormalizer(Sewage baseline) {
-		oldNormalizer = normalizer;
-
-		double ours = 0, base = 0;
-		int firstDay = getFirstDay(), lastDay = getLastDay();
-		for (int day = firstDay; day < lastDay; day++) {
-			DaySewage ds1, ds2;
-
-			synchronized (this) {
-				ds1 = entries.get(day);
-			}
-			synchronized (baseline) {
-				ds2 = baseline.entries.get(day);
-			}
-			if (ds1 == null || ds2 == null) {
-				continue;
-			}
-			ours += ds1.getSewage();
-			base += ds2.getSewage();
-		}
-
-		if (base == 0 || ours == 0) {
-			return;
-		}
-		normalizer = base / ours;
-		if (normalizer < 0 || base < 0 || ours < 0) {
-			new Exception("Uh oh big fail.").printStackTrace();
-		}
-	}
-
-	@SuppressWarnings("unused")
-	private void normalizeFromCDC(Collection<Sewage> plants) {
-		clear();
-		plants.forEach(p -> {
-			if (p.id.startsWith("CDC")) {
-				System.out.println("Fixing baseline from " + p.id);
-				includeSewage(p, 1.0);
-			}
-		});
-		plants.forEach(p -> {
-			if (!p.id.startsWith("CDC")) {
-				p.buildNormalizer(this);
-			}
-		});
-	}
-
 	public synchronized double getTotalSewage(int first, int last) {
 		double sewage = 0.0;
 		for (int day = first; day <= last; day++) {
@@ -428,73 +297,6 @@ public class Sewage extends DailyTracker {
 			}
 		}
 		return sewage;
-	}
-
-	public synchronized int getNumPlants() {
-		return numPlants;
-	}
-
-	/*
-	 * CDC numbers claim to be normalized, but the scales differ by up to 100.
-	 * This makes averaging nigh on impossible, big problem. So I just normalize
-	 * it here with some crazy area-preserving algorithm. It assumes (pretty
-	 * close BUT probably not accurate for urban vs rural) that over long enough
-	 * everywhere will have around the same amount of covid.
-	 */
-	@SuppressWarnings("unused")
-	private void normalizeFull(Collection<Sewage> plants) {
-		clear();
-		plants.forEach(p -> includeSewage(p, 1.0));
-		int firstDay = getFirstDay(), lastDay = getLastDay();
-		double area = getTotalSewage(firstDay, lastDay);
-
-		for (int i = 0; i < 2000; i++) {
-
-			clear();
-			plants.forEach(p -> includeSewage(p, 1.0));
-			plants.forEach(p -> p.buildNormalizer(this));
-
-			double renorm = getTotalSewage(firstDay, lastDay) / area;
-			plants.forEach(p -> p.normalizer /= renorm);
-
-			double normDiff = -1;
-			Sewage normPlant = this;
-
-			for (Sewage p : plants) {
-				double d = Math.abs(Math.log(p.normalizer / p.oldNormalizer));
-				if (normDiff > d) {
-					normDiff = d;
-					normPlant = p;
-				}
-				normDiff = Math.max(normDiff, d);
-			}
-
-			if (normDiff < 1E-6) {
-				break;
-			}
-		}
-
-		double cdcNorm = 0.0, cdcs = 0;
-		for (Sewage p : plants) {
-			if (p.id.startsWith("CDC")) {
-				cdcNorm += Math.log(p.normalizer) * p.population;
-				cdcs += p.population;
-			}
-		}
-		double renorm = Math.exp(cdcNorm / cdcs);
-		plants.forEach(p -> p.normalizer /= renorm);
-	}
-
-	public void buildCountry(Collection<Sewage> plants) {
-		normalizeFull(plants);
-
-		clear();
-		plants.forEach(p -> includeSewage(p, 1.0));
-
-		int firstDay = getFirstDay();
-		while (entries.get(firstDay).getSewage() > entries.get(firstDay + 1).getSewage()) {
-			firstDay++;
-		}
 	}
 
 }

@@ -8,7 +8,6 @@ import java.io.File;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Map;
-import java.util.Objects;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
@@ -28,8 +27,7 @@ import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 
 import covid.CalendarUtils;
-import nwss.Sewage;
-import nwss.Sewage.Type;
+import sewage.Abstract;
 import variants.Voc;
 
 /**
@@ -72,10 +70,9 @@ public class ChartSewage {
 
 	public static int lastInflection = CalendarUtils.dateToDay("6-16-2023");
 
-	public static BufferedImage buildSewageTimeseriesChart(Sewage sewage, boolean log, boolean fit) {
+	public static BufferedImage buildSewageTimeseriesChart(Abstract sewage, boolean log, boolean fit) {
 
-		if (sewage.getLastDay() < sewage.getFirstDay()) {
-			System.out.println("Zero data for " + sewage.id);
+		if (!sewage.hasDays()) {
 			return null;
 		}
 
@@ -104,33 +101,9 @@ public class ChartSewage {
 
 		// dataset.addSeries("Cases", series);
 
-		String fileName = sewage.id;
+		String fileName = sewage.getChartFilename();
 		String title = "Covid in sewage, " + CalendarUtils.dayToDate(sewage.getLastDay()) + "\n";
-		switch (sewage.type) {
-		case COUNTRY:
-			title += String.format("%s (%,d line pop)", sewage.id, sewage.getPopulation());
-			break;
-		case COUNTY:
-			title += String.format("%s county, %s (%,d line pop)", sewage.getCounty(), sewage.getState(),
-					sewage.getPopulation());
-			fileName = COUNTIES + "\\" + sewage.getState() + "\\" + sewage.getCounty();
-			break;
-		case PLANT:
-			if (sewage.getPlantId() == 0) {
-				title += "(no metadata for this plant)";
-			} else {
-				title += String.format("Plant %d - %s county, %s (%,d line pop)", sewage.getPlantId(),
-						sewage.getCounty(), sewage.getState(), sewage.getPopulation());
-			}
-			fileName = PLANTS + "\\" + sewage.id;
-			break;
-		case STATE:
-			title += String.format("%s (%,d line pop)", sewage.getState(), sewage.getPopulation());
-			fileName = STATES + "\\" + sewage.getState();
-			break;
-		default:
-			break;
-		}
+		title += sewage.getTitleLine();
 		title += "\nSource: CDC/NWSS";
 		fileName += "-" + (log ? "log" : "cart");
 		String verticalAxis = "Arbitrary sewage units";
@@ -155,9 +128,8 @@ public class ChartSewage {
 
 		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
 
-		if (sewage.id.equalsIgnoreCase("Colorado-Denver") || sewage.id.equalsIgnoreCase("Colorado")
-				|| Objects.equals(sewage.plantId, 251) || Objects.equals(sewage.plantId, 252)
-				|| sewage.type.equals(Type.COUNTRY)) {
+		if (sewage instanceof sewage.All) {
+			sewage.All all = (sewage.All) sewage;
 			library.OpenImage.openImage(fileName);
 		}
 
@@ -166,7 +138,7 @@ public class ChartSewage {
 		return image;
 	}
 
-	public static BufferedImage buildSewageTimeseriesChart(Sewage sewage, Voc voc, boolean exact, boolean fit) {
+	public static BufferedImage buildSewageTimeseriesChart(Abstract sewage, Voc voc, boolean exact, boolean fit) {
 		TimeSeriesCollection collection = new TimeSeriesCollection();
 
 		DeviationRenderer renderer = new DeviationRenderer(true, false);
@@ -206,33 +178,8 @@ public class ChartSewage {
 
 		// dataset.addSeries("Cases", series);
 
-		String fileName = sewage.id;
-		String title;
-		switch (sewage.type) {
-		case COUNTRY:
-			title = String.format("%s, %s\n %,d line pop", sewage.id, CalendarUtils.dayToDate(sewage.getLastDay()),
-					sewage.getPopulation());
-			break;
-		case COUNTY:
-			title = String.format("%s county, %s\n%s / %,d line pop", sewage.getCounty(), sewage.getState(),
-					CalendarUtils.dayToDate(sewage.getLastDay()), sewage.getPopulation());
-			fileName = COUNTIES + "\\" + sewage.getState() + "\\" + sewage.getCounty();
-			break;
-		case PLANT:
-			title = String.format("Plant %d, %s\n%s / %s county / %,d line pop", sewage.getPlantId(),
-					CalendarUtils.dayToDate(sewage.getLastDay()), sewage.getState(), sewage.getCounty(),
-					sewage.getPopulation());
-			fileName = PLANTS + "\\" + sewage.id;
-			break;
-		case STATE:
-			title = String.format("%s through %s\n%,d line pop", sewage.getState(),
-					CalendarUtils.dayToDate(sewage.getLastDay()), sewage.getPopulation(), sewage.getState());
-			fileName = STATES + "\\" + sewage.getState();
-			break;
-		default:
-			title = null;
-			break;
-		}
+		String fileName = sewage.getChartFilename();
+		String title = sewage.getTitleLine();
 		fileName += "-log-voc" + (fit ? "-fit" : "") + (exact ? "-exact" : "");
 		title += "\nSource: CDC/NWSS, Cov-Spectrum";
 		String verticalAxis = "Arbitrary sewage units";
@@ -274,7 +221,7 @@ public class ChartSewage {
 		return image;
 	}
 
-	public static BufferedImage buildSewageCumulativeChart(Sewage sewage, Voc voc) {
+	public static BufferedImage buildSewageCumulativeChart(Abstract sewage, Voc voc) {
 
 		ArrayList<String> variants = voc.getVariants();
 		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
@@ -314,7 +261,7 @@ public class ChartSewage {
 
 		BufferedImage image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT);
 
-		String fileName = sewage.id + "-cumulative";
+		String fileName = sewage.getChartFilename() + "-cumulative";
 		Charts.saveBufferedImageAsPNG(SEWAGE_FOLDER, fileName, image);
 		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
 
@@ -324,7 +271,7 @@ public class ChartSewage {
 		return image;
 	}
 
-	public static void createSewage(Sewage sewage) {
+	public static void createSewage(Abstract sewage) {
 		// buildSewageTimeseriesChart(sewage, false);
 		buildSewageTimeseriesChart(sewage, true, true);
 	}

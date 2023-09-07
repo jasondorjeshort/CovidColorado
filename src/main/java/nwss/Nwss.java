@@ -16,7 +16,6 @@ import charts.Chart;
 import charts.ChartSewage;
 import covid.CalendarUtils;
 import library.ASync;
-import nwss.Sewage.Type;
 import variants.VariantSet;
 import variants.Voc;
 
@@ -32,21 +31,10 @@ public class Nwss {
 
 	private static final Charset CHARSET = Charset.forName("US-ASCII");
 
-	private HashMap<String, Sewage> plantSewage = new HashMap<>();
-	private HashMap<String, Sewage> countySewage = new HashMap<>();
-	private HashMap<String, Sewage> stateSewage = new HashMap<>();
-	private Sewage countrySewage = new Sewage(Type.COUNTRY, "United States");
-
-	private static Sewage getIdSewage(Type type, String id, HashMap<String, Sewage> source) {
-		synchronized (source) {
-			Sewage sewage = source.get(id);
-			if (sewage == null) {
-				sewage = new Sewage(type, id);
-				source.put(id, sewage);
-			}
-			return sewage;
-		}
-	}
+	private HashMap<String, sewage.Plant> plants = new HashMap<>();
+	private HashMap<String, sewage.County> counties = new HashMap<>();
+	private HashMap<String, sewage.State> states = new HashMap<>();
+	private sewage.All all = new sewage.All("United States");
 
 	private static long HOUR = 60 * 60 * 1000;
 
@@ -89,22 +77,38 @@ public class Nwss {
 		return f;
 	}
 
-	private Sewage getPlantSewage(String plantId) {
-		return getIdSewage(Type.PLANT, plantId, plantSewage);
+	private sewage.Plant getPlantSewage(String plantId) {
+		synchronized (plants) {
+			sewage.Plant sew = plants.get(plantId);
+			if (sew == null) {
+				sew = new sewage.Plant(plantId);
+				plants.put(plantId, sew);
+			}
+			return sew;
+		}
 	}
 
-	private Sewage getCountySewage(String county, String state) {
-		String countyId = state + "-" + county;
-		Sewage s = getIdSewage(Type.COUNTY, countyId, countySewage);
-		s.setCounty(county);
-		s.setState(state);
-		return s;
+	private sewage.County getCountySewage(String county, String state) {
+		synchronized (counties) {
+			String countyId = state + "-" + county;
+			sewage.County sew = counties.get(countyId);
+			if (sew == null) {
+				sew = new sewage.County(county, state);
+				counties.put(countyId, sew);
+			}
+			return sew;
+		}
 	}
 
-	private Sewage getStateSewage(String stateId) {
-		Sewage s = getIdSewage(Type.STATE, stateId, stateSewage);
-		s.setState(stateId);
-		return s;
+	private sewage.State getStateSewage(String state) {
+		synchronized (states) {
+			sewage.State sew = states.get(state);
+			if (sew == null) {
+				sew = new sewage.State(state);
+				states.put(state, sew);
+			}
+			return sew;
+		}
 	}
 
 	double scaleFactor = 1E6;
@@ -142,7 +146,7 @@ public class Nwss {
 					 */
 					// continue;
 				}
-				Sewage sewage = getPlantSewage(plant);
+				sewage.Plant sewage = getPlantSewage(plant);
 				sewage.setSmoothing(line.get(3));
 				maxNumber = Math.max(number, maxNumber);
 				sewage.addEntry(day, number / scaleFactor);
@@ -169,7 +173,7 @@ public class Nwss {
 				String county = line.get(6);
 				String popString = line.get(8);
 
-				Sewage sewage = getPlantSewage(plant);
+				sewage.Plant sewage = getPlantSewage(plant);
 				sewage.setPlantId(Integer.valueOf(plantIdString));
 				sewage.setState(state);
 				sewage.setCounty(county);
@@ -192,6 +196,7 @@ public class Nwss {
 	private Voc variants;
 
 	public void read() {
+		long time = System.currentTimeMillis();
 		ASync<Chart> build = new ASync<>();
 		build.execute(() -> readSewage());
 		build.execute(() -> readLocations());
@@ -204,37 +209,49 @@ public class Nwss {
 
 		build.complete();
 
-		countrySewage.buildCountry(plantSewage.values());
-		plantSewage.forEach((plantId, sewage) -> {
+		System.out.println("Read stuff in " + (System.currentTimeMillis() - time) / 1000 + "s.");
+		time = System.currentTimeMillis();
+
+		all.build(plants.values());
+		plants.forEach((plantId, sewage) -> {
 			String state = sewage.getState();
 			if (state != null) {
 				getStateSewage(state).includeSewage(sewage, 1.0);
 				String c = sewage.getCounty();
 				if (c != null) {
-					String[] counties = sewage.getCounty().split(",");
-					for (String county : counties) {
-						getCountySewage(county, state).includeSewage(sewage, 1.0 / counties.length);
+					String[] countyNames = sewage.getCounty().split(",");
+					for (String county : countyNames) {
+						getCountySewage(county, state).includeSewage(sewage, 1.0 / countyNames.length);
 					}
 				}
 			}
 		});
+
+		System.out.println("Built combos in " + (System.currentTimeMillis() - time) / 1000 + "s.");
 	}
 
 	public void build() {
+		long time = System.currentTimeMillis();
 		ChartSewage.mkdirs();
-		stateSewage.forEach((id, sewage) -> ChartSewage.reportState(id));
+		states.forEach((id, sewage) -> ChartSewage.reportState(id));
+
+		System.out.println("Built dirs in " + (System.currentTimeMillis() - time) / 1000 + "s.");
+		time = System.currentTimeMillis();
+
 		ASync<Chart> build = new ASync<>();
-		build.execute(() -> ChartSewage.createSewage(countrySewage));
+		build.execute(() -> ChartSewage.createSewage(all));
 		if (variants != null) {
-			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(countrySewage, variants, true, false));
-			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(countrySewage, variants, true, true));
-			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(countrySewage, variants, false, true));
-			build.execute(() -> ChartSewage.buildSewageCumulativeChart(countrySewage, variants));
+			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(all, variants, true, false));
+			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(all, variants, true, true));
+			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(all, variants, false, true));
+			build.execute(() -> ChartSewage.buildSewageCumulativeChart(all, variants));
 		}
-		plantSewage.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
-		countySewage.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
-		stateSewage.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
+		plants.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
+		counties.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
+		states.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
 		build.complete();
+		System.out.println("Built charts " + (System.currentTimeMillis() - time) / 1000 + "s.");
+		time = System.currentTimeMillis();
 		library.OpenImage.open();
 	}
 
