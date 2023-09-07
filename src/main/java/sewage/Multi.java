@@ -26,12 +26,8 @@ public abstract class Multi extends Abstract {
 	}
 
 	public void includeSewage(Plant sewage, double popMultiplier) {
-		boolean log = (this instanceof sewage.State) && ((sewage.State) this).getState().equalsIgnoreCase("Colorado");
-		if (log) {
-			System.out.println("Including plant " + sewage.getPlantId() + " -> " + sewage.numDays() + " days.");
-		}
 		if (sewage.numDays() <= 1) {
-			// return;
+			return;
 		}
 		Integer pop = sewage.getPopulation();
 		if (pop == null) {
