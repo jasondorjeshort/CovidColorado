@@ -16,6 +16,7 @@ import charts.Chart;
 import charts.ChartSewage;
 import covid.CalendarUtils;
 import library.ASync;
+import variants.VariantEnum;
 import variants.VariantSet;
 import variants.Voc;
 
@@ -202,10 +203,14 @@ public class Nwss {
 		build.execute(() -> readLocations());
 		build.execute(() -> variants = Voc.create());
 
-		VariantSet vs = new VariantSet(VariantSet.JUNE_15, VariantSet.TODAY, VariantSet.JUNE_TO_SEPTEMBER_VARIANTS);
-		vs.getCovSpectrumLink();
-		vs.getCovSpectrumLink2(false);
-		vs.getCovSpectrumLink2(true);
+		for (VariantEnum vEnum : VariantEnum.values()) {
+			System.out.println(vEnum);
+			VariantSet vs = new VariantSet(vEnum);
+			vs.getCovSpectrumLink();
+			vs.getCovSpectrumLink2(false);
+			vs.getCovSpectrumLink2(true);
+			System.out.println();
+		}
 
 		build.complete();
 
