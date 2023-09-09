@@ -75,7 +75,11 @@ public class All extends Multi {
 
 		double cdcNorm = 0.0, cdcs = 0;
 		for (Plant p : plants) {
-			if (p.id.startsWith("CDC")) {
+			if (p.getPopulation() == null) {
+				System.out.println("Null pop on plant: " + p.id);
+				continue;
+			}
+			if (p.id.startsWith("CDC") && p.getPopulation() > 0) {
 				cdcNorm += Math.log(p.getNormalizer()) * p.getPopulation();
 				cdcs += p.getPopulation();
 			}
