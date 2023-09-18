@@ -55,6 +55,8 @@ public class ChartSewage {
 	public static final String STATES_FOLDER = SEWAGE_FOLDER + "\\" + STATES;
 	public static final String COUNTIES_FOLDER = SEWAGE_FOLDER + "\\" + COUNTIES;
 	public static final String PLANT_FOLDER = SEWAGE_FOLDER + "\\" + PLANTS;
+	public static final String LL = "LL";
+	public static final String LL_FOLDER = SEWAGE_FOLDER + "\\" + LL;
 
 	public static void mkdirs() {
 		new File(Charts.FULL_FOLDER).mkdir();
@@ -62,6 +64,7 @@ public class ChartSewage {
 		new File(PLANT_FOLDER).mkdir();
 		new File(STATES_FOLDER).mkdir();
 		new File(COUNTIES_FOLDER).mkdir();
+		new File(LL_FOLDER).mkdir();
 	}
 
 	public static void reportState(String state) {
@@ -128,9 +131,9 @@ public class ChartSewage {
 
 		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
 
-		if (sewage instanceof sewage.All) {
-			sewage.All all = (sewage.All) sewage;
+		if (sewage instanceof sewage.All || sewage instanceof sewage.Geo) {
 			library.OpenImage.openImage(fileName);
+			library.OpenImage.open();
 		}
 
 		// System.out.println("Created : " + sewage.id + " for " +

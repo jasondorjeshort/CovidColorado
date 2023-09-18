@@ -8,7 +8,8 @@ public class Plant extends Abstract {
 	private int plantId;
 
 	private String smoothing;
-	private String state, county;
+	private String state, counties, fipsIds;
+	private double lat, lon;
 
 	public Plant(String id) {
 		this.id = id;
@@ -39,12 +40,20 @@ public class Plant extends Abstract {
 		this.state = state;
 	}
 
-	public synchronized String getCounty() {
-		return county;
+	public synchronized String getCounties() {
+		return counties;
 	}
 
-	public synchronized void setCounty(String county) {
-		this.county = county;
+	public synchronized void setCounties(String counties) {
+		this.counties = counties;
+	}
+
+	public synchronized String getFipsIds() {
+		return fipsIds;
+	}
+
+	public synchronized void setFipsIds(String fipsIds) {
+		this.fipsIds = fipsIds;
 	}
 
 	public synchronized int getPlantId() {
@@ -53,6 +62,19 @@ public class Plant extends Abstract {
 
 	public synchronized void setPlantId(int plantId) {
 		this.plantId = plantId;
+	}
+
+	public synchronized void setLatLon(double newLat, double newLon) {
+		this.lat = newLat;
+		this.lon = newLon;
+	}
+
+	public synchronized double getLat() {
+		return lat;
+	}
+
+	public synchronized double getLon() {
+		return lon;
 	}
 
 	public void buildNormalizer(All baseline) {
@@ -93,11 +115,11 @@ public class Plant extends Abstract {
 	}
 
 	@Override
-	public String getTitleLine() {
+	public synchronized String getTitleLine() {
 		if (getPlantId() == 0) {
 			return "(no metadata for this plant)";
 		}
-		return String.format("Plant %d - %s county, %s (%,d line pop)", getPlantId(), getCounty(), getState(),
-				getPopulation());
+		return String.format("Plant %d - %s %s, %s (%,d line pop)", getPlantId(), getCounties(),
+				counties.contains(",") ? "counties" : "county", getState(), getPopulation());
 	}
 }

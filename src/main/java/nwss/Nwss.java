@@ -16,26 +16,36 @@ import charts.Chart;
 import charts.ChartSewage;
 import covid.CalendarUtils;
 import library.ASync;
+import sewage.Fips;
 import variants.VariantEnum;
 import variants.VariantSet;
 import variants.Voc;
 
 public class Nwss {
 
-	public static final String CSV1 = System.getProperty("java.io.tmpdir")
+	public static final String FOLDER = "CovidBackend";
+
+	static {
+		new File(System.getProperty("java.io.tmpdir") + "\\" + FOLDER).mkdir();
+	}
+
+	public static final String CSV1 = System.getProperty("java.io.tmpdir") + "\\" + FOLDER + "\\"
 			+ "NWSS_Public_SARS-CoV-2_Concentration_in_Wastewater_Data.csv";
 	public static final String URL1 = "https://data.cdc.gov/api/views/g653-rqe2/rows.csv?accessType=DOWNLOAD";
 
-	public static final String CSV2 = System.getProperty("java.io.tmpdir")
+	public static final String CSV2 = System.getProperty("java.io.tmpdir") + "\\" + FOLDER + "\\"
 			+ "NWSS_Public_SARS-CoV-2_Wastewater_Metric_Data.csv";
 	public static final String URL2 = "https://data.cdc.gov/api/views/2ew6-ywp6/rows.csv?accessType=DOWNLOAD";
 
-	private static final Charset CHARSET = Charset.forName("US-ASCII");
+	public static final Charset CHARSET = Charset.forName("US-ASCII");
 
 	private HashMap<String, sewage.Plant> plants = new HashMap<>();
 	private HashMap<String, sewage.County> counties = new HashMap<>();
 	private HashMap<String, sewage.State> states = new HashMap<>();
 	private sewage.All all = new sewage.All("United States");
+	private sewage.Geo geo = new sewage.Geo(37.8921116, -106.0125575);
+
+	private Fips fips;
 
 	private static long HOUR = 60 * 60 * 1000;
 
@@ -172,21 +182,20 @@ public class Nwss {
 				String plantIdString = line.get(1);
 				String plant = line.get(5);
 				String county = line.get(6);
+				String fipsIds = line.get(7);
 				String popString = line.get(8);
 
 				sewage.Plant sewage = getPlantSewage(plant);
 				sewage.setPlantId(Integer.valueOf(plantIdString));
 				sewage.setState(state);
-				sewage.setCounty(county);
-				sewage.setPopulation(Integer.valueOf(popString));
-
-				if (false && line.get(0).equalsIgnoreCase("colorado")) {
-					System.out.println("CO => ");
-					System.out.println("County => " + sewage.getCounty());
-					System.out.println("Pop => " + sewage.getPopulation());
-					System.out.println("Plant => " + sewage.id);
-					return;
+				sewage.setCounties(county);
+				sewage.setFipsIds(fipsIds);
+				if (county.contains(",") != fipsIds.contains(",")) {
+					// System.out.println("Problem set");
+					// System.out.println(county);
+					// System.out.println(fipsIds);
 				}
+				sewage.setPopulation(Integer.valueOf(popString));
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -202,6 +211,7 @@ public class Nwss {
 		build.execute(() -> readSewage());
 		build.execute(() -> readLocations());
 		build.execute(() -> variants = Voc.create());
+		build.execute(() -> fips = new Fips());
 
 		for (VariantEnum vEnum : VariantEnum.values()) {
 			System.out.println(vEnum);
@@ -222,14 +232,15 @@ public class Nwss {
 			String state = sewage.getState();
 			if (state != null) {
 				getStateSewage(state).includeSewage(sewage, 1.0);
-				String c = sewage.getCounty();
+				String c = sewage.getCounties();
 				if (c != null) {
-					String[] countyNames = sewage.getCounty().split(",");
+					String[] countyNames = c.split(",");
 					for (String county : countyNames) {
 						getCountySewage(county, state).includeSewage(sewage, 1.0 / countyNames.length);
 					}
 				}
 			}
+			geo.includeSewage(sewage, 1.0);
 		});
 
 		System.out.println("Built combos in " + (System.currentTimeMillis() - time) / 1000 + "s.");
@@ -244,6 +255,7 @@ public class Nwss {
 		time = System.currentTimeMillis();
 
 		ASync<Chart> build = new ASync<>();
+		build.execute(() -> ChartSewage.createSewage(geo));
 		build.execute(() -> ChartSewage.createSewage(all));
 		if (variants != null) {
 			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(all, variants, true, false));
