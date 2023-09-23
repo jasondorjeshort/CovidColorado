@@ -77,7 +77,6 @@ public enum VariantEnum {
 			"ge.1",
 			"eg.5.1.4",
 			"xbb.1.42.2",
-			"he.1",
 			"fd.1.1",
 			"fu.2",
 			"hf.1",
@@ -94,7 +93,6 @@ public enum VariantEnum {
 			"fl.15",
 			"eg.5.1.6",
 			"xbb.2.3.8",
-			"xbb.1.5.77",
 			"gk.2",
 			"gy.5",
 			"fy.5",
@@ -104,7 +102,9 @@ public enum VariantEnum {
 			"gn.1",
 			"xbb.1.16.15",
 			"xbb.1.41",
-			"ch.1.1"),
+			"ch.1.1",
+			"gk.1.1",
+			"hn.1"),
 
 	FLIP_VARIANTS(
 			"2023-08-01",
