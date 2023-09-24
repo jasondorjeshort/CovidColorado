@@ -29,6 +29,7 @@ import org.jfree.data.time.TimeSeriesCollection;
 import covid.CalendarUtils;
 import sewage.Abstract;
 import variants.Voc;
+import variants.VocSewage;
 
 /**
  * This program is free software: you can redistribute it and/or modify it under
@@ -141,29 +142,30 @@ public class ChartSewage {
 		return image;
 	}
 
-	public static BufferedImage buildSewageTimeseriesChart(Abstract sewage, Voc voc, boolean exact, boolean fit) {
+	public static BufferedImage buildSewageTimeseriesChart(VocSewage vocSewage, boolean exact, boolean fit) {
 		TimeSeriesCollection collection = new TimeSeriesCollection();
 
 		DeviationRenderer renderer = new DeviationRenderer(true, false);
 		int seriesCount = 0;
 		TimeSeries series;
 
+		Voc voc = vocSewage.voc;
 		ArrayList<String> variants = voc.getVariants();
 		if (fit) {
-			series = sewage.makeRegressionTS(voc, variants);
+			series = vocSewage.makeRegressionTS(variants);
 			collection.addSeries(series);
 			renderer.setSeriesStroke(seriesCount, new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 			seriesCount++;
 		}
 
-		series = sewage.makeTimeSeries(fit ? "Actual" : "Sewage");
+		series = vocSewage.sewage.makeTimeSeries(fit ? "Actual" : "Sewage");
 		collection.addSeries(series);
 		renderer.setSeriesStroke(seriesCount, new BasicStroke(4.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		seriesCount++;
 
 		for (String variant : variants) {
 			if (fit) {
-				series = sewage.makeRegressionTS(voc, variant);
+				series = vocSewage.makeRegressionTS(variant);
 				collection.addSeries(series);
 				renderer.setSeriesStroke(seriesCount,
 						new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
@@ -171,7 +173,7 @@ public class ChartSewage {
 			}
 			if (exact) {
 				series = new TimeSeries(variant.replaceAll("nextcladePangoLineage:", ""));
-				sewage.makeTimeSeries(series, voc, variant);
+				vocSewage.makeTimeSeries(series, variant);
 				collection.addSeries(series);
 				renderer.setSeriesStroke(seriesCount,
 						new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
@@ -181,8 +183,8 @@ public class ChartSewage {
 
 		// dataset.addSeries("Cases", series);
 
-		String fileName = sewage.getChartFilename();
-		String title = sewage.getTitleLine();
+		String fileName = vocSewage.sewage.getChartFilename();
+		String title = vocSewage.sewage.getTitleLine();
 		fileName += "-log-voc" + (fit ? "-fit" : "") + (exact ? "-exact" : "");
 		title += "\nSource: CDC/NWSS, Cov-Spectrum";
 		String verticalAxis = "Arbitrary sewage units";
@@ -207,7 +209,7 @@ public class ChartSewage {
 			xAxis.setLowerBound(bound);
 		}
 		if (fit) {
-			bound = CalendarUtils.dayToTime(sewage.getLastDay() + 28);
+			bound = CalendarUtils.dayToTime(vocSewage.getLastDay() + 28);
 			xAxis.setUpperBound(bound);
 		}
 
@@ -224,12 +226,12 @@ public class ChartSewage {
 		return image;
 	}
 
-	public static BufferedImage buildSewageCumulativeChart(Abstract sewage, Voc voc) {
+	public static BufferedImage buildSewageCumulativeChart(VocSewage vocSewage) {
 
-		ArrayList<String> variants = voc.getVariants();
+		ArrayList<String> variants = vocSewage.voc.getVariants();
 		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 
-		Map<String, Double> prev = sewage.getCumulativePrevalence(voc, variants);
+		Map<String, Double> prev = vocSewage.getCumulativePrevalence(variants);
 
 		for (String variant : variants) {
 			double prevalence = prev.get(variant);
@@ -264,7 +266,7 @@ public class ChartSewage {
 
 		BufferedImage image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT);
 
-		String fileName = sewage.getChartFilename() + "-cumulative";
+		String fileName = vocSewage.sewage.getChartFilename() + "-cumulative";
 		Charts.saveBufferedImageAsPNG(SEWAGE_FOLDER, fileName, image);
 		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
 

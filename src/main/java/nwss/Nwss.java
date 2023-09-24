@@ -20,6 +20,7 @@ import sewage.Fips;
 import variants.VariantEnum;
 import variants.VariantSet;
 import variants.Voc;
+import variants.VocSewage;
 
 public class Nwss {
 
@@ -258,10 +259,11 @@ public class Nwss {
 		build.execute(() -> ChartSewage.createSewage(geo));
 		build.execute(() -> ChartSewage.createSewage(all));
 		if (variants != null) {
-			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(all, variants, true, false));
-			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(all, variants, true, true));
-			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(all, variants, false, true));
-			build.execute(() -> ChartSewage.buildSewageCumulativeChart(all, variants));
+			VocSewage vocSewage = new VocSewage(all, variants);
+			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(vocSewage, true, false));
+			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(vocSewage, true, true));
+			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(vocSewage, false, true));
+			build.execute(() -> ChartSewage.buildSewageCumulativeChart(vocSewage));
 		}
 		plants.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
 		counties.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
