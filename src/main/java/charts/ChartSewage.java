@@ -72,8 +72,6 @@ public class ChartSewage {
 		new File(COUNTIES_FOLDER + "\\" + state).mkdir();
 	}
 
-	public static int lastInflection = CalendarUtils.dateToDay("6-16-2023");
-
 	public static BufferedImage buildSewageTimeseriesChart(Abstract sewage, boolean log, boolean fit) {
 
 		if (!sewage.hasDays()) {
@@ -92,7 +90,7 @@ public class ChartSewage {
 		seriesCount++;
 
 		if (fit) {
-			TimeSeries series2 = sewage.makeFitSeries(lastInflection);
+			TimeSeries series2 = sewage.makeFitSeries(28);
 			if (series2 != null) {
 				collection.addSeries(series2);
 				renderer.setSeriesStroke(seriesCount,
@@ -213,7 +211,7 @@ public class ChartSewage {
 			xAxis.setUpperBound(bound);
 		}
 
-		BufferedImage image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT);
+		BufferedImage image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT * 3 / 2);
 		Charts.saveBufferedImageAsPNG(SEWAGE_FOLDER, fileName, image);
 
 		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
@@ -264,7 +262,7 @@ public class ChartSewage {
 					new ItemLabelPosition(ItemLabelAnchor.CENTER, TextAnchor.CENTER, TextAnchor.CENTER, -0 / 2));
 		}
 
-		BufferedImage image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT);
+		BufferedImage image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT * 3 / 2);
 
 		String fileName = vocSewage.sewage.getChartFilename() + "-cumulative";
 		Charts.saveBufferedImageAsPNG(SEWAGE_FOLDER, fileName, image);

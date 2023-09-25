@@ -117,6 +117,16 @@ public class VocSewage {
 		return series;
 	}
 
+	public static double slopeToWeekly(double slope) {
+		return 100.0 * (Math.exp(7.0 * slope) - 1);
+	}
+
+	public static String slopeToWeekly(SimpleRegression fit) {
+		double min = slopeToWeekly(fit.getSlope() - fit.getSlopeConfidenceInterval());
+		double max = slopeToWeekly(fit.getSlope() + fit.getSlopeConfidenceInterval());
+		return String.format("[%+.0f%%,%+.0f%%]/week", min, max);
+	}
+
 	public synchronized TimeSeries makeRegressionTS(String variant) {
 		final SimpleRegression fit = new SimpleRegression();
 		final int fitLastDay = Math.min(getLastDay(), voc.getLastDay());
@@ -140,8 +150,7 @@ public class VocSewage {
 		}
 
 		String name = variant.replaceAll("nextcladePangoLineage:", "");
-		TimeSeries series = new TimeSeries(
-				String.format("%s (%+.0f%%/week)", name, 100.0 * (Math.exp(7.0 * fit.getSlope()) - 1)));
+		TimeSeries series = new TimeSeries(String.format("%s %s", name, slopeToWeekly(fit)));
 		int first = Math.max(getFirstDay(), voc.getFirstDay());
 		series.add(CalendarUtils.dayToDay(first), Math.exp(fit.predict(first)));
 		int last = getLastDay() + 28;

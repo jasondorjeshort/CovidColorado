@@ -60,36 +60,50 @@ public abstract class Abstract extends DailyTracker {
 		return 1.0;
 	}
 
-	public synchronized TimeSeries makeFitSeries(int fFirstDay) {
+	public static double slopeToWeekly(double slope) {
+		return 100.0 * (Math.exp(7.0 * slope) - 1);
+	}
+
+	public static String slopeToWeekly(SimpleRegression fit) {
+		double min = slopeToWeekly(fit.getSlope() - fit.getSlopeConfidenceInterval());
+		double max = slopeToWeekly(fit.getSlope() + fit.getSlopeConfidenceInterval());
+		return String.format("[%+.1f%%,%+.1f%%]/week", min, max);
+	}
+
+	public synchronized TimeSeries makeFitSeries(int numDays) {
 		final SimpleRegression fit = new SimpleRegression();
-		fFirstDay = Math.max(fFirstDay, getFirstDay());
-		int fLastDay = getLastDay();
-		if (fFirstDay >= fLastDay) {
-			return null;
-		}
-		for (int day = fFirstDay; day <= fLastDay; day++) {
-			DaySewage entry;
-			synchronized (this) {
-				entry = entries.get(day);
-			}
+		Double confidence = null;
+		int startDay = getFirstDay(), endDay = getLastDay();
+
+		for (int day = endDay; day >= startDay; day--) {
+			DaySewage entry = getEntry(day);
 			if (entry == null) {
 				continue;
 			}
 
 			double number = entry.getSewage();
 			number *= getNormalizer();
-			fit.addData(day, Math.log(number));
+			double val = Math.log(number);
+			fit.addData(day, val);
+
+			if (day < endDay - numDays) {
+				double newConfidence = fit.getSlopeConfidenceInterval();
+				if (confidence != null && newConfidence > confidence) {
+					fit.removeData(day, val);
+					startDay = day + 1;
+					break;
+				}
+				confidence = newConfidence;
+			}
 		}
 
 		TimeSeries series = new TimeSeries(
-				String.format("%s (%+.0f%%/week)", "Fit", 100.0 * (Math.exp(7.0 * fit.getSlope()) - 1)));
+				String.format("%s (%s, %d days)", "Fit", slopeToWeekly(fit), endDay - startDay + 1));
 		try {
-			series.add(CalendarUtils.dayToDay(fFirstDay), Math.exp(fit.predict(fFirstDay)));
-			series.add(CalendarUtils.dayToDay(fLastDay), Math.exp(fit.predict(fLastDay)));
+			series.add(CalendarUtils.dayToDay(startDay), Math.exp(fit.predict(startDay)));
+			series.add(CalendarUtils.dayToDay(endDay), Math.exp(fit.predict(endDay)));
 		} catch (Exception e) {
 			e.printStackTrace();
-			System.out.println("First: " + fFirstDay);
-			System.out.println("Last: " + fLastDay);
 		}
 		return series;
 	}
