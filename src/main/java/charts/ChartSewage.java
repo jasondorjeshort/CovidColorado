@@ -75,7 +75,7 @@ public class ChartSewage {
 		new File(COUNTIES_FOLDER + "\\" + state).mkdir();
 	}
 
-	public static BufferedImage buildSewageTimeseriesChart(Abstract sewage, boolean log, boolean fit) {
+	public static BufferedImage buildSewageTimeseriesChart(Abstract sewage, boolean log, Integer maxChildren) {
 
 		if (!sewage.hasDays()) {
 			return null;
@@ -87,19 +87,25 @@ public class ChartSewage {
 		int seriesCount = 0;
 
 		collection.addSeries(sewage.makeTimeSeries(null));
-		renderer.setSeriesStroke(seriesCount, new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+		renderer.setSeriesStroke(seriesCount, new BasicStroke(3.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		renderer.setSeriesPaint(seriesCount, Color.BLUE);
 		renderer.setSeriesFillPaint(seriesCount, Color.BLUE.darker());
 		seriesCount++;
 
-		if (fit) {
-			TimeSeries series2 = sewage.makeFitSeries(28);
-			if (series2 != null) {
-				collection.addSeries(series2);
+		TimeSeries series2 = sewage.makeFitSeries(28);
+		if (series2 != null) {
+			collection.addSeries(series2);
+			renderer.setSeriesStroke(seriesCount, new BasicStroke(6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+			renderer.setSeriesPaint(seriesCount, Color.RED);
+			renderer.setSeriesFillPaint(seriesCount, Color.RED.darker());
+			seriesCount++;
+		}
+
+		if (sewage instanceof sewage.Multi) {
+			for (Abstract child : ((sewage.Multi) sewage).getChildren(maxChildren)) {
+				collection.addSeries(child.makeTimeSeries(null));
 				renderer.setSeriesStroke(seriesCount,
-						new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-				renderer.setSeriesPaint(seriesCount, Color.RED);
-				renderer.setSeriesFillPaint(seriesCount, Color.RED.darker());
+						new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 				seriesCount++;
 			}
 		}
@@ -133,7 +139,8 @@ public class ChartSewage {
 
 		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
 
-		if (sewage instanceof sewage.All || sewage instanceof sewage.Geo) {
+		if (sewage instanceof sewage.All || sewage instanceof sewage.Geo
+				|| sewage.getName().equalsIgnoreCase("Colorado")) {
 			library.OpenImage.openImage(fileName);
 			library.OpenImage.open();
 		}
@@ -277,9 +284,9 @@ public class ChartSewage {
 		return image;
 	}
 
-	public static void createSewage(Abstract sewage) {
+	public static void createSewage(Abstract sewage, Integer maxChildren) {
 		// buildSewageTimeseriesChart(sewage, false);
-		buildSewageTimeseriesChart(sewage, true, true);
+		buildSewageTimeseriesChart(sewage, true, maxChildren);
 	}
 
 }

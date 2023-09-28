@@ -28,4 +28,8 @@ public class County extends Multi {
 		return String.format("%s county, %s (%,d line pop)", getCounty(), getState(), getPopulation());
 	}
 
+	@Override
+	public String getName() {
+		return getCounty();
+	}
 }

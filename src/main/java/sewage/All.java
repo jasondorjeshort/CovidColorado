@@ -86,10 +86,6 @@ public class All extends Multi {
 
 		clear();
 		plants.forEach(p -> includeSewage(p, 1.0));
-
-		while (getEntry(getFirstDay()).getSewage() > getEntry(getFirstDay() + 1).getSewage()) {
-			bumpFirstDay();
-		}
 	}
 
 	@Override
@@ -100,5 +96,10 @@ public class All extends Multi {
 	@Override
 	public String getTitleLine() {
 		return String.format("%s (%,d line pop)", desc, getPopulation());
+	}
+
+	@Override
+	public String getName() {
+		return "Nationwide";
 	}
 }

@@ -1,10 +1,13 @@
 package sewage;
 
+import java.util.ArrayList;
+
 import nwss.DaySewage;
 
 public abstract class Multi extends Abstract {
 
 	private int numPlants = 0;
+	private final ArrayList<Abstract> children = new ArrayList<>(10);
 
 	public Multi() {
 		setPopulation(0);
@@ -22,7 +25,20 @@ public abstract class Multi extends Abstract {
 
 	@Override
 	public String getTSName() {
-		return String.format("Combined sewage (%,d plants)", getNumPlants());
+		return String.format("%s (%,d plants, %,d pop)", getName(), getNumPlants(), getPopulation());
+	}
+
+	@Override
+	protected void fixStarting() {
+		try {
+			if (getEntry(getFirstDay()).getSewage() > 100) {
+				while (getEntry(getFirstDay()).getSewage() > getEntry(getFirstDay() + 1).getSewage()) {
+					bumpFirstDay();
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	public void includeSewage(Plant sewage, double popMultiplier) {
@@ -65,4 +81,23 @@ public abstract class Multi extends Abstract {
 			}
 		}
 	}
+
+	public void addChild(Abstract child) {
+		synchronized (children) {
+			children.add(child);
+			children.sort((c1, c2) -> -Integer.compare(c1.getPopulation(), c2.getPopulation()));
+		}
+	}
+
+	public ArrayList<Abstract> getChildren(Integer maxChildren) {
+		if (maxChildren == null) {
+			return new ArrayList<>(children);
+		}
+		ArrayList<Abstract> c = new ArrayList<>(maxChildren);
+		for (int i = 0; i < maxChildren && i < children.size(); i++) {
+			c.add(children.get(i));
+		}
+		return c;
+	}
+
 }

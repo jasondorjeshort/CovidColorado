@@ -20,6 +20,11 @@ public class Region extends Multi {
 	@Override
 	public String getTitleLine() {
 		return String.format("%s (%,d line pop)", getRegion(), getPopulation());
-
 	}
+
+	@Override
+	public String getName() {
+		return getRegion();
+	}
+
 }

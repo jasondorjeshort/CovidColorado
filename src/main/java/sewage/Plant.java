@@ -24,6 +24,11 @@ public class Plant extends Abstract {
 				getNormalizer(), numDays());
 	}
 
+	@Override
+	public String getName() {
+		return String.format("Plant %d", getPlantId());
+	}
+
 	public synchronized void setSmoothing(String smoothing) {
 		this.smoothing = smoothing;
 	}

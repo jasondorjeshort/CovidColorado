@@ -19,8 +19,12 @@ public class State extends Multi {
 
 	@Override
 	public String getTitleLine() {
-
 		return String.format("%s (%,d line pop)", getState(), getPopulation());
-
 	}
+
+	@Override
+	public String getName() {
+		return getState();
+	}
+
 }

@@ -21,11 +21,18 @@ public abstract class Abstract extends DailyTracker {
 
 	public abstract String getTSName();
 
+	public abstract String getName();
+
 	public abstract String getChartFilename();
 
 	public abstract String getTitleLine();
 
+	protected void fixStarting() {
+
+	}
+
 	public synchronized TimeSeries makeTimeSeries(String name) {
+		fixStarting();
 		if (name == null) {
 			name = getTSName();
 		}
@@ -71,6 +78,7 @@ public abstract class Abstract extends DailyTracker {
 	}
 
 	public synchronized TimeSeries makeFitSeries(int numDays) {
+		fixStarting();
 		final SimpleRegression fit = new SimpleRegression();
 		Double confidence = null;
 		int startDay = getFirstDay(), endDay = getLastDay();
@@ -101,9 +109,11 @@ public abstract class Abstract extends DailyTracker {
 				String.format("%s (%s, %d days)", "Fit", slopeToWeekly(fit), endDay - startDay + 1));
 		try {
 			series.add(CalendarUtils.dayToDay(startDay), Math.exp(fit.predict(startDay)));
-			series.add(CalendarUtils.dayToDay(endDay), Math.exp(fit.predict(endDay)));
+			int today = CalendarUtils.timeToDay(System.currentTimeMillis());
+			series.add(CalendarUtils.dayToDay(endDay), Math.exp(fit.predict(today)));
 		} catch (Exception e) {
 			e.printStackTrace();
+			System.out.println("Error on " + getClass() + " - " + getName());
 		}
 		return series;
 	}

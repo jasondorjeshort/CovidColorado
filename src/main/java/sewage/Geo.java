@@ -68,4 +68,9 @@ public class Geo extends Multi {
 	public String getTitleLine() {
 		return String.format("%f,%f", getLat(), getLon());
 	}
+
+	@Override
+	public String getName() {
+		return String.format("%.2f,%.2f", getLat(), getLon());
+	}
 }

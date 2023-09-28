@@ -243,6 +243,8 @@ public class Nwss {
 		time = System.currentTimeMillis();
 
 		all.build(plants.values());
+
+		// JFC this is tedious
 		plants.forEach((plantId, sewage) -> {
 			String state = sewage.getState();
 			if (state != null) {
@@ -253,11 +255,24 @@ public class Nwss {
 				if (c != null) {
 					String[] countyNames = c.split(",");
 					for (String county : countyNames) {
-						getCountySewage(county, state).includeSewage(sewage, 1.0 / countyNames.length);
+						sewage.County cSew = getCountySewage(county, state);
+						cSew.includeSewage(sewage, 1.0 / countyNames.length);
+						cSew.addChild(sewage);
 					}
 				}
 			}
 			geo.includeSewage(sewage, 1.0);
+		});
+
+		regions.values().forEach(sewage -> all.addChild(sewage));
+		states.forEach((stateId, sewage) -> {
+			String r = regionList.getRegion(stateId);
+			sewage.Multi rSew = getRegionSewage(r);
+			rSew.addChild(sewage);
+		});
+		counties.forEach((countyId, sewage) -> {
+			sewage.State sSew = getStateSewage(sewage.getState());
+			sSew.addChild(sewage);
 		});
 
 		System.out.println("Built combos in " + (System.currentTimeMillis() - time) / 1000 + "s.");
@@ -272,8 +287,8 @@ public class Nwss {
 		time = System.currentTimeMillis();
 
 		ASync<Chart> build = new ASync<>();
-		build.execute(() -> ChartSewage.createSewage(geo));
-		build.execute(() -> ChartSewage.createSewage(all));
+		// build.execute(() -> ChartSewage.createSewage(geo));
+		build.execute(() -> ChartSewage.createSewage(all, null));
 		if (variants != null) {
 			VocSewage vocSewage = new VocSewage(all, variants);
 			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(vocSewage, true, false));
@@ -281,13 +296,10 @@ public class Nwss {
 			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(vocSewage, false, true));
 			build.execute(() -> ChartSewage.buildSewageCumulativeChart(vocSewage));
 		}
-		plants.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
-		counties.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
-		states.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
-		regions.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
-		states.forEach((id, sewage) -> {
-			System.out.println(id + "," + regionList.getRegion(id));
-		});
+		plants.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage, null)));
+		counties.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage, null)));
+		states.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage, 5)));
+		regions.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage, null)));
 		build.complete();
 		System.out.println("Built charts " + (System.currentTimeMillis() - time) / 1000 + "s.");
 		time = System.currentTimeMillis();
