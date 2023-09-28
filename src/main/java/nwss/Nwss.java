@@ -43,10 +43,12 @@ public class Nwss {
 	private HashMap<String, sewage.Plant> plants = new HashMap<>();
 	private HashMap<String, sewage.County> counties = new HashMap<>();
 	private HashMap<String, sewage.State> states = new HashMap<>();
+	private HashMap<String, sewage.Region> regions = new HashMap<>();
 	private sewage.All all = new sewage.All("United States");
 	private sewage.Geo geo = new sewage.Geo(37.8921116, -106.0125575);
 
 	private Fips fips;
+	private Regions regionList = new Regions();
 
 	private static long HOUR = 60 * 60 * 1000;
 
@@ -118,6 +120,17 @@ public class Nwss {
 			if (sew == null) {
 				sew = new sewage.State(state);
 				states.put(state, sew);
+			}
+			return sew;
+		}
+	}
+
+	private sewage.Region getRegionSewage(String region) {
+		synchronized (regions) {
+			sewage.Region sew = regions.get(region);
+			if (sew == null) {
+				sew = new sewage.Region(region);
+				regions.put(region, sew);
 			}
 			return sew;
 		}
@@ -213,6 +226,7 @@ public class Nwss {
 		build.execute(() -> readLocations());
 		build.execute(() -> variants = Voc.create());
 		build.execute(() -> fips = new Fips());
+		build.execute(() -> regionList.load());
 
 		for (VariantEnum vEnum : VariantEnum.values()) {
 			System.out.println(vEnum);
@@ -232,6 +246,8 @@ public class Nwss {
 		plants.forEach((plantId, sewage) -> {
 			String state = sewage.getState();
 			if (state != null) {
+				String region = regionList.getRegion(state);
+				getRegionSewage(region).includeSewage(sewage, 1.0);
 				getStateSewage(state).includeSewage(sewage, 1.0);
 				String c = sewage.getCounties();
 				if (c != null) {
@@ -268,6 +284,10 @@ public class Nwss {
 		plants.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
 		counties.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
 		states.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
+		regions.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage)));
+		states.forEach((id, sewage) -> {
+			System.out.println(id + "," + regionList.getRegion(id));
+		});
 		build.complete();
 		System.out.println("Built charts " + (System.currentTimeMillis() - time) / 1000 + "s.");
 		time = System.currentTimeMillis();

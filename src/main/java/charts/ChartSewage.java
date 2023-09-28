@@ -52,8 +52,10 @@ public class ChartSewage {
 	public static final String SEWAGE_FOLDER = Charts.FULL_FOLDER + "\\nwss";
 	public static final String PLANTS = "plants";
 	public static final String STATES = "states";
+	public static final String REGIONS = "regions";
 	public static final String COUNTIES = "counties";
 	public static final String STATES_FOLDER = SEWAGE_FOLDER + "\\" + STATES;
+	public static final String REGIONS_FOLDER = SEWAGE_FOLDER + "\\" + REGIONS;
 	public static final String COUNTIES_FOLDER = SEWAGE_FOLDER + "\\" + COUNTIES;
 	public static final String PLANT_FOLDER = SEWAGE_FOLDER + "\\" + PLANTS;
 	public static final String LL = "LL";
@@ -64,6 +66,7 @@ public class ChartSewage {
 		new File(SEWAGE_FOLDER).mkdir();
 		new File(PLANT_FOLDER).mkdir();
 		new File(STATES_FOLDER).mkdir();
+		new File(REGIONS_FOLDER).mkdir();
 		new File(COUNTIES_FOLDER).mkdir();
 		new File(LL_FOLDER).mkdir();
 	}
