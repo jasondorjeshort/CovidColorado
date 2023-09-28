@@ -108,7 +108,7 @@ public class ChartSewage {
 		title += sewage.getTitleLine();
 		title += "\nSource: CDC/NWSS";
 		fileName += "-" + (log ? "log" : "cart");
-		String verticalAxis = "Arbitrary sewage units";
+		String verticalAxis = "Percentage of Jan 2022 peak";
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title, "Date", verticalAxis, collection);
 
 		XYPlot plot = chart.getXYPlot();
@@ -117,7 +117,7 @@ public class ChartSewage {
 		if (log) {
 			LogarithmicAxis yAxis = new LogarithmicAxis(verticalAxis);
 			plot.setRangeAxis(yAxis);
-			double lowerBound = yAxis.getUpperBound() / 1000.0;
+			double lowerBound = 0.01;
 			if (yAxis.getLowerBound() < lowerBound) {
 				yAxis.setLowerBound(lowerBound);
 			}
@@ -185,7 +185,7 @@ public class ChartSewage {
 		String title = vocSewage.sewage.getTitleLine();
 		fileName += "-log-voc" + (fit ? "-fit" : "") + (exact ? "-exact" : "");
 		title += "\nSource: CDC/NWSS, Cov-Spectrum";
-		String verticalAxis = "Arbitrary sewage units";
+		String verticalAxis = "Percentage of Jan 2022 peak";
 
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title, "Date", verticalAxis, collection);
 
@@ -195,7 +195,7 @@ public class ChartSewage {
 		LogarithmicAxis yAxis = new LogarithmicAxis(verticalAxis);
 		plot.setRangeAxis(yAxis);
 		// yAxis.setUpperBound(1000);
-		yAxis.setLowerBound(0.1);
+		yAxis.setLowerBound(0.01);
 		/*
 		 * double bound = yAxis.getUpperBound() / 10000.0; if
 		 * (yAxis.getLowerBound() < bound) { yAxis.setLowerBound(bound); }

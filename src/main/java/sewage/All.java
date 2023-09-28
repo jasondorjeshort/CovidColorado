@@ -3,6 +3,8 @@ package sewage;
 import java.util.Collection;
 import java.util.HashMap;
 
+import covid.CalendarUtils;
+
 public class All extends Multi {
 
 	public final String desc;
@@ -27,6 +29,14 @@ public class All extends Multi {
 		});
 	}
 
+	int peakStart = CalendarUtils.dateToDay("12-1-2021");
+	int peakEnd = CalendarUtils.dateToDay("3-1-2022");
+
+	private void renorm(Collection<Plant> plants) {
+		double renorm = getHighestSewage(peakStart, peakEnd) / 100.0;
+		plants.forEach(p -> p.renorm(renorm));
+	}
+
 	/*
 	 * CDC numbers claim to be normalized, but the scales differ by up to 100.
 	 * This makes averaging nigh on impossible, big problem. So I just normalize
@@ -39,13 +49,9 @@ public class All extends Multi {
 		clear();
 		plants.forEach(p -> includeSewage(p, 1.0));
 		int firstDay = getFirstDay(), lastDay = getLastDay();
-		double area = getTotalSewage(firstDay, lastDay);
-
-		System.out.println("Sewage area: " + area);
 
 		HashMap<Plant, Double> oldNormalizers = new HashMap<>();
 		for (int i = 0; i < 2000; i++) {
-
 			oldNormalizers.clear();
 			plants.forEach(p -> oldNormalizers.put(p, p.getNormalizer()));
 
@@ -53,8 +59,7 @@ public class All extends Multi {
 			plants.forEach(p -> includeSewage(p, 1.0));
 			plants.forEach(p -> p.buildNormalizer(this));
 
-			double renorm = getTotalSewage(firstDay, lastDay) / area;
-			plants.forEach(p -> p.renorm(renorm));
+			renorm(plants);
 
 			double normDiff = -1;
 			Abstract normPlant = this;
@@ -73,19 +78,7 @@ public class All extends Multi {
 			}
 		}
 
-		double cdcNorm = 0.0, cdcs = 0;
-		for (Plant p : plants) {
-			if (p.getPopulation() == null) {
-				System.out.println("Null pop on plant: " + p.id);
-				continue;
-			}
-			if (p.id.startsWith("CDC") && p.getPopulation() > 0) {
-				cdcNorm += Math.log(p.getNormalizer()) * p.getPopulation();
-				cdcs += p.getPopulation();
-			}
-		}
-		double renorm = Math.exp(cdcNorm / cdcs);
-		plants.forEach(p -> p.renorm(renorm));
+		renorm(plants);
 	}
 
 	public void build(Collection<Plant> plants) {

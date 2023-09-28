@@ -166,15 +166,29 @@ public abstract class Abstract extends DailyTracker {
 		return lastDay + 1;
 	}
 
-	public synchronized double getTotalSewage(int first, int last) {
-		double sewage = 0.0;
+	public double getTotalSewage(int first, int last) {
+		double totalSewage = 0.0;
 		for (int day = first; day <= last; day++) {
-			DaySewage ds = entries.get(day);
+			DaySewage ds = getEntry(day);
 			if (ds != null) {
-				sewage += ds.getSewage();
+				totalSewage += ds.getSewage();
 			}
 		}
-		return sewage;
+		return totalSewage;
+	}
+
+	public Double getHighestSewage(int first, int last) {
+		Double highestSewage = null;
+		for (int day = first; day <= last; day++) {
+			DaySewage ds = getEntry(day);
+			if (ds != null) {
+				double s = ds.getSewage();
+				if (highestSewage == null || s > highestSewage) {
+					highestSewage = s;
+				}
+			}
+		}
+		return highestSewage;
 	}
 
 }
