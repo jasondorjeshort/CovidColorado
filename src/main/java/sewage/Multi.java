@@ -30,6 +30,10 @@ public abstract class Multi extends Abstract {
 
 	@Override
 	protected void fixStarting() {
+		if (getFirstDay() >= getLastDay()) {
+			// There's empty counties somehow?
+			return;
+		}
 		try {
 			if (getEntry(getFirstDay()).getSewage() > 100) {
 				while (getEntry(getFirstDay()).getSewage() > getEntry(getFirstDay() + 1).getSewage()) {
@@ -38,6 +42,8 @@ public abstract class Multi extends Abstract {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
+			System.out.println(
+					"Error on " + getClass() + " for " + getName() + " as " + getFirstDay() + " to " + getLastDay());
 		}
 	}
 
