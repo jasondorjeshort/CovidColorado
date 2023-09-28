@@ -31,9 +31,12 @@ public class All extends Multi {
 
 	int peakStart = CalendarUtils.dateToDay("12-1-2021");
 	int peakEnd = CalendarUtils.dateToDay("3-1-2022");
+	
+	public static final double SCALE_PEAK_RENORMALIZER = 100.0;
+	public static final String SCALE_NAME = "Percentage of Jan 2022 peak";
 
 	private void renorm(Collection<Plant> plants) {
-		double renorm = getHighestSewage(peakStart, peakEnd) / 100.0;
+		double renorm = getHighestSewage(peakStart, peakEnd) / SCALE_PEAK_RENORMALIZER;
 		plants.forEach(p -> p.renorm(renorm));
 	}
 

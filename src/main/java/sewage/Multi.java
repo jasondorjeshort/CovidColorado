@@ -35,7 +35,7 @@ public abstract class Multi extends Abstract {
 			return;
 		}
 		try {
-			if (getEntry(getFirstDay()).getSewage() > 100) {
+			if (getEntry(getFirstDay()).getSewage() > All.SCALE_PEAK_RENORMALIZER) {
 				while (getEntry(getFirstDay()).getSewage() > getEntry(getFirstDay() + 1).getSewage()) {
 					bumpFirstDay();
 				}

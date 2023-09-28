@@ -28,6 +28,7 @@ import org.jfree.data.time.TimeSeriesCollection;
 
 import covid.CalendarUtils;
 import sewage.Abstract;
+import sewage.All;
 import variants.Voc;
 import variants.VocSewage;
 
@@ -117,7 +118,7 @@ public class ChartSewage {
 		title += sewage.getTitleLine();
 		title += "\nSource: CDC/NWSS";
 		fileName += "-" + (log ? "log" : "cart");
-		String verticalAxis = "Percentage of Jan 2022 peak";
+		String verticalAxis = All.SCALE_NAME;
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title, "Date", verticalAxis, collection);
 
 		XYPlot plot = chart.getXYPlot();
@@ -195,7 +196,7 @@ public class ChartSewage {
 		String title = vocSewage.sewage.getTitleLine();
 		fileName += "-log-voc" + (fit ? "-fit" : "") + (exact ? "-exact" : "");
 		title += "\nSource: CDC/NWSS, Cov-Spectrum";
-		String verticalAxis = "Percentage of Jan 2022 peak";
+		String verticalAxis = All.SCALE_NAME;
 
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title, "Date", verticalAxis, collection);
 
