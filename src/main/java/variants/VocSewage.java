@@ -28,23 +28,8 @@ public class VocSewage {
 	}
 
 	public HashMap<String, Double> getCumulativePrevalence(ArrayList<String> variants) {
-		HashMap<String, Double> prevalence = new HashMap<>();
-
-		int vFirstDay = getFirstDay(), vLastDay = getLastDay();
-		for (String variant : variants) {
-			double number = 0;
-			for (int day = vFirstDay; day <= vLastDay; day++) {
-				Double prev = sewage.getSewageNormalized(day);
-				if (prev == null) {
-					continue;
-				}
-				number += prev * voc.getPrevalence(day, variant);
-			}
-			prevalence.put(variant, number);
-		}
-
-		variants.sort((v1, v2) -> -Double.compare(prevalence.get(v1), prevalence.get(v2)));
-
+		makeFits();
+		variants.addAll(variantsByCumulative);
 		return prevalence;
 	}
 
@@ -127,34 +112,83 @@ public class VocSewage {
 		return String.format("[%+.0f%%,%+.0f%%]/week", min, max);
 	}
 
-	public synchronized TimeSeries makeRegressionTS(String variant) {
-		final SimpleRegression fit = new SimpleRegression();
-		final int fitLastDay = Math.min(getLastDay(), voc.getLastDay());
-		final int fitFirstDay = Math.max(getFirstDay(), voc.getFirstDay());
-		for (int day = fitFirstDay; day <= fitLastDay; day++) {
-			DaySewage entry;
-			entry = sewage.getEntry(day);
-			if (entry == null) {
-				continue;
-			}
+	private ArrayList<String> variantsByGrowth, variantsByCount, variantsByCumulative;
+	private HashMap<String, SimpleRegression> fits;
+	private HashMap<String, Double> prevalence = new HashMap<>();
 
-			double number = entry.getSewage();
-			number *= sewage.getNormalizer();
+	private int fitLastDay;
 
-			number *= voc.getPrevalence(day, variant);
-			if (number <= 0) {
-				continue;
-			}
-
-			fit.addData(day, Math.log(number));
+	public synchronized void makeFits() {
+		if (fits != null) {
+			return;
 		}
 
+		fitLastDay = getLastDay() + 28;
+
+		fits = new HashMap<>();
+		variantsByGrowth = voc.getVariants();
+		variantsByCount = voc.getVariants();
+
+		final int fitFirstDay = getFirstDay();
+		for (String variant : variantsByGrowth) {
+			SimpleRegression fit = new SimpleRegression();
+			for (int day = fitFirstDay; day <= fitLastDay; day++) {
+				DaySewage entry;
+				entry = sewage.getEntry(day);
+				if (entry == null) {
+					continue;
+				}
+
+				double number = entry.getSewage();
+				number *= sewage.getNormalizer();
+
+				number *= voc.getPrevalence(day, variant);
+				if (number <= 0) {
+					continue;
+				}
+
+				fit.addData(day, Math.log(number));
+			}
+
+			fits.put(variant, fit);
+		}
+
+		variantsByGrowth.sort((v1, v2) -> Double.compare(fits.get(v1).getSlope(), fits.get(v2).getSlope()));
+		variantsByCount
+				.sort((v1, v2) -> Double.compare(fits.get(v1).predict(fitLastDay), fits.get(v2).predict(fitLastDay)));
+
+		variantsByCumulative = voc.getVariants();
+		int vFirstDay = getFirstDay(), vLastDay = getLastDay();
+		for (String variant : variantsByCumulative) {
+			double number = 0;
+			for (int day = vFirstDay; day <= vLastDay; day++) {
+				Double prev = sewage.getSewageNormalized(day);
+				if (prev == null) {
+					continue;
+				}
+				number += prev * voc.getPrevalence(day, variant);
+			}
+			prevalence.put(variant, number);
+		}
+
+		variantsByCumulative.sort((v1, v2) -> -Double.compare(prevalence.get(v1), prevalence.get(v2)));
+	}
+
+	public TimeSeries makeRegressionTS(String variant) {
+
+		SimpleRegression fit;
+		synchronized (this) {
+			fit = fits.get(variant);
+		}
+		if (fit == null) {
+			return null;
+		}
+		int fitFirstDay = Math.max(getFirstDay(), voc.getFirstDay());
 		String name = variant.replaceAll("nextcladePangoLineage:", "");
 		TimeSeries series = new TimeSeries(String.format("%s %s", name, slopeToWeekly(fit)));
-		int first = Math.max(getFirstDay(), voc.getFirstDay());
-		series.add(CalendarUtils.dayToDay(first), Math.exp(fit.predict(first)));
-		int last = getLastDay() + 28;
-		series.add(CalendarUtils.dayToDay(last), Math.exp(fit.predict(last)));
+		series.add(CalendarUtils.dayToDay(fitFirstDay), Math.exp(fit.predict(fitFirstDay)));
+
+		series.add(CalendarUtils.dayToDay(fitLastDay), Math.exp(fit.predict(fitLastDay)));
 		return series;
 	}
 }
