@@ -31,7 +31,7 @@ public class All extends Multi {
 
 	int peakStart = CalendarUtils.dateToDay("12-1-2021");
 	int peakEnd = CalendarUtils.dateToDay("3-1-2022");
-	
+
 	public static final double SCALE_PEAK_RENORMALIZER = 100.0;
 	public static final String SCALE_NAME = "Percentage of Jan 2022 peak";
 

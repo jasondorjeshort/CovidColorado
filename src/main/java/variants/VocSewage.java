@@ -2,6 +2,7 @@ package variants;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.jfree.data.time.TimeSeries;
@@ -31,6 +32,52 @@ public class VocSewage {
 		makeFits();
 		variants.addAll(variantsByCumulative);
 		return prevalence;
+	}
+
+	double getSlopeByGrowth(int n) {
+		String v = variantsByGrowth.get(n);
+		return fits.get(v).getSlope();
+	}
+
+	public VocSewage merge(int variantCount) {
+		makeFits();
+
+		if (variantCount >= variantsByGrowth.size()) {
+			return this;
+		}
+
+		final int count = 5;
+		final double[] targetSlopes = new double[count];
+		@SuppressWarnings("unchecked")
+		final LinkedList<String>[] variants = new LinkedList[count];
+		targetSlopes[0] = getSlopeByGrowth(Math.max((numVariants - 1) / 10, 1));
+		targetSlopes[count - 1] = getSlopeByGrowth(numVariants - 1) * 0.33 + getSlopeByGrowth(numVariants - 2) * 0.67;
+		double gap = (targetSlopes[count - 1] - targetSlopes[0]) / (count - 1);
+		for (int i = 0; i < count - 1; i++) {
+			targetSlopes[i] = targetSlopes[0] + i * gap;
+		}
+		for (int i = 0; i < count; i++) {
+			variants[i] = new LinkedList<>();
+		}
+
+		for (String variant : variantsByGrowth) {
+			double slope = fits.get(variant).getSlope();
+
+			int closest = 0;
+			double closestDist = Math.abs(slope - targetSlopes[0]);
+			// This is O(mn), could be O(m) with a better algorithm but only n=5
+			for (int i = 1; i < count; i++) {
+				double dist = Math.abs(slope - targetSlopes[i]);
+				if (dist < closestDist) {
+					closest = i;
+					closestDist = dist;
+				}
+			}
+			variants[closest].add(variant);
+		}
+
+		Voc voc2 = new Voc(voc, variants);
+		return new VocSewage(sewage, voc2);
 	}
 
 	public synchronized void makeTimeSeries(TimeSeries series, String variant) {
@@ -112,22 +159,22 @@ public class VocSewage {
 		return String.format("[%+.0f%%,%+.0f%%]/week", min, max);
 	}
 
+	private int numVariants;
+	private int fitLastDay;
 	private ArrayList<String> variantsByGrowth, variantsByCount, variantsByCumulative;
 	private HashMap<String, SimpleRegression> fits;
 	private HashMap<String, Double> prevalence = new HashMap<>();
-
-	private int fitLastDay;
 
 	public synchronized void makeFits() {
 		if (fits != null) {
 			return;
 		}
 
-		fitLastDay = getLastDay() + 28;
-
 		fits = new HashMap<>();
 		variantsByGrowth = voc.getVariants();
 		variantsByCount = voc.getVariants();
+		numVariants = variantsByGrowth.size();
+		fitLastDay = getLastDay() + 28;
 
 		final int fitFirstDay = getFirstDay();
 		for (String variant : variantsByGrowth) {
@@ -175,7 +222,7 @@ public class VocSewage {
 	}
 
 	public TimeSeries makeRegressionTS(String variant) {
-
+		makeFits();
 		SimpleRegression fit;
 		synchronized (this) {
 			fit = fits.get(variant);

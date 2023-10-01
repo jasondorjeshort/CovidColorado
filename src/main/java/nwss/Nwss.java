@@ -290,7 +290,7 @@ public class Nwss {
 		// build.execute(() -> ChartSewage.createSewage(geo));
 		build.execute(() -> ChartSewage.createSewage(all, null));
 		if (variants != null) {
-			VocSewage vocSewage = new VocSewage(all, variants);
+			VocSewage vocSewage = new VocSewage(all, variants).merge(5);
 			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(vocSewage, true, false));
 			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(vocSewage, true, true));
 			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(vocSewage, false, true));

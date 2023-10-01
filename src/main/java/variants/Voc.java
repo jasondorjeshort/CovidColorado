@@ -5,6 +5,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -106,18 +107,8 @@ public class Voc extends DailyTracker {
 		}
 		variantSet.add(OTHERS);
 
-		for (String variant : variantSet) {
-			double number = 0;
-			for (int day = getFirstDay(); day <= getLastDay(); day++) {
-				DayVariants entry = entries.get(day);
-				if (entry != null) {
-					number += entry.getPrevalence(variant);
-				}
-			}
-			variantTot.put(variant, number);
-		}
-
 		variantList.addAll(variantSet);
+		makeVariantTot();
 		variantList.sort((v1, v2) -> -Double.compare(variantTot.get(v1), variantTot.get(v2)));
 
 		System.out.println(String.format("%,d total variants", variantList.size() - 1));
@@ -143,7 +134,68 @@ public class Voc extends DailyTracker {
 		}
 		System.out.println(sb.toString());
 		System.out.println(sb2.toString());
+	}
 
+	private void makeVariantTot() {
+		for (String variant : variantList) {
+			double number = 0;
+			for (int day = getFirstDay(); day <= getLastDay(); day++) {
+				DayVariants entry = entries.get(day);
+				if (entry != null) {
+					number += entry.getPrevalence(variant);
+				}
+			}
+			variantTot.put(variant, number);
+		}
+	}
+
+	public Voc(Voc parent, LinkedList<String>[] variants) {
+		includeDay(parent.getFirstDay());
+		includeDay(parent.getLastDay());
+
+		int num = variants.length;
+		String[] vNames = new String[num];
+		for (int v = 0; v < vNames.length; v++) {
+			vNames[v] = "Tier " + (v + 1);
+			variantList.add(vNames[v]);
+			System.out.println(vNames[v]);
+			for (String var : variants[v]) {
+				System.out.println("  " + var.replaceAll("nextcladePangoLineage:", ""));
+			}
+		}
+
+		// int debugDay = (getFirstDay() + getLastDay()) / 2;
+
+		for (int day = getFirstDay(); day <= getLastDay(); day++) {
+			DayVariants entry = parent.entries.get(day);
+			if (entry == null) {
+				continue;
+			}
+
+			DayVariants entry2 = new DayVariants(day);
+			entries.put(day, entry2);
+
+			for (int v = 0; v < variants.length; v++) {
+				LinkedList<String> vList = variants[v];
+				String variant = vNames[v];
+				double totalPrev = 0.0;
+				for (String vParent : vList) {
+					double prev = parent.entries.get(day).getPrevalence(vParent);
+					// if (day == debugDay) {
+					// System.out.println("Parent prev for " + vParent + " is "
+					// + prev);
+					// }
+					totalPrev += prev;
+				}
+				// if (day == debugDay) {
+				// System.out.println("Total prev for " + variant + " is " +
+				// totalPrev);
+				// }
+				entry2.variants.put(variant, totalPrev);
+			}
+		}
+
+		makeVariantTot();
 	}
 
 	public synchronized ArrayList<String> getVariants() {
