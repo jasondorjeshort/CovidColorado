@@ -22,6 +22,8 @@ public class Voc extends DailyTracker {
 
 	public static String OTHERS = "others";
 
+	public final boolean isMerger;
+
 	public static Voc create() {
 		File f = new File(CSV_NAME);
 		if (f.exists()) {
@@ -72,6 +74,7 @@ public class Voc extends DailyTracker {
 	private final ArrayList<String> variantList = new ArrayList<>();
 
 	public Voc(File f) {
+		isMerger = false;
 		HashSet<String> variantSet = new HashSet<>();
 		try (CSVParser csv = CSVParser.parse(f, CHARSET, CSVFormat.DEFAULT)) {
 			int records = 0;
@@ -150,6 +153,7 @@ public class Voc extends DailyTracker {
 	}
 
 	public Voc(Voc parent, LinkedList<String>[] variants) {
+		isMerger = true;
 		includeDay(parent.getFirstDay());
 		includeDay(parent.getLastDay());
 

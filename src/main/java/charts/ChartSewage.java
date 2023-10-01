@@ -194,7 +194,7 @@ public class ChartSewage {
 
 		String fileName = vocSewage.sewage.getChartFilename();
 		String title = vocSewage.sewage.getTitleLine();
-		fileName += "-log-voc" + (fit ? "-fit" : "") + (exact ? "-exact" : "");
+		fileName += "-log-voc" + (fit ? "-fit" : "") + (exact ? "-exact" : "") + (voc.isMerger ? "-merger" : "");
 		title += "\nSource: CDC/NWSS, Cov-Spectrum";
 		String verticalAxis = All.SCALE_NAME;
 
@@ -275,7 +275,8 @@ public class ChartSewage {
 
 		BufferedImage image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT * 3 / 2);
 
-		String fileName = vocSewage.sewage.getChartFilename() + "-cumulative";
+		String fileName = vocSewage.sewage.getChartFilename() + "-cumulative"
+				+ (vocSewage.voc.isMerger ? "-merger" : "");
 		Charts.saveBufferedImageAsPNG(SEWAGE_FOLDER, fileName, image);
 		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
 
@@ -288,6 +289,13 @@ public class ChartSewage {
 	public static void createSewage(Abstract sewage, Integer maxChildren) {
 		// buildSewageTimeseriesChart(sewage, false);
 		buildSewageTimeseriesChart(sewage, true, maxChildren);
+	}
+
+	public static void buildVocSewageCharts(VocSewage vocSewage) {
+		ChartSewage.buildSewageTimeseriesChart(vocSewage, true, false);
+		ChartSewage.buildSewageTimeseriesChart(vocSewage, true, true);
+		ChartSewage.buildSewageTimeseriesChart(vocSewage, false, true);
+		ChartSewage.buildSewageCumulativeChart(vocSewage);
 	}
 
 }

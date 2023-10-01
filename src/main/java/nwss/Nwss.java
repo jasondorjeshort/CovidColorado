@@ -290,11 +290,9 @@ public class Nwss {
 		// build.execute(() -> ChartSewage.createSewage(geo));
 		build.execute(() -> ChartSewage.createSewage(all, null));
 		if (variants != null) {
-			VocSewage vocSewage = new VocSewage(all, variants).merge(5);
-			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(vocSewage, true, false));
-			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(vocSewage, true, true));
-			build.execute(() -> ChartSewage.buildSewageTimeseriesChart(vocSewage, false, true));
-			build.execute(() -> ChartSewage.buildSewageCumulativeChart(vocSewage));
+			VocSewage vocSewage1 = new VocSewage(all, variants);
+			build.execute(() -> ChartSewage.buildVocSewageCharts(vocSewage1));
+			build.execute(() -> ChartSewage.buildVocSewageCharts(vocSewage1.merge(5)));
 		}
 		plants.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage, null)));
 		counties.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage, null)));
