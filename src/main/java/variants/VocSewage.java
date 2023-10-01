@@ -46,17 +46,17 @@ public class VocSewage {
 			return this;
 		}
 
-		final int count = 5;
-		final double[] targetSlopes = new double[count];
+		final double[] targetSlopes = new double[variantCount];
 		@SuppressWarnings("unchecked")
-		final LinkedList<String>[] variants = new LinkedList[count];
+		final LinkedList<String>[] variants = new LinkedList[variantCount];
 		targetSlopes[0] = getSlopeByGrowth(Math.max((numVariants - 1) / 10, 1));
-		targetSlopes[count - 1] = getSlopeByGrowth(numVariants - 1) * 0.33 + getSlopeByGrowth(numVariants - 2) * 0.67;
-		double gap = (targetSlopes[count - 1] - targetSlopes[0]) / (count - 1);
-		for (int i = 0; i < count - 1; i++) {
+		targetSlopes[variantCount - 1] = getSlopeByGrowth(numVariants - 1) * 0.33
+				+ getSlopeByGrowth(numVariants - 2) * 0.67;
+		double gap = (targetSlopes[variantCount - 1] - targetSlopes[0]) / (variantCount - 1);
+		for (int i = 0; i < variantCount - 1; i++) {
 			targetSlopes[i] = targetSlopes[0] + i * gap;
 		}
-		for (int i = 0; i < count; i++) {
+		for (int i = 0; i < variantCount; i++) {
 			variants[i] = new LinkedList<>();
 		}
 
@@ -66,7 +66,7 @@ public class VocSewage {
 			int closest = 0;
 			double closestDist = Math.abs(slope - targetSlopes[0]);
 			// This is O(mn), could be O(m) with a better algorithm but only n=5
-			for (int i = 1; i < count; i++) {
+			for (int i = 1; i < variantCount; i++) {
 				double dist = Math.abs(slope - targetSlopes[i]);
 				if (dist < closestDist) {
 					closest = i;
