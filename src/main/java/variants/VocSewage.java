@@ -107,9 +107,7 @@ public class VocSewage {
 	}
 
 	public synchronized TimeSeries makeRegressionTS(ArrayList<String> variants) {
-		final int fitFirstDay = getFirstDay();
-		final int fitLastDay = getLastDay();
-		HashMap<String, SimpleRegression> fits = new HashMap<>();
+		makeFits();
 		HashMap<String, Double> finals = new HashMap<>();
 		int tsLastDay = getLastDay() + 28;
 		for (String variant : variants) {
@@ -161,6 +159,7 @@ public class VocSewage {
 
 	private int numVariants;
 	private int fitLastDay;
+	private int fitFirstDay;
 	private ArrayList<String> variantsByGrowth, variantsByCount, variantsByCumulative;
 	private HashMap<String, SimpleRegression> fits;
 	private HashMap<String, Double> prevalence = new HashMap<>();
@@ -174,9 +173,9 @@ public class VocSewage {
 		variantsByGrowth = voc.getVariants();
 		variantsByCount = voc.getVariants();
 		numVariants = variantsByGrowth.size();
+		fitFirstDay = getFirstDay();
 		fitLastDay = getLastDay() + 28;
 
-		final int fitFirstDay = getFirstDay();
 		for (String variant : variantsByGrowth) {
 			SimpleRegression fit = new SimpleRegression();
 			for (int day = fitFirstDay; day <= fitLastDay; day++) {
@@ -230,7 +229,6 @@ public class VocSewage {
 		if (fit == null) {
 			return null;
 		}
-		int fitFirstDay = Math.max(getFirstDay(), voc.getFirstDay());
 		String name = variant.replaceAll("nextcladePangoLineage:", "");
 		TimeSeries series = new TimeSeries(String.format("%s %s", name, slopeToWeekly(fit)));
 		series.add(CalendarUtils.dayToDay(fitFirstDay), Math.exp(fit.predict(fitFirstDay)));
