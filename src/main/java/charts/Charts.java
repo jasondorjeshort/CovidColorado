@@ -39,7 +39,7 @@ import covid.DailyTracker;
  */
 public class Charts {
 	public static final BasicStroke stroke = new BasicStroke(2);
-	public static final Font font = new Font("normal", 0, 12);
+	public static final Font font = new Font("normal", 0, 16);
 
 	public static final int WIDTH = 1024, HEIGHT = 800;
 

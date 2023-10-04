@@ -1,10 +1,15 @@
 package sewage;
 
+import java.awt.Color;
 import java.util.HashMap;
+import java.util.LinkedList;
 
 import org.apache.commons.math3.stat.regression.SimpleRegression;
+import org.jfree.chart.plot.ValueMarker;
+import org.jfree.chart.ui.TextAnchor;
 import org.jfree.data.time.TimeSeries;
 
+import charts.Charts;
 import covid.CalendarUtils;
 import covid.DailyTracker;
 import nwss.DaySewage;
@@ -77,6 +82,14 @@ public abstract class Abstract extends DailyTracker {
 		return String.format("[%+.1f%%,%+.1f%%]/week", min, max);
 	}
 
+	public synchronized Double getNormalized(int day) {
+		DaySewage entry = getEntry(day);
+		if (entry == null) {
+			return null;
+		}
+		return entry.getSewage() * getNormalizer();
+	}
+
 	public synchronized TimeSeries makeFitSeries(int numDays) {
 		fixStarting();
 		final SimpleRegression fit = new SimpleRegression();
@@ -116,6 +129,58 @@ public abstract class Abstract extends DailyTracker {
 			System.out.println("Error on " + getClass() + " - " + getName());
 		}
 		return series;
+	}
+
+	public synchronized LinkedList<ValueMarker> getMarkers() {
+		fixStarting();
+		LinkedList<ValueMarker> markers = new LinkedList<>();
+
+		int firstDay = Math.max(getFirstDay(), CalendarUtils.dateToDay("9/1/2020")), lastDay = getLastDay();
+		boolean rising = getNormalized(firstDay + 1) >= getNormalized(firstDay);
+
+		for (int day = firstDay + 1; day <= lastDay - 14; day++) {
+			Double val = getNormalized(day);
+			Double val2 = getNormalized(day + 1);
+			if (val == null || val2 == null) {
+				continue;
+			}
+			boolean stillRising = val2 >= val;
+
+			if (stillRising == rising) {
+				continue;
+			}
+
+			for (int flipDay = day + 2; flipDay < day + 30 && flipDay <= lastDay; flipDay++) {
+				val2 = getNormalized(flipDay);
+				if (val2 == null) {
+					continue;
+				}
+				stillRising = val2 >= val;
+				if (stillRising == rising) {
+					val = val2;
+					day = flipDay;
+				}
+			}
+
+			if (day > lastDay - 14) {
+				break;
+			}
+
+			long time = CalendarUtils.dayToTime(day);
+			ValueMarker marker = new ValueMarker(time);
+			marker.setPaint(rising ? Color.red : Color.green);
+			if (rising) {
+				marker.setLabel(String.format("%s", CalendarUtils.dayToDate(day), val));
+			}
+			marker.setStroke(Charts.stroke);
+			marker.setLabelFont(Charts.font);
+			marker.setLabelTextAnchor(rising ? TextAnchor.TOP_CENTER : TextAnchor.HALF_ASCENT_CENTER);
+			markers.add(marker);
+
+			rising = !rising;
+		}
+
+		return markers;
 	}
 
 	public Double getSewageNormalized(int day) {

@@ -18,6 +18,7 @@ import org.jfree.chart.labels.ItemLabelAnchor;
 import org.jfree.chart.labels.ItemLabelPosition;
 import org.jfree.chart.labels.StandardCategoryItemLabelGenerator;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.category.CategoryItemRenderer;
 import org.jfree.chart.renderer.xy.DeviationRenderer;
@@ -110,7 +111,6 @@ public class ChartSewage {
 				seriesCount++;
 			}
 		}
-
 		// dataset.addSeries("Cases", series);
 
 		String fileName = sewage.getChartFilename();
@@ -122,6 +122,9 @@ public class ChartSewage {
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title, "Date", verticalAxis, collection);
 
 		XYPlot plot = chart.getXYPlot();
+		for (ValueMarker marker : sewage.getMarkers()) {
+			plot.addDomainMarker(marker);
+		}
 		plot.setRenderer(renderer);
 
 		if (log) {
