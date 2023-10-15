@@ -118,17 +118,18 @@ public abstract class Abstract extends DailyTracker {
 			}
 		}
 
-		TimeSeries series = new TimeSeries(
-				String.format("%s (%s, %d days)", "Fit", slopeToWeekly(fit), endDay - startDay + 1));
 		try {
-			series.add(CalendarUtils.dayToDay(startDay), Math.exp(fit.predict(startDay)));
 			int today = CalendarUtils.timeToDay(System.currentTimeMillis());
+			TimeSeries series = new TimeSeries(
+					String.format("%s (%s, today=%.0f)", "Fit", slopeToWeekly(fit), Math.exp(fit.predict(today))));
+			series.add(CalendarUtils.dayToDay(startDay), Math.exp(fit.predict(startDay)));
 			series.add(CalendarUtils.dayToDay(endDay), Math.exp(fit.predict(today)));
+			return series;
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.out.println("Error on " + getClass() + " - " + getName());
+			return null;
 		}
-		return series;
 	}
 
 	public synchronized LinkedList<ValueMarker> getMarkers() {
