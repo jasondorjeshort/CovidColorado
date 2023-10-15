@@ -50,7 +50,7 @@ public class Nwss {
 	private Fips fips;
 	private Regions regionList = new Regions();
 
-	private static long HOUR = 60 * 60 * 1000;
+	public static long HOUR = 60 * 60 * 1000;
 
 	public static void download(URL url, File file) {
 		try (BufferedInputStream in = new BufferedInputStream(url.openStream());

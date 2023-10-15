@@ -13,6 +13,7 @@ import org.apache.commons.csv.CSVRecord;
 
 import covid.CalendarUtils;
 import covid.DailyTracker;
+import nwss.Nwss;
 
 public class Voc extends DailyTracker {
 
@@ -26,10 +27,18 @@ public class Voc extends DailyTracker {
 
 	public static Voc create() {
 		File f = new File(CSV_NAME);
-		if (f.exists()) {
-			return new Voc(f);
+		if (!f.exists()) {
+			return null;
 		}
-		return null;
+
+		if (System.currentTimeMillis() - f.lastModified() > 36 * Nwss.HOUR) {
+			System.out.println("Deleting " + f.getPath() + ", age "
+					+ (System.currentTimeMillis() - f.lastModified()) / Nwss.HOUR + "h.");
+			f.delete();
+			return null;
+		}
+
+		return new Voc(f);
 	}
 
 	public static class DayVariants {
