@@ -1,5 +1,6 @@
 package sewage;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 
@@ -13,8 +14,10 @@ public class All extends Multi {
 		this.desc = desc;
 	}
 
+	final ArrayList<Plant> plants = new ArrayList<>();
+
 	@SuppressWarnings("unused")
-	private void normalizeFromCDC(Collection<Plant> plants) {
+	private void normalizeFromCDC() {
 		clear();
 		plants.forEach(p -> {
 			if (p.id.startsWith("CDC")) {
@@ -35,7 +38,7 @@ public class All extends Multi {
 	public static final double SCALE_PEAK_RENORMALIZER = 100.0;
 	public static final String SCALE_NAME = "Percentage of Jan 2022 peak";
 
-	private void renorm(Collection<Plant> plants) {
+	private void renorm() {
 		double renorm = getHighestSewage(peakStart, peakEnd) / SCALE_PEAK_RENORMALIZER;
 		plants.forEach(p -> p.renorm(renorm));
 	}
@@ -48,7 +51,7 @@ public class All extends Multi {
 	 * everywhere will have around the same amount of covid.
 	 */
 	@SuppressWarnings("unused")
-	private void normalizeFull(Collection<Plant> plants) {
+	private void normalizeFull() {
 		clear();
 		plants.forEach(p -> includeSewage(p, 1.0));
 		int firstDay = getFirstDay(), lastDay = getLastDay();
@@ -62,30 +65,32 @@ public class All extends Multi {
 			plants.forEach(p -> includeSewage(p, 1.0));
 			plants.forEach(p -> p.buildNormalizer(this));
 
-			renorm(plants);
+			renorm();
 
-			double normDiff = -1;
-			Abstract normPlant = this;
+			double normDiff = 0;
+			Plant normPlant = null;
 
-			for (Abstract p : plants) {
+			for (Plant p : plants) {
 				double d = Math.abs(Math.log(p.getNormalizer() / oldNormalizers.get(p)));
-				if (normDiff > d) {
+				if (d > normDiff) {
 					normDiff = d;
 					normPlant = p;
 				}
-				normDiff = Math.max(normDiff, d);
 			}
 
-			if (normDiff < 1E-6) {
+			if (normDiff < 1E-6 || normPlant == null) {
 				break;
 			}
 		}
 
-		renorm(plants);
+		renorm();
 	}
 
-	public void build(Collection<Plant> plants) {
-		normalizeFull(plants);
+	public void build(Collection<Plant> thePlants) {
+		plants.clear();
+		plants.addAll(thePlants);
+		plants.sort((p1, p2) -> Integer.compare(p1.getPlantId(), p2.getPlantId()));
+		normalizeFull();
 
 		clear();
 		plants.forEach(p -> includeSewage(p, 1.0));
