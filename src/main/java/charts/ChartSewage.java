@@ -240,7 +240,7 @@ public class ChartSewage {
 
 	public static BufferedImage buildSewageCumulativeChart(VocSewage vocSewage) {
 
-		ArrayList<String> variants = vocSewage.voc.getVariants();
+		ArrayList<String> variants = new ArrayList<>();
 		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 
 		Map<String, Double> prev = vocSewage.getCumulativePrevalence(variants);
@@ -248,7 +248,8 @@ public class ChartSewage {
 		for (String variant : variants) {
 			double prevalence = prev.get(variant);
 			prevalence = Math.log(prevalence) / Math.log(10);
-			dataset.addValue(prevalence, variant, "Prevalence");
+			String name = String.format("%s (%+.0f weekly)", variant, vocSewage.getGrowth(variant));
+			dataset.addValue(prevalence, name, "Prevalence");
 		}
 
 		JFreeChart chart = ChartFactory.createBarChart("Cumulative prevalence", null, "Combined sewage (powers of 10)",

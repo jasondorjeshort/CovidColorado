@@ -31,6 +31,7 @@ public class VocSewage {
 	public HashMap<String, Double> getCumulativePrevalence(ArrayList<String> variants) {
 		makeFits();
 		variants.addAll(variantsByCumulative);
+		variants.sort((v1, v2) -> -Double.compare(prevalence.get(v1), prevalence.get(v2)));
 		return prevalence;
 	}
 
@@ -163,6 +164,10 @@ public class VocSewage {
 	private ArrayList<String> variantsByGrowth, variantsByCount, variantsByCumulative;
 	private HashMap<String, SimpleRegression> fits;
 	private HashMap<String, Double> prevalence = new HashMap<>();
+
+	public double getGrowth(String variant) {
+		return slopeToWeekly(fits.get(variant).getSlope());
+	}
 
 	public synchronized void makeFits() {
 		if (fits != null) {
