@@ -88,7 +88,11 @@ public class All extends Multi {
 
 	public void build(Collection<Plant> thePlants) {
 		plants.clear();
-		plants.addAll(thePlants);
+		for (Plant p : thePlants) {
+			if (p.hasDays() && p.getTotalSewage(p.getFirstDay(), p.getLastDay()) > 0) {
+				plants.add(p);
+			}
+		}
 		plants.sort((p1, p2) -> Integer.compare(p1.getPlantId(), p2.getPlantId()));
 		normalizeFull();
 
