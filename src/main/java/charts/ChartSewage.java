@@ -79,7 +79,7 @@ public class ChartSewage {
 
 	public static BufferedImage buildSewageTimeseriesChart(Abstract sewage, boolean log, Integer maxChildren) {
 
-		if (!sewage.hasDays() || sewage.getTotalSewage(sewage.getFirstDay(), sewage.getLastDay()) <= 0) {
+		if (!sewage.hasDays() || sewage.getTotalSewage() <= 0) {
 			return null;
 		}
 

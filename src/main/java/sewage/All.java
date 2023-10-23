@@ -89,7 +89,7 @@ public class All extends Multi {
 	public void build(Collection<Plant> thePlants) {
 		plants.clear();
 		for (Plant p : thePlants) {
-			if (p.hasDays() && p.getTotalSewage(p.getFirstDay(), p.getLastDay()) > 0) {
+			if (p.hasDays() && p.getTotalSewage() > 0) {
 				plants.add(p);
 			}
 		}

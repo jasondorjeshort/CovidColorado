@@ -253,6 +253,10 @@ public abstract class Abstract extends DailyTracker {
 		return totalSewage;
 	}
 
+	public double getTotalSewage() {
+		return getTotalSewage(getFirstDay(), getLastDay());
+	}
+
 	public Double getHighestSewage(int first, int last) {
 		Double highestSewage = null;
 		for (int day = first; day <= last; day++) {
