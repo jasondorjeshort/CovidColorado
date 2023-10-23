@@ -38,9 +38,9 @@ public class All extends Multi {
 	public static final double SCALE_PEAK_RENORMALIZER = 100.0;
 	public static final String SCALE_NAME = "Percentage of Jan 2022 peak";
 
-	private void renorm() {
-		double renorm = getHighestSewage(peakStart, peakEnd) / SCALE_PEAK_RENORMALIZER;
-		plants.forEach(p -> p.renorm(renorm));
+	private void include() {
+		clear();
+		plants.forEach(p -> includeSewage(p, 1.0));
 	}
 
 	/*
@@ -50,22 +50,18 @@ public class All extends Multi {
 	 * close BUT probably not accurate for urban vs rural) that over long enough
 	 * everywhere will have around the same amount of covid.
 	 */
-	@SuppressWarnings("unused")
-	private void normalizeFull() {
-		clear();
-		plants.forEach(p -> includeSewage(p, 1.0));
-		int firstDay = getFirstDay(), lastDay = getLastDay();
-
+	private void normalize() {
 		HashMap<Plant, Double> oldNormalizers = new HashMap<>();
 		for (int i = 0; i < 2000; i++) {
 			oldNormalizers.clear();
 			plants.forEach(p -> oldNormalizers.put(p, p.getNormalizer()));
 
-			clear();
-			plants.forEach(p -> includeSewage(p, 1.0));
+			include();
 			plants.forEach(p -> p.buildNormalizer(this));
 
-			renorm();
+			include();
+			double renorm = getHighestSewage(peakStart, peakEnd) / SCALE_PEAK_RENORMALIZER;
+			plants.forEach(p -> p.renorm(renorm));
 
 			double normDiff = 0;
 			Plant normPlant = null;
@@ -78,12 +74,10 @@ public class All extends Multi {
 				}
 			}
 
-			if (normDiff < 1E-6 || normPlant == null) {
+			if (normDiff < 1E-9 || normPlant == null) {
 				break;
 			}
 		}
-
-		renorm();
 	}
 
 	public void build(Collection<Plant> thePlants) {
@@ -94,10 +88,9 @@ public class All extends Multi {
 			}
 		}
 		plants.sort((p1, p2) -> Integer.compare(p1.getPlantId(), p2.getPlantId()));
-		normalizeFull();
 
-		clear();
-		plants.forEach(p -> includeSewage(p, 1.0));
+		normalize();
+		include();
 	}
 
 	@Override
