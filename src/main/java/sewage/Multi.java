@@ -29,21 +29,14 @@ public abstract class Multi extends Abstract {
 	}
 
 	@Override
-	protected void fixStarting() {
-		if (getFirstDay() >= getLastDay()) {
-			// There's empty counties somehow?
+	protected void buildBackend() {
+		if (getTotalSewage() <= 0) {
 			return;
 		}
-		try {
-			if (getEntry(getFirstDay()).getSewage() > All.SCALE_PEAK_RENORMALIZER) {
-				while (getEntry(getFirstDay()).getSewage() > getEntry(getFirstDay() + 1).getSewage()) {
-					bumpFirstDay();
-				}
+		if (getEntry(getFirstDay()).getSewage() > All.SCALE_PEAK_RENORMALIZER) {
+			while (getEntry(getFirstDay()).getSewage() > getEntry(getFirstDay() + 1).getSewage()) {
+				bumpFirstDay();
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.out.println(
-					"Error on " + getClass() + " for " + getName() + " as " + getFirstDay() + " to " + getLastDay());
 		}
 	}
 

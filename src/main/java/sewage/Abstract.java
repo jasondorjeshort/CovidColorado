@@ -32,12 +32,23 @@ public abstract class Abstract extends DailyTracker {
 
 	public abstract String getTitleLine();
 
-	protected void fixStarting() {
+	private boolean built = false;
+
+	protected synchronized final void build() {
+		if (built) {
+			return;
+		}
+		built = true;
+
+		buildBackend();
+	}
+
+	protected void buildBackend() {
 
 	}
 
 	public synchronized TimeSeries makeTimeSeries(String name) {
-		fixStarting();
+		build();
 		if (name == null) {
 			name = getTSName();
 		}
@@ -91,7 +102,7 @@ public abstract class Abstract extends DailyTracker {
 	}
 
 	public synchronized TimeSeries makeFitSeries(int numDays) {
-		fixStarting();
+		build();
 		final SimpleRegression fit = new SimpleRegression();
 		Double confidence = null;
 		int startDay = getFirstDay(), endDay = getLastDay();
@@ -133,7 +144,7 @@ public abstract class Abstract extends DailyTracker {
 	}
 
 	public synchronized LinkedList<ValueMarker> getMarkers() {
-		fixStarting();
+		build();
 		LinkedList<ValueMarker> markers = new LinkedList<>();
 
 		int firstDay = Math.max(getFirstDay(), CalendarUtils.dateToDay("9/1/2020")), lastDay = getLastDay();
