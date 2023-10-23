@@ -29,7 +29,7 @@ public class VocSewage {
 	}
 
 	public HashMap<String, Double> getCumulativePrevalence(ArrayList<String> variants) {
-		makeFits();
+		build();
 		variants.addAll(variantsByCumulative);
 		variants.sort((v1, v2) -> -Double.compare(prevalence.get(v1), prevalence.get(v2)));
 		return prevalence;
@@ -41,7 +41,7 @@ public class VocSewage {
 	}
 
 	public VocSewage merge(int variantCount) {
-		makeFits();
+		build();
 
 		if (variantCount >= variantsByGrowth.size()) {
 			return this;
@@ -108,7 +108,7 @@ public class VocSewage {
 	}
 
 	public synchronized TimeSeries makeRegressionTS(ArrayList<String> variants) {
-		makeFits();
+		build();
 		HashMap<String, Double> finals = new HashMap<>();
 		int tsLastDay = getLastDay() + 28;
 		for (String variant : variants) {
@@ -158,6 +158,7 @@ public class VocSewage {
 		return String.format("[%+.0f%%,%+.0f%%]/week", min, max);
 	}
 
+	private boolean built = false;
 	private int numVariants;
 	private int fitLastDay;
 	private int fitFirstDay;
@@ -169,10 +170,11 @@ public class VocSewage {
 		return slopeToWeekly(fits.get(variant).getSlope());
 	}
 
-	public synchronized void makeFits() {
-		if (fits != null) {
+	public synchronized void build() {
+		if (built) {
 			return;
 		}
+		built = true;
 
 		fits = new HashMap<>();
 		variantsByGrowth = voc.getVariants();
@@ -226,7 +228,7 @@ public class VocSewage {
 	}
 
 	public TimeSeries makeRegressionTS(String variant) {
-		makeFits();
+		build();
 		SimpleRegression fit;
 		synchronized (this) {
 			fit = fits.get(variant);
