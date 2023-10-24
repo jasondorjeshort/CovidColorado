@@ -132,6 +132,9 @@ public class VocSewage {
 
 		variants.sort((v1, v2) -> -Double.compare(finals.get(v1), finals.get(v2)));
 
+		if (!variants.contains(Voc.OTHERS)) {
+			return null;
+		}
 		TimeSeries series = new TimeSeries(String.format("Collective fit"));
 		for (int day = fitFirstDay; day <= tsLastDay; day++) {
 			double number = 0.0;

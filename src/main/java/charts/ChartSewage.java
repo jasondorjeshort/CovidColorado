@@ -165,9 +165,12 @@ public class ChartSewage {
 		ArrayList<String> variants = voc.getVariants();
 		if (fit) {
 			series = vocSewage.makeRegressionTS(variants);
-			collection.addSeries(series);
-			renderer.setSeriesStroke(seriesCount, new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-			seriesCount++;
+			if (series != null) {
+				collection.addSeries(series);
+				renderer.setSeriesStroke(seriesCount,
+						new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+				seriesCount++;
+			}
 		}
 
 		series = vocSewage.sewage.makeTimeSeries(fit ? "Actual" : "Sewage");
