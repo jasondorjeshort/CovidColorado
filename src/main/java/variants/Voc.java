@@ -31,7 +31,7 @@ public class Voc extends DailyTracker {
 			return null;
 		}
 
-		if (System.currentTimeMillis() - f.lastModified() > 36 * Nwss.HOUR) {
+		if (System.currentTimeMillis() - f.lastModified() > 8 * Nwss.HOUR) {
 			System.out.println("Deleting " + f.getPath() + ", age "
 					+ (System.currentTimeMillis() - f.lastModified()) / Nwss.HOUR + "h.");
 			f.delete();
