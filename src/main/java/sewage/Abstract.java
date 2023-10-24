@@ -32,7 +32,54 @@ public abstract class Abstract extends DailyTracker {
 
 	public abstract String getTitleLine();
 
+	class Inflection {
+		int day;
+		boolean peak; // vs valley
+	}
+
 	private boolean built = false;
+	private final LinkedList<Inflection> inflections = new LinkedList<>();
+
+	private synchronized void buildInflections() {
+		int firstDay = Math.max(getFirstDay(), CalendarUtils.dateToDay("9/1/2020")), lastDay = getLastDay();
+		boolean rising = getNormalized(firstDay + 1) >= getNormalized(firstDay);
+
+		for (int day = firstDay + 1; day <= lastDay - 14; day++) {
+			Double val = getNormalized(day);
+			Double val2 = getNormalized(day + 1);
+			if (val == null || val2 == null) {
+				continue;
+			}
+			boolean stillRising = val2 >= val;
+
+			if (stillRising == rising) {
+				continue;
+			}
+
+			for (int flipDay = day + 2; flipDay < day + 30 && flipDay <= lastDay; flipDay++) {
+				val2 = getNormalized(flipDay);
+				if (val2 == null) {
+					continue;
+				}
+				stillRising = val2 >= val;
+				if (stillRising == rising) {
+					val = val2;
+					day = flipDay;
+				}
+			}
+
+			if (day > lastDay - 14) {
+				break;
+			}
+
+			Inflection inflection = new Inflection();
+			inflection.day = day;
+			inflection.peak = rising;
+			inflections.add(inflection);
+
+			rising = !rising;
+		}
+	}
 
 	protected synchronized final void build() {
 		if (built) {
@@ -40,6 +87,10 @@ public abstract class Abstract extends DailyTracker {
 		}
 		built = true;
 
+		if (getTotalSewage() <= 0) {
+			return;
+		}
+		buildInflections();
 		buildBackend();
 	}
 
@@ -107,6 +158,10 @@ public abstract class Abstract extends DailyTracker {
 		Double confidence = null;
 		int startDay = getFirstDay(), endDay = getLastDay();
 
+		if (inflections.size() > 0) {
+			startDay = Math.max(startDay, inflections.getLast().day + 7);
+		}
+
 		for (int day = endDay; day >= startDay; day--) {
 			DaySewage entry = getEntry(day);
 			if (entry == null) {
@@ -147,49 +202,18 @@ public abstract class Abstract extends DailyTracker {
 		build();
 		LinkedList<ValueMarker> markers = new LinkedList<>();
 
-		int firstDay = Math.max(getFirstDay(), CalendarUtils.dateToDay("9/1/2020")), lastDay = getLastDay();
-		boolean rising = getNormalized(firstDay + 1) >= getNormalized(firstDay);
-
-		for (int day = firstDay + 1; day <= lastDay - 14; day++) {
-			Double val = getNormalized(day);
-			Double val2 = getNormalized(day + 1);
-			if (val == null || val2 == null) {
-				continue;
-			}
-			boolean stillRising = val2 >= val;
-
-			if (stillRising == rising) {
-				continue;
-			}
-
-			for (int flipDay = day + 2; flipDay < day + 30 && flipDay <= lastDay; flipDay++) {
-				val2 = getNormalized(flipDay);
-				if (val2 == null) {
-					continue;
-				}
-				stillRising = val2 >= val;
-				if (stillRising == rising) {
-					val = val2;
-					day = flipDay;
-				}
-			}
-
-			if (day > lastDay - 14) {
-				break;
-			}
-
-			long time = CalendarUtils.dayToTime(day);
+		for (Inflection inflection : inflections) {
+			long time = CalendarUtils.dayToTime(inflection.day);
 			ValueMarker marker = new ValueMarker(time);
-			marker.setPaint(rising ? Color.red : Color.green);
-			if (rising) {
-				marker.setLabel(String.format("%s", CalendarUtils.dayToDate(day), val));
+			marker.setPaint(inflection.peak ? Color.red : Color.green);
+			if (inflection.peak) {
+				double val = entries.get(inflection.day).getSewage();
+				marker.setLabel(String.format("%s", CalendarUtils.dayToDate(inflection.day), val));
 			}
 			marker.setStroke(Charts.stroke);
 			marker.setLabelFont(Charts.font);
-			marker.setLabelTextAnchor(rising ? TextAnchor.TOP_CENTER : TextAnchor.HALF_ASCENT_CENTER);
+			marker.setLabelTextAnchor(inflection.peak ? TextAnchor.TOP_CENTER : TextAnchor.HALF_ASCENT_CENTER);
 			markers.add(marker);
-
-			rising = !rising;
 		}
 
 		return markers;
