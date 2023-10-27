@@ -5,17 +5,34 @@ import nwss.DaySewage;
 public class Plant extends Abstract {
 
 	public final String id;
+	private final Source source;
 	private int plantId;
 
 	private String smoothing;
 	private String state, counties, fipsIds;
 	private double lat, lon;
 
+	enum Source {
+		CDC_BIOBOT,
+		NWSS,
+		WWS;
+
+		public static Source get(String plantId) {
+			for (Source source : Source.values()) {
+				if (plantId.startsWith(source.name())) {
+					return source;
+				}
+			}
+			return null;
+		}
+	}
+
 	public Plant(String id) {
 		this.id = id;
 		if (id == null) {
 			new Exception("Plant with null id is noooo go.").printStackTrace();
 		}
+		this.source = Source.get(id);
 	}
 
 	@Override
@@ -27,6 +44,10 @@ public class Plant extends Abstract {
 	@Override
 	public String getName() {
 		return String.format("Plant %d", getPlantId());
+	}
+	
+	public Source getSource() {
+		return source;
 	}
 
 	public synchronized void setSmoothing(String smoothing) {
