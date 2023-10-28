@@ -49,8 +49,8 @@ public enum VariantEnum {
 			"fk.1.1",
 			"ch.1.1"),
 
-	JUNE_TO_SEPTEMBER_VARIANTS(
-			"2023-06-15",
+	SEPTEMBER_PLUS_VARIANTS(
+			"2023-09-15",
 			null,
 			"ba.2.86",
 			"ch.1.1",
