@@ -298,6 +298,9 @@ public class Nwss {
 				if (voc.numVariants() > tiers) {
 					build.execute(() -> ChartSewage.buildVocSewageCharts(vocSewage.merge(tiers)));
 				}
+
+				states.forEach((id, sewage) -> build
+						.execute(() -> ChartSewage.buildVocSewageCharts(new VocSewage(sewage, voc))));
 			}
 		}
 		plants.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage, null)));

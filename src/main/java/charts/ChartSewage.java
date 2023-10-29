@@ -79,7 +79,7 @@ public class ChartSewage {
 
 	public static BufferedImage buildSewageTimeseriesChart(Abstract sewage, boolean log, Integer maxChildren) {
 
-		if (!sewage.hasDays() || sewage.getTotalSewage() <= 0) {
+		if (sewage.getTotalSewage() <= 0) {
 			return null;
 		}
 
@@ -155,6 +155,10 @@ public class ChartSewage {
 	}
 
 	public static BufferedImage buildSewageTimeseriesChart(VocSewage vocSewage, boolean exact, boolean fit) {
+
+		if (vocSewage.sewage.getTotalSewage() <= 0) {
+			return null;
+		}
 		TimeSeriesCollection collection = new TimeSeriesCollection();
 
 		DeviationRenderer renderer = new DeviationRenderer(true, false);
@@ -234,8 +238,8 @@ public class ChartSewage {
 
 		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
 
-		library.OpenImage.openImage(fileName);
-		library.OpenImage.open();
+		// library.OpenImage.openImage(fileName);
+		// library.OpenImage.open();
 
 		// System.out.println("Created : " + sewage.id + " for " +
 		// series.getItemCount() + " => " + fileName);
@@ -244,8 +248,12 @@ public class ChartSewage {
 
 	public static BufferedImage buildSewageCumulativeChart(VocSewage vocSewage) {
 
+		if (vocSewage.sewage.getTotalSewage() <= 0) {
+			return null;
+		}
 		ArrayList<String> variants = new ArrayList<>();
 		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+		Voc voc = vocSewage.voc;
 
 		Map<String, Double> prev = vocSewage.getCumulativePrevalence(variants);
 
@@ -283,13 +291,13 @@ public class ChartSewage {
 
 		BufferedImage image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT * 3 / 2);
 
-		String fileName = vocSewage.sewage.getChartFilename() + "-cumulative"
+		String fileName = vocSewage.sewage.getChartFilename() + "-" + voc.id + "-cumulative"
 				+ (vocSewage.voc.isMerger ? "-merger" : "");
 		Charts.saveBufferedImageAsPNG(SEWAGE_FOLDER, fileName, image);
 		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
 
-		library.OpenImage.openImage(fileName);
-		library.OpenImage.open();
+		// library.OpenImage.openImage(fileName);
+		// library.OpenImage.open();
 
 		return image;
 	}
