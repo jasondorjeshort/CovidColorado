@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.Collection;
 import java.util.HashMap;
 
 import org.apache.commons.csv.CSVFormat;
@@ -217,7 +218,7 @@ public class Nwss {
 		}
 	}
 
-	private Voc variants;
+	private Collection<Voc> variants;
 
 	public void read() {
 		long time = System.currentTimeMillis();
@@ -290,9 +291,14 @@ public class Nwss {
 		// build.execute(() -> ChartSewage.createSewage(geo));
 		build.execute(() -> ChartSewage.createSewage(all, null));
 		if (variants != null) {
-			VocSewage vocSewage1 = new VocSewage(all, variants);
-			build.execute(() -> ChartSewage.buildVocSewageCharts(vocSewage1));
-			build.execute(() -> ChartSewage.buildVocSewageCharts(vocSewage1.merge(5)));
+			for (Voc voc : variants) {
+				VocSewage vocSewage = new VocSewage(all, voc);
+				build.execute(() -> ChartSewage.buildVocSewageCharts(vocSewage));
+				int tiers = 5;
+				if (voc.numVariants() > tiers) {
+					build.execute(() -> ChartSewage.buildVocSewageCharts(vocSewage.merge(tiers)));
+				}
+			}
 		}
 		plants.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage, null)));
 		counties.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage, null)));

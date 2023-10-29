@@ -17,28 +17,42 @@ import nwss.Nwss;
 
 public class Voc extends DailyTracker {
 
-	private static final String CSV_NAME = "C:\\Users\\jdorj\\Downloads\\" + "VariantComparisonTimeDistributionPlot"
+	private static final String CSV_NAME1 = "C:\\Users\\jdorj\\Downloads\\" + "VariantComparisonTimeDistributionPlot"
 			+ ".csv";
+	private static final String CSV_NAME2 = "C:\\Users\\jdorj\\Downloads\\" + "VariantTimeDistributionPlot" + ".csv";
 	private static final Charset CHARSET = Charset.forName("US-ASCII");
 
 	public static String OTHERS = "others";
 
 	public final boolean isMerger;
 
-	public static Voc create() {
-		File f = new File(CSV_NAME);
-		if (!f.exists()) {
-			return null;
+	public static LinkedList<Voc> create() {
+		LinkedList<Voc> vocs = new LinkedList<>();
+		File f;
+
+		f = new File(CSV_NAME1);
+		if (f.exists()) {
+			if (System.currentTimeMillis() - f.lastModified() > 8 * Nwss.HOUR) {
+				System.out.println("Deleting " + f.getPath() + ", age "
+						+ (System.currentTimeMillis() - f.lastModified()) / Nwss.HOUR + "h.");
+				f.delete();
+			} else {
+				vocs.add(new Voc(f, true));
+			}
 		}
 
-		if (System.currentTimeMillis() - f.lastModified() > 8 * Nwss.HOUR) {
-			System.out.println("Deleting " + f.getPath() + ", age "
-					+ (System.currentTimeMillis() - f.lastModified()) / Nwss.HOUR + "h.");
-			f.delete();
-			return null;
+		f = new File(CSV_NAME2);
+		if (f.exists()) {
+			if (System.currentTimeMillis() - f.lastModified() > 8 * Nwss.HOUR) {
+				System.out.println("Deleting " + f.getPath() + ", age "
+						+ (System.currentTimeMillis() - f.lastModified()) / Nwss.HOUR + "h.");
+				f.delete();
+			} else {
+				vocs.add(new Voc(f, false));
+			}
 		}
 
-		return new Voc(f);
+		return vocs;
 	}
 
 	public static class DayVariants {
@@ -81,9 +95,16 @@ public class Voc extends DailyTracker {
 	private final HashMap<Integer, DayVariants> entries = new HashMap<>();
 	private HashMap<String, Double> variantTot = new HashMap<>();
 	private final ArrayList<String> variantList = new ArrayList<>();
+	public final int id;
 
-	public Voc(File f) {
+	private static int nextId = 1;
+	private static final Object nextIdLock = new Object();
+
+	public Voc(File f, boolean multiVariant) {
 		isMerger = false;
+		synchronized (nextIdLock) {
+			id = nextId++;
+		}
 		HashSet<String> variantSet = new HashSet<>();
 		try (CSVParser csv = CSVParser.parse(f, CHARSET, CSVFormat.DEFAULT)) {
 			int records = 0;
@@ -97,7 +118,12 @@ public class Voc extends DailyTracker {
 				if (proportion == null || proportion.equalsIgnoreCase("null")) {
 					continue;
 				}
-				String variant = line.get(4);
+				String variant;
+				if (multiVariant) {
+					variant = line.get(4);
+				} else {
+					variant = "Variant";
+				}
 				int day = CalendarUtils.dateToDay(date);
 
 				DayVariants entry = entries.get(day);
@@ -117,7 +143,9 @@ public class Voc extends DailyTracker {
 			e.printStackTrace();
 			System.exit(0);
 		}
-		variantSet.add(OTHERS);
+		if (multiVariant) {
+			variantSet.add(OTHERS);
+		}
 
 		variantList.addAll(variantSet);
 		makeVariantTot();
@@ -163,6 +191,9 @@ public class Voc extends DailyTracker {
 
 	public Voc(Voc parent, LinkedList<String>[] variants) {
 		isMerger = true;
+		synchronized (nextIdLock) {
+			id = nextId++;
+		}
 		includeDay(parent.getFirstDay());
 		includeDay(parent.getLastDay());
 
@@ -213,6 +244,10 @@ public class Voc extends DailyTracker {
 
 	public synchronized ArrayList<String> getVariants() {
 		return new ArrayList<>(variantList);
+	}
+
+	public synchronized int numVariants() {
+		return variantList.size();
 	}
 
 	public double getPrevalence(int day, String variant) {

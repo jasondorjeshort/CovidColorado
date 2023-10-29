@@ -200,7 +200,8 @@ public class ChartSewage {
 
 		String fileName = vocSewage.sewage.getChartFilename();
 		String title = vocSewage.sewage.getTitleLine();
-		fileName += "-log-voc" + (fit ? "-fit" : "") + (exact ? "-exact" : "") + (voc.isMerger ? "-merger" : "");
+		fileName += "-" + voc.id + "-log-voc" + (fit ? "-fit" : "") + (exact ? "-exact" : "")
+				+ (voc.isMerger ? "-merger" : "");
 		title += "\nSource: CDC/NWSS, Cov-Spectrum";
 		String verticalAxis = All.SCALE_NAME;
 
