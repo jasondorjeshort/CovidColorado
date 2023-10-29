@@ -259,6 +259,9 @@ public class ChartSewage {
 
 		for (String variant : variants) {
 			double prevalence = prev.get(variant);
+			if (prevalence == 0) {
+				continue;
+			}
 			prevalence = Math.log(prevalence) / Math.log(10);
 			String name = String.format("%s (%+.0f weekly)", variant, vocSewage.getGrowth(variant));
 			dataset.addValue(prevalence, name, "Prevalence");
