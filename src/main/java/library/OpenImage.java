@@ -22,6 +22,8 @@ public class OpenImage {
 
 	private static final LinkedList<String> files = new LinkedList<>();
 
+	private static int num = 0;
+
 	/**
 	 * This just opens the given file name (with extension) in irfanview.
 	 * Irfanview must be installed at the location hard-coded here.
@@ -33,6 +35,10 @@ public class OpenImage {
 		if (fileName == null) {
 			return;
 		}
+		if (num > 10) {
+			return;
+		}
+		num++;
 		files.add(fileName);
 	}
 
