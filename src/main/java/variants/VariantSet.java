@@ -40,6 +40,7 @@ public class VariantSet {
 			put("hz", "XBB.1.5.68");
 			put("jd", "xbb.1.5.102");
 			put("jf", "XBB.1.16.6");
+			put("jn", "BA.2.86.1");
 
 			for (String key : keySet()) {
 				put(key, get(key).toLowerCase());
