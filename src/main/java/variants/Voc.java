@@ -204,7 +204,8 @@ public class Voc extends DailyTracker {
 			variantList.add(vNames[v]);
 			System.out.println(String.format("%s (%d)", vNames[v], variants[v].size()));
 			for (String var : variants[v]) {
-				System.out.println("  " + var.replaceAll("nextcladePangoLineage:", ""));
+				String n = var.replaceAll("nextcladePangoLineage:", "");
+				System.out.println(String.format("  %s", n));
 			}
 		}
 
