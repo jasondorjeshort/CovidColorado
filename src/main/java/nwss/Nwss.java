@@ -18,6 +18,7 @@ import charts.ChartSewage;
 import covid.CalendarUtils;
 import library.ASync;
 import sewage.Fips;
+import variants.Aliases;
 import variants.VariantEnum;
 import variants.VariantSet;
 import variants.Voc;
@@ -228,15 +229,18 @@ public class Nwss {
 		build.execute(() -> variants = Voc.create());
 		build.execute(() -> fips = new Fips());
 		build.execute(() -> regionList.load());
+		build.execute(() -> {
+			Aliases.load();
 
-		for (VariantEnum vEnum : VariantEnum.values()) {
-			System.out.println(vEnum);
-			VariantSet vs = new VariantSet(vEnum);
-			vs.getCovSpectrumLink();
-			vs.getCovSpectrumLink2(false);
-			vs.getCovSpectrumLink2(true);
-			System.out.println();
-		}
+			for (VariantEnum vEnum : VariantEnum.values()) {
+				System.out.println(vEnum);
+				VariantSet vs = new VariantSet(vEnum);
+				vs.getCovSpectrumLink();
+				vs.getCovSpectrumLink2(false);
+				vs.getCovSpectrumLink2(true);
+				System.out.println();
+			}
+		});
 
 		build.complete();
 

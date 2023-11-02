@@ -2,51 +2,10 @@ package variants;
 
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.HashMap;
 
 import covid.CalendarUtils;
 
 public class VariantSet {
-
-	private HashMap<String, String> aliases = new HashMap<>() {
-		private static final long serialVersionUID = -5540557963380925809L;
-
-		{
-			put("ba", "b.1.1.529");
-			put("bq", "B.1.1.529.5.3.1.1.1.1");
-			put("ch", "B.1.1.529.2.75.3.4.1.1");
-			put("dv", "B.1.1.529.2.75.3.4.1.1.1.1.1");
-			put("eg", "xbb.1.9.2");
-			put("eu", "XBB.1.5.26");
-			put("fd", "XBB.1.5.15");
-			put("fe", "XBB.1.18.1");
-			put("fk", "B.1.1.529.2.75.3.4.1.1.1.1.17");
-			put("fl", "xbb.1.9.1");
-			put("fu", "xbb.1.16.1");
-			put("fy", "xbb.1.22.1");
-			put("ge", "XBB.2.3.10");
-			put("gj", "xbb.2.3.3");
-			put("gk", "XBB.1.5.70");
-			put("gn", "XBB.1.5.73");
-			put("gs", "XBB.2.3.11");
-			put("gw", "XBB.1.19.1");
-			put("gy", "XBB.1.16.2");
-			put("he", "XBB.1.18.1.1.1.1");
-			put("hf", "XBB.1.16.13");
-			put("hh", "XBB.2.3.2");
-			put("hk", "XBB.1.9.2.5.1.1");
-			put("hn", "XBB.1.9.1.1.5.1");
-			put("hv", "xbb.1.9.2.5.1.6");
-			put("hz", "XBB.1.5.68");
-			put("jd", "xbb.1.5.102");
-			put("jf", "XBB.1.16.6");
-			put("jn", "BA.2.86.1");
-
-			for (String key : keySet()) {
-				put(key, get(key).toLowerCase());
-			}
-		}
-	};
 
 	private final String[] variants;
 	private String[] variantsFull;
@@ -88,9 +47,9 @@ public class VariantSet {
 			}
 
 			variantsFull[i] = variants[i];
-			for (String prefix : aliases.keySet()) {
+			for (String prefix : Aliases.aliases.keySet()) {
 				if (variantsFull[i].startsWith(prefix)) {
-					variantsFull[i] = variantsFull[i].replaceAll(prefix, aliases.get(prefix));
+					variantsFull[i] = variantsFull[i].replaceAll(prefix, Aliases.aliases.get(prefix));
 				}
 			}
 
