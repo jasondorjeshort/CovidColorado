@@ -259,7 +259,10 @@ public class ChartSewage {
 
 		for (String variant : variants) {
 			double prevalence = prev.get(variant);
-			if (prevalence == 0) {
+			if (prevalence <= 0) {
+				if (prevalence < 0) {
+					System.out.println("Prevalence " + prevalence + " for " + variant);
+				}
 				continue;
 			}
 			prevalence = Math.log(prevalence) / Math.log(10);
