@@ -44,7 +44,7 @@ public class Aliases {
 				String alias = simplify(ele.getKey());
 				JsonElement value = ele.getValue();
 
-				if (!value.isJsonPrimitive()) {
+				if (value.isJsonArray()) {
 					roots.add(alias);
 					continue;
 				}
