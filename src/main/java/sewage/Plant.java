@@ -45,7 +45,7 @@ public class Plant extends Abstract {
 	public String getName() {
 		return String.format("Plant %d", getPlantId());
 	}
-	
+
 	public Source getSource() {
 		return source;
 	}
