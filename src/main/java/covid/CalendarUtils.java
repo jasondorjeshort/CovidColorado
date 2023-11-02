@@ -69,7 +69,7 @@ public class CalendarUtils {
 	}
 
 	public static int timeToDay(long time) {
-		return (int) ((time + MILLIS_PER_DAY / 2) / MILLIS_PER_DAY);
+		return (int) ((time) / MILLIS_PER_DAY);
 	}
 
 	public static long dayToTime(double day) {
