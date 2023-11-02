@@ -3,10 +3,10 @@ package variants;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -29,8 +29,8 @@ public class Aliases {
 		return s.trim().toLowerCase();
 	}
 
-	public static final HashSet<String> roots = new HashSet<>();
-	public static final HashMap<String, String> aliases = new HashMap<>();
+	public static final TreeSet<String> roots = new TreeSet<>();
+	public static final TreeMap<String, String> aliases = new TreeMap<>();
 
 	public static void load() {
 		File f = Nwss.ensureFileUpdated(ALIAS_FILE, ALIAS_URL, 168);
@@ -66,9 +66,9 @@ public class Aliases {
 		}
 
 		for (String root : roots) {
-			System.out.println("> " + root);
+			System.out.println("Alias> Root: " + root);
 		}
 
-		aliases.forEach((k, v) -> System.out.println("> " + k + " => " + v));
+		aliases.forEach((k, v) -> System.out.println("Alias> " + k + " => " + v));
 	}
 }
