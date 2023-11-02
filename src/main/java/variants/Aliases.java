@@ -17,10 +17,6 @@ import nwss.Nwss;
 
 public class Aliases {
 
-	public static class Alias {
-		String from, to;
-	}
-
 	private static final String ALIAS_FILE = System.getProperty("java.io.tmpdir") + "\\" + Nwss.FOLDER + "\\"
 			+ "aliases.json";
 	private static final String ALIAS_URL = "https://raw.githubusercontent.com/cov-lineages/pango-designation/bf7bf4a1bcfbc1642291507a766bdaa7341fab50/pango_designation/alias_key.json";
@@ -29,10 +25,16 @@ public class Aliases {
 		return s.trim().toLowerCase();
 	}
 
-	public static final TreeSet<String> roots = new TreeSet<>();
-	public static final TreeMap<String, String> aliases = new TreeMap<>();
+	private static final TreeSet<String> roots = new TreeSet<>();
+	private static final TreeMap<String, String> aliases = new TreeMap<>();
+	private static boolean built = false;
 
-	public static void load() {
+	public static synchronized void build() {
+		if (built) {
+			return;
+		}
+		built = true;
+
 		File f = Nwss.ensureFileUpdated(ALIAS_FILE, ALIAS_URL, 168);
 
 		try (FileReader fr = new FileReader(f); BufferedReader br = new BufferedReader(fr)) {
@@ -65,10 +67,36 @@ public class Aliases {
 			System.exit(1);
 		}
 
-		for (String root : roots) {
-			System.out.println("Alias> Root: " + root);
+		if (false) {
+			roots.forEach(root -> System.out.println("Alias> Root: " + root));
+			aliases.forEach((k, v) -> System.out.println("Alias> " + k + " => " + v));
+		}
+	}
+
+	public static String expand(String variant) {
+		build();
+
+		variant = simplify(variant);
+
+		for (String prefix : aliases.keySet()) {
+			if (prefix.contains(".")) {
+				throw new RuntimeException("uh oh.");
+			}
+			if (variant.equals(prefix) || variant.startsWith(prefix + ".")) {
+				String v2 = variant.replaceAll(prefix, aliases.get(prefix));
+				// System.out.println("Expanding " + variant + " to " + v2 + "
+				// via sub of ");
+				return v2;
+			}
 		}
 
-		aliases.forEach((k, v) -> System.out.println("Alias> " + k + " => " + v));
+		for (String root : roots) {
+			if (variant.equals(root) || variant.startsWith(root + ".")) {
+				return variant;
+			}
+		}
+
+		// System.out.println("Missing: " + variant);
+		return null;
 	}
 }

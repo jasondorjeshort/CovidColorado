@@ -224,14 +224,13 @@ public class Nwss {
 	public void read() {
 		long time = System.currentTimeMillis();
 		ASync<Chart> build = new ASync<>();
+		build.execute(() -> Aliases.build());
 		build.execute(() -> readSewage());
 		build.execute(() -> readLocations());
 		build.execute(() -> variants = Voc.create());
 		build.execute(() -> fips = new Fips());
 		build.execute(() -> regionList.load());
 		build.execute(() -> {
-			Aliases.load();
-
 			for (VariantEnum vEnum : VariantEnum.values()) {
 				System.out.println(vEnum);
 				VariantSet vs = new VariantSet(vEnum);

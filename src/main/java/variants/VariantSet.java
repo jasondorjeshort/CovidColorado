@@ -41,23 +41,14 @@ public class VariantSet {
 		Arrays.sort(variants, (s1, s2) -> s1.compareTo(s2));
 		boolean exit = false;
 		for (int i = 0; i < variants.length; i++) {
-			variants[i] = variants[i].toLowerCase();
+			variants[i] = Aliases.simplify(variants[i]);
 			if (variants[i].contains("*")) {
 				System.out.println("Illegal " + variants[i]);
-			}
-
-			variantsFull[i] = variants[i];
-			for (String prefix : Aliases.aliases.keySet()) {
-				if (variantsFull[i].startsWith(prefix)) {
-					variantsFull[i] = variantsFull[i].replaceAll(prefix, Aliases.aliases.get(prefix));
-				}
-			}
-
-			if (!variantsFull[i].startsWith("x") & !variantsFull[i].startsWith("b.")
-					& !variantsFull[i].startsWith("a.")) {
-				System.out.println("Missing: " + variantsFull[i]);
 				exit = true;
 			}
+
+			variantsFull[i] = Aliases.expand(variants[i]);
+			exit |= variantsFull[i] == null;
 
 			variantQueries[i] = variants[i] + "*";
 			variantDisplay[i] = variants[i];
