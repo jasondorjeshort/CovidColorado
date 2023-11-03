@@ -82,6 +82,7 @@ public class VocSewage {
 	}
 
 	public synchronized void makeTimeSeries(TimeSeries series, String variant) {
+		build();
 		for (int day = Math.max(getFirstDay(), voc.getFirstDay()); day <= getLastDay()
 				&& day <= voc.getLastDay(); day++) {
 			DaySewage entry;
@@ -110,7 +111,7 @@ public class VocSewage {
 	public synchronized TimeSeries makeRegressionTS(ArrayList<String> variants) {
 		build();
 		HashMap<String, Double> sorter = new HashMap<>();
-		int tsLastDay = getLastDay() + 28;
+		int tsLastDay = CalendarUtils.timeToDay(System.currentTimeMillis()) + 30;
 		for (String variant : variants) {
 			sorter.put(variant, Math.exp(fits.get(variant).predict(tsLastDay)));
 		}
@@ -222,7 +223,8 @@ public class VocSewage {
 		}
 		String name = variant.replaceAll("nextcladePangoLineage:", "");
 		TimeSeries series = new TimeSeries(String.format("%s %s", name, slopeToWeekly(fit)));
-		int f = getFirstDay(), l = getLastDay() + 28;
+		int f = getFirstDay();
+		int l = CalendarUtils.timeToDay(System.currentTimeMillis()) + 30;
 		series.add(CalendarUtils.dayToDay(f), Math.exp(fit.predict(f)));
 		series.add(CalendarUtils.dayToDay(l), Math.exp(fit.predict(l)));
 		return series;

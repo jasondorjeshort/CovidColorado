@@ -238,7 +238,8 @@ public class ChartSewage {
 			xAxis.setLowerBound(bound);
 		}
 		if (fit) {
-			bound = CalendarUtils.dayToTime(vocSewage.getLastDay() + 28);
+			bound = System.currentTimeMillis() + 30l * 24 * 60 * 60 * 1000;
+			bound = Math.min(bound, xAxis.getUpperBound());
 			xAxis.setUpperBound(bound);
 		}
 
