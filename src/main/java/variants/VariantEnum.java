@@ -50,7 +50,7 @@ public enum VariantEnum {
 			"ch.1.1"),
 
 	SEPTEMBER_PLUS_VARIANTS(
-			"2023-09-15",
+			"2023-09-10",
 			null,
 			"ba.2.86.1",
 			"ch.1.1",
