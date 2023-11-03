@@ -15,10 +15,14 @@ public class VariantSet {
 	private final String startDate;
 	private final String endDate;
 
-	public static final String TODAY() {
-		Calendar cal = CalendarUtils.timeToCalendar(System.currentTimeMillis());
+	public static final String TODAY(int offset) {
+		Calendar cal = CalendarUtils.timeToCalendar(System.currentTimeMillis() + offset * 24l * 60l * 60l * 1000l);
 		return String.format("%d-%02d-%02d", cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1,
 				cal.get(Calendar.DAY_OF_MONTH));
+	}
+
+	public static final String TODAY() {
+		return TODAY(0);
 	}
 
 	public VariantSet(VariantEnum vEnum) {
@@ -28,7 +32,7 @@ public class VariantSet {
 	public VariantSet(String startDate, String endDate, String... variants) {
 		this.startDate = startDate;
 		if (endDate == null) {
-			endDate = TODAY();
+			endDate = TODAY(-10);
 		}
 		this.endDate = endDate;
 		this.variants = variants;
