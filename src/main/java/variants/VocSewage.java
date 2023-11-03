@@ -31,8 +31,8 @@ public class VocSewage {
 	public HashMap<String, Double> getCumulativePrevalence(ArrayList<String> variants) {
 		build();
 		variants.addAll(variantsByCumulative);
-		variants.sort((v1, v2) -> -Double.compare(prevalence.get(v1), prevalence.get(v2)));
-		return prevalence;
+		variants.sort((v1, v2) -> -Double.compare(cumulativePrevalence.get(v1), cumulativePrevalence.get(v2)));
+		return cumulativePrevalence;
 	}
 
 	double getSlopeByGrowth(int n) {
@@ -109,34 +109,19 @@ public class VocSewage {
 
 	public synchronized TimeSeries makeRegressionTS(ArrayList<String> variants) {
 		build();
-		HashMap<String, Double> finals = new HashMap<>();
+		HashMap<String, Double> sorter = new HashMap<>();
 		int tsLastDay = getLastDay() + 28;
 		for (String variant : variants) {
-			final SimpleRegression fit = new SimpleRegression();
-			for (int day = fitFirstDay; day <= fitLastDay; day++) {
-				Double number = sewage.getSewageNormalized(day);
-				if (number == null) {
-					continue;
-				}
-				number *= voc.getPrevalence(day, variant);
-				if (number <= 0) {
-					continue;
-				}
-
-				fit.addData(day, Math.log(number));
-			}
-
-			fits.put(variant, fit);
-			finals.put(variant, Math.exp(fits.get(variant).predict(tsLastDay)));
+			sorter.put(variant, Math.exp(fits.get(variant).predict(tsLastDay)));
 		}
 
-		variants.sort((v1, v2) -> -Double.compare(finals.get(v1), finals.get(v2)));
+		variants.sort((v1, v2) -> -Double.compare(sorter.get(v1), sorter.get(v2)));
 
 		if (!variants.contains(Voc.OTHERS)) {
 			return null;
 		}
 		TimeSeries series = new TimeSeries(String.format("Collective fit"));
-		for (int day = fitFirstDay; day <= tsLastDay; day++) {
+		for (int day = getFirstDay(); day <= tsLastDay; day++) {
 			double number = 0.0;
 			for (String variant : variants) {
 				if (fits.get(variant) == null) {
@@ -163,11 +148,9 @@ public class VocSewage {
 
 	private boolean built = false;
 	private int numVariants;
-	private int fitLastDay;
-	private int fitFirstDay;
 	private ArrayList<String> variantsByGrowth, variantsByCount, variantsByCumulative;
 	private HashMap<String, SimpleRegression> fits;
-	private HashMap<String, Double> prevalence = new HashMap<>();
+	private HashMap<String, Double> cumulativePrevalence = new HashMap<>();
 
 	public double getGrowth(String variant) {
 		return slopeToWeekly(fits.get(variant).getSlope());
@@ -183,12 +166,10 @@ public class VocSewage {
 		variantsByGrowth = voc.getVariants();
 		variantsByCount = voc.getVariants();
 		numVariants = variantsByGrowth.size();
-		fitFirstDay = getFirstDay();
-		fitLastDay = getLastDay() + 28;
 
 		for (String variant : variantsByGrowth) {
 			SimpleRegression fit = new SimpleRegression();
-			for (int day = fitFirstDay; day <= fitLastDay; day++) {
+			for (int day = getFirstDay(); day <= getLastDay(); day++) {
 				DaySewage entry;
 				entry = sewage.getEntry(day);
 				if (entry == null) {
@@ -210,24 +191,24 @@ public class VocSewage {
 		}
 
 		variantsByGrowth.sort((v1, v2) -> Double.compare(fits.get(v1).getSlope(), fits.get(v2).getSlope()));
-		variantsByCount
-				.sort((v1, v2) -> Double.compare(fits.get(v1).predict(fitLastDay), fits.get(v2).predict(fitLastDay)));
+		variantsByCount.sort(
+				(v1, v2) -> Double.compare(fits.get(v1).predict(getFirstDay()), fits.get(v2).predict(getLastDay())));
 
 		variantsByCumulative = voc.getVariants();
-		int vFirstDay = getFirstDay(), vLastDay = getLastDay();
 		for (String variant : variantsByCumulative) {
 			double number = 0;
-			for (int day = vFirstDay; day <= vLastDay; day++) {
+			for (int day = getFirstDay(); day <= getLastDay(); day++) {
 				Double prev = sewage.getSewageNormalized(day);
 				if (prev == null) {
 					continue;
 				}
 				number += prev * voc.getPrevalence(day, variant);
 			}
-			prevalence.put(variant, number);
+			cumulativePrevalence.put(variant, number);
 		}
 
-		variantsByCumulative.sort((v1, v2) -> -Double.compare(prevalence.get(v1), prevalence.get(v2)));
+		variantsByCumulative
+				.sort((v1, v2) -> -Double.compare(cumulativePrevalence.get(v1), cumulativePrevalence.get(v2)));
 	}
 
 	public TimeSeries makeRegressionTS(String variant) {
@@ -241,9 +222,9 @@ public class VocSewage {
 		}
 		String name = variant.replaceAll("nextcladePangoLineage:", "");
 		TimeSeries series = new TimeSeries(String.format("%s %s", name, slopeToWeekly(fit)));
-		series.add(CalendarUtils.dayToDay(fitFirstDay), Math.exp(fit.predict(fitFirstDay)));
-
-		series.add(CalendarUtils.dayToDay(fitLastDay), Math.exp(fit.predict(fitLastDay)));
+		int f = getFirstDay(), l = getLastDay() + 28;
+		series.add(CalendarUtils.dayToDay(f), Math.exp(fit.predict(f)));
+		series.add(CalendarUtils.dayToDay(l), Math.exp(fit.predict(l)));
 		return series;
 	}
 }
