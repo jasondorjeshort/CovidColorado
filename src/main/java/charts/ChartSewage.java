@@ -154,7 +154,8 @@ public class ChartSewage {
 		return image;
 	}
 
-	public static BufferedImage buildSewageTimeseriesChart(VocSewage vocSewage, boolean exact, boolean fit) {
+	public static BufferedImage buildSewageTimeseriesChart(VocSewage vocSewage, String targetVariant, boolean exact,
+			boolean fit) {
 
 		if (vocSewage.sewage.getTotalSewage() <= 0) {
 			return null;
@@ -183,6 +184,9 @@ public class ChartSewage {
 		seriesCount++;
 
 		for (String variant : variants) {
+			if (targetVariant != null && !targetVariant.equalsIgnoreCase(variant)) {
+				continue;
+			}
 			if (fit) {
 				series = vocSewage.makeRegressionTS(variant);
 				collection.addSeries(series);
@@ -206,6 +210,11 @@ public class ChartSewage {
 		String title = vocSewage.sewage.getTitleLine();
 		fileName += "-" + voc.id + "-log-voc" + (fit ? "-fit" : "") + (exact ? "-exact" : "")
 				+ (voc.isMerger ? "-merger" : "");
+		if (targetVariant == null) {
+			fileName += "-all";
+		} else {
+			fileName += ("-" + targetVariant);
+		}
 		title += "\nSource: CDC/NWSS, Cov-Spectrum";
 		String verticalAxis = All.SCALE_NAME;
 
@@ -314,9 +323,12 @@ public class ChartSewage {
 	}
 
 	public static void buildVocSewageCharts(VocSewage vocSewage) {
-		ChartSewage.buildSewageTimeseriesChart(vocSewage, true, false);
-		ChartSewage.buildSewageTimeseriesChart(vocSewage, true, true);
-		ChartSewage.buildSewageTimeseriesChart(vocSewage, false, true);
+		ChartSewage.buildSewageTimeseriesChart(vocSewage, null, true, false);
+		ChartSewage.buildSewageTimeseriesChart(vocSewage, null, true, true);
+		if (false) {
+			ChartSewage.buildSewageTimeseriesChart(vocSewage, "Others", true, true);
+		}
+		ChartSewage.buildSewageTimeseriesChart(vocSewage, null, false, true);
 		ChartSewage.buildSewageCumulativeChart(vocSewage);
 	}
 
