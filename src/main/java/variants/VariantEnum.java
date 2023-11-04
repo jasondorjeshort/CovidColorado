@@ -106,31 +106,6 @@ public enum VariantEnum {
 	// should be 51
 	),
 
-	FLIP_VARIANTS(
-			"2023-08-01",
-			null,
-			"GK.2",
-			"GK.1",
-			"XBB.1.5.70",
-			"GK.1.3",
-			"GK.1.1",
-			"GK.3",
-			"DV.7.1",
-			"GK.3.1",
-			"HK.3",
-			"GW.5"),
-
-	HIGHEST_VARIANTS(
-			"2023-06-15",
-			null,
-			"fl.1.5.1",
-			"hv.1",
-			"eg.5.1.1",
-			"xbb.1.16.6",
-			"eg.5.1.3",
-			"xbb.1.16.11",
-			"eg.5.1"),
-
 	ALL_TIME_VARIANTS("2020-01-06", null, "b.1", "b.1.617.2", "ba.1", "ba.2", "ba.2.75", "xbb", "ba.5", "ba.4", "bq.1"),
 
 	;
