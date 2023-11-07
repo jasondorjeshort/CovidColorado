@@ -40,6 +40,12 @@ public class VocSewage {
 		return fits.get(v).getSlope();
 	}
 
+	/**
+	 * Todo: this should just be merged into the new VocSewage call from the end
+	 * 
+	 * Actually it should be a new VocSewage(VocSewage parent, int
+	 * variantCount)?
+	 */
 	public VocSewage merge(int variantCount) {
 		build();
 
@@ -77,7 +83,7 @@ public class VocSewage {
 			variants[closest].add(variant);
 		}
 
-		Voc voc2 = new Voc(voc, variants);
+		Voc voc2 = new Voc(this, variants);
 		return new VocSewage(sewage, voc2);
 	}
 
@@ -152,9 +158,24 @@ public class VocSewage {
 	private ArrayList<String> variantsByGrowth, variantsByCount, variantsByCumulative;
 	private HashMap<String, SimpleRegression> fits;
 	private HashMap<String, Double> cumulativePrevalence = new HashMap<>();
+	private double cumulative = 0;
 
 	public double getGrowth(String variant) {
 		return slopeToWeekly(fits.get(variant).getSlope());
+	}
+
+	public double getCumulative(String variant) {
+		build();
+		return cumulativePrevalence.get(variant);
+	}
+
+	public double getCumulative() {
+		build();
+		return cumulative;
+	}
+
+	public double getPercentage(String variant) {
+		return getCumulative(variant) / getCumulative();
 	}
 
 	public synchronized void build() {
@@ -196,6 +217,19 @@ public class VocSewage {
 				(v1, v2) -> Double.compare(fits.get(v1).predict(getFirstDay()), fits.get(v2).predict(getLastDay())));
 
 		variantsByCumulative = voc.getVariants();
+
+		cumulative = 0;
+		for (int day = getFirstDay(); day <= getLastDay(); day++) {
+			Double prev = sewage.getSewageNormalized(day);
+			if (prev == null) {
+				continue;
+			}
+			cumulative += prev;
+		}
+		if (sewage instanceof sewage.All) {
+			System.out.println("Cumulative " + sewage.getName() + " => " + cumulative);
+		}
+
 		for (String variant : variantsByCumulative) {
 			double number = 0;
 			for (int day = getFirstDay(); day <= getLastDay(); day++) {
@@ -206,6 +240,10 @@ public class VocSewage {
 				number += prev * voc.getPrevalence(day, variant);
 			}
 			cumulativePrevalence.put(variant, number);
+
+			if (sewage instanceof sewage.All) {
+				System.out.println("Prev on " + variant + " => " + number);
+			}
 		}
 
 		variantsByCumulative

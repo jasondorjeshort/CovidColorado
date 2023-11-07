@@ -189,7 +189,7 @@ public class Voc extends DailyTracker {
 		}
 	}
 
-	public Voc(Voc parent, LinkedList<String>[] variants) {
+	public Voc(VocSewage parent, LinkedList<String>[] variants) {
 		isMerger = true;
 		synchronized (nextIdLock) {
 			id = nextId++;
@@ -205,14 +205,15 @@ public class Voc extends DailyTracker {
 			System.out.println(String.format("%s (%d)", vNames[v], variants[v].size()));
 			for (String var : variants[v]) {
 				String n = var.replaceAll("nextcladePangoLineage:", "");
-				System.out.println(String.format("  %s", n));
+				System.out.println(String.format("  %s (%+f%%/week, %.2f%% prevalence)", n, parent.getGrowth(var),
+						100.0 * parent.getPercentage(var)));
 			}
 		}
 
 		// int debugDay = (getFirstDay() + getLastDay()) / 2;
 
 		for (int day = getFirstDay(); day <= getLastDay(); day++) {
-			DayVariants entry = parent.entries.get(day);
+			DayVariants entry = parent.voc.entries.get(day);
 			if (entry == null) {
 				continue;
 			}
@@ -225,7 +226,7 @@ public class Voc extends DailyTracker {
 				String variant = vNames[v];
 				double totalPrev = 0.0;
 				for (String vParent : vList) {
-					double prev = parent.entries.get(day).getPrevalence(vParent);
+					double prev = parent.voc.entries.get(day).getPrevalence(vParent);
 					// if (day == debugDay) {
 					// System.out.println("Parent prev for " + vParent + " is "
 					// + prev);
