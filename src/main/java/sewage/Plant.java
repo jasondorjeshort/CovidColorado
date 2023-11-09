@@ -12,7 +12,7 @@ public class Plant extends Abstract {
 	private String state, counties, fipsIds;
 	private double lat, lon;
 
-	enum Source {
+	public enum Source {
 		CDC_BIOBOT,
 		NWSS,
 		WWS;
