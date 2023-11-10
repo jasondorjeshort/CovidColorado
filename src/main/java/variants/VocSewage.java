@@ -87,10 +87,9 @@ public class VocSewage {
 		return new VocSewage(sewage, voc2);
 	}
 
-	public synchronized void makeTimeSeries(TimeSeries series, String variant) {
+	public synchronized void makeTimeSeries(TimeSeries series, String variant, int lastDay) {
 		build();
-		for (int day = Math.max(getFirstDay(), voc.getFirstDay()); day <= getLastDay()
-				&& day <= voc.getLastDay(); day++) {
+		for (int day = Math.max(getFirstDay(), voc.getFirstDay()); day <= getLastDay(); day++) {
 			DaySewage entry;
 			entry = sewage.getEntry(day);
 			if (entry == null) {
@@ -111,6 +110,15 @@ public class VocSewage {
 			}
 
 			series.add(CalendarUtils.dayToDay(day), number);
+		}
+		SimpleRegression fit;
+		synchronized (this) {
+			fit = fits.get(variant);
+		}
+		if (fit != null) {
+			for (int day = getLastDay() + 1; day <= lastDay; day++) {
+				series.add(CalendarUtils.dayToDay(day), Math.exp(fit.predict(day)));
+			}
 		}
 	}
 

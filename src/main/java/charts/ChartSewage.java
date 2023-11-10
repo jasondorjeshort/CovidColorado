@@ -183,6 +183,7 @@ public class ChartSewage {
 		renderer.setSeriesStroke(seriesCount, new BasicStroke(4.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		seriesCount++;
 
+		int lastDay = CalendarUtils.timeToDay(System.currentTimeMillis()) + 30;
 		for (String variant : variants) {
 			if (targetVariant != null && !targetVariant.equalsIgnoreCase(variant)) {
 				continue;
@@ -196,7 +197,7 @@ public class ChartSewage {
 			}
 			if (exact) {
 				series = new TimeSeries(variant.replaceAll("nextcladePangoLineage:", ""));
-				vocSewage.makeTimeSeries(series, variant);
+				vocSewage.makeTimeSeries(series, variant, lastDay);
 				collection.addSeries(series);
 				renderer.setSeriesStroke(seriesCount,
 						new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
@@ -237,11 +238,10 @@ public class ChartSewage {
 		if (xAxis.getLowerBound() < bound) {
 			xAxis.setLowerBound(bound);
 		}
-		if (fit) {
-			bound = System.currentTimeMillis() + 30l * 24 * 60 * 60 * 1000;
-			bound = Math.min(bound, xAxis.getUpperBound());
-			xAxis.setUpperBound(bound);
-		}
+
+		bound = System.currentTimeMillis() + 30l * 24 * 60 * 60 * 1000;
+		bound = Math.min(bound, xAxis.getUpperBound());
+		xAxis.setUpperBound(bound);
 
 		BufferedImage image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT * 3 / 2);
 		Charts.saveBufferedImageAsPNG(SEWAGE_FOLDER, fileName, image);
