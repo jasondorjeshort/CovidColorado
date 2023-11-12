@@ -87,30 +87,32 @@ public class VocSewage {
 		return new VocSewage(sewage, voc2);
 	}
 
-	public synchronized TimeSeries makeCumulativeTimeseries(ArrayList<String> variants) {
-		build();
-		HashMap<String, Double> sorter = new HashMap<>();
-		int tsLastDay = CalendarUtils.timeToDay(System.currentTimeMillis()) + 30;
-		for (String variant : variants) {
-			sorter.put(variant, Math.exp(fits.get(variant).predict(tsLastDay)));
-		}
+	public double getCollectiveFit(int day) {
+		synchronized (collectiveFit) {
+			Double n = collectiveFit.get(day);
+			if (n != null) {
+				return n;
+			}
 
-		variants.sort((v1, v2) -> -Double.compare(sorter.get(v1), sorter.get(v2)));
-
-		if (!variants.contains(Voc.OTHERS)) {
-			return null;
-		}
-		TimeSeries series = new TimeSeries(String.format("Collective fit"));
-		for (int day = getFirstDay(); day <= tsLastDay; day++) {
 			double number = 0.0;
-			for (String variant : variants) {
+			for (String variant : variantsByCount) {
 				if (fits.get(variant) == null) {
 					System.out.println("Impossible variant : " + variant);
 					continue;
 				}
 				number += Math.exp(fits.get(variant).predict(day));
 			}
-			series.add(CalendarUtils.dayToDay(day), number);
+			collectiveFit.put(day, number);
+			return number;
+		}
+	}
+
+	public TimeSeries makeCollectiveTS() {
+		build();
+
+		TimeSeries series = new TimeSeries(String.format("Collective fit"));
+		for (int day = getFirstDay(); day <= modelLastDay; day++) {
+			series.add(CalendarUtils.dayToDay(day), getCollectiveFit(day));
 		}
 
 		return series;
@@ -132,9 +134,11 @@ public class VocSewage {
 	private boolean built = false;
 	private int numVariants;
 	private ArrayList<String> variantsByGrowth, variantsByCount, variantsByCumulative;
+	private int modelLastDay;
 	private HashMap<String, SimpleRegression> fits;
-	private HashMap<String, Double> cumulativePrevalence = new HashMap<>();
+	private final HashMap<String, Double> cumulativePrevalence = new HashMap<>();
 	private double cumulative = 0;
+	private final HashMap<Integer, Double> collectiveFit = new HashMap<>();
 
 	public double getGrowth(String variant) {
 		return slopeToWeekly(fits.get(variant).getSlope());
@@ -189,8 +193,9 @@ public class VocSewage {
 		}
 
 		variantsByGrowth.sort((v1, v2) -> Double.compare(fits.get(v1).getSlope(), fits.get(v2).getSlope()));
+		modelLastDay = CalendarUtils.timeToDay(System.currentTimeMillis()) + 30;
 		variantsByCount.sort(
-				(v1, v2) -> Double.compare(fits.get(v1).predict(getFirstDay()), fits.get(v2).predict(getLastDay())));
+				(v1, v2) -> -Double.compare(fits.get(v1).predict(modelLastDay), fits.get(v2).predict(modelLastDay)));
 
 		variantsByCumulative = voc.getVariants();
 
@@ -288,5 +293,9 @@ public class VocSewage {
 			}
 		}
 		return series;
+	}
+
+	public ArrayList<String> getVariantsByCount() {
+		return variantsByCount;
 	}
 }

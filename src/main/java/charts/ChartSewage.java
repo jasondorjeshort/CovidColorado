@@ -167,8 +167,7 @@ public class ChartSewage {
 		TimeSeries series;
 
 		Voc voc = vocSewage.voc;
-		ArrayList<String> variants = voc.getVariants();
-		series = vocSewage.makeCumulativeTimeseries(variants);
+		series = vocSewage.makeCollectiveTS();
 		if (series != null) {
 			collection.addSeries(series);
 			renderer.setSeriesStroke(seriesCount, new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
@@ -181,7 +180,7 @@ public class ChartSewage {
 		seriesCount++;
 
 		int lastDay = CalendarUtils.timeToDay(System.currentTimeMillis()) + 30;
-		for (String variant : variants) {
+		for (String variant : vocSewage.getVariantsByCount()) {
 			if (targetVariant != null && !targetVariant.equalsIgnoreCase(variant)) {
 				continue;
 			}
@@ -196,7 +195,7 @@ public class ChartSewage {
 				series = vocSewage.makeTimeSeries(variant, lastDay);
 				collection.addSeries(series);
 				renderer.setSeriesStroke(seriesCount,
-						new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+						new BasicStroke(1.75f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 				seriesCount++;
 			}
 		}
@@ -321,11 +320,10 @@ public class ChartSewage {
 
 	public static void buildVocSewageCharts(VocSewage vocSewage) {
 		ChartSewage.buildSewageTimeseriesChart(vocSewage, null, true, false);
-		ChartSewage.buildSewageTimeseriesChart(vocSewage, null, true, true);
+		ChartSewage.buildSewageTimeseriesChart(vocSewage, null, false, true);
 		if (false) {
 			ChartSewage.buildSewageTimeseriesChart(vocSewage, "Others", true, true);
 		}
-		ChartSewage.buildSewageTimeseriesChart(vocSewage, null, false, true);
 		ChartSewage.buildSewageCumulativeChart(vocSewage);
 	}
 
