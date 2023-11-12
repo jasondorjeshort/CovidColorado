@@ -179,7 +179,6 @@ public class ChartSewage {
 		renderer.setSeriesStroke(seriesCount, new BasicStroke(4.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		seriesCount++;
 
-		int lastDay = CalendarUtils.timeToDay(System.currentTimeMillis()) + 30;
 		for (String variant : vocSewage.getVariantsByCount()) {
 			if (targetVariant != null && !targetVariant.equalsIgnoreCase(variant)) {
 				continue;
@@ -192,7 +191,7 @@ public class ChartSewage {
 				seriesCount++;
 			}
 			if (exact) {
-				series = vocSewage.makeTimeSeries(variant, lastDay);
+				series = vocSewage.makeTimeSeries(variant);
 				collection.addSeries(series);
 				renderer.setSeriesStroke(seriesCount,
 						new BasicStroke(1.75f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
@@ -234,7 +233,7 @@ public class ChartSewage {
 			xAxis.setLowerBound(bound);
 		}
 
-		bound = System.currentTimeMillis() + 30l * 24 * 60 * 60 * 1000;
+		bound = CalendarUtils.dayToTime(vocSewage.getModelLastDay());
 		bound = Math.min(bound, xAxis.getUpperBound());
 		xAxis.setUpperBound(bound);
 

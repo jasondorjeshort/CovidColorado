@@ -140,6 +140,11 @@ public class VocSewage {
 	private double cumulative = 0;
 	private final HashMap<Integer, Double> collectiveFit = new HashMap<>();
 
+	public int getModelLastDay() {
+		build();
+		return modelLastDay;
+	}
+
 	public double getGrowth(String variant) {
 		return slopeToWeekly(fits.get(variant).getSlope());
 	}
@@ -249,7 +254,7 @@ public class VocSewage {
 		return series;
 	}
 
-	public synchronized TimeSeries makeTimeSeries(String variant, int lastDay) {
+	public synchronized TimeSeries makeTimeSeries(String variant) {
 		build();
 		String name = variant.replaceAll("nextcladePangoLineage:", "");
 		SimpleRegression fit;
@@ -288,7 +293,7 @@ public class VocSewage {
 			series.add(CalendarUtils.dayToDay(day), number);
 		}
 		if (fit != null) {
-			for (int day = getLastDay() + 1; day <= lastDay; day++) {
+			for (int day = getLastDay() + 1; day <= modelLastDay; day++) {
 				series.add(CalendarUtils.dayToDay(day), Math.exp(fit.predict(day)));
 			}
 		}
