@@ -87,42 +87,7 @@ public class VocSewage {
 		return new VocSewage(sewage, voc2);
 	}
 
-	public synchronized void makeTimeSeries(TimeSeries series, String variant, int lastDay) {
-		build();
-		for (int day = Math.max(getFirstDay(), voc.getFirstDay()); day <= getLastDay(); day++) {
-			DaySewage entry;
-			entry = sewage.getEntry(day);
-			if (entry == null) {
-				continue;
-			}
-
-			// Double pop = entry.getPop();
-
-			double number = entry.getSewage();
-			number *= sewage.getNormalizer();
-			if (number <= 0) {
-				number = 1E-6;
-			}
-
-			number *= voc.getPrevalence(day, variant);
-			if (number <= 0) {
-				number = 1E-12;
-			}
-
-			series.add(CalendarUtils.dayToDay(day), number);
-		}
-		SimpleRegression fit;
-		synchronized (this) {
-			fit = fits.get(variant);
-		}
-		if (fit != null) {
-			for (int day = getLastDay() + 1; day <= lastDay; day++) {
-				series.add(CalendarUtils.dayToDay(day), Math.exp(fit.predict(day)));
-			}
-		}
-	}
-
-	public synchronized TimeSeries makeRegressionTS(ArrayList<String> variants) {
+	public synchronized TimeSeries makeCumulativeTimeseries(ArrayList<String> variants) {
 		build();
 		HashMap<String, Double> sorter = new HashMap<>();
 		int tsLastDay = CalendarUtils.timeToDay(System.currentTimeMillis()) + 30;
@@ -156,9 +121,12 @@ public class VocSewage {
 	}
 
 	public static String slopeToWeekly(SimpleRegression fit) {
-		double min = slopeToWeekly(fit.getSlope() - fit.getSlopeConfidenceInterval());
-		double max = slopeToWeekly(fit.getSlope() + fit.getSlopeConfidenceInterval());
-		return String.format("[%+.0f%%,%+.0f%%]/week", min, max);
+		// double min = slopeToWeekly(fit.getSlope() -
+		// fit.getSlopeConfidenceInterval());
+		// double max = slopeToWeekly(fit.getSlope() +
+		// fit.getSlopeConfidenceInterval());
+		double act = slopeToWeekly(fit.getSlope());
+		return String.format("%+.0f%%/week", act);
 	}
 
 	private boolean built = false;
@@ -273,6 +241,52 @@ public class VocSewage {
 		int l = CalendarUtils.timeToDay(System.currentTimeMillis()) + 30;
 		series.add(CalendarUtils.dayToDay(f), Math.exp(fit.predict(f)));
 		series.add(CalendarUtils.dayToDay(l), Math.exp(fit.predict(l)));
+		return series;
+	}
+
+	public synchronized TimeSeries makeTimeSeries(String variant, int lastDay) {
+		build();
+		String name = variant.replaceAll("nextcladePangoLineage:", "");
+		SimpleRegression fit;
+		synchronized (this) {
+			fit = fits.get(variant);
+		}
+		if (fit != null) {
+			name = String.format("%s %s", name, slopeToWeekly(fit));
+		}
+		TimeSeries series = new TimeSeries(name);
+		if (fit != null) {
+			int day = getFirstDay() - 42;
+			series.add(CalendarUtils.dayToDay(day), Math.exp(fit.predict(day)));
+		}
+		for (int day = Math.max(getFirstDay(), voc.getFirstDay()); day <= getLastDay(); day++) {
+			DaySewage entry;
+			entry = sewage.getEntry(day);
+			if (entry == null) {
+				continue;
+			}
+
+			// Double pop = entry.getPop();
+
+			double number = entry.getSewage();
+			number *= sewage.getNormalizer();
+			if (number <= 0) {
+				number = 1E-6;
+			}
+
+			number *= voc.getPrevalence(day, variant);
+			if (number <= 0) {
+				// fit data before or after will fill for it
+				continue;
+			}
+
+			series.add(CalendarUtils.dayToDay(day), number);
+		}
+		if (fit != null) {
+			for (int day = getLastDay() + 1; day <= lastDay; day++) {
+				series.add(CalendarUtils.dayToDay(day), Math.exp(fit.predict(day)));
+			}
+		}
 		return series;
 	}
 }

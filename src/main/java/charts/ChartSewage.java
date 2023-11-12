@@ -168,14 +168,11 @@ public class ChartSewage {
 
 		Voc voc = vocSewage.voc;
 		ArrayList<String> variants = voc.getVariants();
-		if (fit) {
-			series = vocSewage.makeRegressionTS(variants);
-			if (series != null) {
-				collection.addSeries(series);
-				renderer.setSeriesStroke(seriesCount,
-						new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-				seriesCount++;
-			}
+		series = vocSewage.makeCumulativeTimeseries(variants);
+		if (series != null) {
+			collection.addSeries(series);
+			renderer.setSeriesStroke(seriesCount, new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+			seriesCount++;
 		}
 
 		series = vocSewage.sewage.makeTimeSeries(fit ? "Actual" : "Sewage");
@@ -196,8 +193,7 @@ public class ChartSewage {
 				seriesCount++;
 			}
 			if (exact) {
-				series = new TimeSeries(variant.replaceAll("nextcladePangoLineage:", ""));
-				vocSewage.makeTimeSeries(series, variant, lastDay);
+				series = vocSewage.makeTimeSeries(variant, lastDay);
 				collection.addSeries(series);
 				renderer.setSeriesStroke(seriesCount,
 						new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
