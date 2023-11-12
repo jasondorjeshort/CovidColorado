@@ -217,6 +217,7 @@ public class Nwss {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
+			f.delete();
 			System.exit(0);
 		}
 	}
