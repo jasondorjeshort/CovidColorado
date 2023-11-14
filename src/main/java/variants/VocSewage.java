@@ -134,7 +134,7 @@ public class VocSewage {
 	private boolean built = false;
 	private int numVariants;
 	private ArrayList<String> variantsByGrowth, variantsByCount, variantsByCumulative;
-	private int modelLastDay;
+	private int currentDay, modelLastDay;
 	private HashMap<String, SimpleRegression> fits;
 	private final HashMap<String, Double> cumulativePrevalence = new HashMap<>();
 	private double cumulative = 0;
@@ -198,7 +198,8 @@ public class VocSewage {
 		}
 
 		variantsByGrowth.sort((v1, v2) -> Double.compare(fits.get(v1).getSlope(), fits.get(v2).getSlope()));
-		modelLastDay = CalendarUtils.timeToDay(System.currentTimeMillis()) + 30;
+		currentDay = CalendarUtils.timeToDay(System.currentTimeMillis());
+		modelLastDay = currentDay + 30;
 		variantsByCount.sort(
 				(v1, v2) -> -Double.compare(fits.get(v1).predict(modelLastDay), fits.get(v2).predict(modelLastDay)));
 
@@ -262,7 +263,20 @@ public class VocSewage {
 			fit = fits.get(variant);
 		}
 		if (fit != null) {
-			name = String.format("%s %s", name, slopeToWeekly(fit));
+
+			String cap = variantsByGrowth.get(variantsByGrowth.size() - 1);
+			String apex = "";
+			double num = Math.exp(fit.predict(currentDay));
+			if (variant.equalsIgnoreCase(cap)) {
+				int n = num > getCollectiveFit(currentDay) * 0.5 ? -1 : 1;
+				for (int day = currentDay;; day += n) {
+					if (Math.exp(fit.predict(day)) > getCollectiveFit(day) * 0.5) {
+						apex = ", " + CalendarUtils.dayToDate(day);
+						break;
+					}
+				}
+			}
+			name = String.format("%s (%.1f%s%s)", name, num, slopeToWeekly(fit), apex);
 		}
 		TimeSeries series = new TimeSeries(name);
 		if (fit != null) {
