@@ -237,6 +237,22 @@ public class ChartSewage {
 		bound = Math.min(bound, xAxis.getUpperBound());
 		xAxis.setUpperBound(bound);
 
+		ValueMarker marker = new ValueMarker(CalendarUtils.dayToTime(vocSewage.getLastDay() + 1));
+		marker.setPaint(Color.black);
+		marker.setLabel("Data cutoff");
+		marker.setStroke(Charts.stroke);
+		marker.setLabelFont(Charts.font);
+		marker.setLabelTextAnchor(TextAnchor.TOP_CENTER);
+		plot.addDomainMarker(marker);
+
+		marker = new ValueMarker(System.currentTimeMillis());
+		marker.setPaint(Color.black);
+		marker.setLabel("Today");
+		marker.setStroke(Charts.stroke);
+		marker.setLabelFont(Charts.font);
+		marker.setLabelTextAnchor(TextAnchor.TOP_CENTER);
+		plot.addDomainMarker(marker);
+
 		BufferedImage image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT * 3 / 2);
 		Charts.saveBufferedImageAsPNG(SEWAGE_FOLDER, fileName, image);
 
