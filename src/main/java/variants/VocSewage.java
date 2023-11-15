@@ -263,20 +263,26 @@ public class VocSewage {
 			fit = fits.get(variant);
 		}
 		if (fit != null) {
-
 			String cap = variantsByGrowth.get(variantsByGrowth.size() - 1);
 			String apex = "";
 			double num = Math.exp(fit.predict(currentDay));
 			if (variant.equalsIgnoreCase(cap)) {
+				apex = ", 365d+";
 				int n = num > getCollectiveFit(currentDay) * 0.5 ? -1 : 1;
-				for (int day = currentDay;; day += n) {
+				for (int day = currentDay; day < currentDay + 364; day += n) {
 					if (Math.exp(fit.predict(day)) > getCollectiveFit(day) * 0.5) {
-						apex = ", " + CalendarUtils.dayToDate(day);
+						apex = ", " + (day - currentDay) + "d";
 						break;
 					}
 				}
 			}
-			name = String.format("%s (%.1f%s%s)", name, num, slopeToWeekly(fit), apex);
+			if (num > 1) {
+				name = String.format("%s (%.1f%s%s)", name, num, slopeToWeekly(fit), apex);
+			} else if (num > 0.1) {
+				name = String.format("%s (%.2f%s%s)", name, num, slopeToWeekly(fit), apex);
+			} else {
+				name = String.format("%s (%.3f%s%s)", name, num, slopeToWeekly(fit), apex);
+			}
 		}
 		TimeSeries series = new TimeSeries(name);
 		if (fit != null) {
