@@ -239,7 +239,7 @@ public class Nwss {
 				VariantSet vs = new VariantSet(vEnum);
 				String link = vs.getCovSpectrumLink();
 
-				if (vEnum == VariantEnum.SEPTEMBER_PLUS_VARIANTS) {
+				if (vEnum == VariantEnum.SEP_TO_NOV_2023) {
 					File f = ensureFileUpdated(VOC_HTML, link, 168);
 					// TODO: probably can't actually do anything with this.
 				}
