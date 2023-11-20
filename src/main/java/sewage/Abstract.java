@@ -1,6 +1,7 @@
 package sewage;
 
 import java.awt.Color;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 
@@ -38,7 +39,7 @@ public abstract class Abstract extends DailyTracker {
 	}
 
 	private boolean built = false;
-	private final LinkedList<Inflection> inflections = new LinkedList<>();
+	private final ArrayList<Inflection> inflections = new ArrayList<>();
 
 	private synchronized void buildInflections() {
 		int firstDay = Math.max(getFirstDay(), CalendarUtils.dateToDay("9/1/2020")), lastDay = getLastDay();
@@ -159,7 +160,7 @@ public abstract class Abstract extends DailyTracker {
 		int startDay = getFirstDay(), endDay = getLastDay();
 
 		if (inflections.size() > 0) {
-			startDay = Math.max(startDay, inflections.getLast().day + 7);
+			startDay = Math.max(startDay, inflections.get(inflections.size() - 1).day + 7);
 		}
 
 		for (int day = endDay; day >= startDay; day--) {
@@ -202,13 +203,14 @@ public abstract class Abstract extends DailyTracker {
 		build();
 		LinkedList<ValueMarker> markers = new LinkedList<>();
 
-		for (Inflection inflection : inflections) {
+		for (int i = 0; i < inflections.size(); i++) {
+			Inflection inflection = inflections.get(i);
 			long time = CalendarUtils.dayToTime(inflection.day);
 			ValueMarker marker = new ValueMarker(time);
 			marker.setPaint(inflection.peak ? Color.red : Color.green);
 			if (inflection.peak) {
 				double val = entries.get(inflection.day).getSewage();
-				marker.setLabel(String.format("%s", CalendarUtils.dayToDate(inflection.day), val));
+				marker.setLabel(String.format("%s %.1f", CalendarUtils.dayToDate(inflection.day), val));
 			}
 			marker.setStroke(Charts.stroke);
 			marker.setLabelFont(Charts.font);
