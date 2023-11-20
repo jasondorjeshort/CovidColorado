@@ -285,9 +285,10 @@ public class ChartSewage {
 				}
 				continue;
 			}
-			prevalence = Math.log(prevalence) / Math.log(10);
-			String name = String.format("%s (%+.0f weekly)", variant, vocSewage.getGrowth(variant));
-			dataset.addValue(prevalence, name, "Prevalence");
+			double logPrevalence = Math.log(prevalence) / Math.log(10);
+			String name = String.format("%s %.0f (%+.0f weekly)", variant.replaceAll("nextcladePangoLineage:", ""),
+					prevalence, vocSewage.getGrowth(variant));
+			dataset.addValue(logPrevalence, name, "Prevalence");
 		}
 
 		JFreeChart chart = ChartFactory.createBarChart("Cumulative prevalence", null, "Combined sewage (powers of 10)",
