@@ -145,8 +145,8 @@ public class ChartSewage {
 
 		if (sewage instanceof sewage.All || sewage instanceof sewage.Geo
 				|| sewage.getName().equalsIgnoreCase("Colorado")) {
-			library.OpenImage.openImage(fileName);
-			library.OpenImage.open();
+			// library.OpenImage.openImage(fileName);
+			// library.OpenImage.open();
 		}
 
 		// System.out.println("Created : " + sewage.id + " for " +
