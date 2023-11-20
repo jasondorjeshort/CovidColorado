@@ -57,7 +57,7 @@ public abstract class Abstract extends DailyTracker {
 				continue;
 			}
 
-			for (int flipDay = day + 2; flipDay < day + 30 && flipDay <= lastDay; flipDay++) {
+			for (int flipDay = day + 2; flipDay < day + 21 && flipDay <= lastDay; flipDay++) {
 				val2 = getNormalized(flipDay);
 				if (val2 == null) {
 					continue;
@@ -67,10 +67,6 @@ public abstract class Abstract extends DailyTracker {
 					val = val2;
 					day = flipDay;
 				}
-			}
-
-			if (day > lastDay - 14) {
-				break;
 			}
 
 			Inflection inflection = new Inflection();
@@ -161,6 +157,10 @@ public abstract class Abstract extends DailyTracker {
 
 		if (inflections.size() > 0) {
 			startDay = Math.max(startDay, inflections.get(inflections.size() - 1).day + 7);
+		}
+
+		if (startDay == endDay) {
+			return null;
 		}
 
 		for (int day = endDay; day >= startDay; day--) {
