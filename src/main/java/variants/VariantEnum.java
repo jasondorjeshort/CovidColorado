@@ -16,7 +16,7 @@ public enum VariantEnum {
 	SEP_TO_NOV_2023(
 			"2023-09-10",
 			null,
-			"ba.2.86",
+			"ba.2.86.1",
 			"dv.7.1",
 			"eg.5.1",
 			"eg.5.1.1",
@@ -54,6 +54,7 @@ public enum VariantEnum {
 			"jg.3",
 			"jg.3.1",
 			"jn.1",
+			"jn.3",
 			"xbb.1.16",
 			"xbb.1.16.11",
 			"xbb.1.16.15",
