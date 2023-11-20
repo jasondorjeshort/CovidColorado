@@ -33,6 +33,7 @@ public enum VariantEnum {
 			"gj.1.2",
 			"gj.1.2.2",
 			"gk.1.1",
+			"gk.1.8",
 			"gk.3.1",
 			"gk.2",
 			"gs.4.1",
@@ -42,10 +43,10 @@ public enum VariantEnum {
 			"hk.3.1",
 			"hk.3.4",
 			"hk.6",
-			"hk.8",
 			"hk.13",
 			"hn.1",
 			"hn.2",
+			"hn.5",
 			"hv.1",
 			"hv.1.1",
 			"jd.1.1",
@@ -64,9 +65,17 @@ public enum VariantEnum {
 			"xbb.1.9",
 			"xbb.2.3",
 			"xch.1",
-			"xcr"
-	// watch: hk.3.X, hk.20.1 (when named)
+			"xcr",
+			"xda"
 	// should be 51
+	// watch list:
+	// XDD (not numbered)
+	//
+	// HK.20.1 (23, +23%)
+	// HK.8 (21, +19%)
+	// JE.1.1 (14, +13%)
+	// HK.2 (27, +15%)
+	// EG.6.1.1 (23, +10%)
 	),
 
 	ALL_TIME_VARIANTS("2020-01-06", null, "b.1", "b.1.617.2", "ba.1", "ba.2", "ba.2.75", "xbb", "ba.5", "ba.4", "bq.1"),
