@@ -78,6 +78,8 @@ public enum VariantEnum {
 	// EG.6.1.1 (23, +10%)
 	),
 
+	BA_286("2023-09-10", null, "BA.2.86", "BA.2.86.1", "JN.1", "JN.2", "JN.3"),
+
 	ALL_TIME_VARIANTS("2020-01-06", null, "b.1", "b.1.617.2", "ba.1", "ba.2", "ba.2.75", "xbb", "ba.5", "ba.4", "bq.1"),
 
 	;
