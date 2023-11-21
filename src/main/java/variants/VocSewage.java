@@ -255,7 +255,63 @@ public class VocSewage {
 		return series;
 	}
 
-	public synchronized TimeSeries makeTimeSeries(String variant) {
+	public synchronized TimeSeries makeRelativeSeries(String variant) {
+		build();
+		String name = variant.replaceAll("nextcladePangoLineage:", "");
+		SimpleRegression fit;
+		synchronized (this) {
+			fit = fits.get(variant);
+		}
+		if (fit != null) {
+			double num = 100 * Math.exp(fit.predict(currentDay)) / getCollectiveFit(currentDay);
+			double lastNum = 100 * Math.exp(fit.predict(modelLastDay)) / getCollectiveFit(modelLastDay);
+			if (num > 10 && lastNum > 10) {
+				name = String.format("%s (%.0f%%->%.0f%%)", name, num, lastNum);
+			} else if (num > 1 && lastNum > 1) {
+				name = String.format("%s (%.1f%%->%.1f%%)", name, num, lastNum);
+			} else if (num > 0.1 && lastNum > 0.1) {
+				name = String.format("%s (%.2f%%->%.2f%%)", name, num, lastNum);
+			} else {
+				name = String.format("%s (%.3f%%->%.3f%%)", name, num, lastNum);
+			}
+		}
+		TimeSeries series = new TimeSeries(name);
+		if (fit != null) {
+			int day = getFirstDay() - 42;
+			series.add(CalendarUtils.dayToDay(day), 100 * Math.exp(fit.predict(day)) / getCollectiveFit(day));
+		}
+		for (int day = Math.max(getFirstDay(), voc.getFirstDay()); day <= getLastDay(); day++) {
+			DaySewage entry;
+			entry = sewage.getEntry(day);
+			if (entry == null) {
+				continue;
+			}
+
+			// Double pop = entry.getPop();
+
+			double number = entry.getSewage();
+			number *= sewage.getNormalizer();
+			if (number <= 0) {
+				number = 1E-6;
+			}
+
+			number *= voc.getPrevalence(day, variant);
+			if (number <= 0) {
+				// fit data before or after will fill for it
+				continue;
+			}
+
+			series.add(CalendarUtils.dayToDay(day), 100 * number / entry.getSewage());
+		}
+		if (fit != null) {
+			for (int day = getLastDay() + 1; day <= modelLastDay; day++) {
+				series.add(CalendarUtils.dayToDay(day), 100 * Math.exp(fit.predict(day)) / getCollectiveFit(day));
+			}
+		}
+		return series;
+	}
+
+	public synchronized TimeSeries makeAbsoluteSeries(String variant) {
 		build();
 		String name = variant.replaceAll("nextcladePangoLineage:", "");
 		SimpleRegression fit;

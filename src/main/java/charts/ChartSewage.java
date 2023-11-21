@@ -62,6 +62,8 @@ public class ChartSewage {
 	public static final String PLANT_FOLDER = SEWAGE_FOLDER + "\\" + PLANTS;
 	public static final String LL = "LL";
 	public static final String LL_FOLDER = SEWAGE_FOLDER + "\\" + LL;
+	public static final String VARIANTS = "variants";
+	public static final String VARIANTS_FOLDER = SEWAGE_FOLDER + "\\" + VARIANTS;
 
 	public static void mkdirs() {
 		new File(Charts.FULL_FOLDER).mkdir();
@@ -71,6 +73,7 @@ public class ChartSewage {
 		new File(REGIONS_FOLDER).mkdir();
 		new File(COUNTIES_FOLDER).mkdir();
 		new File(LL_FOLDER).mkdir();
+		new File(VARIANTS_FOLDER).mkdir();
 	}
 
 	public static void reportState(String state) {
@@ -154,8 +157,7 @@ public class ChartSewage {
 		return image;
 	}
 
-	public static BufferedImage buildSewageTimeseriesChart(VocSewage vocSewage, String targetVariant, boolean exact,
-			boolean fit) {
+	public static BufferedImage buildAbsolute(VocSewage vocSewage, String targetVariant) {
 
 		if (vocSewage.sewage.getTotalSewage() <= 0) {
 			return null;
@@ -174,7 +176,7 @@ public class ChartSewage {
 			seriesCount++;
 		}
 
-		series = vocSewage.sewage.makeTimeSeries(fit ? "Actual" : "Sewage");
+		series = vocSewage.sewage.makeTimeSeries("Actual sewage");
 		collection.addSeries(series);
 		renderer.setSeriesStroke(seriesCount, new BasicStroke(4.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		seriesCount++;
@@ -183,28 +185,25 @@ public class ChartSewage {
 			if (targetVariant != null && !targetVariant.equalsIgnoreCase(variant)) {
 				continue;
 			}
-			if (fit) {
-				series = vocSewage.makeRegressionTS(variant);
-				collection.addSeries(series);
-				renderer.setSeriesStroke(seriesCount,
-						new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-				seriesCount++;
-			}
-			if (exact) {
-				series = vocSewage.makeTimeSeries(variant);
-				collection.addSeries(series);
-				renderer.setSeriesStroke(seriesCount,
-						new BasicStroke(1.75f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-				seriesCount++;
-			}
+			/*
+			 * if (fit) { series = vocSewage.makeRegressionTS(variant);
+			 * collection.addSeries(series);
+			 * renderer.setSeriesStroke(seriesCount, new BasicStroke(1.0f,
+			 * BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)); seriesCount++; }
+			 */
+			series = vocSewage.makeAbsoluteSeries(variant);
+			collection.addSeries(series);
+			renderer.setSeriesStroke(seriesCount,
+					new BasicStroke(1.75f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+			seriesCount++;
 		}
 
 		// dataset.addSeries("Cases", series);
 
 		String fileName = vocSewage.sewage.getChartFilename();
 		String title = vocSewage.sewage.getTitleLine();
-		fileName += "-" + voc.id + "-log-voc" + (fit ? "-fit" : "") + (exact ? "-exact" : "")
-				+ (voc.isMerger ? "-merger" : "");
+		// (fit ? "-fit" : "") +(exact ? "-exact" : "") +
+		fileName += "-" + voc.id + "-abslog" + (voc.isMerger ? "-merger" : "");
 		if (targetVariant == null) {
 			fileName += "-all";
 		} else {
@@ -266,8 +265,103 @@ public class ChartSewage {
 		return image;
 	}
 
-	public static BufferedImage buildSewageCumulativeChart(VocSewage vocSewage) {
+	public static BufferedImage buildRelative(VocSewage vocSewage, String targetVariant) {
+		if (vocSewage.sewage.getTotalSewage() <= 0) {
+			return null;
+		}
+		TimeSeriesCollection collection = new TimeSeriesCollection();
 
+		DeviationRenderer renderer = new DeviationRenderer(true, false);
+		int seriesCount = 0;
+		TimeSeries series;
+
+		Voc voc = vocSewage.voc;
+
+		for (String variant : vocSewage.getVariantsByCount()) {
+			if (targetVariant != null && !targetVariant.equalsIgnoreCase(variant)) {
+				continue;
+			}
+			/*
+			 * if (fit) { series = vocSewage.makeRegressionTS(variant);
+			 * collection.addSeries(series);
+			 * renderer.setSeriesStroke(seriesCount, new BasicStroke(1.0f,
+			 * BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)); seriesCount++; }
+			 */
+			series = vocSewage.makeRelativeSeries(variant);
+			collection.addSeries(series);
+			renderer.setSeriesStroke(seriesCount,
+					new BasicStroke(1.75f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+			seriesCount++;
+		}
+
+		// dataset.addSeries("Cases", series);
+
+		String fileName = vocSewage.sewage.getChartFilename();
+		String title = vocSewage.sewage.getTitleLine();
+		// (fit ? "-fit" : "") +(exact ? "-exact" : "") +
+		fileName += "-" + voc.id + "-rel" + (voc.isMerger ? "-merger" : "");
+		if (targetVariant == null) {
+			fileName += "-all";
+		} else {
+			fileName += ("-" + targetVariant);
+		}
+		title += "\nSource: CDC/NWSS, Cov-Spectrum";
+		String verticalAxis = "Relative percentage";
+
+		JFreeChart chart = ChartFactory.createTimeSeriesChart(title, "Date", verticalAxis, collection);
+
+		XYPlot plot = chart.getXYPlot();
+		plot.setRenderer(renderer);
+
+		LogarithmicAxis yAxis = new LogarithmicAxis(verticalAxis);
+		plot.setRangeAxis(yAxis);
+		// yAxis.setUpperBound(1000);
+		yAxis.setLowerBound(0.1);
+		/*
+		 * double bound = yAxis.getUpperBound() / 10000.0; if
+		 * (yAxis.getLowerBound() < bound) { yAxis.setLowerBound(bound); }
+		 */
+
+		ValueAxis xAxis = plot.getDomainAxis();
+		double bound = CalendarUtils.dayToTime(voc.getFirstDay());
+		if (xAxis.getLowerBound() < bound) {
+			xAxis.setLowerBound(bound);
+		}
+
+		bound = CalendarUtils.dayToTime(vocSewage.getModelLastDay());
+		bound = Math.min(bound, xAxis.getUpperBound());
+		xAxis.setUpperBound(bound);
+
+		ValueMarker marker = new ValueMarker(CalendarUtils.dayToTime(vocSewage.getLastDay() + 1));
+		marker.setPaint(Color.black);
+		marker.setLabel("Data cutoff");
+		marker.setStroke(Charts.stroke);
+		marker.setLabelFont(Charts.font);
+		marker.setLabelTextAnchor(TextAnchor.TOP_CENTER);
+		plot.addDomainMarker(marker);
+
+		marker = new ValueMarker(System.currentTimeMillis());
+		marker.setPaint(Color.black);
+		marker.setLabel("Today");
+		marker.setStroke(Charts.stroke);
+		marker.setLabelFont(Charts.font);
+		marker.setLabelTextAnchor(TextAnchor.TOP_CENTER);
+		plot.addDomainMarker(marker);
+
+		BufferedImage image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT * 3 / 2);
+		Charts.saveBufferedImageAsPNG(SEWAGE_FOLDER, fileName, image);
+
+		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
+
+		// library.OpenImage.openImage(fileName);
+		// library.OpenImage.open();
+
+		// System.out.println("Created : " + sewage.id + " for " +
+		// series.getItemCount() + " => " + fileName);
+		return image;
+	}
+
+	public static BufferedImage buildSewageCumulativeChart(VocSewage vocSewage) {
 		if (vocSewage.sewage.getTotalSewage() <= 0) {
 			return null;
 		}
@@ -335,10 +429,10 @@ public class ChartSewage {
 	}
 
 	public static void buildVocSewageCharts(VocSewage vocSewage) {
-		ChartSewage.buildSewageTimeseriesChart(vocSewage, null, true, false);
-		ChartSewage.buildSewageTimeseriesChart(vocSewage, null, false, true);
+		ChartSewage.buildAbsolute(vocSewage, null);
+		ChartSewage.buildRelative(vocSewage, null);
 		if (false) {
-			ChartSewage.buildSewageTimeseriesChart(vocSewage, "Others", true, true);
+			ChartSewage.buildAbsolute(vocSewage, "Others");
 		}
 		ChartSewage.buildSewageCumulativeChart(vocSewage);
 	}
