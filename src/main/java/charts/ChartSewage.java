@@ -157,7 +157,7 @@ public class ChartSewage {
 		return image;
 	}
 
-	public static BufferedImage buildAbsolute(VocSewage vocSewage, String targetVariant) {
+	public static BufferedImage buildAbsolute(VocSewage vocSewage, String targetVariant, boolean fit) {
 
 		if (vocSewage.sewage.getTotalSewage() <= 0) {
 			return null;
@@ -169,11 +169,14 @@ public class ChartSewage {
 		TimeSeries series;
 
 		Voc voc = vocSewage.voc;
-		series = vocSewage.makeCollectiveTS();
-		if (series != null) {
-			collection.addSeries(series);
-			renderer.setSeriesStroke(seriesCount, new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-			seriesCount++;
+		if (fit) {
+			series = vocSewage.makeCollectiveTS();
+			if (series != null) {
+				collection.addSeries(series);
+				renderer.setSeriesStroke(seriesCount,
+						new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+				seriesCount++;
+			}
 		}
 
 		series = vocSewage.sewage.makeTimeSeries("Actual sewage");
@@ -191,7 +194,7 @@ public class ChartSewage {
 			 * renderer.setSeriesStroke(seriesCount, new BasicStroke(1.0f,
 			 * BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)); seriesCount++; }
 			 */
-			series = vocSewage.makeAbsoluteSeries(variant);
+			series = vocSewage.makeAbsoluteSeries(variant, fit);
 			collection.addSeries(series);
 			renderer.setSeriesStroke(seriesCount,
 					new BasicStroke(1.75f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
@@ -202,8 +205,8 @@ public class ChartSewage {
 
 		String fileName = vocSewage.sewage.getChartFilename();
 		String title = vocSewage.sewage.getTitleLine();
-		// (fit ? "-fit" : "") +(exact ? "-exact" : "") +
-		fileName += "-" + voc.id + "-abslog" + (voc.isMerger ? "-merger" : "");
+		// (exact ? "-exact" : "") +
+		fileName += "-" + voc.id + "-abslog" + (fit ? "-fit" : "") + (voc.isMerger ? "-merger" : "");
 		if (targetVariant == null) {
 			fileName += "-all";
 		} else {
@@ -429,10 +432,11 @@ public class ChartSewage {
 	}
 
 	public static void buildVocSewageCharts(VocSewage vocSewage) {
-		ChartSewage.buildAbsolute(vocSewage, null);
+		ChartSewage.buildAbsolute(vocSewage, null, true);
+		ChartSewage.buildAbsolute(vocSewage, null, false);
 		ChartSewage.buildRelative(vocSewage, null);
 		if (false) {
-			ChartSewage.buildAbsolute(vocSewage, "Others");
+			ChartSewage.buildAbsolute(vocSewage, "Others", true);
 		}
 		ChartSewage.buildSewageCumulativeChart(vocSewage);
 	}

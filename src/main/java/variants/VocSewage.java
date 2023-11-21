@@ -311,12 +311,14 @@ public class VocSewage {
 		return series;
 	}
 
-	public synchronized TimeSeries makeAbsoluteSeries(String variant) {
+	public synchronized TimeSeries makeAbsoluteSeries(String variant, boolean doFit) {
 		build();
 		String name = variant.replaceAll("nextcladePangoLineage:", "");
-		SimpleRegression fit;
-		synchronized (this) {
-			fit = fits.get(variant);
+		SimpleRegression fit = null;
+		if (doFit) {
+			synchronized (this) {
+				fit = fits.get(variant);
+			}
 		}
 		if (fit != null) {
 			String cap = variantsByGrowth.get(variantsByGrowth.size() - 1);
