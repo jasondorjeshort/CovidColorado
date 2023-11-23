@@ -87,7 +87,9 @@ public abstract class Abstract extends DailyTracker {
 		if (getTotalSewage() <= 0) {
 			return;
 		}
-		buildInflections();
+		if (getLastDay() > getFirstDay()) {
+			buildInflections();
+		}
 		buildBackend();
 	}
 
