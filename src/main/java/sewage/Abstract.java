@@ -57,7 +57,7 @@ public abstract class Abstract extends DailyTracker {
 				continue;
 			}
 
-			for (int flipDay = day + 2; flipDay < day + 21 && flipDay <= lastDay; flipDay++) {
+			for (int flipDay = day + 2; flipDay < day + 28 && flipDay <= lastDay; flipDay++) {
 				val2 = getNormalized(flipDay);
 				if (val2 == null) {
 					continue;
