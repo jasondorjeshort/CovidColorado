@@ -28,6 +28,7 @@ import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 
 import covid.CalendarUtils;
+import myjfreechart.LogitAxis;
 import sewage.Abstract;
 import sewage.All;
 import variants.Voc;
@@ -316,7 +317,7 @@ public class ChartSewage {
 		XYPlot plot = chart.getXYPlot();
 		plot.setRenderer(renderer);
 
-		LogarithmicAxis yAxis = new LogarithmicAxis(verticalAxis);
+		LogitAxis yAxis = new LogitAxis(verticalAxis, 100.0);
 		plot.setRangeAxis(yAxis);
 		// yAxis.setUpperBound(1000);
 		yAxis.setLowerBound(0.1);
@@ -356,8 +357,8 @@ public class ChartSewage {
 
 		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
 
-		// library.OpenImage.openImage(fileName);
-		// library.OpenImage.open();
+		library.OpenImage.openImage(fileName);
+		library.OpenImage.open();
 
 		// System.out.println("Created : " + sewage.id + " for " +
 		// series.getItemCount() + " => " + fileName);
