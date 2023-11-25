@@ -170,7 +170,7 @@ public class ChartSewage {
 		TimeSeries series;
 
 		Voc voc = vocSewage.voc;
-		if (fit) {
+		if (fit && targetVariant == null) {
 			series = vocSewage.makeCollectiveTS();
 			if (series != null) {
 				collection.addSeries(series);
@@ -204,14 +204,18 @@ public class ChartSewage {
 
 		// dataset.addSeries("Cases", series);
 
-		String fileName = vocSewage.sewage.getChartFilename();
+		String folder, fileName;
 		String title = vocSewage.sewage.getTitleLine();
 		// (exact ? "-exact" : "") +
-		fileName += "-" + voc.id + "-abslog" + (fit ? "-fit" : "") + (voc.isMerger ? "-merger" : "");
 		if (targetVariant == null) {
-			fileName += "-all";
+			folder = SEWAGE_FOLDER;
+			fileName = vocSewage.sewage.getChartFilename() + "-" + voc.id + "-abslog" + (fit ? "-fit" : "")
+					+ (voc.isMerger ? "-merger" : "") + "-all";
 		} else {
-			fileName += ("-" + targetVariant);
+			folder = VARIANTS_FOLDER;
+			String n = Voc.display(targetVariant);
+			n = n.replaceAll("\\*", "");
+			fileName = n + "-" + voc.id + "-abslog" + (fit ? "-fit" : "") + (voc.isMerger ? "-merger" : "");
 		}
 		title += "\nSource: CDC/NWSS, Cov-Spectrum";
 		String verticalAxis = All.SCALE_NAME;
@@ -240,7 +244,7 @@ public class ChartSewage {
 		bound = Math.min(bound, xAxis.getUpperBound());
 		xAxis.setUpperBound(bound);
 
-		ValueMarker marker = new ValueMarker(CalendarUtils.dayToTime(vocSewage.getLastDay() + 1));
+		ValueMarker marker = new ValueMarker(CalendarUtils.dayToTime(vocSewage.getLastDay()));
 		marker.setPaint(Color.black);
 		marker.setLabel("Data cutoff");
 		marker.setStroke(Charts.stroke);
@@ -257,9 +261,14 @@ public class ChartSewage {
 		plot.addDomainMarker(marker);
 
 		BufferedImage image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT * 3 / 2);
-		Charts.saveBufferedImageAsPNG(SEWAGE_FOLDER, fileName, image);
+		try {
+			Charts.saveBufferedImageAsPNG(folder, fileName, image);
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
 
-		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
+		fileName = folder + "\\" + fileName + ".png";
 
 		// library.OpenImage.openImage(fileName);
 		// library.OpenImage.open();
@@ -384,8 +393,8 @@ public class ChartSewage {
 				continue;
 			}
 			double logPrevalence = Math.log(prevalence) / Math.log(10);
-			String name = String.format("%s %.0f (%+.0f weekly)", variant.replaceAll("nextcladePangoLineage:", ""),
-					prevalence, vocSewage.getGrowth(variant));
+			String name = String.format("%s %.0f (%+.0f weekly)", Voc.display(variant), prevalence,
+					vocSewage.getGrowth(variant));
 			dataset.addValue(logPrevalence, name, "Prevalence");
 		}
 
@@ -433,13 +442,16 @@ public class ChartSewage {
 	}
 
 	public static void buildVocSewageCharts(VocSewage vocSewage) {
+		long time = System.currentTimeMillis();
 		ChartSewage.buildAbsolute(vocSewage, null, true);
 		ChartSewage.buildAbsolute(vocSewage, null, false);
 		ChartSewage.buildRelative(vocSewage, null);
-		if (false) {
-			ChartSewage.buildAbsolute(vocSewage, "Others", true);
+		for (String variant : vocSewage.voc.getVariants()) {
+			ChartSewage.buildAbsolute(vocSewage, variant, true);
 		}
 		ChartSewage.buildSewageCumulativeChart(vocSewage);
+		time = System.currentTimeMillis() - time;
+		System.out.println("Built voc in " + time + " ms.");
 	}
 
 }

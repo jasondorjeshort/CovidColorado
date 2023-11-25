@@ -189,6 +189,10 @@ public class Voc extends DailyTracker {
 		}
 	}
 
+	public static String display(String variant) {
+		return variant.replaceAll("nextcladePangoLineage:", "");
+	}
+
 	public Voc(VocSewage parent, LinkedList<String>[] variants) {
 		isMerger = true;
 		synchronized (nextIdLock) {
@@ -204,7 +208,7 @@ public class Voc extends DailyTracker {
 			variantList.add(vNames[v]);
 			System.out.println(String.format("%s (%d)", vNames[v], variants[v].size()));
 			for (String var : variants[v]) {
-				String n = var.replaceAll("nextcladePangoLineage:", "");
+				String n = display(var);
 				System.out.println(String.format("  %s (%+f%%/week, %.2f%% prevalence)", n, parent.getGrowth(var),
 						100.0 * parent.getPercentage(var)));
 			}
