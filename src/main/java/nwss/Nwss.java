@@ -305,15 +305,14 @@ public class Nwss {
 		if (variants != null) {
 			for (Voc voc : variants) {
 				VocSewage vocSewage = new VocSewage(all, voc);
-				build.execute(() -> ChartSewage.buildVocSewageCharts(vocSewage));
+				ChartSewage.buildVocSewageCharts(vocSewage, build);
 				int tiers = 5;
 				if (voc.numVariants() > tiers) {
-					build.execute(() -> ChartSewage.buildVocSewageCharts(vocSewage.merge(tiers)));
+					ChartSewage.buildVocSewageCharts(vocSewage.merge(tiers), build);
 				}
 
 				if (false) {
-					states.forEach((id, sewage) -> build
-							.execute(() -> ChartSewage.buildVocSewageCharts(new VocSewage(sewage, voc))));
+					states.forEach((id, sewage) -> ChartSewage.buildVocSewageCharts(new VocSewage(sewage, voc), build));
 				}
 			}
 		}

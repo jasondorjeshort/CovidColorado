@@ -379,6 +379,7 @@ public class VocSewage {
 	}
 
 	public ArrayList<String> getVariantsByCount() {
+		build();
 		return variantsByCount;
 	}
 }

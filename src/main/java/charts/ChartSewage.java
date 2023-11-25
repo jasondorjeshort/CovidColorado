@@ -28,6 +28,7 @@ import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 
 import covid.CalendarUtils;
+import library.ASync;
 import myjfreechart.LogitAxis;
 import sewage.Abstract;
 import sewage.All;
@@ -441,15 +442,15 @@ public class ChartSewage {
 		buildSewageTimeseriesChart(sewage, true, maxChildren);
 	}
 
-	public static void buildVocSewageCharts(VocSewage vocSewage) {
+	public static void buildVocSewageCharts(VocSewage vocSewage, ASync<Chart> build) {
 		long time = System.currentTimeMillis();
-		ChartSewage.buildAbsolute(vocSewage, null, true);
-		ChartSewage.buildAbsolute(vocSewage, null, false);
-		ChartSewage.buildRelative(vocSewage, null);
+		build.execute(() -> ChartSewage.buildAbsolute(vocSewage, null, true));
+		build.execute(() -> ChartSewage.buildAbsolute(vocSewage, null, false));
+		build.execute(() -> ChartSewage.buildRelative(vocSewage, null));
 		for (String variant : vocSewage.voc.getVariants()) {
-			ChartSewage.buildAbsolute(vocSewage, variant, true);
+			build.execute(() -> ChartSewage.buildAbsolute(vocSewage, variant, true));
 		}
-		ChartSewage.buildSewageCumulativeChart(vocSewage);
+		build.execute(() -> ChartSewage.buildSewageCumulativeChart(vocSewage));
 		time = System.currentTimeMillis() - time;
 		System.out.println("Built voc in " + time + " ms.");
 	}
