@@ -105,6 +105,7 @@ public class VariantSet {
 			sb.append("&");
 		}
 
+		System.out.println("Len: " + sb.length());
 		System.out.println(sb.toString());
 
 		return sb.toString();
