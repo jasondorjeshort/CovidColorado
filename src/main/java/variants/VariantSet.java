@@ -87,7 +87,7 @@ public class VariantSet {
 		}
 	}
 
-	public String getCovSpectrumLink() {
+	public String getCovSpectrumLink(boolean all) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("https://cov-spectrum.org/explore/United%20States/AllSamples/");
 		sb.append("from=" + startDate + "%26to=" + endDate);
@@ -101,7 +101,11 @@ public class VariantSet {
 				sb.append(String.valueOf(i));
 			}
 			sb.append("=nextcladePangoLineage:");
-			sb.append(variantQueries[i]);
+			if (all) {
+				sb.append(variantQueries[i]);
+			} else {
+				sb.append(variants[i]);
+			}
 			sb.append("&");
 		}
 
@@ -111,7 +115,7 @@ public class VariantSet {
 		return sb.toString();
 	}
 
-	public String getCovSpectrumLink2(boolean all) {
+	public String getCovSpectrumReverseLink(boolean all) {
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < variants.length; i++) {
 			if (sb.length() > 0) {

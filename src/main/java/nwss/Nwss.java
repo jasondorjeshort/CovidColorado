@@ -237,15 +237,16 @@ public class Nwss {
 			for (VariantEnum vEnum : VariantEnum.values()) {
 				System.out.println(vEnum);
 				VariantSet vs = new VariantSet(vEnum);
-				String link = vs.getCovSpectrumLink();
+				String link = vs.getCovSpectrumLink(true);
+				link = vs.getCovSpectrumLink(false);
 
 				if (vEnum == VariantEnum.SEP_TO_NOV_2023) {
 					File f = ensureFileUpdated(VOC_HTML, link, 168);
 					// TODO: probably can't actually do anything with this.
 				}
 
-				vs.getCovSpectrumLink2(false);
-				vs.getCovSpectrumLink2(true);
+				vs.getCovSpectrumReverseLink(false);
+				vs.getCovSpectrumReverseLink(true);
 				System.out.println();
 			}
 		});
