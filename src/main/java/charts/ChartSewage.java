@@ -271,8 +271,10 @@ public class ChartSewage {
 
 		fileName = folder + "\\" + fileName + ".png";
 
-		// library.OpenImage.openImage(fileName);
-		// library.OpenImage.open();
+		if (!vocSewage.voc.isMerger && targetVariant == null) {
+			library.OpenImage.openImage(fileName);
+			library.OpenImage.open();
+		}
 
 		// System.out.println("Created : " + sewage.id + " for " +
 		// series.getItemCount() + " => " + fileName);
@@ -367,8 +369,10 @@ public class ChartSewage {
 
 		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
 
-		library.OpenImage.openImage(fileName);
-		library.OpenImage.open();
+		if (!vocSewage.voc.isMerger) {
+			library.OpenImage.openImage(fileName);
+			library.OpenImage.open();
+		}
 
 		// System.out.println("Created : " + sewage.id + " for " +
 		// series.getItemCount() + " => " + fileName);
@@ -394,8 +398,7 @@ public class ChartSewage {
 				continue;
 			}
 			double logPrevalence = Math.log(prevalence) / Math.log(10);
-			String name = String.format("%s %.0f (%+.0f weekly)", Voc.display(variant), prevalence,
-					vocSewage.getGrowth(variant));
+			String name = String.format("%s (%+.0f%%/w)", Voc.display(variant), vocSewage.getGrowth(variant));
 			dataset.addValue(logPrevalence, name, "Prevalence");
 		}
 
@@ -431,8 +434,10 @@ public class ChartSewage {
 		Charts.saveBufferedImageAsPNG(SEWAGE_FOLDER, fileName, image);
 		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
 
-		// library.OpenImage.openImage(fileName);
-		// library.OpenImage.open();
+		if (!vocSewage.voc.isMerger) {
+			library.OpenImage.openImage(fileName);
+			library.OpenImage.open();
+		}
 
 		return image;
 	}
