@@ -16,6 +16,7 @@ public enum VariantEnum {
 	SEP_TO_NOV_2023(
 			"2023-09-10",
 			null,
+			"ba.2.86",
 			"ba.2.86.1",
 			"dv.7.1",
 			"eg.5.1",
@@ -43,6 +44,7 @@ public enum VariantEnum {
 			"hk.3.1",
 			"hk.3.4",
 			"hk.6",
+			"hk.8",
 			"hk.13",
 			"hn.1",
 			"hn.2",
@@ -51,10 +53,12 @@ public enum VariantEnum {
 			"hv.1.1",
 			"jd.1.1",
 			"jd.1.1.1",
+			"je.1.1",
 			"jf.1",
 			"jg.3",
 			"jg.3.1",
 			"jn.1",
+			"jn.2",
 			"jn.3",
 			"xbb.1.16",
 			"xbb.1.16.11",
@@ -71,11 +75,14 @@ public enum VariantEnum {
 	// watch list:
 	// XDD (not numbered)
 	//
-	// HK.20.1 (23, +23%)
+	// JG.3.2 (lacks assignment)
+	// HK.20.1 (23, +23%), lacks assignment
 	// HK.8 (21, +19%)
-	// JE.1.1 (14, +13%)
 	// HK.2 (27, +15%)
 	// EG.6.1.1 (23, +10%)
+	//
+	// Next removal:
+	// HN.2
 	),
 
 	BA_286("2023-09-10", null, "BA.2.86", "BA.2.86.1", "JN.1", "JN.2", "JN.3"),
