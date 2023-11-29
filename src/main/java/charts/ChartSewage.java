@@ -171,7 +171,7 @@ public class ChartSewage {
 		TimeSeries series;
 
 		Voc voc = vocSewage.voc;
-		if (fit && targetVariant == null) {
+		if (fit && targetVariant == null && vocSewage.voc.numVariants() > 1) {
 			series = vocSewage.makeCollectiveTS();
 			if (series != null) {
 				collection.addSeries(series);
@@ -283,6 +283,9 @@ public class ChartSewage {
 
 	public static BufferedImage buildRelative(VocSewage vocSewage, String targetVariant) {
 		if (vocSewage.sewage.getTotalSewage() <= 0) {
+			return null;
+		}
+		if (vocSewage.voc.numVariants() <= 1) {
 			return null;
 		}
 		TimeSeriesCollection collection = new TimeSeriesCollection();
