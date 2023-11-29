@@ -148,7 +148,7 @@ public class Voc extends DailyTracker {
 		}
 
 		variantList.addAll(variantSet);
-		makeVariantTot();
+		build();
 		variantList.sort((v1, v2) -> -Double.compare(variantTot.get(v1), variantTot.get(v2)));
 
 		System.out.println(String.format("%,d total variants", variantList.size() - 1));
@@ -176,7 +176,36 @@ public class Voc extends DailyTracker {
 		System.out.println(sb2.toString());
 	}
 
-	private void makeVariantTot() {
+	boolean built = false;
+
+	private synchronized void build() {
+		while (true) {
+			/*
+			 * This is specifically for single-variant graphs. If there aren't
+			 * any sequences for days near the end of the query, we want to
+			 * ignore those days and show the data cutoff sooner.
+			 */
+			int last = getLastDay();
+			if (last < getFirstDay()) {
+				break;
+			}
+
+			DayVariants entry = entries.get(last);
+			if (entry != null) {
+				double prev = 0.0;
+				for (String variant : variantList) {
+					if (variant.equalsIgnoreCase(OTHERS)) {
+						continue;
+					}
+					prev += entry.getPrevalence(variant);
+				}
+				if (prev > 0.0) {
+					break;
+				}
+			}
+			dropLastDay();
+		}
+
 		for (String variant : variantList) {
 			double number = 0;
 			for (int day = getFirstDay(); day <= getLastDay(); day++) {
@@ -245,7 +274,7 @@ public class Voc extends DailyTracker {
 			}
 		}
 
-		makeVariantTot();
+		build();
 	}
 
 	public synchronized ArrayList<String> getVariants() {
