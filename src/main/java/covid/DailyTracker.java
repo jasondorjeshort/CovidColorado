@@ -23,6 +23,12 @@ public class DailyTracker {
 		}
 	}
 
+	public void dropLastDay() {
+		synchronized (lock) {
+			lastDay--;
+		}
+	}
+
 	public void includeDay(int day) {
 		synchronized (lock) {
 			firstDay = Math.min(day, firstDay);
