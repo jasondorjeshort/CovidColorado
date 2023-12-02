@@ -104,12 +104,17 @@ public class Voc extends DailyTracker {
 
 		final String displayName;
 
+		final boolean isLineage;
+
 		/** Cumulative prevalence (ASUs) over the time period */
 		double cumulativePrevalence;
 
 		public Variant(String name) {
 			this.name = name;
 			this.displayName = display(name);
+
+			isLineage = name.matches("nextcladePangoLineage:[A-Za-z]+[.0-9]*\\*");
+			// TODO: more stuff here
 		}
 
 	}
