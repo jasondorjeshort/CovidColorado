@@ -4,7 +4,6 @@ import java.io.File;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 
 import org.apache.commons.csv.CSVFormat;
@@ -93,8 +92,31 @@ public class Voc extends DailyTracker {
 	}
 
 	private final HashMap<Integer, DayVariants> entries = new HashMap<>();
-	private HashMap<String, Double> variantTot = new HashMap<>();
-	private final ArrayList<String> variantList = new ArrayList<>();
+
+	/*
+	 * This might be a misnomer because it includes data on the lineage itself,
+	 * and also prevalence info for it. The main daily prevalence data is stored
+	 * in a daily hash though.
+	 */
+	public static class Variant {
+		String name; // official name
+		double cumulativePrevalence;
+	}
+
+	private HashMap<String, Variant> variants = new HashMap<>();
+
+	public Variant getVariant(String name) {
+		synchronized (variants) {
+			Variant var = variants.get(name);
+			if (var == null) {
+				var = new Variant();
+				var.name = name;
+				variants.put(name, var);
+			}
+			return var;
+		}
+	}
+
 	public final int id;
 
 	private static int nextId = 1;
@@ -105,7 +127,6 @@ public class Voc extends DailyTracker {
 		synchronized (nextIdLock) {
 			id = nextId++;
 		}
-		HashSet<String> variantSet = new HashSet<>();
 		try (CSVParser csv = CSVParser.parse(f, CHARSET, CSVFormat.DEFAULT)) {
 			int records = 0;
 			for (CSVRecord line : csv) {
@@ -137,24 +158,19 @@ public class Voc extends DailyTracker {
 				}
 				entry.variants.put(variant, prev);
 				includeDay(day);
-				variantSet.add(variant);
+				getVariant(variant);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(0);
 		}
-		if (multiVariant) {
-			variantSet.add(OTHERS);
-		}
 
-		variantList.addAll(variantSet);
 		build();
-		variantList.sort((v1, v2) -> -Double.compare(variantTot.get(v1), variantTot.get(v2)));
 
-		System.out.println(String.format("%,d total variants", variantList.size() - 1));
+		System.out.println(String.format("%,d total variants", variants.size() - 1));
 		StringBuilder sb = new StringBuilder();
 		StringBuilder sb2 = new StringBuilder();
-		for (String variant : variantList) {
+		for (Variant variant : variants.values()) {
 			if (variant.equals(Voc.OTHERS)) {
 				continue;
 			}
@@ -169,7 +185,7 @@ public class Voc extends DailyTracker {
 				sb2.append(",");
 			}
 			sb2.append("\"");
-			sb2.append(variant.replaceAll("nextcladePangoLineage:", ""));
+			sb2.append(display(variant.name));
 			sb2.append("\"");
 		}
 		System.out.println(sb.toString());
@@ -179,12 +195,17 @@ public class Voc extends DailyTracker {
 	boolean built = false;
 
 	private synchronized void build() {
+		if (built) {
+			return;
+		}
+		built = true;
+
+		/*
+		 * This is specifically for single-variant graphs. If there aren't any
+		 * sequences for days near the end of the query, we want to ignore those
+		 * days and show the data cutoff sooner.
+		 */
 		while (true) {
-			/*
-			 * This is specifically for single-variant graphs. If there aren't
-			 * any sequences for days near the end of the query, we want to
-			 * ignore those days and show the data cutoff sooner.
-			 */
 			int last = getLastDay();
 			if (last < getFirstDay()) {
 				break;
@@ -193,7 +214,7 @@ public class Voc extends DailyTracker {
 			DayVariants entry = entries.get(last);
 			if (entry != null) {
 				double prev = 0.0;
-				for (String variant : variantList) {
+				for (String variant : variants.keySet()) {
 					if (variant.equalsIgnoreCase(OTHERS)) {
 						continue;
 					}
@@ -206,15 +227,17 @@ public class Voc extends DailyTracker {
 			dropLastDay();
 		}
 
-		for (String variant : variantList) {
-			double number = 0;
+		/*
+		 * Build the variant data directly, currently cumulative prevalence
+		 */
+		for (Variant variant : variants.values()) {
+			variant.cumulativePrevalence = 0;
 			for (int day = getFirstDay(); day <= getLastDay(); day++) {
 				DayVariants entry = entries.get(day);
 				if (entry != null) {
-					number += entry.getPrevalence(variant);
+					variant.cumulativePrevalence += entry.getPrevalence(variant.name);
 				}
 			}
-			variantTot.put(variant, number);
 		}
 	}
 
@@ -234,7 +257,7 @@ public class Voc extends DailyTracker {
 		String[] vNames = new String[num];
 		for (int v = 0; v < vNames.length; v++) {
 			vNames[v] = "Tier " + (v + 1);
-			variantList.add(vNames[v]);
+			getVariant(vNames[v]);
 			System.out.println(String.format("%s (%d)", vNames[v], variants[v].size()));
 			for (String var : variants[v]) {
 				String n = display(var);
@@ -278,11 +301,11 @@ public class Voc extends DailyTracker {
 	}
 
 	public synchronized ArrayList<String> getVariants() {
-		return new ArrayList<>(variantList);
+		return new ArrayList<>(variants.keySet());
 	}
 
 	public synchronized int numVariants() {
-		return variantList.size();
+		return variants.size();
 	}
 
 	public double getPrevalence(int day, String variant) {
