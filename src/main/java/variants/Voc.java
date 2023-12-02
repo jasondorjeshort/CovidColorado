@@ -181,30 +181,6 @@ public class Voc extends DailyTracker {
 		}
 
 		build();
-
-		System.out.println(String.format("%,d total variants", variants.size() - 1));
-		StringBuilder sb = new StringBuilder();
-		StringBuilder sb2 = new StringBuilder();
-		for (Variant variant : variants.values()) {
-			if (variant.equals(Voc.OTHERS)) {
-				continue;
-			}
-			if (sb.length() > 0) {
-				sb.append("&");
-			}
-			sb.append("!(");
-			sb.append(variant);
-			sb.append(")");
-
-			if (sb2.length() > 0) {
-				sb2.append(",");
-			}
-			sb2.append("\"");
-			sb2.append(variant.displayName);
-			sb2.append("\"");
-		}
-		System.out.println(sb.toString());
-		System.out.println(sb2.toString());
 	}
 
 	boolean built = false;
@@ -254,6 +230,33 @@ public class Voc extends DailyTracker {
 				}
 			}
 		}
+
+		/*
+		 * Output (display)
+		 */
+		System.out.println(String.format("%,d total variants", variants.size() - 1));
+		StringBuilder sb = new StringBuilder();
+		StringBuilder sb2 = new StringBuilder();
+		for (Variant variant : variants.values()) {
+			if (variant.equals(Voc.OTHERS)) {
+				continue;
+			}
+			if (sb.length() > 0) {
+				sb.append("&");
+			}
+			sb.append("!(");
+			sb.append(variant);
+			sb.append(")");
+
+			if (sb2.length() > 0) {
+				sb2.append(",");
+			}
+			sb2.append("\"");
+			sb2.append(variant.displayName);
+			sb2.append("\"");
+		}
+		System.out.println(sb.toString());
+		System.out.println(sb2.toString());
 	}
 
 	public static String display(String variant) {
