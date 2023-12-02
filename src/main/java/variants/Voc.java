@@ -99,8 +99,19 @@ public class Voc extends DailyTracker {
 	 * in a daily hash though.
 	 */
 	public static class Variant {
-		String name; // official name
+		/** Index name. */
+		final String name;
+
+		final String displayName;
+
+		/** Cumulative prevalence (ASUs) over the time period */
 		double cumulativePrevalence;
+
+		public Variant(String name) {
+			this.name = name;
+			this.displayName = display(name);
+		}
+
 	}
 
 	private HashMap<String, Variant> variants = new HashMap<>();
@@ -109,8 +120,7 @@ public class Voc extends DailyTracker {
 		synchronized (variants) {
 			Variant var = variants.get(name);
 			if (var == null) {
-				var = new Variant();
-				var.name = name;
+				var = new Variant(name);
 				variants.put(name, var);
 			}
 			return var;
@@ -185,7 +195,7 @@ public class Voc extends DailyTracker {
 				sb2.append(",");
 			}
 			sb2.append("\"");
-			sb2.append(display(variant.name));
+			sb2.append(variant.displayName);
 			sb2.append("\"");
 		}
 		System.out.println(sb.toString());
