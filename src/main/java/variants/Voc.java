@@ -100,7 +100,7 @@ public class Voc extends DailyTracker {
 	 */
 	public static class Variant {
 		/** Index name. */
-		final String name;
+		public final String name;
 
 		final String displayName;
 
@@ -108,6 +108,9 @@ public class Voc extends DailyTracker {
 
 		/** Cumulative prevalence (ASUs) over the time period */
 		double cumulativePrevalence;
+
+		/** Weighted average of which day this variant was on. */
+		public double averageDay;
 
 		public Variant(String name) {
 			this.name = name;
@@ -219,16 +222,21 @@ public class Voc extends DailyTracker {
 		}
 
 		/*
-		 * Build the variant data directly, currently cumulative prevalence
+		 * Build the variant data directly: cumulative prevalence and average
+		 * time
 		 */
 		for (Variant variant : variants.values()) {
 			variant.cumulativePrevalence = 0;
+			double totalDay = 0;
 			for (int day = getFirstDay(); day <= getLastDay(); day++) {
 				DayVariants entry = entries.get(day);
 				if (entry != null) {
-					variant.cumulativePrevalence += entry.getPrevalence(variant.name);
+					double prev = entry.getPrevalence(variant.name);
+					variant.cumulativePrevalence += prev;
+					totalDay += day * prev;
 				}
 			}
+			variant.averageDay = totalDay / variant.cumulativePrevalence;
 		}
 
 		/*
@@ -254,6 +262,8 @@ public class Voc extends DailyTracker {
 			sb2.append("\"");
 			sb2.append(variant.displayName);
 			sb2.append("\"");
+
+			System.out.println(variant.name + " : " + CalendarUtils.dayToDate(variant.averageDay));
 		}
 		System.out.println(sb.toString());
 		System.out.println(sb2.toString());
@@ -318,7 +328,11 @@ public class Voc extends DailyTracker {
 		build();
 	}
 
-	public synchronized ArrayList<String> getVariants() {
+	public synchronized ArrayList<Variant> getVariants() {
+		return new ArrayList<>(variants.values());
+	}
+
+	public synchronized ArrayList<String> getVariantNames() {
 		return new ArrayList<>(variants.keySet());
 	}
 

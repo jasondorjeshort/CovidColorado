@@ -170,8 +170,8 @@ public class VocSewage {
 		built = true;
 
 		fits = new HashMap<>();
-		variantsByGrowth = voc.getVariants();
-		variantsByCount = voc.getVariants();
+		variantsByGrowth = voc.getVariantNames();
+		variantsByCount = voc.getVariantNames();
 		numVariants = variantsByGrowth.size();
 
 		for (String variant : variantsByGrowth) {
@@ -203,7 +203,7 @@ public class VocSewage {
 		variantsByCount.sort(
 				(v1, v2) -> -Double.compare(fits.get(v1).predict(modelLastDay), fits.get(v2).predict(modelLastDay)));
 
-		variantsByCumulative = voc.getVariants();
+		variantsByCumulative = voc.getVariantNames();
 
 		cumulative = 0;
 		for (int day = getFirstDay(); day <= getLastDay(); day++) {
@@ -255,12 +255,14 @@ public class VocSewage {
 		return series;
 	}
 
-	public synchronized TimeSeries makeRelativeSeries(String variant) {
+	public synchronized TimeSeries makeRelativeSeries(String variant, boolean doFit) {
 		build();
 		String name = variant.replaceAll("nextcladePangoLineage:", "");
-		SimpleRegression fit;
-		synchronized (this) {
-			fit = fits.get(variant);
+		SimpleRegression fit = null;
+		if (doFit) {
+			synchronized (this) {
+				fit = fits.get(variant);
+			}
 		}
 		if (fit != null) {
 			double num = 100 * Math.exp(fit.predict(currentDay)) / getCollectiveFit(currentDay);

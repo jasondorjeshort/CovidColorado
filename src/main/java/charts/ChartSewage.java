@@ -33,6 +33,7 @@ import myjfreechart.LogitAxis;
 import sewage.Abstract;
 import sewage.All;
 import variants.Voc;
+import variants.Voc.Variant;
 import variants.VocSewage;
 
 /**
@@ -160,7 +161,6 @@ public class ChartSewage {
 	}
 
 	public static BufferedImage buildAbsolute(VocSewage vocSewage, String targetVariant, boolean fit) {
-
 		if (vocSewage.sewage.getTotalSewage() <= 0) {
 			return null;
 		}
@@ -210,7 +210,7 @@ public class ChartSewage {
 		// (exact ? "-exact" : "") +
 		if (targetVariant == null) {
 			folder = SEWAGE_FOLDER;
-			fileName = vocSewage.sewage.getChartFilename() + "-" + voc.id + "-abslog" + (fit ? "-fit" : "")
+			fileName = vocSewage.sewage.getChartFilename() + "-" + voc.id + "-abslog" + (fit ? "-fit" : "-old")
 					+ (voc.isMerger ? "-merger" : "") + "-all";
 		} else {
 			folder = VARIANTS_FOLDER;
@@ -281,7 +281,7 @@ public class ChartSewage {
 		return image;
 	}
 
-	public static BufferedImage buildRelative(VocSewage vocSewage, String targetVariant) {
+	public static BufferedImage buildRelative(VocSewage vocSewage, String targetVariant, boolean fit) {
 		if (vocSewage.sewage.getTotalSewage() <= 0) {
 			return null;
 		}
@@ -296,8 +296,11 @@ public class ChartSewage {
 
 		Voc voc = vocSewage.voc;
 
-		for (String variant : vocSewage.getVariantsByCount()) {
-			if (targetVariant != null && !targetVariant.equalsIgnoreCase(variant)) {
+		ArrayList<Variant> variants = vocSewage.voc.getVariants();
+		variants.sort((v1, v2) -> Double.compare(v1.averageDay, v2.averageDay));
+
+		for (Variant variant : variants) {
+			if (targetVariant != null && !targetVariant.equalsIgnoreCase(variant.name)) {
 				continue;
 			}
 			/*
@@ -306,7 +309,7 @@ public class ChartSewage {
 			 * renderer.setSeriesStroke(seriesCount, new BasicStroke(1.0f,
 			 * BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)); seriesCount++; }
 			 */
-			series = vocSewage.makeRelativeSeries(variant);
+			series = vocSewage.makeRelativeSeries(variant.name, fit);
 			collection.addSeries(series);
 			renderer.setSeriesStroke(seriesCount,
 					new BasicStroke(1.75f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
@@ -318,7 +321,7 @@ public class ChartSewage {
 		String fileName = vocSewage.sewage.getChartFilename();
 		String title = vocSewage.sewage.getTitleLine();
 		// (fit ? "-fit" : "") +(exact ? "-exact" : "") +
-		fileName += "-" + voc.id + "-rel" + (voc.isMerger ? "-merger" : "");
+		fileName += (voc.isMerger ? "-merger" : "") + "-" + voc.id + "-rel" + (fit ? "-fit" : "-old");
 		if (targetVariant == null) {
 			fileName += "-all";
 		} else {
@@ -335,7 +338,9 @@ public class ChartSewage {
 		LogitAxis yAxis = new LogitAxis(verticalAxis, 100.0);
 		plot.setRangeAxis(yAxis);
 		// yAxis.setUpperBound(1000);
-		yAxis.setLowerBound(0.1);
+		double upper = yAxis.getUpperBound();
+		double lower = upper > 99 ? 1.0 : 0.1;
+		yAxis.setLowerBound(lower);
 		/*
 		 * double bound = yAxis.getUpperBound() / 10000.0; if
 		 * (yAxis.getLowerBound() < bound) { yAxis.setLowerBound(bound); }
@@ -351,21 +356,25 @@ public class ChartSewage {
 		bound = Math.min(bound, xAxis.getUpperBound());
 		xAxis.setUpperBound(bound);
 
-		ValueMarker marker = new ValueMarker(CalendarUtils.dayToTime(vocSewage.getLastDay() + 1));
-		marker.setPaint(Color.black);
-		marker.setLabel("Data cutoff");
-		marker.setStroke(Charts.stroke);
-		marker.setLabelFont(Charts.font);
-		marker.setLabelTextAnchor(TextAnchor.TOP_CENTER);
-		plot.addDomainMarker(marker);
+		if (fit) {
+			ValueMarker marker = new ValueMarker(CalendarUtils.dayToTime(vocSewage.getLastDay() + 1));
+			marker.setPaint(Color.black);
+			marker.setLabel("Data cutoff");
+			marker.setStroke(Charts.stroke);
+			marker.setLabelFont(Charts.font);
+			marker.setLabelTextAnchor(TextAnchor.TOP_CENTER);
+			plot.addDomainMarker(marker);
 
-		marker = new ValueMarker(System.currentTimeMillis());
-		marker.setPaint(Color.black);
-		marker.setLabel("Today");
-		marker.setStroke(Charts.stroke);
-		marker.setLabelFont(Charts.font);
-		marker.setLabelTextAnchor(TextAnchor.TOP_CENTER);
-		plot.addDomainMarker(marker);
+			marker = new ValueMarker(System.currentTimeMillis());
+			marker.setPaint(Color.black);
+			marker.setLabel("Today");
+			marker.setStroke(Charts.stroke);
+			marker.setLabelFont(Charts.font);
+			marker.setLabelTextAnchor(TextAnchor.TOP_CENTER);
+			plot.addDomainMarker(marker);
+		} else {
+			xAxis.setUpperBound(CalendarUtils.dayToTime(vocSewage.getLastDay()));
+		}
 
 		BufferedImage image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT * 3 / 2);
 		Charts.saveBufferedImageAsPNG(SEWAGE_FOLDER, fileName, image);
@@ -454,8 +463,9 @@ public class ChartSewage {
 		long time = System.currentTimeMillis();
 		build.execute(() -> ChartSewage.buildAbsolute(vocSewage, null, true));
 		build.execute(() -> ChartSewage.buildAbsolute(vocSewage, null, false));
-		build.execute(() -> ChartSewage.buildRelative(vocSewage, null));
-		for (String variant : vocSewage.voc.getVariants()) {
+		build.execute(() -> ChartSewage.buildRelative(vocSewage, null, true));
+		build.execute(() -> ChartSewage.buildRelative(vocSewage, null, false));
+		for (String variant : vocSewage.voc.getVariantNames()) {
 			build.execute(() -> ChartSewage.buildAbsolute(vocSewage, variant, true));
 		}
 		build.execute(() -> ChartSewage.buildSewageCumulativeChart(vocSewage));
