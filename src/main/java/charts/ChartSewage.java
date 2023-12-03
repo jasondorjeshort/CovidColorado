@@ -296,8 +296,14 @@ public class ChartSewage {
 
 		Voc voc = vocSewage.voc;
 
+		int lastDay = vocSewage.getModelLastDay();
 		ArrayList<Variant> variants = vocSewage.voc.getVariants();
-		variants.sort((v1, v2) -> Double.compare(v1.averageDay, v2.averageDay));
+		if (fit) {
+			variants.sort((v1,
+					v2) -> -Double.compare(vocSewage.getFit(v1.name, lastDay), vocSewage.getFit(v2.name, lastDay)));
+		} else {
+			variants.sort((v1, v2) -> Double.compare(v1.averageDay, v2.averageDay));
+		}
 
 		for (Variant variant : variants) {
 			if (targetVariant != null && !targetVariant.equalsIgnoreCase(variant.name)) {
@@ -352,7 +358,7 @@ public class ChartSewage {
 			xAxis.setLowerBound(bound);
 		}
 
-		bound = CalendarUtils.dayToTime(vocSewage.getModelLastDay());
+		bound = CalendarUtils.dayToTime(lastDay);
 		bound = Math.min(bound, xAxis.getUpperBound());
 		xAxis.setUpperBound(bound);
 

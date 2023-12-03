@@ -163,6 +163,10 @@ public class VocSewage {
 		return getCumulative(variant) / getCumulative();
 	}
 
+	public double getFit(String variant, int day) {
+		return fits.get(variant).predict(day);
+	}
+
 	public synchronized void build() {
 		if (built) {
 			return;
