@@ -5,6 +5,8 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -104,7 +106,7 @@ public class Voc extends DailyTracker {
 
 		final String displayName;
 
-		final boolean isLineage;
+		final String lineage;
 
 		/** Cumulative prevalence (ASUs) over the time period */
 		double cumulativePrevalence;
@@ -116,8 +118,14 @@ public class Voc extends DailyTracker {
 			this.name = name;
 			this.displayName = display(name);
 
-			isLineage = name.matches("nextcladePangoLineage:[A-Za-z]+[.0-9]*\\*");
-			// TODO: more stuff here
+			Pattern p = Pattern.compile("nextcladePangoLineage:([A-Za-z]+[.0-9]*)\\*");
+			Matcher m = p.matcher(name);
+			String fullLineage = null;
+			if (m.matches()) {
+				// may be null
+				fullLineage = Aliases.expand(m.group(1));
+			}
+			lineage = fullLineage;
 		}
 
 	}
