@@ -233,7 +233,7 @@ public class VocSewage {
 			cumulativePrevalence.put(variant, number);
 
 			if (sewage instanceof sewage.All) {
-				System.out.println("Prev on " + variant + " => " + number);
+				// System.out.println("Prev on " + variant + " => " + number);
 			}
 		}
 
