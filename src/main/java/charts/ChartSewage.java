@@ -32,8 +32,8 @@ import library.ASync;
 import myjfreechart.LogitAxis;
 import sewage.Abstract;
 import sewage.All;
+import variants.Variant;
 import variants.Voc;
-import variants.Voc.Variant;
 import variants.VocSewage;
 
 /**

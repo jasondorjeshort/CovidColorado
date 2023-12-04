@@ -5,8 +5,6 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -94,41 +92,6 @@ public class Voc extends DailyTracker {
 	}
 
 	private final HashMap<Integer, DayVariants> entries = new HashMap<>();
-
-	/*
-	 * This might be a misnomer because it includes data on the lineage itself,
-	 * and also prevalence info for it. The main daily prevalence data is stored
-	 * in a daily hash though.
-	 */
-	public static class Variant {
-		/** Index name. */
-		public final String name;
-
-		final String displayName;
-
-		final String lineage;
-
-		/** Cumulative prevalence (ASUs) over the time period */
-		double cumulativePrevalence;
-
-		/** Weighted average of which day this variant was on. */
-		public double averageDay;
-
-		public Variant(String name) {
-			this.name = name;
-			this.displayName = display(name);
-
-			Pattern p = Pattern.compile("nextcladePangoLineage:([A-Za-z]+[.0-9]*)\\*");
-			Matcher m = p.matcher(name);
-			String fullLineage = null;
-			if (m.matches()) {
-				// may be null
-				fullLineage = Aliases.expand(m.group(1));
-			}
-			lineage = fullLineage;
-		}
-
-	}
 
 	private HashMap<String, Variant> variants = new HashMap<>();
 

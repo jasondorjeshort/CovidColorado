@@ -1,0 +1,38 @@
+package variants;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/**
+ * A variant is a lineage PLUS some data on the lineage prevalence. Direct daily
+ * prevalence data is included in the Voc for now though.
+ */
+public class Variant {
+	/** Index name. */
+	public final String name;
+
+	public final String displayName;
+
+	public final String lineage;
+
+	/** Cumulative prevalence (ASUs) over the time period */
+	public double cumulativePrevalence;
+
+	/** Weighted average of which day this variant was on. */
+	public double averageDay;
+
+	public Variant(String name) {
+		this.name = name;
+		this.displayName = Voc.display(name);
+
+		Pattern p = Pattern.compile("nextcladePangoLineage:([A-Za-z]+[.0-9]*)\\*");
+		Matcher m = p.matcher(name);
+		String fullLineage = null;
+		if (m.matches()) {
+			// may be null
+			fullLineage = Aliases.expand(m.group(1));
+		}
+		lineage = fullLineage;
+	}
+
+}
