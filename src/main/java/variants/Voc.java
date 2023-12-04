@@ -246,7 +246,7 @@ public class Voc extends DailyTracker {
 		StringBuilder sb = new StringBuilder();
 		StringBuilder sb2 = new StringBuilder();
 		for (Variant variant : variants.values()) {
-			if (variant.equals(Voc.OTHERS)) {
+			if (variant.name.equals(Voc.OTHERS)) {
 				continue;
 			}
 			if (sb.length() > 0) {
@@ -263,7 +263,8 @@ public class Voc extends DailyTracker {
 			sb2.append(variant.displayName);
 			sb2.append("\"");
 
-			System.out.println(variant.name + " : " + CalendarUtils.dayToDate(variant.averageDay));
+			// System.out.println(variant.name + " : " +
+			// CalendarUtils.dayToDate(variant.averageDay));
 		}
 		System.out.println(sb.toString());
 		System.out.println(sb2.toString());
