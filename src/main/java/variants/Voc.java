@@ -24,6 +24,7 @@ public class Voc extends DailyTracker {
 	private static String OTHERS = "others";
 
 	public final boolean isMerger;
+	public boolean exclusions = false;
 
 	public static LinkedList<Voc> create() {
 		LinkedList<Voc> vocs = new LinkedList<>();
@@ -203,9 +204,6 @@ public class Voc extends DailyTracker {
 		for (Variant v : variants.values()) {
 			if (v.lineage != null) {
 				myList.add(v);
-			} else {
-				System.out.println(" ==>(no) " + v.name);
-
 			}
 		}
 		myList.sort((v1, v2) -> Integer.compare(v1.lineage.getFull().length(), v2.lineage.getFull().length()));
@@ -235,6 +233,7 @@ public class Voc extends DailyTracker {
 					num -= entry.variants.get(child.name);
 					entry.variants.put(parent.name, num);
 				}
+				exclusions = true;
 				System.out.println("Child: " + child.lineage.getAlias() + " <-> " + parent.lineage.getAlias());
 			}
 		}

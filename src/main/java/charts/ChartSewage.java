@@ -218,6 +218,7 @@ public class ChartSewage {
 			n = n.replaceAll("\\*", "");
 			fileName = n + "-" + voc.id + "-abslog" + (fit ? "-fit" : "") + (voc.isMerger ? "-merger" : "");
 		}
+		fileName += vocSewage.voc.exclusions ? "-exc" : "-nxc";
 		title += "\nSource: CDC/NWSS, Cov-Spectrum";
 		String verticalAxis = All.SCALE_NAME;
 
@@ -333,6 +334,7 @@ public class ChartSewage {
 		} else {
 			fileName += ("-" + targetVariant);
 		}
+		fileName += vocSewage.voc.exclusions ? "-exc" : "-nxc";
 		title += "\nSource: CDC/NWSS, Cov-Spectrum";
 		String verticalAxis = "Relative percentage";
 
@@ -449,6 +451,7 @@ public class ChartSewage {
 
 		String fileName = vocSewage.sewage.getChartFilename() + "-" + voc.id + "-cumulative"
 				+ (vocSewage.voc.isMerger ? "-merger" : "");
+		fileName += vocSewage.voc.exclusions ? "-exc" : "-nxc";
 		Charts.saveBufferedImageAsPNG(SEWAGE_FOLDER, fileName, image);
 		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
 
