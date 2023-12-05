@@ -167,6 +167,15 @@ public class VocSewage {
 		return fits.get(variant).predict(day);
 	}
 
+	/*
+	 * rounding error of subtractions can cause "0" to show as really low.
+	 * Usually like E-16 but nothing lower than about E-4 should be possible
+	 * given sequencing counts. Actually the lowest in the US for any reasonable
+	 * lineage is 0.0025. Anything zero needs to be ignored for both graphing or
+	 * regression, since they'll bork an exponential fit or graph.
+	 */
+	private static final double MINIMUM = 1E-8;
+
 	public synchronized void build() {
 		if (built) {
 			return;
@@ -191,7 +200,7 @@ public class VocSewage {
 				number *= sewage.getNormalizer();
 
 				number *= voc.getPrevalence(day, variant);
-				if (number <= 0) {
+				if (number <= MINIMUM) {
 					continue;
 				}
 
@@ -297,12 +306,8 @@ public class VocSewage {
 
 			double number = entry.getSewage();
 			number *= sewage.getNormalizer();
-			if (number <= 0) {
-				number = 1E-6;
-			}
-
 			number *= voc.getPrevalence(day, variant);
-			if (number <= 0) {
+			if (number <= MINIMUM) {
 				// fit data before or after will fill for it
 				continue;
 			}
@@ -364,12 +369,8 @@ public class VocSewage {
 
 			double number = entry.getSewage();
 			number *= sewage.getNormalizer();
-			if (number <= 0) {
-				number = 1E-6;
-			}
-
 			number *= voc.getPrevalence(day, variant);
-			if (number <= 0) {
+			if (number <= MINIMUM) {
 				// fit data before or after will fill for it
 				continue;
 			}
