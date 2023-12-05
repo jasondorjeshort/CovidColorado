@@ -13,7 +13,8 @@ public class Variant {
 
 	public final String displayName;
 
-	public final String lineage;
+	/** Lineage for this variant data, or null for odd queries. */
+	public final Lineage lineage;
 
 	/** Cumulative prevalence (ASUs) over the time period */
 	public double cumulativePrevalence;
@@ -27,12 +28,18 @@ public class Variant {
 
 		Pattern p = Pattern.compile("nextcladePangoLineage:([A-Za-z]+[.0-9]*)\\*");
 		Matcher m = p.matcher(name);
-		String fullLineage = null;
 		if (m.matches()) {
-			// may be null
-			fullLineage = Aliases.expand(m.group(1));
+			// may still be null
+			lineage = Lineage.get(m.group(1));
+		} else {
+			lineage = null;
 		}
-		lineage = fullLineage;
+		System.out.println("Lineage for " + name + " is "
+				+ (lineage == null ? "N/A" : lineage.getFull() + " / " + lineage.getAlias()));
+	}
+
+	public boolean isAncestor(Variant descendant) {
+		return lineage.isAncestor(descendant.lineage);
 	}
 
 }

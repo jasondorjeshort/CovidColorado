@@ -105,6 +105,7 @@ public class VariantSet {
 				sb.append(variantQueries[i]);
 			} else {
 				sb.append(variants[i]);
+				sb.append("*");
 			}
 			sb.append("&");
 		}

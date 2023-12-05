@@ -21,7 +21,7 @@ public class Voc extends DailyTracker {
 	private static final String CSV_NAME2 = "C:\\Users\\jdorj\\Downloads\\" + "VariantTimeDistributionPlot" + ".csv";
 	private static final Charset CHARSET = Charset.forName("US-ASCII");
 
-	public static String OTHERS = "others";
+	private static String OTHERS = "others";
 
 	public final boolean isMerger;
 
@@ -154,6 +154,10 @@ public class Voc extends DailyTracker {
 			System.exit(0);
 		}
 
+		if (multiVariant) {
+			getVariant(OTHERS);
+		}
+
 		build();
 	}
 
@@ -191,6 +195,50 @@ public class Voc extends DailyTracker {
 			}
 			dropLastDay();
 		}
+
+		/*
+		 * If lineages are known, lets subtract off child from parent.
+		 */
+		ArrayList<Variant> myList = new ArrayList<>(variants.size());
+		for (Variant v : variants.values()) {
+			if (v.lineage != null) {
+				myList.add(v);
+			} else {
+				System.out.println(" ==>(no) " + v.name);
+
+			}
+		}
+		myList.sort((v1, v2) -> Integer.compare(v1.lineage.getFull().length(), v2.lineage.getFull().length()));
+		for (Variant v : myList) {
+			System.out.println(" ==> " + v.lineage.getFull() + " -> " + v.lineage.getAlias());
+		}
+		for (int i = myList.size() - 1; i >= 0; i--) {
+			Variant child = myList.get(i);
+
+			for (int j = 0; j < i; j++) {
+				Variant parent = myList.get(j);
+				if (!parent.isAncestor(child)) {
+
+					// System.out.println("NO Child: " +
+					// child.lineage.getAlias() + " <-> " +
+					// parent.lineage.getAlias());
+					continue;
+				}
+
+				for (int day = getFirstDay(); day <= getLastDay(); day++) {
+					DayVariants entry = entries.get(day);
+					if (entry == null) {
+						continue;
+					}
+
+					double num = entry.variants.get(parent.name);
+					num -= entry.variants.get(child.name);
+					entry.variants.put(parent.name, num);
+				}
+				System.out.println("Child: " + child.lineage.getAlias() + " <-> " + parent.lineage.getAlias());
+			}
+		}
+		// System.exit(0);
 
 		/*
 		 * Build the variant data directly: cumulative prevalence and average

@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -26,7 +28,13 @@ public class Aliases {
 	}
 
 	private static final TreeSet<String> roots = new TreeSet<>();
-	private static final TreeMap<String, String> aliases = new TreeMap<>();
+
+	/* Maps from alias to full lineage */
+	private static final TreeMap<String, String> forward = new TreeMap<>();
+
+	/* Maps from full lineage back to alias */
+	private static final TreeMap<String, String> backward = new TreeMap<>();
+
 	private static boolean built = false;
 
 	public static synchronized void build() {
@@ -59,7 +67,15 @@ public class Aliases {
 					continue;
 				}
 
-				aliases.put(alias, lineage);
+				if (alias.contains(".")) {
+					new Exception("uh oh.").printStackTrace();
+				}
+				if (forward.put(alias, lineage) != null) {
+					new Exception("Double alias (forward) for " + alias).printStackTrace();
+				}
+				if (backward.put(lineage, alias) != null) {
+					new Exception("Double alias (backward) for " + lineage).printStackTrace();
+				}
 			}
 
 		} catch (Exception e) {
@@ -69,34 +85,72 @@ public class Aliases {
 
 		if (false) {
 			roots.forEach(root -> System.out.println("Alias> Root: " + root));
-			aliases.forEach((k, v) -> System.out.println("Alias> " + k + " => " + v));
+			forward.forEach((k, v) -> System.out.println("Alias> " + k + " => " + v));
 		}
 	}
 
-	public static String expand(String variant) {
+	private static final Pattern expandPattern = Pattern.compile("(?<pre>[A-Za-z]+)(?<post>(\\.\\d+)*)");
+
+	public static String expand(String shortLineage) {
 		build();
 
-		variant = simplify(variant);
+		shortLineage = simplify(shortLineage);
 
-		for (String prefix : aliases.keySet()) {
-			if (prefix.contains(".")) {
-				throw new RuntimeException("uh oh.");
-			}
-			if (variant.equals(prefix) || variant.startsWith(prefix + ".")) {
-				String v2 = variant.replaceAll(prefix, aliases.get(prefix));
-				// System.out.println("Expanding " + variant + " to " + v2 + "
-				// via sub of ");
-				return v2;
+		Matcher m = expandPattern.matcher(shortLineage);
+		if (!m.matches()) {
+			// System.out.println("Missing: " + shortLineage);
+			return null;
+		}
+
+		String pre = m.group("pre");
+		if (roots.contains(pre)) {
+			// System.out.println("Root: " + shortLineage);
+			return shortLineage;
+		}
+
+		String pre2 = forward.get(pre);
+		String post = m.group("post");
+
+		String variant2 = pre2 + post;
+		// System.out.println("Expand: " + pre + " -> " + pre2 + " ====> " +
+		// shortLineage + " -> " + variant2);
+		return variant2;
+	}
+
+	private static final Pattern shortenPattern = Pattern
+			.compile("(?<pre>[A-Za-z]+(\\.\\d+\\.\\d+\\.\\d+)*)(?<post>(\\.\\d+)(\\.\\d+)?(\\.\\d+)?)");
+
+	public static String shorten(String longLineage) {
+		build();
+
+		if (roots.contains(longLineage)) {
+			// System.out.println("Alias -> " + longLineage + " : root");
+			return longLineage;
+		}
+
+		Matcher m = shortenPattern.matcher(longLineage);
+		if (!m.matches()) {
+			new Exception("Fail match: " + longLineage).printStackTrace();
+			return null;
+		}
+
+		String pre = m.group("pre");
+		if (!roots.contains(pre)) {
+			pre = backward.get(pre);
+			if (pre == null) {
+				new Exception("Missing pre: " + m.group("pre")).printStackTrace();
 			}
 		}
 
-		for (String root : roots) {
-			if (variant.equals(root) || variant.startsWith(root + ".")) {
-				return variant;
-			}
-		}
+		String post = m.group("post");
 
-		// System.out.println("Missing: " + variant);
-		return null;
+		return pre + post;
+	}
+
+	/**
+	 * Exclusive. Lineage names must be expanded.
+	 */
+	public static boolean isAncestor(String ancestorLong, String childLong) {
+		return childLong.startsWith(ancestorLong + ".");
 	}
 }
