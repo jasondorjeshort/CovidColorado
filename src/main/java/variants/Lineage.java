@@ -12,6 +12,9 @@ public class Lineage {
 	private Lineage parent;
 
 	private Lineage(String full) {
+		if (full == null || full.equalsIgnoreCase("null")) {
+			throw new RuntimeException("Null lineage???");
+		}
 		this.full = full;
 		alias = Aliases.shorten(full);
 	}
@@ -40,7 +43,8 @@ public class Lineage {
 
 	public static Lineage get(String name) {
 		name = Aliases.expand(name);
-		if (name == null) {
+		if (name == null || name.equalsIgnoreCase("null")) {
+			// no idea wtf the "null" is doing here.
 			return null;
 		}
 
