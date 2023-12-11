@@ -365,7 +365,7 @@ public class ChartSewage {
 		xAxis.setUpperBound(bound);
 
 		if (fit) {
-			ValueMarker marker = new ValueMarker(CalendarUtils.dayToTime(vocSewage.getLastDay() + 1));
+			ValueMarker marker = new ValueMarker(CalendarUtils.dayToTime(vocSewage.getLastDay()));
 			marker.setPaint(Color.black);
 			marker.setLabel("Data cutoff");
 			marker.setStroke(Charts.stroke);
