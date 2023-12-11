@@ -30,6 +30,8 @@ public enum VariantEnum {
 			"eg.5.1.6",
 			"eg.5.1.8",
 			"eg.5.1.9",
+			"eg.5.1.13",
+			"eg.5.1.16",
 			"eg.5.2",
 			"eg.5.2.1",
 			"eg.6.1",
@@ -77,6 +79,7 @@ public enum VariantEnum {
 			"hk.6",
 			"hk.7",
 			"hk.8",
+			"hk.31",
 			"hn.1",
 			"hn.2",
 			"hn.3.1",
@@ -135,11 +138,8 @@ public enum VariantEnum {
 			"xdd"
 
 	// watch list:
-	// XDD (6 sequences)
 	//
-	// JG.3.2 (18 sequences)
 	// HK.2 (16, +15%)
-	// EG.6.1.1 (23, +10%)
 	//
 	// Next removal:
 	// HN.2
