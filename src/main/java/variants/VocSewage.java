@@ -9,6 +9,7 @@ import org.jfree.data.time.TimeSeries;
 
 import covid.CalendarUtils;
 import nwss.DaySewage;
+import sewage.All;
 
 public class VocSewage {
 
@@ -213,6 +214,9 @@ public class VocSewage {
 		variantsByGrowth.sort((v1, v2) -> Double.compare(fits.get(v1).getSlope(), fits.get(v2).getSlope()));
 		currentDay = CalendarUtils.timeToDay(System.currentTimeMillis());
 		modelLastDay = currentDay + 30;
+		while (getCollectiveFit(modelLastDay) > All.SCALE_PEAK_RENORMALIZER) {
+			modelLastDay--;
+		}
 		variantsByCount.sort(
 				(v1, v2) -> -Double.compare(fits.get(v1).predict(modelLastDay), fits.get(v2).predict(modelLastDay)));
 
