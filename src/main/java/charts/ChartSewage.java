@@ -160,7 +160,7 @@ public class ChartSewage {
 		return image;
 	}
 
-	public static BufferedImage buildAbsolute(VocSewage vocSewage, String targetVariant, boolean fit) {
+	public static BufferedImage buildAbsolute(VocSewage vocSewage, String targetVariant, boolean fit, boolean legend) {
 		if (vocSewage.sewage.getTotalSewage() <= 0) {
 			return null;
 		}
@@ -218,11 +218,14 @@ public class ChartSewage {
 			n = n.replaceAll("\\*", "");
 			fileName = n + "-" + voc.id + "-abslog" + (fit ? "-fit" : "") + (voc.isMerger ? "-merger" : "");
 		}
-		fileName += vocSewage.voc.exclusions ? "-exc" : "-nxc";
+		fileName += (vocSewage.voc.exclusions ? "-exc" : "-nxc") + (legend ? "-legend" : "-noleg");
 		title += "\nSource: CDC/NWSS, Cov-Spectrum";
 		String verticalAxis = All.SCALE_NAME;
 
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title, "Date", verticalAxis, collection);
+		if (!legend) {
+			chart.removeLegend();
+		}
 
 		XYPlot plot = chart.getXYPlot();
 		plot.setRenderer(renderer);
@@ -282,7 +285,7 @@ public class ChartSewage {
 		return image;
 	}
 
-	public static BufferedImage buildRelative(VocSewage vocSewage, String targetVariant, boolean fit) {
+	public static BufferedImage buildRelative(VocSewage vocSewage, String targetVariant, boolean fit, boolean legend) {
 		if (vocSewage.sewage.getTotalSewage() <= 0) {
 			return null;
 		}
@@ -328,7 +331,8 @@ public class ChartSewage {
 		String fileName = vocSewage.sewage.getChartFilename();
 		String title = vocSewage.sewage.getTitleLine();
 		// (fit ? "-fit" : "") +(exact ? "-exact" : "") +
-		fileName += (voc.isMerger ? "-merger" : "") + "-" + voc.id + "-rel" + (fit ? "-fit" : "-old");
+		fileName += (voc.isMerger ? "-merger" : "") + "-" + voc.id + "-rel" + (fit ? "-fit" : "-old")
+				+ (legend ? "-legend" : "-noleg");
 		if (targetVariant == null) {
 			fileName += "-all";
 		} else {
@@ -339,6 +343,9 @@ public class ChartSewage {
 		String verticalAxis = "Relative percentage";
 
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title, "Date", verticalAxis, collection);
+		if (!legend) {
+			chart.removeLegend();
+		}
 
 		XYPlot plot = chart.getXYPlot();
 		plot.setRenderer(renderer);
@@ -470,12 +477,18 @@ public class ChartSewage {
 
 	public static void buildVocSewageCharts(VocSewage vocSewage, ASync<Chart> build) {
 		long time = System.currentTimeMillis();
-		build.execute(() -> ChartSewage.buildAbsolute(vocSewage, null, true));
-		build.execute(() -> ChartSewage.buildAbsolute(vocSewage, null, false));
-		build.execute(() -> ChartSewage.buildRelative(vocSewage, null, true));
-		build.execute(() -> ChartSewage.buildRelative(vocSewage, null, false));
+		build.execute(() -> ChartSewage.buildAbsolute(vocSewage, null, true, true));
+		build.execute(() -> ChartSewage.buildAbsolute(vocSewage, null, false, true));
+		build.execute(() -> ChartSewage.buildAbsolute(vocSewage, null, true, false));
+		build.execute(() -> ChartSewage.buildAbsolute(vocSewage, null, false, false));
+		
+		build.execute(() -> ChartSewage.buildRelative(vocSewage, null, true, true));
+		build.execute(() -> ChartSewage.buildRelative(vocSewage, null, false, true));
+		build.execute(() -> ChartSewage.buildRelative(vocSewage, null, true, false));
+		build.execute(() -> ChartSewage.buildRelative(vocSewage, null, false, false));
 		for (String variant : vocSewage.voc.getVariantNames()) {
-			build.execute(() -> ChartSewage.buildAbsolute(vocSewage, variant, true));
+			build.execute(() -> ChartSewage.buildAbsolute(vocSewage, variant, true, true));
+			build.execute(() -> ChartSewage.buildAbsolute(vocSewage, variant, true, false));
 		}
 		build.execute(() -> ChartSewage.buildSewageCumulativeChart(vocSewage));
 		time = System.currentTimeMillis() - time;
