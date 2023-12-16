@@ -38,7 +38,7 @@ public class Lineage {
 	}
 
 	public boolean isAncestor(Lineage descendant) {
-		return Aliases.isAncestor(full, descendant.full);
+		return Aliases.isAncestorExclusive(full, descendant.full);
 	}
 
 	public static Lineage get(String name) {

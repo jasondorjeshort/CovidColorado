@@ -32,6 +32,7 @@ import library.ASync;
 import myjfreechart.LogitAxis;
 import sewage.Abstract;
 import sewage.All;
+import variants.Strain;
 import variants.Variant;
 import variants.Voc;
 import variants.VocSewage;
@@ -160,7 +161,11 @@ public class ChartSewage {
 		return image;
 	}
 
-	public static BufferedImage buildAbsolute(VocSewage vocSewage, String targetVariant, boolean fit, boolean legend) {
+	public static BufferedImage buildAbsolute(VocSewage vocSewage, String targetVariant, boolean fit, boolean legend,
+			boolean strains) {
+		if (strains && !fit) {
+			return null;
+		}
 		if (vocSewage.sewage.getTotalSewage() <= 0) {
 			return null;
 		}
@@ -186,21 +191,38 @@ public class ChartSewage {
 		renderer.setSeriesStroke(seriesCount, new BasicStroke(4.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		seriesCount++;
 
-		for (String variant : vocSewage.getVariantsByCount()) {
-			if (targetVariant != null && !targetVariant.equalsIgnoreCase(variant)) {
-				continue;
+		if (strains) {
+			for (Strain strain : Strain.values()) {
+				if (vocSewage.getCumulative(strain) < 0.1) {
+					new Exception("Skipping on " + strain.getName() + " at " + vocSewage.getCumulative(strain))
+							.printStackTrace();
+					continue;
+				}
+				new Exception("Flying on " + strain.getName()).printStackTrace();
+				series = vocSewage.makeAbsoluteSeries(strain, fit);
+				collection.addSeries(series);
+				renderer.setSeriesStroke(seriesCount,
+						new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+				seriesCount++;
 			}
-			/*
-			 * if (fit) { series = vocSewage.makeRegressionTS(variant);
-			 * collection.addSeries(series);
-			 * renderer.setSeriesStroke(seriesCount, new BasicStroke(1.0f,
-			 * BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)); seriesCount++; }
-			 */
-			series = vocSewage.makeAbsoluteSeries(variant, fit);
-			collection.addSeries(series);
-			renderer.setSeriesStroke(seriesCount,
-					new BasicStroke(1.75f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-			seriesCount++;
+		} else {
+			for (String variant : vocSewage.getVariantsByCount()) {
+				if (targetVariant != null && !targetVariant.equalsIgnoreCase(variant)) {
+					continue;
+				}
+				/*
+				 * if (fit) { series = vocSewage.makeRegressionTS(variant);
+				 * collection.addSeries(series);
+				 * renderer.setSeriesStroke(seriesCount, new BasicStroke(1.0f,
+				 * BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+				 * seriesCount++; }
+				 */
+				series = vocSewage.makeAbsoluteSeries(variant, fit);
+				collection.addSeries(series);
+				renderer.setSeriesStroke(seriesCount,
+						new BasicStroke(1.75f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+				seriesCount++;
+			}
 		}
 
 		// dataset.addSeries("Cases", series);
@@ -218,7 +240,9 @@ public class ChartSewage {
 			n = n.replaceAll("\\*", "");
 			fileName = n + "-" + voc.id + "-abslog" + (fit ? "-fit" : "") + (voc.isMerger ? "-merger" : "");
 		}
-		fileName += (vocSewage.voc.exclusions ? "-exc" : "-nxc") + (legend ? "-legend" : "-noleg");
+		fileName += strains ? "-strain" : "-variant";
+		fileName += legend ? "-legend" : "-noleg";
+		fileName += vocSewage.voc.exclusions ? "-exc" : "-nxc";
 		title += "\nSource: CDC/NWSS, Cov-Spectrum";
 		String verticalAxis = All.SCALE_NAME;
 
@@ -285,7 +309,11 @@ public class ChartSewage {
 		return image;
 	}
 
-	public static BufferedImage buildRelative(VocSewage vocSewage, String targetVariant, boolean fit, boolean legend) {
+	public static BufferedImage buildRelative(VocSewage vocSewage, String targetVariant, boolean fit, boolean legend,
+			boolean strains) {
+		if (strains && !fit) {
+			return null;
+		}
 		if (vocSewage.sewage.getTotalSewage() <= 0) {
 			return null;
 		}
@@ -309,21 +337,35 @@ public class ChartSewage {
 			variants.sort((v1, v2) -> Double.compare(v1.averageDay, v2.averageDay));
 		}
 
-		for (Variant variant : variants) {
-			if (targetVariant != null && !targetVariant.equalsIgnoreCase(variant.name)) {
-				continue;
+		if (strains) {
+			for (Strain strain : Strain.values()) {
+				if (vocSewage.getCumulative(strain) < 0.1) {
+					continue;
+				}
+				series = vocSewage.makeRelativeSeries(strain, fit);
+				collection.addSeries(series);
+				renderer.setSeriesStroke(seriesCount,
+						new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+				seriesCount++;
 			}
-			/*
-			 * if (fit) { series = vocSewage.makeRegressionTS(variant);
-			 * collection.addSeries(series);
-			 * renderer.setSeriesStroke(seriesCount, new BasicStroke(1.0f,
-			 * BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)); seriesCount++; }
-			 */
-			series = vocSewage.makeRelativeSeries(variant.name, fit);
-			collection.addSeries(series);
-			renderer.setSeriesStroke(seriesCount,
-					new BasicStroke(1.75f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-			seriesCount++;
+		} else {
+			for (Variant variant : variants) {
+				if (targetVariant != null && !targetVariant.equalsIgnoreCase(variant.name)) {
+					continue;
+				}
+				/*
+				 * if (fit) { series = vocSewage.makeRegressionTS(variant);
+				 * collection.addSeries(series);
+				 * renderer.setSeriesStroke(seriesCount, new BasicStroke(1.0f,
+				 * BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+				 * seriesCount++; }
+				 */
+				series = vocSewage.makeRelativeSeries(variant.name, fit);
+				collection.addSeries(series);
+				renderer.setSeriesStroke(seriesCount,
+						new BasicStroke(1.75f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+				seriesCount++;
+			}
 		}
 
 		// dataset.addSeries("Cases", series);
@@ -331,8 +373,10 @@ public class ChartSewage {
 		String fileName = vocSewage.sewage.getChartFilename();
 		String title = vocSewage.sewage.getTitleLine();
 		// (fit ? "-fit" : "") +(exact ? "-exact" : "") +
-		fileName += (voc.isMerger ? "-merger" : "") + "-" + voc.id + "-rel" + (fit ? "-fit" : "-old")
-				+ (legend ? "-legend" : "-noleg");
+		fileName += (voc.isMerger ? "-merger" : "") + "-" + voc.id + "-rel";
+		fileName += (fit ? "-fit" : "-old");
+		fileName += strains ? "-strain" : "-variant";
+		fileName += (legend ? "-legend" : "-noleg");
 		if (targetVariant == null) {
 			fileName += "-all";
 		} else {
@@ -406,7 +450,7 @@ public class ChartSewage {
 		return image;
 	}
 
-	public static BufferedImage buildSewageCumulativeChart(VocSewage vocSewage) {
+	public static BufferedImage buildSewageCumulativeChart(VocSewage vocSewage, boolean strains) {
 		if (vocSewage.sewage.getTotalSewage() <= 0) {
 			return null;
 		}
@@ -414,19 +458,34 @@ public class ChartSewage {
 		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 		Voc voc = vocSewage.voc;
 
-		Map<String, Double> prev = vocSewage.getCumulativePrevalence(variants);
-
-		for (String variant : variants) {
-			double prevalence = prev.get(variant);
-			if (prevalence <= 0) {
-				if (prevalence < 0) {
-					System.out.println("Prevalence " + prevalence + " for " + variant);
+		if (strains) {
+			for (Strain strain : Strain.values()) {
+				double prevalence = vocSewage.getCumulative(strain);
+				if (prevalence <= 0) {
+					if (prevalence < 0) {
+						System.out.println("Prevalence " + prevalence + " for " + strain);
+					}
+					continue;
 				}
-				continue;
+				double logPrevalence = Math.log(prevalence) / Math.log(10);
+				String name = String.format("%s", strain.getName());
+				dataset.addValue(logPrevalence, name, "Prevalence");
 			}
-			double logPrevalence = Math.log(prevalence) / Math.log(10);
-			String name = String.format("%s (%+.0f%%/w)", Voc.display(variant), vocSewage.getGrowth(variant));
-			dataset.addValue(logPrevalence, name, "Prevalence");
+		} else {
+
+			Map<String, Double> prev = vocSewage.getCumulativePrevalence(variants);
+			for (String variant : variants) {
+				double prevalence = prev.get(variant);
+				if (prevalence <= 0) {
+					if (prevalence < 0) {
+						System.out.println("Prevalence " + prevalence + " for " + variant);
+					}
+					continue;
+				}
+				double logPrevalence = Math.log(prevalence) / Math.log(10);
+				String name = String.format("%s (%+.0f%%/w)", Voc.display(variant), vocSewage.getGrowth(variant));
+				dataset.addValue(logPrevalence, name, "Prevalence");
+			}
 		}
 
 		JFreeChart chart = ChartFactory.createBarChart("Cumulative prevalence", null, "Combined sewage (powers of 10)",
@@ -458,6 +517,7 @@ public class ChartSewage {
 
 		String fileName = vocSewage.sewage.getChartFilename() + "-" + voc.id + "-cumulative"
 				+ (vocSewage.voc.isMerger ? "-merger" : "");
+		fileName += strains ? "-strain" : "-variant";
 		fileName += vocSewage.voc.exclusions ? "-exc" : "-nxc";
 		Charts.saveBufferedImageAsPNG(SEWAGE_FOLDER, fileName, image);
 		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
@@ -477,20 +537,28 @@ public class ChartSewage {
 
 	public static void buildVocSewageCharts(VocSewage vocSewage, ASync<Chart> build) {
 		long time = System.currentTimeMillis();
-		build.execute(() -> ChartSewage.buildAbsolute(vocSewage, null, true, true));
-		build.execute(() -> ChartSewage.buildAbsolute(vocSewage, null, false, true));
-		build.execute(() -> ChartSewage.buildAbsolute(vocSewage, null, true, false));
-		build.execute(() -> ChartSewage.buildAbsolute(vocSewage, null, false, false));
-		
-		build.execute(() -> ChartSewage.buildRelative(vocSewage, null, true, true));
-		build.execute(() -> ChartSewage.buildRelative(vocSewage, null, false, true));
-		build.execute(() -> ChartSewage.buildRelative(vocSewage, null, true, false));
-		build.execute(() -> ChartSewage.buildRelative(vocSewage, null, false, false));
+		vocSewage.build();
+		build.execute(() -> ChartSewage.buildAbsolute(vocSewage, null, true, true, true));
+		build.execute(() -> ChartSewage.buildAbsolute(vocSewage, null, false, true, true));
+		build.execute(() -> ChartSewage.buildAbsolute(vocSewage, null, true, true, false));
+		build.execute(() -> ChartSewage.buildAbsolute(vocSewage, null, false, true, false));
+		build.execute(() -> ChartSewage.buildAbsolute(vocSewage, null, true, false, false));
+		build.execute(() -> ChartSewage.buildAbsolute(vocSewage, null, false, false, false));
+
+		build.execute(() -> ChartSewage.buildRelative(vocSewage, null, true, true, true));
+		build.execute(() -> ChartSewage.buildRelative(vocSewage, null, false, true, true));
+		build.execute(() -> ChartSewage.buildRelative(vocSewage, null, true, false, true));
+		build.execute(() -> ChartSewage.buildRelative(vocSewage, null, false, false, true));
+		build.execute(() -> ChartSewage.buildRelative(vocSewage, null, true, true, false));
+		build.execute(() -> ChartSewage.buildRelative(vocSewage, null, false, true, false));
+		build.execute(() -> ChartSewage.buildRelative(vocSewage, null, true, false, false));
+		build.execute(() -> ChartSewage.buildRelative(vocSewage, null, false, false, false));
 		for (String variant : vocSewage.voc.getVariantNames()) {
-			build.execute(() -> ChartSewage.buildAbsolute(vocSewage, variant, true, true));
-			build.execute(() -> ChartSewage.buildAbsolute(vocSewage, variant, true, false));
+			build.execute(() -> ChartSewage.buildAbsolute(vocSewage, variant, true, true, false));
+			build.execute(() -> ChartSewage.buildAbsolute(vocSewage, variant, true, false, false));
 		}
-		build.execute(() -> ChartSewage.buildSewageCumulativeChart(vocSewage));
+		build.execute(() -> ChartSewage.buildSewageCumulativeChart(vocSewage, true));
+		build.execute(() -> ChartSewage.buildSewageCumulativeChart(vocSewage, false));
 		time = System.currentTimeMillis() - time;
 		System.out.println("Built voc in " + time + " ms.");
 	}

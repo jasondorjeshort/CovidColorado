@@ -21,7 +21,7 @@ public class Aliases {
 
 	private static final String ALIAS_FILE = System.getProperty("java.io.tmpdir") + "\\" + Nwss.FOLDER + "\\"
 			+ "aliases.json";
-	private static final String ALIAS_URL = "https://raw.githubusercontent.com/cov-lineages/pango-designation/bf7bf4a1bcfbc1642291507a766bdaa7341fab50/pango_designation/alias_key.json";
+	private static final String ALIAS_URL = "https://raw.githubusercontent.com/cov-lineages/pango-designation/master/pango_designation/alias_key.json";
 
 	public static String simplify(String s) {
 		return s.trim().toLowerCase();
@@ -150,7 +150,12 @@ public class Aliases {
 	/**
 	 * Exclusive. Lineage names must be expanded.
 	 */
-	public static boolean isAncestor(String ancestorLong, String childLong) {
+	public static boolean isAncestorExclusive(String ancestorLong, String childLong) {
 		return childLong.startsWith(ancestorLong + ".");
 	}
+
+	public static boolean isAncestorInclusive(String ancestorLong, String childLong) {
+		return childLong.equals(ancestorLong) || childLong.startsWith(ancestorLong + ".");
+	}
+
 }

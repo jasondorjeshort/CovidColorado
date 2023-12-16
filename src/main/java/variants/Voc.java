@@ -3,6 +3,7 @@ package variants;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 
@@ -21,7 +22,7 @@ public class Voc extends DailyTracker {
 	private static final String CSV_NAME2 = "C:\\Users\\jdorj\\Downloads\\" + "VariantTimeDistributionPlot" + ".csv";
 	private static final Charset CHARSET = Charset.forName("US-ASCII");
 
-	private static String OTHERS = "others";
+	public static final String OTHERS = "others";
 
 	public final boolean isMerger;
 	public boolean exclusions = false;
@@ -208,7 +209,8 @@ public class Voc extends DailyTracker {
 		}
 		myList.sort((v1, v2) -> Integer.compare(v1.lineage.getFull().length(), v2.lineage.getFull().length()));
 		for (Variant v : myList) {
-			System.out.println(" ==> " + v.lineage.getFull() + " -> " + v.lineage.getAlias());
+			// System.out.println(" ==> " + v.lineage.getFull() + " -> " +
+			// v.lineage.getAlias());
 		}
 		for (int i = myList.size() - 1; i >= 0; i--) {
 			Variant child = myList.get(i);
@@ -234,7 +236,6 @@ public class Voc extends DailyTracker {
 					entry.variants.put(parent.name, num);
 				}
 				exclusions = true;
-				System.out.println("Child: " + child.lineage.getAlias() + " <-> " + parent.lineage.getAlias());
 			}
 		}
 		// System.exit(0);
@@ -349,6 +350,10 @@ public class Voc extends DailyTracker {
 
 	public synchronized ArrayList<Variant> getVariants() {
 		return new ArrayList<>(variants.values());
+	}
+
+	public Collection<Variant> getVariantsInline() {
+		return variants.values();
 	}
 
 	public synchronized ArrayList<String> getVariantNames() {

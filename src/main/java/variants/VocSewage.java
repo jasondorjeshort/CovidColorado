@@ -89,6 +89,7 @@ public class VocSewage {
 	}
 
 	public double getCollectiveFit(int day) {
+		build();
 		synchronized (collectiveFit) {
 			Double n = collectiveFit.get(day);
 			if (n != null) {
@@ -106,6 +107,37 @@ public class VocSewage {
 			collectiveFit.put(day, number);
 			return number;
 		}
+	}
+
+	public double getCollectiveFit(Strain strain, int day) {
+		// HashMap<Strain, HashMap<Integer, Double>> collectiveStrainFit
+		build();
+		synchronized (collectiveStrainFit) {
+			HashMap<Strain, Double> cFit = collectiveStrainFit.get(day);
+
+			if (cFit != null) {
+				return cFit.get(strain);
+			}
+
+			cFit = new HashMap<>();
+			collectiveStrainFit.put(day, cFit);
+
+			for (Strain s : Strain.values()) {
+				cFit.put(s, 0.0);
+			}
+			for (Variant variant : voc.getVariantsInline()) {
+				Lineage l = variant.lineage;
+				if (l != null) {
+					Strain s = Strain.findStrain(l.getFull());
+					double number = Math.exp(fits.get(variant.name).predict(day));
+					number += cFit.get(s);
+					cFit.put(s, number);
+				}
+			}
+
+			return cFit.get(strain);
+		}
+
 	}
 
 	public TimeSeries makeCollectiveTS() {
@@ -138,8 +170,10 @@ public class VocSewage {
 	private int currentDay, modelLastDay;
 	private HashMap<String, SimpleRegression> fits;
 	private final HashMap<String, Double> cumulativePrevalence = new HashMap<>();
+	private final HashMap<Strain, Double> cumulativeStrainPrevalence = new HashMap<>();
 	private double cumulative = 0;
 	private final HashMap<Integer, Double> collectiveFit = new HashMap<>();
+	private final HashMap<Integer, HashMap<Strain, Double>> collectiveStrainFit = new HashMap<>();
 
 	public int getModelLastDay() {
 		build();
@@ -153,6 +187,11 @@ public class VocSewage {
 	public double getCumulative(String variant) {
 		build();
 		return cumulativePrevalence.get(variant);
+	}
+
+	public double getCumulative(Strain strain) {
+		build();
+		return cumulativeStrainPrevalence.get(strain);
 	}
 
 	public double getCumulative() {
@@ -234,16 +273,25 @@ public class VocSewage {
 			System.out.println("Cumulative " + sewage.getName() + " => " + cumulative);
 		}
 
-		for (String variant : variantsByCumulative) {
+		for (Strain s : Strain.values()) {
+			cumulativeStrainPrevalence.put(s, 0.0);
+		}
+		for (Variant variant : voc.getVariants()) {
 			double number = 0;
 			for (int day = getFirstDay(); day <= getLastDay(); day++) {
 				Double prev = sewage.getSewageNormalized(day);
 				if (prev == null) {
 					continue;
 				}
-				number += prev * voc.getPrevalence(day, variant);
+				number += prev * voc.getPrevalence(day, variant.name);
 			}
-			cumulativePrevalence.put(variant, number);
+			cumulativePrevalence.put(variant.name, number);
+
+			if (variant.lineage != null) {
+				Strain s = Strain.findStrain(variant.lineage.getFull());
+				double sPrev = cumulativeStrainPrevalence.get(s) + number;
+				cumulativeStrainPrevalence.put(s, sPrev);
+			}
 
 			if (sewage instanceof sewage.All) {
 				// System.out.println("Prev on " + variant + " => " + number);
@@ -326,6 +374,39 @@ public class VocSewage {
 		return series;
 	}
 
+	public synchronized TimeSeries makeRelativeSeries(Strain strain, boolean doFit) {
+		build();
+		TimeSeries series = new TimeSeries(strain.getName());
+		if (doFit) {
+			int day = getFirstDay() - 42;
+			series.add(CalendarUtils.dayToDay(day), 100.0 * getCollectiveFit(strain, day) / getCollectiveFit(day));
+		}
+		for (int day = Math.max(getFirstDay(), voc.getFirstDay()); day <= getLastDay(); day++) {
+			DaySewage entry;
+			entry = sewage.getEntry(day);
+			if (entry == null) {
+				continue;
+			}
+
+			// Double pop = entry.getPop();
+
+			double number = getPrevalence(strain, day);
+			number *= 100.0;
+			if (number <= MINIMUM) {
+				// fit data before or after will fill for it
+				continue;
+			}
+
+			series.add(CalendarUtils.dayToDay(day), number);
+		}
+		if (doFit) {
+			for (int day = getLastDay() + 1; day <= modelLastDay; day++) {
+				series.add(CalendarUtils.dayToDay(day), 100.0 * getCollectiveFit(strain, day) / getCollectiveFit(day));
+			}
+		}
+		return series;
+	}
+
 	public synchronized TimeSeries makeAbsoluteSeries(String variant, boolean doFit) {
 		build();
 		String name = variant.replaceAll("nextcladePangoLineage:", "");
@@ -384,6 +465,58 @@ public class VocSewage {
 		if (fit != null) {
 			for (int day = getLastDay() + 1; day <= modelLastDay; day++) {
 				series.add(CalendarUtils.dayToDay(day), Math.exp(fit.predict(day)));
+			}
+		}
+		return series;
+	}
+
+	public double getPrevalence(Strain strain, int day) {
+		double number = 0;
+		for (Variant variant : voc.getVariantsInline()) {
+			// TODO: cache this maybe? dunno
+			Strain s = variant.lineage == null ? Strain.OTHERS : Strain.findStrain(variant.lineage.getFull());
+			if (s != Strain.CH_1_1 && s != Strain.XBB && s != Strain.BA_2_86
+					&& !variant.name.equalsIgnoreCase(Voc.OTHERS)) {
+				new Exception(s.name() + " on " + variant.name + " => "
+						+ (variant.lineage != null ? variant.lineage.getFull() : "?")).printStackTrace();
+			}
+			if (s == strain) {
+				number += voc.getPrevalence(day, variant.name);
+			}
+		}
+		return number;
+	}
+
+	public synchronized TimeSeries makeAbsoluteSeries(Strain strain, boolean doFit) {
+		build();
+		TimeSeries series = new TimeSeries(strain.getName());
+		if (doFit) {
+			int day = getFirstDay() - 42;
+			series.add(CalendarUtils.dayToDay(day), getCollectiveFit(strain, day));
+		}
+		for (int day = Math.max(getFirstDay(), voc.getFirstDay()); day <= getLastDay(); day++) {
+			DaySewage entry;
+			entry = sewage.getEntry(day);
+			if (entry == null) {
+				continue;
+			}
+
+			// Double pop = entry.getPop();
+
+			double number = getPrevalence(strain, day);
+
+			number *= sewage.getNormalizer();
+			number *= entry.getSewage();
+			if (number <= MINIMUM) {
+				// fit data before or after will fill for it
+				continue;
+			}
+
+			series.add(CalendarUtils.dayToDay(day), number);
+		}
+		if (doFit) {
+			for (int day = getLastDay() + 1; day <= modelLastDay; day++) {
+				series.add(CalendarUtils.dayToDay(day), getCollectiveFit(strain, day));
 			}
 		}
 		return series;

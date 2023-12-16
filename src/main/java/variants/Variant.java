@@ -34,8 +34,9 @@ public class Variant {
 		} else {
 			lineage = null;
 		}
-		System.out.println("Lineage for " + name + " is "
-				+ (lineage == null ? "N/A" : lineage.getFull() + " / " + lineage.getAlias()));
+		// System.out.println("Lineage for " + name + " is "
+		// + (lineage == null ? "N/A" : lineage.getFull() + " / " +
+		// lineage.getAlias()));
 	}
 
 	public boolean isAncestor(Variant descendant) {
