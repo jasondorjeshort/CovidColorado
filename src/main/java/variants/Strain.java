@@ -35,7 +35,7 @@ public enum Strain {
 
 	private static final HashMap<String, Strain> backwardsMap = new HashMap<>();
 
-	public static Strain findStrain(final String variant) {
+	public static Strain findStrainX(final String variant) {
 
 		String variantFull = Aliases.expand(variant);
 		if (variantFull == null) {
@@ -73,5 +73,12 @@ public enum Strain {
 			backwardsMap.put(variantFull, variantStrain);
 			return variantStrain;
 		}
+	}
+
+	public static Strain findStrain(Lineage lineage) {
+		if (lineage == null) {
+			return OTHERS;
+		}
+		return findStrainX(lineage.getFull());
 	}
 }
