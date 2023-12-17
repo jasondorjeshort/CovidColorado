@@ -163,10 +163,7 @@ public class ChartSewage {
 
 	public static BufferedImage buildAbsolute(VocSewage vocSewage, String targetVariant, boolean fit, boolean legend,
 			boolean strains) {
-		if (strains && (!fit || vocSewage.voc.isMerger)) {
-			return null;
-		}
-		if (strains && vocSewage.voc.isMerger) {
+		if (strains && (!fit || !legend || vocSewage.voc.isMerger)) {
 			return null;
 		}
 		if (vocSewage.sewage.getTotalSewage() <= 0) {
@@ -311,7 +308,7 @@ public class ChartSewage {
 
 	public static BufferedImage buildRelative(VocSewage vocSewage, String targetVariant, boolean fit, boolean legend,
 			boolean strains) {
-		if (strains && (!fit || vocSewage.voc.isMerger)) {
+		if (strains && (!fit || !legend || vocSewage.voc.isMerger)) {
 			return null;
 		}
 		if (vocSewage.sewage.getTotalSewage() <= 0) {
