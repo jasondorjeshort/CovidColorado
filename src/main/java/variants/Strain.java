@@ -13,7 +13,7 @@ public enum Strain {
 	CH_1_1("CH.1.1", "ch.1.1"),
 	XBB("XBB", "xbb", "xbl", "xcf", "xch", "xcl", "xcr", "xda", "xdc"),
 	BA_2_86("BA.2.86", "ba.2.86", "xdd"),
-	OTHERS("others");
+	OTHERS("OTHERS");
 
 	private final String name;
 	private final String[] variants;
@@ -23,7 +23,7 @@ public enum Strain {
 		for (int i = 0; i < variants.length; i++) {
 			variants[i] = Aliases.expand(variants[i]);
 		}
-		if (variants.length == 0) {
+		if (variants.length == 0 && !name.equalsIgnoreCase("OTHERS")) {
 			new Exception("No variants on " + name() + ".").printStackTrace();
 		}
 		this.variants = variants;
