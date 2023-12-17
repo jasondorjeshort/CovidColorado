@@ -194,8 +194,6 @@ public class ChartSewage {
 		if (strains) {
 			for (Strain strain : Strain.values()) {
 				if (vocSewage.getCumulative(strain) < 0.1) {
-					new Exception("Skipping on " + strain.getName() + " at " + vocSewage.getCumulative(strain))
-							.printStackTrace();
 					continue;
 				}
 				new Exception("Flying on " + strain.getName()).printStackTrace();
