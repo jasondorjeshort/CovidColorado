@@ -196,7 +196,6 @@ public class ChartSewage {
 				if (vocSewage.getCumulative(strain) < 0.1) {
 					continue;
 				}
-				new Exception("Flying on " + strain.getName()).printStackTrace();
 				series = vocSewage.makeAbsoluteSeries(strain, fit);
 				collection.addSeries(series);
 				renderer.setSeriesStroke(seriesCount,
