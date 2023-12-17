@@ -51,7 +51,9 @@ public class All extends Multi {
 	 */
 	private void normalize() {
 		HashMap<Plant, Double> oldNormalizers = new HashMap<>();
-		for (int i = 0; i < 2000; i++) {
+		long time = System.currentTimeMillis();
+		int i;
+		for (i = 0; i < 2000; i++) {
 			oldNormalizers.clear();
 			plants.forEach(p -> oldNormalizers.put(p, p.getNormalizer()));
 
@@ -77,6 +79,10 @@ public class All extends Multi {
 				break;
 			}
 		}
+
+		time = System.currentTimeMillis() - time;
+
+		System.out.println("Looped normalization " + i + " times in " + time + " ms.");
 	}
 
 	public void build(Collection<Plant> thePlants) {
