@@ -296,7 +296,7 @@ public class ChartSewage {
 
 		fileName = folder + "\\" + fileName + ".png";
 
-		if (!vocSewage.voc.isMerger && targetVariant == null) {
+		if (!vocSewage.voc.isMerger && targetVariant == null && legend && fit) {
 			library.OpenImage.openImage(fileName);
 			library.OpenImage.open();
 		}
@@ -437,7 +437,7 @@ public class ChartSewage {
 
 		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
 
-		if (!vocSewage.voc.isMerger) {
+		if (!vocSewage.voc.isMerger && legend  && fit) {
 			library.OpenImage.openImage(fileName);
 			library.OpenImage.open();
 		}
@@ -519,7 +519,7 @@ public class ChartSewage {
 		Charts.saveBufferedImageAsPNG(SEWAGE_FOLDER, fileName, image);
 		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
 
-		if (!vocSewage.voc.isMerger) {
+		if (!vocSewage.voc.isMerger ) {
 			library.OpenImage.openImage(fileName);
 			library.OpenImage.open();
 		}
