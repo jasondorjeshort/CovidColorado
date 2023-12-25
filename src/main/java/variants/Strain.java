@@ -11,8 +11,8 @@ public enum Strain {
 	BA_2_3_20("BA.2.3.20", "ba.2.3.20"),
 	BQ_1("BQ.1", "bq.1"),
 	CH_1_1("CH.1.1", "ch.1.1"),
-	XBB("XBB", "xbb", "xbl", "xcf", "xch", "xcl", "xcr", "xda", "xdc"),
-	BA_2_86("BA.2.86", "ba.2.86", "xdd"),
+	XBB("XBB", "xbb", "xbl", "xcf", "xch", "xcl", "xcr", "xda", "xdc", "xcv"),
+	BA_2_86("BA.2.86", "ba.2.86", "xdd", "xdk"),
 	OTHERS("OTHERS");
 
 	private final String name;
@@ -75,9 +75,9 @@ public enum Strain {
 		}
 	}
 
-	public static Strain findStrain(Lineage lineage) {
+	public static Strain findStrainX(Lineage lineage) {
 		if (lineage == null) {
-			return OTHERS;
+			return null;
 		}
 		return findStrainX(lineage.getFull());
 	}
