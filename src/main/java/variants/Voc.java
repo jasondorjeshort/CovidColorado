@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -17,8 +18,7 @@ import nwss.Nwss;
 
 public class Voc extends DailyTracker {
 
-	private static final String CSV_NAME1 = "C:\\Users\\jdorj\\Downloads\\" + "VariantComparisonTimeDistributionPlot"
-			+ ".csv";
+	private static final String CSV_NAME1 = "C:\\Users\\jdorj\\Downloads\\" + "VariantComparisonTimeDistributionPlot";
 	private static final String CSV_NAME2 = "C:\\Users\\jdorj\\Downloads\\" + "VariantTimeDistributionPlot" + ".csv";
 	private static final Charset CHARSET = Charset.forName("US-ASCII");
 
@@ -27,21 +27,37 @@ public class Voc extends DailyTracker {
 	public final boolean isMerger;
 	public boolean exclusions = false;
 
+	private static File csv1(int i) {
+		return new File(CSV_NAME1 + (i == 0 ? "" : "(" + i + ")") + ".csv");
+	}
+
 	public static LinkedList<Voc> create() {
 		LinkedList<Voc> vocs = new LinkedList<>();
 		File f;
+		LinkedList<File> files = new LinkedList<>();
 
-		f = new File(CSV_NAME1);
+		int i = 0;
+		f = csv1(i);
 		if (f.exists()) {
+			files.add(f);
+			while (true) {
+				i++;
+				File f2 = csv1(i);
+				if (!f2.exists()) {
+					break;
+				}
+				files.add(f2);
+			}
 			if (System.currentTimeMillis() - f.lastModified() > 8 * Nwss.HOUR) {
 				System.out.println("Deleting " + f.getPath() + ", age "
 						+ (System.currentTimeMillis() - f.lastModified()) / Nwss.HOUR + "h.");
-				f.delete();
+				files.forEach(file -> file.delete());
 			} else {
-				vocs.add(new Voc(f, true));
+				vocs.add(new Voc(files, true));
 			}
 		}
 
+		files.clear();
 		f = new File(CSV_NAME2);
 		if (f.exists()) {
 			if (System.currentTimeMillis() - f.lastModified() > 8 * Nwss.HOUR) {
@@ -49,7 +65,9 @@ public class Voc extends DailyTracker {
 						+ (System.currentTimeMillis() - f.lastModified()) / Nwss.HOUR + "h.");
 				f.delete();
 			} else {
-				vocs.add(new Voc(f, false));
+				// TODO: more
+				files.add(f);
+				vocs.add(new Voc(files, false));
 			}
 		}
 
@@ -113,47 +131,49 @@ public class Voc extends DailyTracker {
 	private static int nextId = 1;
 	private static final Object nextIdLock = new Object();
 
-	public Voc(File f, boolean multiVariant) {
+	public Voc(List<File> files, boolean multiVariant) {
 		isMerger = false;
 		synchronized (nextIdLock) {
 			id = nextId++;
 		}
-		try (CSVParser csv = CSVParser.parse(f, CHARSET, CSVFormat.DEFAULT)) {
-			int records = 0;
-			for (CSVRecord line : csv) {
-				if (records++ == 0) {
-					continue;
-				}
+		for (File f : files) {
+			try (CSVParser csv = CSVParser.parse(f, CHARSET, CSVFormat.DEFAULT)) {
+				int records = 0;
+				for (CSVRecord line : csv) {
+					if (records++ == 0) {
+						continue;
+					}
 
-				String date = line.get(0);
-				String proportion = line.get(1);
-				if (proportion == null || proportion.equalsIgnoreCase("null")) {
-					continue;
-				}
-				String variant;
-				if (multiVariant) {
-					variant = line.get(4);
-				} else {
-					variant = "Variant";
-				}
-				int day = CalendarUtils.dateToDay(date);
+					String date = line.get(0);
+					String proportion = line.get(1);
+					if (proportion == null || proportion.equalsIgnoreCase("null")) {
+						continue;
+					}
+					String variant;
+					if (multiVariant) {
+						variant = line.get(4);
+					} else {
+						variant = "Variant";
+					}
+					int day = CalendarUtils.dateToDay(date);
 
-				DayVariants entry = entries.get(day);
-				if (entry == null) {
-					entry = new DayVariants(day);
-					entries.put(day, entry);
+					DayVariants entry = entries.get(day);
+					if (entry == null) {
+						entry = new DayVariants(day);
+						entries.put(day, entry);
+					}
+					double prev = Double.valueOf(proportion);
+					if (entry.variants.get(variant) != null) {
+						System.out.println("Duplicate variant " + variant + "?");
+					}
+					entry.variants.put(variant, prev);
+					includeDay(day);
+					getVariant(variant);
 				}
-				double prev = Double.valueOf(proportion);
-				if (entry.variants.get(variant) != null) {
-					System.out.println("Duplicate variant " + variant + "?");
-				}
-				entry.variants.put(variant, prev);
-				includeDay(day);
-				getVariant(variant);
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.exit(0);
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.exit(0);
 		}
 
 		if (multiVariant) {

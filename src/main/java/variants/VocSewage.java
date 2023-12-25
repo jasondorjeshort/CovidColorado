@@ -126,10 +126,12 @@ public class VocSewage {
 				cFit.put(s, 0.0);
 			}
 			for (Variant variant : voc.getVariantsInline()) {
-				Strain s = Strain.findStrain(variant.lineage);
-				double number = Math.exp(fits.get(variant.name).predict(day));
-				number += cFit.get(s);
-				cFit.put(s, number);
+				Strain s = Strain.findStrainX(variant.lineage);
+				if (s != null) {
+					double number = Math.exp(fits.get(variant.name).predict(day));
+					number += cFit.get(s);
+					cFit.put(s, number);
+				}
 			}
 
 			return cFit.get(strain);
@@ -284,9 +286,11 @@ public class VocSewage {
 			}
 			cumulativePrevalence.put(variant.name, number);
 
-			Strain s = Strain.findStrain(variant.lineage);
-			double sPrev = cumulativeStrainPrevalence.get(s) + number;
-			cumulativeStrainPrevalence.put(s, sPrev);
+			Strain s = Strain.findStrainX(variant.lineage);
+			if (s != null) {
+				double sPrev = cumulativeStrainPrevalence.get(s) + number;
+				cumulativeStrainPrevalence.put(s, sPrev);
+			}
 
 			if (sewage instanceof sewage.All) {
 				// System.out.println("Prev on " + variant + " => " + number);
@@ -469,7 +473,7 @@ public class VocSewage {
 		double number = 0;
 		for (Variant variant : voc.getVariantsInline()) {
 			// TODO: cache this maybe? dunno
-			Strain s = Strain.findStrain(variant.lineage);
+			Strain s = Strain.findStrainX(variant.lineage);
 			if (s != Strain.CH_1_1 && s != Strain.XBB && s != Strain.BA_2_86
 					&& !variant.name.equalsIgnoreCase(Voc.OTHERS) && !variant.name.startsWith("Tier")) {
 				new Exception(s.name() + " on " + variant.name + " => "

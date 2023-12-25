@@ -1,5 +1,6 @@
 package variants;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 
@@ -87,45 +88,67 @@ public class VariantSet {
 		}
 	}
 
-	public String getCovSpectrumLink(boolean all) {
-		StringBuilder sb = new StringBuilder();
-		sb.append("https://cov-spectrum.org/explore/United%20States/AllSamples/");
-		sb.append("from=" + startDate + "%26to=" + endDate);
-		sb.append("/variants?analysisMode=CompareEquals&");
+	public ArrayList<String> getCovSpectrumLink() {
+		ArrayList<String> list = new ArrayList<>();
+		StringBuilder sb = null;
+		int n = 0;
 
 		for (int i = 0; i < variants.length; i++) {
+			if (sb == null) {
+				sb = new StringBuilder();
+				sb.append("https://cov-spectrum.org/explore/United%20States/AllSamples/");
+				sb.append("from=" + startDate + "%26to=" + endDate);
+				sb.append("/variants?analysisMode=CompareEquals&");
+				n = 0;
+			}
 			// System.out.println(variants[i] + " => " + variantsFull[i] + " =>
 			// " + variantQueries[i]);
 			sb.append("variantQuery");
-			if (i > 0) {
-				sb.append(String.valueOf(i));
+			if (n > 0) {
+				sb.append(String.valueOf(n));
 			}
 			sb.append("=nextcladePangoLineage:");
-			if (all) {
-				sb.append(variantQueries[i]);
-			} else {
-				sb.append(variants[i]);
-				sb.append("*");
-			}
+			sb.append(variants[i]);
+			sb.append("*");
 			sb.append("&");
+
+			if (sb.length() > 3000) {
+				list.add(sb.toString());
+				sb = null;
+			}
+			n++;
 		}
 
-		System.out.println("Len: " + sb.length());
+		if (sb != null) {
+			list.add(sb.toString());
+		}
+
+		sb = new StringBuilder();
+		sb.append("\n");
+		for (String s2 : list) {
+			sb.append(s2);
+			sb.append("\n");
+		}
 		System.out.println(sb.toString());
 
-		return sb.toString();
+		return list;
 	}
 
 	public String getCovSpectrumReverseLink(boolean all) {
 		StringBuilder sb = new StringBuilder();
+		// sb.append("https://cov-spectrum.org/explore/United%20States/AllSamples/");
+		// sb.append("from=" + startDate + "%26to=" + endDate);
+		// sb.append("/variants?variantQuery=");
 		for (int i = 0; i < variants.length; i++) {
-			if (sb.length() > 0) {
+			if (i > 0) {
 				sb.append("&");
+				// sb.append("%26");
 			}
 			sb.append("!nextcladePangoLineage:");
 			sb.append(variants[i]);
 			if (all) {
 				sb.append("*");
+				// sb.append("%2A");
 			}
 		}
 
