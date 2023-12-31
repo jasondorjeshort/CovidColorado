@@ -19,7 +19,7 @@ import nwss.Nwss;
 public class Voc extends DailyTracker {
 
 	private static final String CSV_NAME1 = "C:\\Users\\jdorj\\Downloads\\" + "VariantComparisonTimeDistributionPlot";
-	private static final String CSV_NAME2 = "C:\\Users\\jdorj\\Downloads\\" + "VariantTimeDistributionPlot" + ".csv";
+	private static final String CSV_NAME2 = "C:\\Users\\jdorj\\Downloads\\" + "VariantTimeDistributionPlot";
 	private static final Charset CHARSET = Charset.forName("US-ASCII");
 
 	public static final String OTHERS = "others";
@@ -29,6 +29,10 @@ public class Voc extends DailyTracker {
 
 	private static File csv1(int i) {
 		return new File(CSV_NAME1 + (i == 0 ? "" : "(" + i + ")") + ".csv");
+	}
+
+	private static File csv2(int i) {
+		return new File(CSV_NAME2 + (i == 0 ? "" : "(" + i + ")") + ".csv");
 	}
 
 	public static LinkedList<Voc> create() {
@@ -58,15 +62,23 @@ public class Voc extends DailyTracker {
 		}
 
 		files.clear();
-		f = new File(CSV_NAME2);
+		i = 0;
+		f = csv2(i);
 		if (f.exists()) {
+			files.add(f);
+			while (true) {
+				i++;
+				File f2 = csv2(i);
+				if (!f2.exists()) {
+					break;
+				}
+				files.add(f2);
+			}
 			if (System.currentTimeMillis() - f.lastModified() > 8 * Nwss.HOUR) {
 				System.out.println("Deleting " + f.getPath() + ", age "
 						+ (System.currentTimeMillis() - f.lastModified()) / Nwss.HOUR + "h.");
-				f.delete();
+				files.forEach(file -> file.delete());
 			} else {
-				// TODO: more
-				files.add(f);
 				vocs.add(new Voc(files, false));
 			}
 		}
@@ -130,13 +142,18 @@ public class Voc extends DailyTracker {
 
 	private static int nextId = 1;
 	private static final Object nextIdLock = new Object();
+	
+	public final boolean multiVariant;
 
 	public Voc(List<File> files, boolean multiVariant) {
 		isMerger = false;
 		synchronized (nextIdLock) {
 			id = nextId++;
 		}
+		int fNumber = 0;
+		this.multiVariant = multiVariant;
 		for (File f : files) {
+			fNumber++;
 			try (CSVParser csv = CSVParser.parse(f, CHARSET, CSVFormat.DEFAULT)) {
 				int records = 0;
 				for (CSVRecord line : csv) {
@@ -153,7 +170,7 @@ public class Voc extends DailyTracker {
 					if (multiVariant) {
 						variant = line.get(4);
 					} else {
-						variant = "Variant";
+						variant = "Variant " + fNumber;
 					}
 					int day = CalendarUtils.dateToDay(date);
 
@@ -176,8 +193,10 @@ public class Voc extends DailyTracker {
 			}
 		}
 
-		if (multiVariant) {
-			getVariant(OTHERS);
+		synchronized (variants) {
+			if (variants.size() > 1) {
+				getVariant(OTHERS);
+			}
 		}
 
 		build();
@@ -323,6 +342,7 @@ public class Voc extends DailyTracker {
 
 		int num = variants.length;
 		String[] vNames = new String[num];
+		this.multiVariant = true;
 		for (int v = 0; v < vNames.length; v++) {
 			vNames[v] = "Tier " + (v + 1);
 			getVariant(vNames[v]);

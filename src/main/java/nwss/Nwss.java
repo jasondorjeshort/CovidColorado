@@ -311,7 +311,7 @@ public class Nwss {
 					ChartSewage.buildVocSewageCharts(vocSewage.merge(tiers), build);
 				}
 
-				if (voc.numVariants() == 1) {
+				if (!voc.multiVariant) {
 					sewage.State sewage = states.get("Colorado");
 					ChartSewage.buildVocSewageCharts(new VocSewage(sewage, voc), build);
 				}
