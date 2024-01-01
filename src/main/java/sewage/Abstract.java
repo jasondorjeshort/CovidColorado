@@ -45,6 +45,10 @@ public abstract class Abstract extends DailyTracker {
 		int firstDay = Math.max(getFirstDay(), CalendarUtils.dateToDay("9/1/2020")), lastDay = getLastDay();
 		boolean rising = getNormalized(firstDay + 1) >= getNormalized(firstDay);
 
+		/*
+		 * This logic is hackish and awful! We want to find inflection points
+		 * that are spread-out enough from others.
+		 */
 		for (int day = firstDay + 1; day <= lastDay - 14; day++) {
 			Double val = getNormalized(day);
 			Double val2 = getNormalized(day + 1);
@@ -57,16 +61,23 @@ public abstract class Abstract extends DailyTracker {
 				continue;
 			}
 
+			double baseVal = val2;
 			for (int flipDay = day + 2; flipDay < day + 28 && flipDay <= lastDay; flipDay++) {
 				val2 = getNormalized(flipDay);
 				if (val2 == null) {
 					continue;
 				}
-				stillRising = val2 >= val;
+				stillRising = val2 >= baseVal;
 				if (stillRising == rising) {
 					val = val2;
 					day = flipDay;
+
+					break;
 				}
+			}
+
+			if (stillRising == rising) {
+				continue;
 			}
 
 			Inflection inflection = new Inflection();
