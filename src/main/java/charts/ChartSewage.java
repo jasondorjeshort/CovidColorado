@@ -177,7 +177,7 @@ public class ChartSewage {
 
 		Voc voc = vocSewage.voc;
 		if (fit && targetVariant == null && vocSewage.voc.numVariants() > 1) {
-			series = vocSewage.makeCollectiveTS();
+			series = vocSewage.makeAbsoluteCollectiveTS();
 			if (series != null) {
 				collection.addSeries(series);
 				renderer.setSeriesStroke(seriesCount,
@@ -325,7 +325,7 @@ public class ChartSewage {
 
 		Voc voc = vocSewage.voc;
 
-		int lastDay = vocSewage.getModelLastDay();
+		int lastDay = vocSewage.getRelativeLastDay();
 		ArrayList<Variant> variants = vocSewage.voc.getVariants();
 		if (fit) {
 			variants.sort((v1,
@@ -437,7 +437,7 @@ public class ChartSewage {
 
 		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
 
-		if (!vocSewage.voc.isMerger && legend  && fit) {
+		if (!vocSewage.voc.isMerger && legend && fit) {
 			library.OpenImage.openImage(fileName);
 			library.OpenImage.open();
 		}
@@ -519,7 +519,7 @@ public class ChartSewage {
 		Charts.saveBufferedImageAsPNG(SEWAGE_FOLDER, fileName, image);
 		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
 
-		if (!vocSewage.voc.isMerger ) {
+		if (!vocSewage.voc.isMerger) {
 			library.OpenImage.openImage(fileName);
 			library.OpenImage.open();
 		}

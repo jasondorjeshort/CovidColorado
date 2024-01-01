@@ -139,11 +139,11 @@ public class VocSewage {
 
 	}
 
-	public TimeSeries makeCollectiveTS() {
+	public TimeSeries makeAbsoluteCollectiveTS() {
 		build();
 
 		TimeSeries series = new TimeSeries(String.format("Collective fit"));
-		for (int day = getFirstDay(); day <= modelLastDay; day++) {
+		for (int day = getFirstDay(); day <= absoluteLastDay; day++) {
 			series.add(CalendarUtils.dayToDay(day), getCollectiveFit(day));
 		}
 
@@ -166,7 +166,7 @@ public class VocSewage {
 	private boolean built = false;
 	private int numVariants;
 	private ArrayList<String> variantsByGrowth, variantsByCount, variantsByCumulative;
-	private int currentDay, modelLastDay;
+	private int currentDay, absoluteLastDay, relativeLastDay;
 	private HashMap<String, SimpleRegression> fits;
 	private final HashMap<String, Double> cumulativePrevalence = new HashMap<>();
 	private final HashMap<Strain, Double> cumulativeStrainPrevalence = new HashMap<>();
@@ -176,7 +176,12 @@ public class VocSewage {
 
 	public int getModelLastDay() {
 		build();
-		return modelLastDay;
+		return absoluteLastDay;
+	}
+
+	public int getRelativeLastDay() {
+		build();
+		return relativeLastDay;
 	}
 
 	public double getGrowth(String variant) {
@@ -251,12 +256,12 @@ public class VocSewage {
 
 		variantsByGrowth.sort((v1, v2) -> Double.compare(fits.get(v1).getSlope(), fits.get(v2).getSlope()));
 		currentDay = CalendarUtils.timeToDay(System.currentTimeMillis());
-		modelLastDay = currentDay + 30;
-		while (getCollectiveFit(modelLastDay) > All.SCALE_PEAK_RENORMALIZER) {
-			modelLastDay--;
+		absoluteLastDay = relativeLastDay = currentDay + 30;
+		while (absoluteLastDay > currentDay + 1 && getCollectiveFit(absoluteLastDay) > All.SCALE_PEAK_RENORMALIZER) {
+			absoluteLastDay--;
 		}
-		variantsByCount.sort(
-				(v1, v2) -> -Double.compare(fits.get(v1).predict(modelLastDay), fits.get(v2).predict(modelLastDay)));
+		variantsByCount.sort((v1,
+				v2) -> -Double.compare(fits.get(v1).predict(relativeLastDay), fits.get(v2).predict(relativeLastDay)));
 
 		variantsByCumulative = voc.getVariantNames();
 
@@ -323,6 +328,7 @@ public class VocSewage {
 		build();
 		String name = variant.replaceAll("nextcladePangoLineage:", "");
 		SimpleRegression fit = null;
+		int last = getRelativeLastDay();
 		if (doFit) {
 			synchronized (this) {
 				fit = fits.get(variant);
@@ -330,7 +336,7 @@ public class VocSewage {
 		}
 		if (fit != null) {
 			double num = 100 * Math.exp(fit.predict(currentDay)) / getCollectiveFit(currentDay);
-			double lastNum = 100 * Math.exp(fit.predict(modelLastDay)) / getCollectiveFit(modelLastDay);
+			double lastNum = 100 * Math.exp(fit.predict(last)) / getCollectiveFit(last);
 			if (num > 10 && lastNum > 10) {
 				name = String.format("%s (%.0f%%->%.0f%%)", name, num, lastNum);
 			} else if (num > 1 && lastNum > 1) {
@@ -366,7 +372,8 @@ public class VocSewage {
 			series.add(CalendarUtils.dayToDay(day), 100 * number / entry.getSewage());
 		}
 		if (fit != null) {
-			for (int day = getLastDay() + 1; day <= modelLastDay; day++) {
+			/* For relative we can go past the model last day */
+			for (int day = getLastDay() + 1; day <= last; day++) {
 				series.add(CalendarUtils.dayToDay(day), 100 * Math.exp(fit.predict(day)) / getCollectiveFit(day));
 			}
 		}
@@ -399,7 +406,7 @@ public class VocSewage {
 			series.add(CalendarUtils.dayToDay(day), number);
 		}
 		if (doFit) {
-			for (int day = getLastDay() + 1; day <= modelLastDay; day++) {
+			for (int day = getLastDay() + 1; day <= relativeLastDay; day++) {
 				series.add(CalendarUtils.dayToDay(day), 100.0 * getCollectiveFit(strain, day) / getCollectiveFit(day));
 			}
 		}
@@ -462,7 +469,7 @@ public class VocSewage {
 			series.add(CalendarUtils.dayToDay(day), number);
 		}
 		if (fit != null) {
-			for (int day = getLastDay() + 1; day <= modelLastDay; day++) {
+			for (int day = getLastDay() + 1; day <= absoluteLastDay; day++) {
 				series.add(CalendarUtils.dayToDay(day), Math.exp(fit.predict(day)));
 			}
 		}
@@ -514,7 +521,7 @@ public class VocSewage {
 			series.add(CalendarUtils.dayToDay(day), number);
 		}
 		if (doFit) {
-			for (int day = getLastDay() + 1; day <= modelLastDay; day++) {
+			for (int day = getLastDay() + 1; day <= absoluteLastDay; day++) {
 				series.add(CalendarUtils.dayToDay(day), getCollectiveFit(strain, day));
 			}
 		}
