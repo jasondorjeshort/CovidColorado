@@ -204,7 +204,11 @@ public class Nwss {
 				String popString = line.get(8);
 
 				sewage.Plant sewage = getPlantSewage(plant);
-				sewage.setPlantId(Integer.valueOf(plantIdString));
+				try {
+					sewage.setPlantId(Integer.valueOf(plantIdString));
+				} catch (Exception e) {
+					/* Might be unassigned I think? */
+				}
 				sewage.setState(state);
 				sewage.setCounties(county);
 				sewage.setFipsIds(fipsIds);
