@@ -25,6 +25,7 @@ public enum VariantEnum {
 			"eg.2",
 			"eg.5.1",
 			"eg.5.1.1",
+			"eg.5.1.11",
 			"eg.5.1.13",
 			"eg.5.1.16",
 			"eg.5.1.3",
@@ -75,8 +76,10 @@ public enum VariantEnum {
 			"hk.13",
 			"hk.20.1",
 			"hk.3",
+			"hk.1.2",
 			"hk.3.1",
 			"hk.3.2.1",
+			"hk.3.2.2",
 			"hk.3.4",
 			"hk.31",
 			"hk.6",
@@ -93,6 +96,7 @@ public enum VariantEnum {
 			"hv.1.2",
 			"hv.1.3",
 			"hv.1.4",
+			"hv.1.6.1",
 			// "hv.2",
 			"hy.1",
 			"hz.1",
@@ -101,6 +105,7 @@ public enum VariantEnum {
 			"jd.1.1",
 			"jd.1.1.1",
 			"jd.1.1.3",
+			"jd.1.1.6",
 			"je.1.1",
 			"jf.1",
 			"jg.3",
@@ -115,6 +120,7 @@ public enum VariantEnum {
 			"jn.2",
 			"jn.3",
 			"jr.1.1",
+			"jr.1.1.1",
 			"kb.1",
 			"xbb.1.16",
 			"xbb.1.16.1",
@@ -143,7 +149,10 @@ public enum VariantEnum {
 			"xch.1",
 			"xcr",
 			"xda",
+			// "xda.1",
 			"xdd"
+
+	// "ge.1.2.1"
 
 	// watch list:
 	//
