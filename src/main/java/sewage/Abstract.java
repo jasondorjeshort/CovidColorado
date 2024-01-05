@@ -114,8 +114,9 @@ public abstract class Abstract extends DailyTracker {
 			name = getTSName();
 		}
 		TimeSeries series = new TimeSeries(name);
+		int today = CalendarUtils.timeToDay(System.currentTimeMillis());
 		Integer popo = getPopulation();
-		for (int day = getFirstDay(); day <= getLastDay(); day++) {
+		for (int day = getFirstDay(); day <= today; day++) {
 			DaySewage entry;
 			synchronized (this) {
 				entry = entries.get(day);
@@ -203,7 +204,7 @@ public abstract class Abstract extends DailyTracker {
 			TimeSeries series = new TimeSeries(
 					String.format("%s (%s, today=%.0f)", "Fit", slopeToWeekly(fit), Math.exp(fit.predict(today))));
 			series.add(CalendarUtils.dayToDay(startDay), Math.exp(fit.predict(startDay)));
-			series.add(CalendarUtils.dayToDay(endDay), Math.exp(fit.predict(today)));
+			series.add(CalendarUtils.dayToDay(today), Math.exp(fit.predict(today)));
 			return series;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -232,6 +233,14 @@ public abstract class Abstract extends DailyTracker {
 		}
 
 		return markers;
+	}
+
+	public Long getLastInflection() {
+		if (inflections.size() == 0) {
+			return null;
+		}
+		Inflection inflection = inflections.get(inflections.size() - 1);
+		return CalendarUtils.dayToTime(inflection.day);
 	}
 
 	public Double getSewageNormalized(int day) {

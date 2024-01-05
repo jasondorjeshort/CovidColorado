@@ -142,7 +142,7 @@ public class Voc extends DailyTracker {
 
 	private static int nextId = 1;
 	private static final Object nextIdLock = new Object();
-	
+
 	public final boolean multiVariant;
 
 	public Voc(List<File> files, boolean multiVariant) {
