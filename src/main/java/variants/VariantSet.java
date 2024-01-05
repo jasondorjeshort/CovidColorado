@@ -112,7 +112,7 @@ public class VariantSet {
 			sb.append("*");
 			sb.append("&");
 
-			if (sb.length() > 3000) {
+			if (sb.length() > 5500) {
 				list.add(sb.toString());
 				sb = null;
 			}
