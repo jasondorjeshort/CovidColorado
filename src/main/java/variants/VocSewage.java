@@ -1,8 +1,8 @@
 package variants;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedList;
 
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.jfree.data.time.TimeSeries;
@@ -29,63 +29,11 @@ public class VocSewage {
 		return Math.min(sewage.getLastDay(), voc.getLastDay());
 	}
 
-	public HashMap<String, Double> getCumulativePrevalence(ArrayList<String> variants) {
+	public HashMap<Variant, Double> getCumulativePrevalence(ArrayList<Variant> variantList) {
 		build();
-		variants.addAll(variantsByCumulative);
-		variants.sort((v1, v2) -> -Double.compare(cumulativePrevalence.get(v1), cumulativePrevalence.get(v2)));
+		variantList.addAll(voc.getVariants());
+		variantList.sort((v1, v2) -> -Double.compare(cumulativePrevalence.get(v1), cumulativePrevalence.get(v2)));
 		return cumulativePrevalence;
-	}
-
-	double getSlopeByGrowth(int n) {
-		String v = variantsByGrowth.get(n);
-		return fits.get(v).getSlope();
-	}
-
-	/**
-	 * Todo: this should just be merged into the new VocSewage call from the end
-	 * 
-	 * Actually it should be a new VocSewage(VocSewage parent, int
-	 * variantCount)?
-	 */
-	public VocSewage merge(int variantCount) {
-		build();
-
-		if (variantCount >= variantsByGrowth.size()) {
-			return this;
-		}
-
-		final double[] targetSlopes = new double[variantCount];
-		@SuppressWarnings("unchecked")
-		final LinkedList<String>[] variants = new LinkedList[variantCount];
-		targetSlopes[0] = getSlopeByGrowth(Math.max((numVariants - 1) / 10, 1));
-		targetSlopes[variantCount - 1] = getSlopeByGrowth(numVariants - 1) * 0.33
-				+ getSlopeByGrowth(numVariants - 2) * 0.67;
-		double gap = (targetSlopes[variantCount - 1] - targetSlopes[0]) / (variantCount - 1);
-		for (int i = 0; i < variantCount - 1; i++) {
-			targetSlopes[i] = targetSlopes[0] + i * gap;
-		}
-		for (int i = 0; i < variantCount; i++) {
-			variants[i] = new LinkedList<>();
-		}
-
-		for (String variant : variantsByGrowth) {
-			double slope = fits.get(variant).getSlope();
-
-			int closest = 0;
-			double closestDist = Math.abs(slope - targetSlopes[0]);
-			// This is O(mn), could be O(m) with a better algorithm but only n=5
-			for (int i = 1; i < variantCount; i++) {
-				double dist = Math.abs(slope - targetSlopes[i]);
-				if (dist < closestDist) {
-					closest = i;
-					closestDist = dist;
-				}
-			}
-			variants[closest].add(variant);
-		}
-
-		Voc voc2 = new Voc(this, variants);
-		return new VocSewage(sewage, voc2);
 	}
 
 	public double getCollectiveFit(int day) {
@@ -97,7 +45,7 @@ public class VocSewage {
 			}
 
 			double number = 0.0;
-			for (String variant : variantsByCount) {
+			for (Variant variant : voc.getVariants()) {
 				if (fits.get(variant) == null) {
 					System.out.println("Impossible variant : " + variant);
 					continue;
@@ -125,10 +73,10 @@ public class VocSewage {
 			for (Strain s : Strain.values()) {
 				cFit.put(s, 0.0);
 			}
-			for (Variant variant : voc.getVariantsInline()) {
-				Strain s = Strain.findStrainX(variant.lineage);
+			for (Variant variant : voc.getVariants()) {
+				Strain s = Strain.findStrain(variant.lineage);
 				if (s != null) {
-					double number = Math.exp(fits.get(variant.name).predict(day));
+					double number = Math.exp(fits.get(variant).predict(day));
 					number += cFit.get(s);
 					cFit.put(s, number);
 				}
@@ -164,17 +112,15 @@ public class VocSewage {
 	}
 
 	private boolean built = false;
-	private int numVariants;
-	private ArrayList<String> variantsByGrowth, variantsByCount, variantsByCumulative;
 	private int currentDay, absoluteLastDay, relativeLastDay;
-	private HashMap<String, SimpleRegression> fits;
-	private final HashMap<String, Double> cumulativePrevalence = new HashMap<>();
+	private HashMap<Variant, SimpleRegression> fits;
+	private final HashMap<Variant, Double> cumulativePrevalence = new HashMap<>();
 	private final HashMap<Strain, Double> cumulativeStrainPrevalence = new HashMap<>();
 	private double cumulative = 0;
 	private final HashMap<Integer, Double> collectiveFit = new HashMap<>();
 	private final HashMap<Integer, HashMap<Strain, Double>> collectiveStrainFit = new HashMap<>();
 
-	public int getModelLastDay() {
+	public int getAbsoluteLastDay() {
 		build();
 		return absoluteLastDay;
 	}
@@ -184,11 +130,11 @@ public class VocSewage {
 		return relativeLastDay;
 	}
 
-	public double getGrowth(String variant) {
+	public double getGrowth(Variant variant) {
 		return slopeToWeekly(fits.get(variant).getSlope());
 	}
 
-	public double getCumulative(String variant) {
+	public double getCumulative(Variant variant) {
 		build();
 		return cumulativePrevalence.get(variant);
 	}
@@ -203,11 +149,11 @@ public class VocSewage {
 		return cumulative;
 	}
 
-	public double getPercentage(String variant) {
+	public double getPercentage(Variant variant) {
 		return getCumulative(variant) / getCumulative();
 	}
 
-	public double getFit(String variant, int day) {
+	public double getFit(Variant variant, int day) {
 		return fits.get(variant).predict(day);
 	}
 
@@ -218,7 +164,7 @@ public class VocSewage {
 	 * lineage is 0.0025. Anything zero needs to be ignored for both graphing or
 	 * regression, since they'll bork an exponential fit or graph.
 	 */
-	private static final double MINIMUM = 1E-8;
+	static final double MINIMUM = 1E-8;
 
 	public synchronized void build() {
 		if (built) {
@@ -227,11 +173,38 @@ public class VocSewage {
 		built = true;
 
 		fits = new HashMap<>();
-		variantsByGrowth = voc.getVariantNames();
-		variantsByCount = voc.getVariantNames();
-		numVariants = variantsByGrowth.size();
 
-		for (String variant : variantsByGrowth) {
+		/*
+		 * Cumulative sewage only (should be part of sewage???)
+		 */
+		cumulative = 0;
+		for (int day = getFirstDay(); day <= getLastDay(); day++) {
+			Double prev = sewage.getSewageNormalized(day);
+			if (prev == null) {
+				continue;
+			}
+			cumulative += prev;
+		}
+
+		/*
+		 * Cumulative sewage by variant
+		 */
+		for (Variant variant : voc.getVariants()) {
+			double number = 0;
+			for (int day = getFirstDay(); day <= getLastDay(); day++) {
+				Double prev = sewage.getSewageNormalized(day);
+				if (prev == null) {
+					continue;
+				}
+				number += prev * variant.getPrevalence(day);
+			}
+			cumulativePrevalence.put(variant, number);
+		}
+
+		/*
+		 * Build fits
+		 */
+		for (Variant variant : voc.getVariants()) {
 			SimpleRegression fit = new SimpleRegression();
 			for (int day = getFirstDay(); day <= getLastDay(); day++) {
 				DaySewage entry;
@@ -242,8 +215,7 @@ public class VocSewage {
 
 				double number = entry.getSewage();
 				number *= sewage.getNormalizer();
-
-				number *= voc.getPrevalence(day, variant);
+				number *= variant.getPrevalence(day);
 				if (number <= MINIMUM) {
 					continue;
 				}
@@ -254,59 +226,32 @@ public class VocSewage {
 			fits.put(variant, fit);
 		}
 
-		variantsByGrowth.sort((v1, v2) -> Double.compare(fits.get(v1).getSlope(), fits.get(v2).getSlope()));
+		/*
+		 * Build (part of) collective fit
+		 */
 		currentDay = CalendarUtils.timeToDay(System.currentTimeMillis());
 		absoluteLastDay = relativeLastDay = currentDay + 30;
 		while (absoluteLastDay > currentDay + 1 && getCollectiveFit(absoluteLastDay) > All.SCALE_PEAK_RENORMALIZER) {
 			absoluteLastDay--;
 		}
-		variantsByCount.sort((v1,
-				v2) -> -Double.compare(fits.get(v1).predict(relativeLastDay), fits.get(v2).predict(relativeLastDay)));
 
-		variantsByCumulative = voc.getVariantNames();
-
-		cumulative = 0;
-		for (int day = getFirstDay(); day <= getLastDay(); day++) {
-			Double prev = sewage.getSewageNormalized(day);
-			if (prev == null) {
-				continue;
-			}
-			cumulative += prev;
-		}
-		if (sewage instanceof sewage.All) {
-			System.out.println("Cumulative " + sewage.getName() + " => " + cumulative);
-		}
-
+		/*
+		 * Build strain numbers
+		 */
 		for (Strain s : Strain.values()) {
 			cumulativeStrainPrevalence.put(s, 0.0);
 		}
 		for (Variant variant : voc.getVariants()) {
-			double number = 0;
-			for (int day = getFirstDay(); day <= getLastDay(); day++) {
-				Double prev = sewage.getSewageNormalized(day);
-				if (prev == null) {
-					continue;
-				}
-				number += prev * voc.getPrevalence(day, variant.name);
-			}
-			cumulativePrevalence.put(variant.name, number);
-
-			Strain s = Strain.findStrainX(variant.lineage);
+			Strain s = Strain.findStrain(variant);
 			if (s != null) {
-				double sPrev = cumulativeStrainPrevalence.get(s) + number;
+				double sPrev = cumulativeStrainPrevalence.get(s) + cumulativePrevalence.get(variant);
 				cumulativeStrainPrevalence.put(s, sPrev);
 			}
 
-			if (sewage instanceof sewage.All) {
-				// System.out.println("Prev on " + variant + " => " + number);
-			}
 		}
-
-		variantsByCumulative
-				.sort((v1, v2) -> -Double.compare(cumulativePrevalence.get(v1), cumulativePrevalence.get(v2)));
 	}
 
-	public TimeSeries makeRegressionTS(String variant) {
+	public TimeSeries makeRegressionTS(Variant variant) {
 		build();
 		SimpleRegression fit;
 		synchronized (this) {
@@ -315,8 +260,7 @@ public class VocSewage {
 		if (fit == null) {
 			return null;
 		}
-		String name = variant.replaceAll("nextcladePangoLineage:", "");
-		TimeSeries series = new TimeSeries(String.format("%s %s", name, slopeToWeekly(fit)));
+		TimeSeries series = new TimeSeries(String.format("%s %s", variant.displayName, slopeToWeekly(fit)));
 		int f = getFirstDay();
 		int l = CalendarUtils.timeToDay(System.currentTimeMillis()) + 30;
 		series.add(CalendarUtils.dayToDay(f), Math.exp(fit.predict(f)));
@@ -324,9 +268,9 @@ public class VocSewage {
 		return series;
 	}
 
-	public synchronized TimeSeries makeRelativeSeries(String variant, boolean doFit) {
+	public synchronized TimeSeries makeRelativeSeries(Variant variant, boolean doFit) {
 		build();
-		String name = variant.replaceAll("nextcladePangoLineage:", "");
+		String name = variant.displayName;
 		SimpleRegression fit = null;
 		int last = getRelativeLastDay();
 		if (doFit) {
@@ -363,7 +307,7 @@ public class VocSewage {
 
 			double number = entry.getSewage();
 			number *= sewage.getNormalizer();
-			number *= voc.getPrevalence(day, variant);
+			number *= variant.getPrevalence(day);
 			if (number <= MINIMUM) {
 				// fit data before or after will fill for it
 				continue;
@@ -407,41 +351,34 @@ public class VocSewage {
 		}
 		if (doFit) {
 			for (int day = getLastDay() + 1; day <= relativeLastDay; day++) {
-				series.add(CalendarUtils.dayToDay(day), 100.0 * getCollectiveFit(strain, day) / getCollectiveFit(day));
+				double num = getCollectiveFit(strain, day) / getCollectiveFit(day);
+				if (num < 0) {
+					new Exception("Uh oh.").printStackTrace();
+				}
+				series.add(CalendarUtils.dayToDay(day), 100.0 * num);
 			}
 		}
 		return series;
 	}
 
-	public synchronized TimeSeries makeAbsoluteSeries(String variant, boolean doFit) {
+	public synchronized TimeSeries makeAbsoluteSeries(Variant variant, boolean doFit) {
 		build();
-		String name = variant.replaceAll("nextcladePangoLineage:", "");
 		SimpleRegression fit = null;
 		if (doFit) {
 			synchronized (this) {
 				fit = fits.get(variant);
 			}
 		}
+		String name = variant.displayName;
 		if (fit != null) {
-			String cap = variantsByGrowth.get(variantsByGrowth.size() - 1);
-			String apex = "";
 			double num = Math.exp(fit.predict(currentDay));
-			if (variant.equalsIgnoreCase(cap)) {
-				apex = ", 365d+";
-				int n = num > getCollectiveFit(currentDay) * 0.5 ? -1 : 1;
-				for (int day = currentDay; day < currentDay + 364; day += n) {
-					if (Math.exp(fit.predict(day)) > getCollectiveFit(day) * 0.5) {
-						apex = ", " + (day - currentDay) + "d";
-						break;
-					}
-				}
-			}
+
 			if (num > 1) {
-				name = String.format("%s (%.1f%s%s)", name, num, slopeToWeekly(fit), apex);
+				name = String.format("%s (%.1f%s)", variant.displayName, num, slopeToWeekly(fit));
 			} else if (num > 0.1) {
-				name = String.format("%s (%.2f%s%s)", name, num, slopeToWeekly(fit), apex);
+				name = String.format("%s (%.2f%s)", variant.displayName, num, slopeToWeekly(fit));
 			} else {
-				name = String.format("%s (%.3f%s%s)", name, num, slopeToWeekly(fit), apex);
+				name = String.format("%s (%.3f%s)", variant.displayName, num, slopeToWeekly(fit));
 			}
 		}
 		TimeSeries series = new TimeSeries(name);
@@ -460,7 +397,7 @@ public class VocSewage {
 
 			double number = entry.getSewage();
 			number *= sewage.getNormalizer();
-			number *= voc.getPrevalence(day, variant);
+			number *= variant.getPrevalence(day);
 			if (number <= MINIMUM) {
 				// fit data before or after will fill for it
 				continue;
@@ -478,19 +415,21 @@ public class VocSewage {
 
 	public double getPrevalence(Strain strain, int day) {
 		double number = 0;
-		for (Variant variant : voc.getVariantsInline()) {
+		for (Variant variant : voc.getVariants()) {
 			// TODO: cache this maybe? dunno
-			Strain s = Strain.findStrainX(variant.lineage);
-			if (s != Strain.CH_1_1 && s != Strain.XBB && s != Strain.BA_2_86
-					&& !variant.name.equalsIgnoreCase(Voc.OTHERS) && !variant.name.startsWith("Tier")) {
-				new Exception(s.name() + " on " + variant.name + " => "
-						+ (variant.lineage != null ? variant.lineage.getFull() : "?")).printStackTrace();
+			if (variant.lineage == null) {
+				continue;
 			}
-			if (s == strain) {
-				number += voc.getPrevalence(day, variant.name);
+			if (Strain.findStrain(variant.lineage) == strain) {
+				number += variant.getPrevalence(day);
 			}
 		}
 		return number;
+	}
+
+	public Collection<Variant> getVariants() {
+		build();
+		return voc.getVariants();
 	}
 
 	public synchronized TimeSeries makeAbsoluteSeries(Strain strain, boolean doFit) {
@@ -526,10 +465,5 @@ public class VocSewage {
 			}
 		}
 		return series;
-	}
-
-	public ArrayList<String> getVariantsByCount() {
-		build();
-		return variantsByCount;
 	}
 }

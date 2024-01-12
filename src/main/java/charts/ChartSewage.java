@@ -171,7 +171,7 @@ public class ChartSewage {
 		return image;
 	}
 
-	public static BufferedImage buildAbsolute(VocSewage vocSewage, String targetVariant, boolean fit, boolean legend,
+	public static BufferedImage buildAbsolute(VocSewage vocSewage, Variant targetVariant, boolean fit, boolean legend,
 			boolean strains) {
 		if (strains && (!fit || !legend || vocSewage.voc.isMerger)) {
 			return null;
@@ -213,8 +213,11 @@ public class ChartSewage {
 				seriesCount++;
 			}
 		} else {
-			for (String variant : vocSewage.getVariantsByCount()) {
-				if (targetVariant != null && !targetVariant.equalsIgnoreCase(variant)) {
+			int lastDay = vocSewage.getAbsoluteLastDay();
+			ArrayList<Variant> variants = new ArrayList<>(vocSewage.getVariants());
+			variants.sort((v1, v2) -> Double.compare(vocSewage.getFit(v1, lastDay), vocSewage.getFit(v2, lastDay)));
+			for (Variant variant : variants) {
+				if (targetVariant != null && targetVariant != variant) {
 					continue;
 				}
 				/*
@@ -243,7 +246,7 @@ public class ChartSewage {
 					+ (voc.isMerger ? "-merger" : "") + "-all";
 		} else {
 			folder = VARIANTS_FOLDER;
-			String n = Voc.display(targetVariant);
+			String n = targetVariant.displayName;
 			n = n.replaceAll("\\*", "");
 			fileName = n + "-" + voc.id + "-abslog" + (fit ? "-fit" : "") + (voc.isMerger ? "-merger" : "");
 		}
@@ -276,7 +279,7 @@ public class ChartSewage {
 			xAxis.setLowerBound(bound);
 		}
 
-		bound = CalendarUtils.dayToTime(vocSewage.getModelLastDay());
+		bound = CalendarUtils.dayToTime(vocSewage.getAbsoluteLastDay());
 		bound = Math.min(bound, xAxis.getUpperBound());
 		xAxis.setUpperBound(bound);
 
@@ -336,10 +339,9 @@ public class ChartSewage {
 		Voc voc = vocSewage.voc;
 
 		int lastDay = vocSewage.getRelativeLastDay();
-		ArrayList<Variant> variants = vocSewage.voc.getVariants();
+		ArrayList<Variant> variants = new ArrayList<>(vocSewage.getVariants());
 		if (fit) {
-			variants.sort((v1,
-					v2) -> -Double.compare(vocSewage.getFit(v1.name, lastDay), vocSewage.getFit(v2.name, lastDay)));
+			variants.sort((v1, v2) -> -Double.compare(vocSewage.getFit(v1, lastDay), vocSewage.getFit(v2, lastDay)));
 		} else {
 			variants.sort((v1, v2) -> Double.compare(v1.averageDay, v2.averageDay));
 		}
@@ -367,7 +369,7 @@ public class ChartSewage {
 				 * BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 				 * seriesCount++; }
 				 */
-				series = vocSewage.makeRelativeSeries(variant.name, fit);
+				series = vocSewage.makeRelativeSeries(variant, fit);
 				collection.addSeries(series);
 				renderer.setSeriesStroke(seriesCount,
 						new BasicStroke(1.75f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
@@ -461,7 +463,7 @@ public class ChartSewage {
 		if (vocSewage.sewage.getTotalSewage() <= 0) {
 			return null;
 		}
-		ArrayList<String> variants = new ArrayList<>();
+		ArrayList<Variant> variants = new ArrayList<>();
 		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 		Voc voc = vocSewage.voc;
 
@@ -480,8 +482,8 @@ public class ChartSewage {
 			}
 		} else {
 
-			Map<String, Double> prev = vocSewage.getCumulativePrevalence(variants);
-			for (String variant : variants) {
+			Map<Variant, Double> prev = vocSewage.getCumulativePrevalence(variants);
+			for (Variant variant : variants) {
 				double prevalence = prev.get(variant);
 				if (prevalence <= 0) {
 					if (prevalence < 0) {
@@ -490,7 +492,7 @@ public class ChartSewage {
 					continue;
 				}
 				double logPrevalence = Math.log(prevalence) / Math.log(10);
-				String name = String.format("%s (%+.0f%%/w)", Voc.display(variant), vocSewage.getGrowth(variant));
+				String name = String.format("%s (%+.0f%%/w)", variant.displayName, vocSewage.getGrowth(variant));
 				dataset.addValue(logPrevalence, name, "Prevalence");
 			}
 		}
@@ -561,9 +563,8 @@ public class ChartSewage {
 		build.execute(() -> ChartSewage.buildRelative(vocSewage, null, false, true, false));
 		build.execute(() -> ChartSewage.buildRelative(vocSewage, null, true, false, false));
 		build.execute(() -> ChartSewage.buildRelative(vocSewage, null, false, false, false));
-		for (String variant : vocSewage.voc.getVariantNames()) {
+		for (Variant variant : vocSewage.getVariants()) {
 			build.execute(() -> ChartSewage.buildAbsolute(vocSewage, variant, true, true, false));
-			build.execute(() -> ChartSewage.buildAbsolute(vocSewage, variant, true, false, false));
 		}
 		build.execute(() -> ChartSewage.buildSewageCumulativeChart(vocSewage, true));
 		build.execute(() -> ChartSewage.buildSewageCumulativeChart(vocSewage, false));

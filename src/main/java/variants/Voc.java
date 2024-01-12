@@ -5,6 +5,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -21,8 +22,6 @@ public class Voc extends DailyTracker {
 	private static final String CSV_NAME1 = "C:\\Users\\jdorj\\Downloads\\" + "VariantComparisonTimeDistributionPlot";
 	private static final String CSV_NAME2 = "C:\\Users\\jdorj\\Downloads\\" + "VariantTimeDistributionPlot";
 	private static final Charset CHARSET = Charset.forName("US-ASCII");
-
-	public static final String OTHERS = "others";
 
 	public final boolean isMerger;
 	public boolean exclusions = false;
@@ -86,57 +85,7 @@ public class Voc extends DailyTracker {
 		return vocs;
 	}
 
-	public static class DayVariants {
-		final HashMap<String, Double> variants = new HashMap<>();
-		final int day;
-
-		public DayVariants(int day) {
-			this.day = day;
-		}
-
-		public synchronized double getPrevalence(String variant) {
-			Double v = variants.get(variant);
-			if (v == null) {
-				if (variant.equals(OTHERS)) {
-					double others = 1.0;
-					for (Double prev : variants.values()) {
-						others -= prev;
-					}
-					if (others < 0) {
-						/*
-						 * Ideally others can just be zero, but due to rounding
-						 * it could then be slightly negative.
-						 */
-						if (others < -1E-15) {
-							new Exception("Big fail negative others " + others + " on " + CalendarUtils.dayToDate(day))
-									.printStackTrace();
-						}
-						others = 0.0;
-					}
-					variants.put(OTHERS, others);
-					return others;
-				}
-				return 0.0;
-			}
-
-			return v;
-		}
-	}
-
-	private final HashMap<Integer, DayVariants> entries = new HashMap<>();
-
-	private HashMap<String, Variant> variants = new HashMap<>();
-
-	public Variant getVariant(String name) {
-		synchronized (variants) {
-			Variant var = variants.get(name);
-			if (var == null) {
-				var = new Variant(name);
-				variants.put(name, var);
-			}
-			return var;
-		}
-	}
+	private HashSet<Variant> variants = new HashSet<>();
 
 	public final int id;
 
@@ -152,6 +101,7 @@ public class Voc extends DailyTracker {
 		}
 		int fNumber = 0;
 		this.multiVariant = multiVariant;
+		HashMap<String, Variant> variantMap = new HashMap<>();
 		for (File f : files) {
 			fNumber++;
 			try (CSVParser csv = CSVParser.parse(f, CHARSET, CSVFormat.DEFAULT)) {
@@ -166,36 +116,28 @@ public class Voc extends DailyTracker {
 					if (proportion == null || proportion.equalsIgnoreCase("null")) {
 						continue;
 					}
-					String variant;
+					String variantName;
 					if (multiVariant) {
-						variant = line.get(4);
+						variantName = line.get(4);
 					} else {
-						variant = "Variant " + fNumber;
+						variantName = "Variant " + fNumber;
 					}
 					int day = CalendarUtils.dateToDay(date);
 
-					DayVariants entry = entries.get(day);
-					if (entry == null) {
-						entry = new DayVariants(day);
-						entries.put(day, entry);
+					Variant variant = variantMap.get(variantName);
+					if (variant == null) {
+						variant = new Variant(variantName);
+						variantMap.put(variantName, variant);
 					}
+
 					double prev = Double.valueOf(proportion);
-					if (entry.variants.get(variant) != null) {
-						System.out.println("Duplicate variant " + variant + "?");
-					}
-					entry.variants.put(variant, prev);
+					variant.setPrevalence(day, prev);
 					includeDay(day);
-					getVariant(variant);
+					variants.add(variant);
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
 				System.exit(0);
-			}
-		}
-
-		synchronized (variants) {
-			if (variants.size() > 1) {
-				getVariant(OTHERS);
 			}
 		}
 
@@ -221,36 +163,44 @@ public class Voc extends DailyTracker {
 				break;
 			}
 
-			DayVariants entry = entries.get(last);
-			if (entry != null) {
-				double prev = 0.0;
-				for (String variant : variants.keySet()) {
-					if (variant.equalsIgnoreCase(OTHERS)) {
-						continue;
-					}
-					prev += entry.getPrevalence(variant);
-				}
-				if (prev > 0.0) {
-					break;
-				}
+			double prev = 0.0;
+			for (Variant variant : variants) {
+				prev += variant.getPrevalence(last);
+			}
+			if (prev > 0.0) {
+				break;
 			}
 			dropLastDay();
 		}
 
 		/*
+		 * Remove variants without enough prevalence.
+		 * 
+		 * TODO: this should go below the lineage subtraction, which then
+		 * requires adding back on any removed lineages to the closest parent.
+		 * 
+		 * Current prevalence requirements are just 10 days of data. With weekly
+		 * smoothing this requires at least 2 sequences separated by ~3 days.
+		 */
+		int num = variants.size();
+		variants.removeIf(variant -> variant.getNumDays(getFirstDay(), getLastDay()) < 10);
+		num -= variants.size();
+		System.out.println("Removed " + num + " variants.");
+
+		/*
 		 * If lineages are known, lets subtract off child from parent.
 		 */
 		ArrayList<Variant> myList = new ArrayList<>(variants.size());
-		for (Variant v : variants.values()) {
+		for (Variant v : variants) {
 			if (v.lineage != null) {
 				myList.add(v);
 			}
 		}
 		myList.sort((v1, v2) -> Integer.compare(v1.lineage.getFull().length(), v2.lineage.getFull().length()));
-		for (Variant v : myList) {
-			// System.out.println(" ==> " + v.lineage.getFull() + " -> " +
-			// v.lineage.getAlias());
-		}
+		// for (Variant v : myList) {
+		// System.out.println(" ==> " + v.lineage.getFull() + " -> " +
+		// v.lineage.getAlias());
+		// }
 		for (int i = myList.size() - 1; i >= 0; i--) {
 			Variant child = myList.get(i);
 
@@ -265,34 +215,23 @@ public class Voc extends DailyTracker {
 				}
 
 				for (int day = getFirstDay(); day <= getLastDay(); day++) {
-					DayVariants entry = entries.get(day);
-					if (entry == null) {
-						continue;
-					}
-
-					double num = entry.variants.get(parent.name);
-					num -= entry.variants.get(child.name);
-					entry.variants.put(parent.name, num);
+					parent.subtractPrevalence(day, child.getPrevalence(day));
 				}
 				exclusions = true;
 			}
 		}
-		// System.exit(0);
 
 		/*
 		 * Build the variant data directly: cumulative prevalence and average
 		 * time
 		 */
-		for (Variant variant : variants.values()) {
+		for (Variant variant : variants) {
 			variant.cumulativePrevalence = 0;
 			double totalDay = 0;
 			for (int day = getFirstDay(); day <= getLastDay(); day++) {
-				DayVariants entry = entries.get(day);
-				if (entry != null) {
-					double prev = entry.getPrevalence(variant.name);
-					variant.cumulativePrevalence += prev;
-					totalDay += day * prev;
-				}
+				double prev = variant.getPrevalence(day);
+				variant.cumulativePrevalence += prev;
+				totalDay += day * prev;
 			}
 			variant.averageDay = totalDay / variant.cumulativePrevalence;
 		}
@@ -303,10 +242,7 @@ public class Voc extends DailyTracker {
 		System.out.println(String.format("%,d total variants", variants.size() - 1));
 		StringBuilder sb = new StringBuilder();
 		StringBuilder sb2 = new StringBuilder();
-		for (Variant variant : variants.values()) {
-			if (variant.name.equals(Voc.OTHERS)) {
-				continue;
-			}
+		for (Variant variant : variants) {
 			if (sb.length() > 0) {
 				sb.append("&");
 			}
@@ -326,94 +262,24 @@ public class Voc extends DailyTracker {
 		}
 		System.out.println(sb.toString());
 		System.out.println(sb2.toString());
-	}
 
-	public static String display(String variant) {
-		return variant.replaceAll("nextcladePangoLineage:", "");
-	}
-
-	public Voc(VocSewage parent, LinkedList<String>[] variants) {
-		isMerger = true;
-		synchronized (nextIdLock) {
-			id = nextId++;
-		}
-		includeDay(parent.getFirstDay());
-		includeDay(parent.getLastDay());
-
-		int num = variants.length;
-		String[] vNames = new String[num];
-		this.multiVariant = true;
-		for (int v = 0; v < vNames.length; v++) {
-			vNames[v] = "Tier " + (v + 1);
-			getVariant(vNames[v]);
-			System.out.println(String.format("%s (%d)", vNames[v], variants[v].size()));
-			for (String var : variants[v]) {
-				String n = display(var);
-				System.out.println(String.format("  %s (%+f%%/week, %.2f%% prevalence)", n, parent.getGrowth(var),
-						100.0 * parent.getPercentage(var)));
-			}
-		}
-
-		// int debugDay = (getFirstDay() + getLastDay()) / 2;
-
-		for (int day = getFirstDay(); day <= getLastDay(); day++) {
-			DayVariants entry = parent.voc.entries.get(day);
-			if (entry == null) {
-				continue;
-			}
-
-			DayVariants entry2 = new DayVariants(day);
-			entries.put(day, entry2);
-
-			for (int v = 0; v < variants.length; v++) {
-				LinkedList<String> vList = variants[v];
-				String variant = vNames[v];
-				double totalPrev = 0.0;
-				for (String vParent : vList) {
-					double prev = parent.voc.entries.get(day).getPrevalence(vParent);
-					// if (day == debugDay) {
-					// System.out.println("Parent prev for " + vParent + " is "
-					// + prev);
-					// }
-					totalPrev += prev;
+		if (variants.size() > 1) {
+			Variant others = new Variant("others");
+			for (int day = getFirstDay(); day <= getLastDay(); day++) {
+				others.setPrevalence(day, 1.0);
+				for (Variant variant : variants) {
+					others.subtractPrevalence(day, variant.getPrevalence(day));
 				}
-				// if (day == debugDay) {
-				// System.out.println("Total prev for " + variant + " is " +
-				// totalPrev);
-				// }
-				entry2.variants.put(variant, totalPrev);
 			}
+			variants.add(others);
 		}
-
-		build();
 	}
 
-	public synchronized ArrayList<Variant> getVariants() {
-		return new ArrayList<>(variants.values());
-	}
-
-	public Collection<Variant> getVariantsInline() {
-		return variants.values();
-	}
-
-	public synchronized ArrayList<String> getVariantNames() {
-		return new ArrayList<>(variants.keySet());
+	public Collection<Variant> getVariants() {
+		return variants;
 	}
 
 	public synchronized int numVariants() {
 		return variants.size();
-	}
-
-	public double getPrevalence(int day, String variant) {
-		DayVariants dv;
-
-		synchronized (this) {
-			dv = entries.get(day);
-		}
-		if (dv == null) {
-			return variant.equalsIgnoreCase(OTHERS) ? 1.0 : 0.0;
-		}
-		Double prev = dv.getPrevalence(variant);
-		return prev;
 	}
 }

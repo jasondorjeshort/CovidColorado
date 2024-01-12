@@ -14,7 +14,7 @@ public enum VariantEnum {
 	 */
 
 	SEP_TO_NOV_2023(
-			"2023-09-17",
+			"2023-11-17",
 			null,
 			"ba.2.86",
 			"ba.2.86.1",
@@ -25,7 +25,7 @@ public enum VariantEnum {
 			"eg.2",
 			"eg.5.1",
 			"eg.5.1.1",
-			"eg.5.1.11",
+			// "eg.5.1.11",
 			"eg.5.1.13",
 			"eg.5.1.16",
 			"eg.5.1.3",

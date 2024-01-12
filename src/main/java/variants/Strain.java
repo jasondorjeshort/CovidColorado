@@ -35,8 +35,7 @@ public enum Strain {
 
 	private static final HashMap<String, Strain> backwardsMap = new HashMap<>();
 
-	public static Strain findStrainX(final String variant) {
-
+	public static Strain findStrain(String variant) {
 		String variantFull = Aliases.expand(variant);
 		if (variantFull == null) {
 			new Exception("Mismatched variant " + variant).printStackTrace();
@@ -65,20 +64,30 @@ public enum Strain {
 				}
 			}
 			if (variantStrain == null) {
+				new Exception("Unknown variant on " + variant).printStackTrace();
 				variantStrain = OTHERS;
 			}
 
-			System.out.println("Variant " + variant + " strained as " + variantStrain.getName());
+			// System.out.println("Variant " + variant + " strained as " +
+			// variantStrain.getName());
 
 			backwardsMap.put(variantFull, variantStrain);
 			return variantStrain;
 		}
 	}
 
-	public static Strain findStrainX(Lineage lineage) {
+	public static Strain findStrain(Variant variant) {
+		if (variant.lineage != null) {
+			return findStrain(variant.lineage);
+		}
+
+		return null;
+	}
+
+	public static Strain findStrain(Lineage lineage) {
 		if (lineage == null) {
 			return null;
 		}
-		return findStrainX(lineage.getFull());
+		return findStrain(lineage.getFull());
 	}
 }
