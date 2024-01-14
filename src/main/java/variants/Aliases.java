@@ -138,7 +138,7 @@ public class Aliases {
 		if (!roots.contains(pre)) {
 			pre = backward.get(pre);
 			if (pre == null) {
-				new Exception("Missing pre: " + m.group("pre")).printStackTrace();
+				new Exception("Missing pre: " + m.group("pre") + " on " + longLineage).printStackTrace();
 			}
 		}
 
