@@ -216,7 +216,8 @@ public class ChartSewage {
 			int lastDay = vocSewage.getAbsoluteLastDay();
 			ArrayList<Variant> variants = new ArrayList<>(vocSewage.getVariants());
 			if (fit) {
-				variants.sort((v1, v2) -> -Double.compare(vocSewage.getFit(v1, lastDay), vocSewage.getFit(v2, lastDay)));
+				variants.sort(
+						(v1, v2) -> -Double.compare(vocSewage.getFit(v1, lastDay), vocSewage.getFit(v2, lastDay)));
 			} else {
 				variants.sort((v1, v2) -> -Double.compare(vocSewage.getCumulative(v1), vocSewage.getCumulative(v2)));
 			}
