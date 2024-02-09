@@ -14,7 +14,7 @@ public enum VariantEnum {
 	 */
 
 	SEP_TO_NOV_2023(
-			"2023-06-01",
+			"2024-01-06",
 			null,
 			"ba.2.86",
 			"ba.2.86.1",
@@ -181,8 +181,6 @@ public enum VariantEnum {
 	// Next removal:
 	// HN.2
 	),
-
-	BA_286("2023-09-10", null, "BA.2.86", "BA.2.86.1", "JN.1", "JN.1.1", "JN.1.2", "JN.2", "JN.3", "XDD"),
 
 	ALL_TIME_VARIANTS(
 			"2020-01-06",
