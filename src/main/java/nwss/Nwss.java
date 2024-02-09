@@ -52,7 +52,7 @@ public class Nwss {
 	private sewage.All all = new sewage.All("United States");
 	private sewage.Geo geo = new sewage.Geo(37.8921116, -106.0125575);
 
-	private Fips fips;
+	// private Fips fips;
 	private Regions regionList = new Regions();
 
 	public static long HOUR = 60 * 60 * 1000;
@@ -236,7 +236,7 @@ public class Nwss {
 		build.execute(() -> readSewage());
 		build.execute(() -> readLocations());
 		build.execute(() -> variants = Voc.create());
-		build.execute(() -> fips = new Fips());
+		// build.execute(() -> fips = new Fips());
 		build.execute(() -> regionList.load());
 		build.execute(() -> {
 			for (VariantEnum vEnum : VariantEnum.values()) {
