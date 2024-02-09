@@ -40,7 +40,8 @@ public class Nwss {
 			+ "NWSS_Public_SARS-CoV-2_Wastewater_Metric_Data.csv";
 	public static final String URL2 = "https://data.cdc.gov/api/views/2ew6-ywp6/rows.csv?accessType=DOWNLOAD";
 
-	public static final String VOC_HTML = System.getProperty("java.io.tmpdir") + "\\" + FOLDER + "\\" + "VOC.html";
+	// public static final String VOC_HTML =
+	// System.getProperty("java.io.tmpdir") + "\\" + FOLDER + "\\" + "VOC.html";
 
 	public static final Charset CHARSET = Charset.forName("US-ASCII");
 
