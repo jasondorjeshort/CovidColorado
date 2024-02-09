@@ -147,6 +147,18 @@ public class Aliases {
 		return pre + post;
 	}
 
+	public static String getParent(String longLineage) {
+		if (roots.contains(longLineage)) {
+			return null;
+		}
+		Pattern parentPattern = Pattern.compile("(?<parent>[A-Za-z]+(\\.\\d+)*)(\\.\\d+)");
+		Matcher m = parentPattern.matcher(longLineage);
+		if (!m.matches()) {
+			throw new RuntimeException("No parent match on " + longLineage);
+		}
+		return m.group("parent");
+	}
+
 	/**
 	 * Exclusive. Lineage names must be expanded.
 	 */

@@ -8,8 +8,7 @@ public class Lineage {
 
 	private final String full;
 	private final String alias;
-	// private final boolean isRoot;
-	private Lineage parent;
+	private final Lineage parent;
 
 	private Lineage(String full) {
 		if (full == null || full.equalsIgnoreCase("null")) {
@@ -17,6 +16,12 @@ public class Lineage {
 		}
 		this.full = full;
 		alias = Aliases.shorten(full);
+		String parentLineage = Aliases.getParent(full);
+		if (parentLineage == null) {
+			parent = null;
+		} else {
+			parent = get(parentLineage);
+		}
 	}
 
 	public String getFull() {
@@ -28,13 +33,7 @@ public class Lineage {
 	}
 
 	public Lineage getParent() {
-		synchronized (this) {
-			if (parent != null) {
-				return parent;
-			}
-		}
-
-		return null;
+		return parent;
 	}
 
 	public boolean isAncestor(Lineage descendant) {
@@ -56,6 +55,7 @@ public class Lineage {
 				lineage = new Lineage(name);
 				lineages.put(name, lineage);
 			}
+
 		}
 		return lineage;
 	}
