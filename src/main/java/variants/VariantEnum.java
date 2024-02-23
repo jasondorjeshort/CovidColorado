@@ -119,7 +119,7 @@ public enum VariantEnum {
 			"jg.3.4",
 			"jj.1",
 			"jm.2",
-			
+
 			"jn.1",
 			"jn.1.1",
 			"jn.1.2",
@@ -148,7 +148,7 @@ public enum VariantEnum {
 			"jn.2",
 			"jn.3",
 			"jn.6",
-			
+
 			"jr.1.1",
 			"jr.1.1.1",
 			"kb.1",

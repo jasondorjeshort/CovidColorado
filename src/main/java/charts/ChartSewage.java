@@ -34,7 +34,6 @@ import sewage.Abstract;
 import sewage.All;
 import variants.Strain;
 import variants.Variant;
-import variants.Voc;
 import variants.VocSewage;
 
 /**
@@ -173,7 +172,7 @@ public class ChartSewage {
 
 	public static BufferedImage buildAbsolute(VocSewage vocSewage, Variant targetVariant, boolean fit, boolean legend,
 			boolean strains) {
-		if (strains && (!legend || vocSewage.voc.isMerger)) {
+		if (strains && (!legend || vocSewage.isMerger)) {
 			return null;
 		}
 		if (vocSewage.sewage.getTotalSewage() <= 0) {
@@ -185,8 +184,7 @@ public class ChartSewage {
 		int seriesCount = 0;
 		TimeSeries series;
 
-		Voc voc = vocSewage.voc;
-		if (fit && targetVariant == null && vocSewage.voc.numVariants() > 1) {
+		if (fit && targetVariant == null && vocSewage.getNumVariants() > 1) {
 			series = vocSewage.makeAbsoluteCollectiveTS();
 			if (series != null) {
 				collection.addSeries(series);
@@ -247,13 +245,14 @@ public class ChartSewage {
 		// (exact ? "-exact" : "") +
 		if (targetVariant == null) {
 			folder = SEWAGE_FOLDER;
-			fileName = vocSewage.sewage.getChartFilename() + "-" + voc.id + "-abslog" + (fit ? "-fit" : "-old")
-					+ (voc.isMerger ? "-merger" : "") + "-all";
+			fileName = vocSewage.sewage.getChartFilename() + "-" + vocSewage.vocId + "-abslog" + (fit ? "-fit" : "-old")
+					+ (vocSewage.isMerger ? "-merger" : "") + "-all";
 		} else {
 			folder = VARIANTS_FOLDER;
 			String n = targetVariant.displayName;
 			n = n.replaceAll("\\*", "");
-			fileName = n + "-" + voc.id + "-absolute" + (fit ? "-fit" : "") + (voc.isMerger ? "-merger" : "");
+			fileName = n + "-" + vocSewage.vocId + "-absolute" + (fit ? "-fit" : "")
+					+ (vocSewage.isMerger ? "-merger" : "");
 		}
 		fileName += strains ? "-strain" : "-variant";
 		fileName += legend ? "-legend" : "-nolegend";
@@ -279,7 +278,7 @@ public class ChartSewage {
 		 */
 
 		ValueAxis xAxis = plot.getDomainAxis();
-		double bound = CalendarUtils.dayToTime(voc.getFirstDay());
+		double bound = CalendarUtils.dayToTime(vocSewage.getFirstDay());
 		if (xAxis.getLowerBound() < bound) {
 			xAxis.setLowerBound(bound);
 		}
@@ -314,7 +313,7 @@ public class ChartSewage {
 
 		fileName = folder + "\\" + fileName + ".png";
 
-		if (!vocSewage.voc.isMerger && targetVariant == null && legend && fit) {
+		if (!vocSewage.isMerger && targetVariant == null && legend && fit) {
 			library.OpenImage.openImage(fileName);
 			library.OpenImage.open();
 		}
@@ -326,13 +325,13 @@ public class ChartSewage {
 
 	public static BufferedImage buildRelative(VocSewage vocSewage, String targetVariant, boolean fit, boolean legend,
 			boolean strains) {
-		if (strains && (!fit || !legend || vocSewage.voc.isMerger)) {
+		if (strains && (!fit || !legend || vocSewage.isMerger)) {
 			return null;
 		}
 		if (vocSewage.sewage.getTotalSewage() <= 0) {
 			return null;
 		}
-		if (vocSewage.voc.numVariants() <= 1) {
+		if (vocSewage.getNumVariants() <= 1) {
 			return null;
 		}
 		TimeSeriesCollection collection = new TimeSeriesCollection();
@@ -340,8 +339,6 @@ public class ChartSewage {
 		DeviationRenderer renderer = new DeviationRenderer(true, false);
 		int seriesCount = 0;
 		TimeSeries series;
-
-		Voc voc = vocSewage.voc;
 
 		int lastDay = vocSewage.getRelativeLastDay();
 		ArrayList<Variant> variants = new ArrayList<>(vocSewage.getVariants());
@@ -387,7 +384,7 @@ public class ChartSewage {
 		String fileName = vocSewage.sewage.getChartFilename();
 		String title = vocSewage.sewage.getTitleLine();
 		// (fit ? "-fit" : "") +(exact ? "-exact" : "") +
-		fileName += (voc.isMerger ? "-merger" : "") + "-" + voc.id + "-relative";
+		fileName += (vocSewage.isMerger ? "-merger" : "") + "-" + vocSewage.vocId + "-relative";
 		fileName += (fit ? "-fit" : "-old");
 		fileName += strains ? "-strain" : "-variant";
 		fileName += (legend ? "-legend" : "-noleg");
@@ -420,7 +417,7 @@ public class ChartSewage {
 		 */
 
 		ValueAxis xAxis = plot.getDomainAxis();
-		double bound = CalendarUtils.dayToTime(voc.getFirstDay());
+		double bound = CalendarUtils.dayToTime(vocSewage.getFirstDay());
 		if (xAxis.getLowerBound() < bound) {
 			xAxis.setLowerBound(bound);
 		}
@@ -454,7 +451,7 @@ public class ChartSewage {
 
 		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
 
-		if (!vocSewage.voc.isMerger && legend && fit) {
+		if (!vocSewage.isMerger && legend && fit) {
 			library.OpenImage.openImage(fileName);
 			library.OpenImage.open();
 		}
@@ -470,7 +467,6 @@ public class ChartSewage {
 		}
 		ArrayList<Variant> variants = new ArrayList<>();
 		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-		Voc voc = vocSewage.voc;
 
 		if (strains) {
 			for (Strain strain : Strain.values()) {
@@ -529,14 +525,14 @@ public class ChartSewage {
 
 		BufferedImage image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT * 3 / 2);
 
-		String fileName = vocSewage.sewage.getChartFilename() + "-" + voc.id + "-cumulative"
-				+ (vocSewage.voc.isMerger ? "-merger" : "");
+		String fileName = vocSewage.sewage.getChartFilename() + "-" + vocSewage.vocId + "-cumulative"
+				+ (vocSewage.isMerger ? "-merger" : "");
 		fileName += strains ? "-strain" : "-variant";
 		// fileName += vocSewage.voc.exclusions ? "-exc" : "-nxc";
 		Charts.saveBufferedImageAsPNG(SEWAGE_FOLDER, fileName, image);
 		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
 
-		if (!vocSewage.voc.isMerger) {
+		if (!vocSewage.isMerger) {
 			library.OpenImage.openImage(fileName);
 			library.OpenImage.open();
 		}
