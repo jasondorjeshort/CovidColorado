@@ -173,7 +173,7 @@ public class ChartSewage {
 
 	public static BufferedImage buildAbsolute(VocSewage vocSewage, Variant targetVariant, boolean fit, boolean legend,
 			boolean strains) {
-		if (strains && (!fit || !legend || vocSewage.voc.isMerger)) {
+		if (strains && (!legend || vocSewage.voc.isMerger)) {
 			return null;
 		}
 		if (vocSewage.sewage.getTotalSewage() <= 0) {
@@ -253,11 +253,11 @@ public class ChartSewage {
 			folder = VARIANTS_FOLDER;
 			String n = targetVariant.displayName;
 			n = n.replaceAll("\\*", "");
-			fileName = n + "-" + voc.id + "-abslog" + (fit ? "-fit" : "") + (voc.isMerger ? "-merger" : "");
+			fileName = n + "-" + voc.id + "-absolute" + (fit ? "-fit" : "") + (voc.isMerger ? "-merger" : "");
 		}
 		fileName += strains ? "-strain" : "-variant";
-		fileName += legend ? "-legend" : "-noleg";
-		fileName += vocSewage.voc.exclusions ? "-exc" : "-nxc";
+		fileName += legend ? "-legend" : "-nolegend";
+		// fileName += vocSewage.voc.exclusions ? "-exc" : "-nxc";
 		title += "\nSource: CDC/NWSS, Cov-Spectrum";
 		String verticalAxis = All.SCALE_NAME;
 
@@ -387,7 +387,7 @@ public class ChartSewage {
 		String fileName = vocSewage.sewage.getChartFilename();
 		String title = vocSewage.sewage.getTitleLine();
 		// (fit ? "-fit" : "") +(exact ? "-exact" : "") +
-		fileName += (voc.isMerger ? "-merger" : "") + "-" + voc.id + "-rel";
+		fileName += (voc.isMerger ? "-merger" : "") + "-" + voc.id + "-relative";
 		fileName += (fit ? "-fit" : "-old");
 		fileName += strains ? "-strain" : "-variant";
 		fileName += (legend ? "-legend" : "-noleg");
@@ -396,7 +396,7 @@ public class ChartSewage {
 		} else {
 			fileName += ("-" + targetVariant);
 		}
-		fileName += vocSewage.voc.exclusions ? "-exc" : "-nxc";
+		// fileName += vocSewage.voc.exclusions ? "-exc" : "-nxc";
 		title += "\nSource: CDC/NWSS, Cov-Spectrum";
 		String verticalAxis = "Relative percentage";
 
@@ -532,7 +532,7 @@ public class ChartSewage {
 		String fileName = vocSewage.sewage.getChartFilename() + "-" + voc.id + "-cumulative"
 				+ (vocSewage.voc.isMerger ? "-merger" : "");
 		fileName += strains ? "-strain" : "-variant";
-		fileName += vocSewage.voc.exclusions ? "-exc" : "-nxc";
+		// fileName += vocSewage.voc.exclusions ? "-exc" : "-nxc";
 		Charts.saveBufferedImageAsPNG(SEWAGE_FOLDER, fileName, image);
 		fileName = SEWAGE_FOLDER + "\\" + fileName + ".png";
 
