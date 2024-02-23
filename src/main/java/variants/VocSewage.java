@@ -114,7 +114,6 @@ public class VocSewage {
 		return String.format("%+.0f%%/week", act);
 	}
 
-	private boolean built = false;
 	private int currentDay, absoluteLastDay, relativeLastDay;
 	private HashMap<Variant, SimpleRegression> fits;
 	private final HashMap<Variant, Double> cumulativePrevalence = new HashMap<>();
@@ -170,11 +169,6 @@ public class VocSewage {
 	static final double MINIMUM = 1E-8;
 
 	private void build() {
-		if (built) {
-			return;
-		}
-		built = true;
-
 		variants.addAll(voc.getVariants());
 		fits = new HashMap<>();
 
