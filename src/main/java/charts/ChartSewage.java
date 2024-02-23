@@ -548,7 +548,6 @@ public class ChartSewage {
 
 	public static void buildVocSewageCharts(VocSewage vocSewage, ASync<Chart> build) {
 		long time = System.currentTimeMillis();
-		vocSewage.build();
 		build.execute(() -> ChartSewage.buildAbsolute(vocSewage, null, true, true, true));
 		build.execute(() -> ChartSewage.buildAbsolute(vocSewage, null, false, true, true));
 		build.execute(() -> ChartSewage.buildAbsolute(vocSewage, null, true, true, false));

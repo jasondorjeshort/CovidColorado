@@ -17,7 +17,6 @@ import charts.Chart;
 import charts.ChartSewage;
 import covid.CalendarUtils;
 import library.ASync;
-import sewage.Fips;
 import variants.Aliases;
 import variants.VariantEnum;
 import variants.VariantSet;
@@ -306,18 +305,20 @@ public class Nwss {
 
 		ASync<Chart> build = new ASync<>();
 		// build.execute(() -> ChartSewage.createSewage(geo));
-		build.execute(() -> ChartSewage.createSewage(all, null));
 		if (variants != null) {
-			for (Voc voc : variants) {
-				VocSewage vocSewage = new VocSewage(all, voc);
-				ChartSewage.buildVocSewageCharts(vocSewage, build);
+			build.execute(() -> {
+				for (Voc voc : variants) {
+					VocSewage vocSewage = new VocSewage(all, voc);
+					ChartSewage.buildVocSewageCharts(vocSewage, build);
 
-				if (!voc.multiVariant) {
-					sewage.State sewage = states.get("Colorado");
-					ChartSewage.buildVocSewageCharts(new VocSewage(sewage, voc), build);
+					if (!voc.multiVariant) {
+						sewage.State sewage = states.get("Colorado");
+						ChartSewage.buildVocSewageCharts(new VocSewage(sewage, voc), build);
+					}
 				}
-			}
+			});
 		}
+		build.execute(() -> ChartSewage.createSewage(all, null));
 		plants.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage, null)));
 		counties.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage, null)));
 		states.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage, 5)));

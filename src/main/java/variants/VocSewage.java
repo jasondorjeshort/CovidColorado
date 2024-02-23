@@ -25,6 +25,7 @@ public class VocSewage {
 		this.voc = voc;
 		this.isMerger = voc.isMerger;
 		this.vocId = voc.id;
+		build();
 	}
 
 	public int lastInflection = CalendarUtils.dateToDay("1-13-2024");
@@ -38,14 +39,12 @@ public class VocSewage {
 	}
 
 	public HashMap<Variant, Double> getCumulativePrevalence(ArrayList<Variant> variantList) {
-		build();
 		variantList.addAll(variants);
 		variantList.sort((v1, v2) -> -Double.compare(cumulativePrevalence.get(v1), cumulativePrevalence.get(v2)));
 		return cumulativePrevalence;
 	}
 
 	public double getCollectiveFit(int day) {
-		build();
 		synchronized (collectiveFit) {
 			Double n = collectiveFit.get(day);
 			if (n != null) {
@@ -66,8 +65,6 @@ public class VocSewage {
 	}
 
 	public double getCollectiveFit(Strain strain, int day) {
-		// HashMap<Strain, HashMap<Integer, Double>> collectiveStrainFit
-		build();
 		synchronized (collectiveStrainFit) {
 			HashMap<Strain, Double> cFit = collectiveStrainFit.get(day);
 
@@ -96,8 +93,6 @@ public class VocSewage {
 	}
 
 	public TimeSeries makeAbsoluteCollectiveTS() {
-		build();
-
 		TimeSeries series = new TimeSeries(String.format("Collective fit"));
 		for (int day = getFirstDay(); day <= absoluteLastDay; day++) {
 			series.add(CalendarUtils.dayToDay(day), getCollectiveFit(day));
@@ -130,12 +125,10 @@ public class VocSewage {
 	private final HashSet<Variant> variants = new HashSet<>();
 
 	public int getAbsoluteLastDay() {
-		build();
 		return absoluteLastDay;
 	}
 
 	public int getRelativeLastDay() {
-		build();
 		return relativeLastDay;
 	}
 
@@ -144,17 +137,14 @@ public class VocSewage {
 	}
 
 	public double getCumulative(Variant variant) {
-		build();
 		return cumulativePrevalence.get(variant);
 	}
 
 	public double getCumulative(Strain strain) {
-		build();
 		return cumulativeStrainPrevalence.get(strain);
 	}
 
 	public double getCumulative() {
-		build();
 		return cumulative;
 	}
 
@@ -179,7 +169,7 @@ public class VocSewage {
 	 */
 	static final double MINIMUM = 1E-8;
 
-	public synchronized void build() {
+	private void build() {
 		if (built) {
 			return;
 		}
@@ -266,7 +256,6 @@ public class VocSewage {
 	}
 
 	public TimeSeries makeRegressionTS(Variant variant) {
-		build();
 		SimpleRegression fit;
 		synchronized (this) {
 			fit = fits.get(variant);
@@ -283,7 +272,6 @@ public class VocSewage {
 	}
 
 	public synchronized TimeSeries makeRelativeSeries(Variant variant, boolean doFit) {
-		build();
 		String name = variant.displayName;
 		SimpleRegression fit = null;
 		int last = getRelativeLastDay();
@@ -339,7 +327,6 @@ public class VocSewage {
 	}
 
 	public synchronized TimeSeries makeRelativeSeries(Strain strain, boolean doFit) {
-		build();
 		TimeSeries series = new TimeSeries(strain.getName());
 		if (doFit) {
 			int day = getFirstDay() - 42;
@@ -376,7 +363,6 @@ public class VocSewage {
 	}
 
 	public synchronized TimeSeries makeAbsoluteSeries(Variant variant, boolean doFit) {
-		build();
 		SimpleRegression fit = null;
 		if (doFit) {
 			synchronized (this) {
@@ -442,12 +428,10 @@ public class VocSewage {
 	}
 
 	public Collection<Variant> getVariants() {
-		build();
 		return variants;
 	}
 
 	public synchronized TimeSeries makeAbsoluteSeries(Strain strain, boolean doFit) {
-		build();
 		TimeSeries series = new TimeSeries(strain.getName());
 		if (doFit) {
 			int day = getFirstDay() - 42;
