@@ -173,19 +173,23 @@ public class Voc extends DailyTracker {
 			dropLastDay();
 		}
 
-		/*
-		 * Remove variants without enough prevalence.
-		 * 
-		 * TODO: this should go below the lineage subtraction, which then
-		 * requires adding back on any removed lineages to the closest parent.
-		 * 
-		 * Current prevalence requirements are just 10 days of data. With weekly
-		 * smoothing this requires at least 2 sequences separated by ~3 days.
-		 */
-		int num = variants.size();
-		variants.removeIf(variant -> variant.getNumDays(getFirstDay(), getLastDay()) < 10);
-		num -= variants.size();
-		System.out.println("Removed " + num + " variants.");
+		if (false) {
+			/*
+			 * Remove variants without enough prevalence.
+			 * 
+			 * TODO: this should go below the lineage subtraction, which then
+			 * requires adding back on any removed lineages to the closest
+			 * parent.
+			 * 
+			 * Current prevalence requirements are just 10 days of data. With
+			 * weekly smoothing this requires at least 2 sequences separated by
+			 * ~3 days.
+			 */
+			int num = variants.size();
+			variants.removeIf(variant -> variant.getNumDays(getFirstDay(), getLastDay()) < 10);
+			num -= variants.size();
+			System.out.println("Removed " + num + " variants.");
+		}
 
 		/*
 		 * If lineages are known, lets subtract off child from parent.
