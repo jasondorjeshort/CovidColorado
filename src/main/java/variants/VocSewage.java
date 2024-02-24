@@ -94,7 +94,7 @@ public class VocSewage {
 
 	public TimeSeries makeAbsoluteCollectiveTS() {
 		TimeSeries series = new TimeSeries(String.format("Collective fit"));
-		for (int day = getFirstDay(); day <= absoluteLastDay; day++) {
+		for (int day = Math.max(getFirstDay(), lastInflection); day <= absoluteLastDay; day++) {
 			series.add(CalendarUtils.dayToDay(day), getCollectiveFit(day));
 		}
 
@@ -115,13 +115,151 @@ public class VocSewage {
 	}
 
 	private int currentDay, absoluteLastDay, relativeLastDay;
-	private HashMap<Variant, SimpleRegression> fits;
+	private final HashMap<Variant, SimpleRegression> fits = new HashMap<>();
 	private final HashMap<Variant, Double> cumulativePrevalence = new HashMap<>();
 	private final HashMap<Strain, Double> cumulativeStrainPrevalence = new HashMap<>();
 	private double cumulative = 0;
 	private final HashMap<Integer, Double> collectiveFit = new HashMap<>();
 	private final HashMap<Integer, HashMap<Strain, Double>> collectiveStrainFit = new HashMap<>();
 	private final HashSet<Variant> variants = new HashSet<>();
+	private final HashMap<Lineage, Variant> variantMap = new HashMap<>();
+
+	/*
+	 * rounding error of subtractions can cause "0" to show as really low.
+	 * Usually like E-16 but nothing lower than about E-4 should be possible
+	 * given sequencing counts. Actually the lowest in the US for any reasonable
+	 * lineage is 0.0025. Anything zero needs to be ignored for both graphing or
+	 * regression, since they'll bork an exponential fit or graph.
+	 */
+	static final double MINIMUM = 1E-8;
+
+	private Variant findVariantToRemove() {
+		ArrayList<Variant> v = new ArrayList<>(variants);
+		v.removeIf(variant -> variant.lineage == null);
+		v.sort((v1, v2) -> -Integer.compare(v1.lineage.getFull().length(), v2.lineage.getFull().length()));
+
+		System.out.println(v.get(0).lineage.getFull());
+		System.out.println(v.get(v.size() - 1).lineage.getFull());
+
+		for (Variant variant : v) {
+			double number = 0, numDays = 0;
+			for (int day = Math.max(lastInflection, getFirstDay()); day <= getLastDay(); day++) {
+				Double s = sewage.getSewageNormalized(day);
+				if (s == null) {
+					continue;
+				}
+				double prev = variant.getPrevalence(day);
+				number += s * prev;
+				numDays += prev > MINIMUM ? 1 : 0;
+			}
+
+			if (numDays < 22 || number < 0.1) {
+				return variant;
+			}
+
+			SimpleRegression fit = makeFit(variant);
+			double slope = fit.getSlope();
+			if (!Double.isFinite(slope)) {
+				return variant;
+			}
+
+		}
+		return null;
+	}
+
+	private SimpleRegression makeFit(Variant variant) {
+		SimpleRegression fit = new SimpleRegression();
+		for (int day = lastInflection; day <= getLastDay(); day++) {
+			DaySewage entry;
+			entry = sewage.getEntry(day);
+			if (entry == null) {
+				continue;
+			}
+
+			double number = entry.getSewage();
+			number *= sewage.getNormalizer();
+			number *= variant.getPrevalence(day);
+			if (number <= MINIMUM) {
+				continue;
+			}
+
+			fit.addData(day, Math.log(number));
+		}
+		return fit;
+	}
+
+	private void build() {
+		variants.addAll(voc.getVariants());
+		variants.forEach(variant -> {
+			if (variant.lineage != null) {
+				variantMap.put(variant.lineage, variant);
+			}
+		});
+
+		Variant deletion;
+		while ((deletion = findVariantToRemove()) != null) {
+			variants.remove(deletion);
+			System.out.println("Deleted variant " + deletion.name);
+		}
+
+		/*
+		 * Cumulative sewage only (should be part of sewage???)
+		 */
+		cumulative = 0;
+		for (int day = getFirstDay(); day <= getLastDay(); day++) {
+			Double prev = sewage.getSewageNormalized(day);
+			if (prev == null) {
+				continue;
+			}
+			cumulative += prev;
+		}
+
+		/*
+		 * Cumulative sewage by variant
+		 */
+		for (Variant variant : variants) {
+			double number = 0;
+			for (int day = getFirstDay(); day <= getLastDay(); day++) {
+				Double prev = sewage.getSewageNormalized(day);
+				if (prev == null) {
+					continue;
+				}
+				number += prev * variant.getPrevalence(day);
+			}
+			cumulativePrevalence.put(variant, number);
+		}
+
+		/*
+		 * Build fits
+		 */
+		for (Variant variant : variants) {
+			fits.put(variant, makeFit(variant));
+		}
+
+		/*
+		 * Build (part of) collective fit
+		 */
+		currentDay = CalendarUtils.timeToDay(System.currentTimeMillis());
+		absoluteLastDay = relativeLastDay = currentDay + 30;
+		while (absoluteLastDay > currentDay + 1 && getCollectiveFit(absoluteLastDay) > All.SCALE_PEAK_RENORMALIZER) {
+			absoluteLastDay--;
+		}
+
+		/*
+		 * Build strain numbers
+		 */
+		for (Strain s : Strain.values()) {
+			cumulativeStrainPrevalence.put(s, 0.0);
+		}
+		for (Variant variant : variants) {
+			Strain s = Strain.findStrain(variant);
+			if (s != null) {
+				double sPrev = cumulativeStrainPrevalence.get(s) + cumulativePrevalence.get(variant);
+				cumulativeStrainPrevalence.put(s, sPrev);
+			}
+
+		}
+	}
 
 	public int getAbsoluteLastDay() {
 		return absoluteLastDay;
@@ -157,96 +295,6 @@ public class VocSewage {
 
 	public int getNumVariants() {
 		return variants.size();
-	}
-
-	/*
-	 * rounding error of subtractions can cause "0" to show as really low.
-	 * Usually like E-16 but nothing lower than about E-4 should be possible
-	 * given sequencing counts. Actually the lowest in the US for any reasonable
-	 * lineage is 0.0025. Anything zero needs to be ignored for both graphing or
-	 * regression, since they'll bork an exponential fit or graph.
-	 */
-	static final double MINIMUM = 1E-8;
-
-	private void build() {
-		variants.addAll(voc.getVariants());
-		fits = new HashMap<>();
-
-		/*
-		 * Cumulative sewage only (should be part of sewage???)
-		 */
-		cumulative = 0;
-		for (int day = getFirstDay(); day <= getLastDay(); day++) {
-			Double prev = sewage.getSewageNormalized(day);
-			if (prev == null) {
-				continue;
-			}
-			cumulative += prev;
-		}
-
-		/*
-		 * Cumulative sewage by variant
-		 */
-		for (Variant variant : variants) {
-			double number = 0;
-			for (int day = getFirstDay(); day <= getLastDay(); day++) {
-				Double prev = sewage.getSewageNormalized(day);
-				if (prev == null) {
-					continue;
-				}
-				number += prev * variant.getPrevalence(day);
-			}
-			cumulativePrevalence.put(variant, number);
-		}
-
-		/*
-		 * Build fits
-		 */
-		for (Variant variant : variants) {
-			SimpleRegression fit = new SimpleRegression();
-			for (int day = getFirstDay(); day <= getLastDay(); day++) {
-				DaySewage entry;
-				entry = sewage.getEntry(day);
-				if (entry == null) {
-					continue;
-				}
-
-				double number = entry.getSewage();
-				number *= sewage.getNormalizer();
-				number *= variant.getPrevalence(day);
-				if (number <= MINIMUM) {
-					continue;
-				}
-
-				fit.addData(day, Math.log(number));
-			}
-
-			fits.put(variant, fit);
-		}
-
-		/*
-		 * Build (part of) collective fit
-		 */
-		currentDay = CalendarUtils.timeToDay(System.currentTimeMillis());
-		absoluteLastDay = relativeLastDay = currentDay + 30;
-		while (absoluteLastDay > currentDay + 1 && getCollectiveFit(absoluteLastDay) > All.SCALE_PEAK_RENORMALIZER) {
-			absoluteLastDay--;
-		}
-
-		/*
-		 * Build strain numbers
-		 */
-		for (Strain s : Strain.values()) {
-			cumulativeStrainPrevalence.put(s, 0.0);
-		}
-		for (Variant variant : variants) {
-			Strain s = Strain.findStrain(variant);
-			if (s != null) {
-				double sPrev = cumulativeStrainPrevalence.get(s) + cumulativePrevalence.get(variant);
-				cumulativeStrainPrevalence.put(s, sPrev);
-			}
-
-		}
 	}
 
 	public TimeSeries makeRegressionTS(Variant variant) {
@@ -288,7 +336,7 @@ public class VocSewage {
 			}
 		}
 		TimeSeries series = new TimeSeries(name);
-		if (fit != null) {
+		if (fit != null && fit.getSlope() > 0) {
 			int day = getFirstDay() - 42;
 			series.add(CalendarUtils.dayToDay(day), 100 * Math.exp(fit.predict(day)) / getCollectiveFit(day));
 		}
@@ -376,7 +424,7 @@ public class VocSewage {
 			}
 		}
 		TimeSeries series = new TimeSeries(name);
-		if (fit != null) {
+		if (fit != null && fit.getSlope() > 0) {
 			int day = getFirstDay() - 42;
 			series.add(CalendarUtils.dayToDay(day), Math.exp(fit.predict(day)));
 		}
