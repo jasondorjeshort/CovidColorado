@@ -28,7 +28,14 @@ public class VocSewage {
 		build();
 	}
 
-	public int lastInflection = CalendarUtils.dateToDay("1-13-2024");
+	private int lastInflection = CalendarUtils.dateToDay("1-14-2024");
+
+	public int getLastInflection(Variant variant) {
+		if (variant == null) {
+			return lastInflection;
+		}
+		return fitStartDays.get(variant);
+	}
 
 	public int getFirstDay() {
 		return Math.max(sewage.getFirstDay(), voc.getFirstDay());
@@ -116,6 +123,7 @@ public class VocSewage {
 
 	private int currentDay, absoluteLastDay, relativeLastDay;
 	private final HashMap<Variant, SimpleRegression> fits = new HashMap<>();
+	private final HashMap<Variant, Integer> fitStartDays = new HashMap<>();
 	private final HashMap<Variant, Double> cumulativePrevalence = new HashMap<>();
 	private final HashMap<Strain, Double> cumulativeStrainPrevalence = new HashMap<>();
 	private double cumulative = 0;
@@ -188,6 +196,34 @@ public class VocSewage {
 
 			fit.addData(day, Math.log(number));
 		}
+
+		/*
+		 * Continue to go backwards SO LONG AS it makes the slope lower.
+		 */
+		double slope = fit.getSlope();
+		int day;
+		for (day = lastInflection - 1;; day--) {
+			DaySewage entry;
+			entry = sewage.getEntry(day);
+			if (entry == null) {
+				break;
+			}
+
+			double number = entry.getSewage();
+			number *= sewage.getNormalizer();
+			number *= variant.getPrevalence(day);
+			if (number <= MINIMUM) {
+				break;
+			}
+
+			fit.addData(day, Math.log(number));
+			double newSlope = fit.getSlope();
+			if (newSlope > slope) {
+				break;
+			}
+			slope = newSlope;
+		}
+		fitStartDays.put(variant, day);
 		return fit;
 	}
 
@@ -298,6 +334,12 @@ public class VocSewage {
 			}
 
 		}
+
+		lastInflection = Integer.MIN_VALUE;
+		for (Variant v : variants) {
+			lastInflection = Math.max(lastInflection, fitStartDays.get(v));
+		}
+
 	}
 
 	public int getAbsoluteLastDay() {

@@ -287,7 +287,16 @@ public class ChartSewage {
 		bound = Math.min(bound, xAxis.getUpperBound());
 		xAxis.setUpperBound(bound);
 
-		ValueMarker marker = new ValueMarker(CalendarUtils.dayToTime(vocSewage.getLastDay()));
+		int fitStartDay = vocSewage.getLastInflection(targetVariant);
+		ValueMarker marker = new ValueMarker(CalendarUtils.dayToTime(fitStartDay));
+		marker.setPaint(Color.black);
+		marker.setLabel("Fit start");
+		marker.setStroke(Charts.stroke);
+		marker.setLabelFont(Charts.font);
+		marker.setLabelTextAnchor(TextAnchor.TOP_CENTER);
+		plot.addDomainMarker(marker);
+
+		marker = new ValueMarker(CalendarUtils.dayToTime(vocSewage.getLastDay()));
 		marker.setPaint(Color.black);
 		marker.setLabel("Data cutoff");
 		marker.setStroke(Charts.stroke);
@@ -427,7 +436,15 @@ public class ChartSewage {
 		xAxis.setUpperBound(bound);
 
 		if (fit) {
-			ValueMarker marker = new ValueMarker(CalendarUtils.dayToTime(vocSewage.getLastDay()));
+			ValueMarker marker = new ValueMarker(CalendarUtils.dayToTime(vocSewage.getLastInflection(null)));
+			marker.setPaint(Color.black);
+			marker.setLabel("Fit start");
+			marker.setStroke(Charts.stroke);
+			marker.setLabelFont(Charts.font);
+			marker.setLabelTextAnchor(TextAnchor.TOP_CENTER);
+			plot.addDomainMarker(marker);
+
+			marker = new ValueMarker(CalendarUtils.dayToTime(vocSewage.getLastDay()));
 			marker.setPaint(Color.black);
 			marker.setLabel("Data cutoff");
 			marker.setStroke(Charts.stroke);
