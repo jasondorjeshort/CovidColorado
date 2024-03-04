@@ -12,6 +12,9 @@ import covid.CalendarUtils;
  * prevalence data is included in the Voc for now though.
  */
 public class Variant {
+
+	public final String OTHERS = "Others";
+
 	/** Index name. */
 	public final String name;
 
@@ -78,6 +81,12 @@ public class Variant {
 		// lineage.getAlias()));
 	}
 
+	public Variant(Lineage lineage) {
+		this.lineage = lineage;
+		this.name = lineage.getFull();
+		this.displayName = lineage.getAlias();
+	}
+
 	public boolean isAncestor(Variant descendant) {
 		return lineage.isAncestor(descendant.lineage);
 	}
@@ -86,6 +95,40 @@ public class Variant {
 		Set<Integer> keys = daily.keySet();
 		keys.removeIf(day -> daily.get(day) <= VocSewage.MINIMUM || day < firstDay || day > lastDay);
 		return keys.size();
+	}
+
+	public void add(Variant descendant) {
+		if (!name.equalsIgnoreCase(OTHERS) && (lineage == null || !lineage.isAncestor(descendant.lineage))) {
+			new Exception("Uh oh.").printStackTrace();
+		}
+
+		descendant.daily.forEach((d, v) -> {
+			if (daily.get(d) == null) {
+				daily.put(d, v);
+			} else {
+				daily.put(d, daily.get(d) + v);
+			}
+		});
+		descendant.daily.clear();
+	}
+
+	public Variant duplicate() {
+		try {
+			Variant dup = new Variant(this.name);
+			if (lineage != dup.lineage) {
+				System.out.println("Uh oh.");
+			}
+			dup.cumulativePrevalence = cumulativePrevalence;
+			dup.averageDay = averageDay;
+			daily.forEach((d, v) -> dup.daily.put(d, v));
+			if (daily == dup.daily) {
+				System.out.println("Uh oh.");
+			}
+			return dup;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 }

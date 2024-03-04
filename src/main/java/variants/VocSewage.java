@@ -122,7 +122,7 @@ public class VocSewage {
 	private final HashMap<Integer, Double> collectiveFit = new HashMap<>();
 	private final HashMap<Integer, HashMap<Strain, Double>> collectiveStrainFit = new HashMap<>();
 	private final HashSet<Variant> variants = new HashSet<>();
-	private final HashMap<Lineage, Variant> variantMap = new HashMap<>();
+	private final HashMap<Lineage, Variant> lineageMap = new HashMap<>();
 
 	/*
 	 * rounding error of subtractions can cause "0" to show as really low.
@@ -133,7 +133,10 @@ public class VocSewage {
 	 */
 	static final double MINIMUM = 1E-8;
 
-	private Variant findVariantToRemove() {
+	private Variant findLineageToRemove() {
+		if (variants.size() <= 1) {
+			return null;
+		}
 		ArrayList<Variant> v = new ArrayList<>(variants);
 		v.removeIf(variant -> variant.lineage == null);
 		v.sort((v1, v2) -> -Integer.compare(v1.lineage.getFull().length(), v2.lineage.getFull().length()));
@@ -189,17 +192,53 @@ public class VocSewage {
 	}
 
 	private void build() {
-		variants.addAll(voc.getVariants());
+		Variant others = null;
+		for (Variant v : voc.getVariants()) {
+			v = v.duplicate();
+			variants.add(v);
+			if (v.name.equalsIgnoreCase("others")) {
+				others = v;
+			}
+		}
 		variants.forEach(variant -> {
 			if (variant.lineage != null) {
-				variantMap.put(variant.lineage, variant);
+				lineageMap.put(variant.lineage, variant);
 			}
 		});
 
 		Variant deletion;
-		while ((deletion = findVariantToRemove()) != null) {
+		while ((deletion = findLineageToRemove()) != null) {
+			Lineage l = deletion.lineage;
+
+			Lineage p = l.getParent();
+
+			Variant merge;
+			if (p == null) {
+				if (others == null) {
+					others = new Variant("Others");
+					variants.add(others);
+				}
+
+				/*
+				 * TODO: maybe per-strain others?
+				 */
+				merge = others;
+			} else {
+				Variant pv = lineageMap.get(p);
+				if (pv == null) {
+					pv = new Variant(p);
+					System.out.println("Manufacturing " + p.getAlias());
+					lineageMap.put(p, pv);
+					variants.add(pv);
+				}
+				merge = pv;
+			}
+
+			merge.add(deletion);
 			variants.remove(deletion);
-			System.out.println("Deleted variant " + deletion.name);
+			lineageMap.remove(l);
+
+			System.out.println("Merged variant " + deletion.name + " into " + merge.name);
 		}
 
 		/*
