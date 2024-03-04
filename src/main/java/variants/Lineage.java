@@ -11,7 +11,7 @@ public class Lineage {
 	private final Lineage parent;
 
 	private Lineage(String full) {
-		if (full == null || full.equalsIgnoreCase("null")) {
+		if (full == null || full.equalsIgnoreCase("null") || full.contains("null")) {
 			throw new RuntimeException("Null lineage???");
 		}
 		this.full = full;
