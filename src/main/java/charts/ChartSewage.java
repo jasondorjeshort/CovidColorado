@@ -83,8 +83,7 @@ public class ChartSewage {
 		new File(COUNTIES_FOLDER + "\\" + state).mkdir();
 	}
 
-	public static BufferedImage buildSewageTimeseriesChart(Abstract sewage, boolean log, Integer maxChildren,
-			boolean latest) {
+	public static BufferedImage buildSewageTimeseriesChart(Abstract sewage, Integer maxChildren, boolean latest) {
 
 		if (sewage.getTotalSewage() <= 0) {
 			return null;
@@ -124,7 +123,6 @@ public class ChartSewage {
 		String title = "Covid in sewage, " + CalendarUtils.dayToDate(sewage.getLastDay()) + "\n";
 		title += sewage.getTitleLine();
 		title += "\nSource: CDC/NWSS";
-		fileName += "-" + (log ? "log" : "cart");
 		fileName += "-" + (latest ? "recent" : "all");
 		String verticalAxis = All.SCALE_NAME;
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title, "Date", verticalAxis, collection);
@@ -135,16 +133,14 @@ public class ChartSewage {
 		}
 		plot.setRenderer(renderer);
 
-		if (log) {
-			LogarithmicAxis yAxis = new LogarithmicAxis(verticalAxis);
-			plot.setRangeAxis(yAxis);
-			double lowerBound = 0.01;
-			if (yAxis.getLowerBound() < lowerBound) {
-				yAxis.setLowerBound(lowerBound);
-			}
-
-			// plot.getDomainAxis().setLowerBound(CalendarUtils.dateToTime("5-1-2023"));
+		LogarithmicAxis yAxis = new LogarithmicAxis(verticalAxis);
+		plot.setRangeAxis(yAxis);
+		double lowerBound = 0.01;
+		if (yAxis.getLowerBound() < lowerBound) {
+			yAxis.setLowerBound(lowerBound);
 		}
+
+		// plot.getDomainAxis().setLowerBound(CalendarUtils.dateToTime("5-1-2023"));
 
 		Long last = sewage.getLastInflection();
 		if (latest && last != null) {
@@ -245,7 +241,7 @@ public class ChartSewage {
 		// (exact ? "-exact" : "") +
 		if (targetVariant == null) {
 			folder = SEWAGE_FOLDER;
-			fileName = vocSewage.sewage.getChartFilename() + "-" + vocSewage.vocId + "-abslog" + (fit ? "-fit" : "-old")
+			fileName = vocSewage.sewage.getChartFilename() + "-" + vocSewage.vocId + "-absolute" + (fit ? "-fit" : "-old")
 					+ (vocSewage.isMerger ? "-merger" : "") + "-all";
 		} else {
 			folder = VARIANTS_FOLDER;
@@ -559,8 +555,8 @@ public class ChartSewage {
 
 	public static void createSewage(Abstract sewage, Integer maxChildren) {
 		// buildSewageTimeseriesChart(sewage, false);
-		buildSewageTimeseriesChart(sewage, true, maxChildren, true);
-		buildSewageTimeseriesChart(sewage, true, maxChildren, false);
+		buildSewageTimeseriesChart(sewage, maxChildren, true);
+		buildSewageTimeseriesChart(sewage, maxChildren, false);
 	}
 
 	public static void buildVocSewageCharts(VocSewage vocSewage, ASync<Chart> build) {
