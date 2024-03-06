@@ -142,11 +142,15 @@ public class ChartSewage {
 
 		// plot.getDomainAxis().setLowerBound(CalendarUtils.dateToTime("5-1-2023"));
 
-		Long last = sewage.getLastInflection();
-		if (latest && last != null) {
+		if (latest) {
 			ValueAxis xaxis = plot.getDomainAxis();
 
-			xaxis.setLowerBound(last);
+			long earliest = System.currentTimeMillis() - 180l * 24 * 60 * 60 * 1000;
+			Long last = sewage.getLastInflection();
+			if (last != null) {
+				earliest = Math.min(earliest, last);
+			}
+			xaxis.setLowerBound(earliest);
 			xaxis.setUpperBound(System.currentTimeMillis());
 		}
 
@@ -157,8 +161,8 @@ public class ChartSewage {
 
 		if (sewage instanceof sewage.All || sewage instanceof sewage.Geo
 				|| sewage.getName().equalsIgnoreCase("Colorado")) {
-			// library.OpenImage.openImage(fileName);
-			// library.OpenImage.open();
+			library.OpenImage.openImage(fileName);
+			library.OpenImage.open();
 		}
 
 		// System.out.println("Created : " + sewage.id + " for " +
@@ -241,8 +245,8 @@ public class ChartSewage {
 		// (exact ? "-exact" : "") +
 		if (targetVariant == null) {
 			folder = SEWAGE_FOLDER;
-			fileName = vocSewage.sewage.getChartFilename() + "-" + vocSewage.vocId + "-absolute" + (fit ? "-fit" : "-old")
-					+ (vocSewage.isMerger ? "-merger" : "") + "-all";
+			fileName = vocSewage.sewage.getChartFilename() + "-" + vocSewage.vocId + "-absolute"
+					+ (fit ? "-fit" : "-old") + (vocSewage.isMerger ? "-merger" : "") + "-all";
 		} else {
 			folder = VARIANTS_FOLDER;
 			String n = targetVariant.displayName;
