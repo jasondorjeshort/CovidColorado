@@ -149,12 +149,16 @@ public class VocSewage {
 		v.removeIf(variant -> variant.lineage == null);
 		v.sort((v1, v2) -> -Integer.compare(v1.lineage.getFull().length(), v2.lineage.getFull().length()));
 
-		System.out.println(v.get(0).lineage.getFull());
-		System.out.println(v.get(v.size() - 1).lineage.getFull());
-
 		for (Variant variant : v) {
+			int fitStartDay = findFitStartDay(variant);
+			SimpleRegression fit = makeFit(variant, fitStartDay);
+			double slope = fit.getSlope();
+			if (!Double.isFinite(slope)) {
+				return variant;
+			}
+
 			double number = 0, numDays = 0;
-			for (int day = Math.max(lastInflection, getFirstDay()); day <= getLastDay(); day++) {
+			for (int day = Math.max(fitStartDay, getFirstDay()); day <= getLastDay(); day++) {
 				Double s = sewage.getSewageNormalized(day);
 				if (s == null) {
 					continue;
@@ -167,63 +171,66 @@ public class VocSewage {
 			if (numDays < 22 || number < 0.1) {
 				return variant;
 			}
-
-			SimpleRegression fit = makeFit(variant);
-			double slope = fit.getSlope();
-			if (!Double.isFinite(slope)) {
-				return variant;
-			}
-
 		}
 		return null;
 	}
 
-	private SimpleRegression makeFit(Variant variant) {
-		SimpleRegression fit = new SimpleRegression();
-		for (int day = lastInflection; day <= getLastDay(); day++) {
-			DaySewage entry;
-			entry = sewage.getEntry(day);
-			if (entry == null) {
-				continue;
-			}
+	private int findFitStartDay(Variant variant) {
+		SimpleRegression fit = makeFit(variant, lastInflection);
 
-			double number = entry.getSewage();
-			number *= sewage.getNormalizer();
-			number *= variant.getPrevalence(day);
-			if (number <= MINIMUM) {
-				continue;
-			}
-
-			fit.addData(day, Math.log(number));
-		}
+		double lowestSlope = fit.getSlope();
+		int fitStartDay = lastInflection;
 
 		/*
 		 * Continue to go backwards SO LONG AS it makes the slope lower.
 		 */
-		double slope = fit.getSlope();
-		int day;
-		for (day = lastInflection - 1;; day--) {
+		for (int day = lastInflection - 1; day >= getFirstDay(); day--) {
 			DaySewage entry;
 			entry = sewage.getEntry(day);
 			if (entry == null) {
-				break;
+				continue;
 			}
 
 			double number = entry.getSewage();
 			number *= sewage.getNormalizer();
 			number *= variant.getPrevalence(day);
 			if (number <= MINIMUM) {
-				break;
+				continue;
 			}
 
 			fit.addData(day, Math.log(number));
-			double newSlope = fit.getSlope();
-			if (newSlope > slope) {
-				break;
+			double slope = fit.getSlope();
+			if (slope < lowestSlope) {
+				lowestSlope = slope;
+				fitStartDay = day;
 			}
-			slope = newSlope;
 		}
-		fitStartDays.put(variant, day);
+
+		return fitStartDay;
+	}
+
+	private SimpleRegression makeFit(Variant variant, Integer fitStartDay) {
+		SimpleRegression fit = new SimpleRegression();
+		if (fitStartDay == null) {
+			fitStartDay = findFitStartDay(variant);
+		}
+		for (int day = fitStartDay; day <= getLastDay(); day++) {
+			DaySewage entry;
+			entry = sewage.getEntry(day);
+			if (entry == null) {
+				continue;
+			}
+
+			double number = entry.getSewage();
+			number *= sewage.getNormalizer();
+			number *= variant.getPrevalence(day);
+			if (number <= MINIMUM) {
+				continue;
+			}
+
+			fit.addData(day, Math.log(number));
+		}
+		fitStartDays.put(variant, fitStartDay);
 		return fit;
 	}
 
@@ -308,7 +315,7 @@ public class VocSewage {
 		 * Build fits
 		 */
 		for (Variant variant : variants) {
-			fits.put(variant, makeFit(variant));
+			fits.put(variant, makeFit(variant, null));
 		}
 
 		/*
