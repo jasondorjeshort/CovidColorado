@@ -12,7 +12,7 @@ public class Lineage {
 
 	private Lineage(String full) {
 		if (full == null || full.equalsIgnoreCase("null") || full.contains("null")) {
-			throw new RuntimeException("Null lineage???");
+			throw new RuntimeException("Null lineage??? " + full);
 		}
 		this.full = full;
 		alias = Aliases.shorten(full);
@@ -40,24 +40,30 @@ public class Lineage {
 		return Aliases.isAncestorExclusive(full, descendant.full);
 	}
 
-	public static Lineage get(String name) {
-		name = Aliases.expand(name);
-		if (name == null || name.equalsIgnoreCase("null")) {
-			// no idea wtf the "null" is doing here.
-			return null;
-		}
-
-		Lineage lineage;
-		synchronized (lineages) {
-			lineage = lineages.get(name);
-
-			if (lineage == null) {
-				lineage = new Lineage(name);
-				lineages.put(name, lineage);
+	public static Lineage get(final String name0) {
+		try {
+			String name = Aliases.expand(name0);
+			if (name == null || name.equalsIgnoreCase("null")) {
+				// no idea wtf the "null" is doing here.
+				return null;
 			}
 
+			Lineage lineage;
+			synchronized (lineages) {
+				lineage = lineages.get(name);
+
+				if (lineage == null) {
+					lineage = new Lineage(name);
+					lineages.put(name, lineage);
+				}
+
+				return lineage;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println("Unsure lineage '" + name0 + "'.");
 		}
-		return lineage;
+		return null;
 	}
 
 }

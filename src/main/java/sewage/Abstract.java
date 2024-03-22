@@ -108,7 +108,7 @@ public abstract class Abstract extends DailyTracker {
 
 	}
 
-	public synchronized TimeSeries makeTimeSeries(String name) {
+	public synchronized TimeSeries makeTimeSeries(String name, boolean yearlyAverage) {
 		build();
 		if (name == null) {
 			name = getTSName();
@@ -117,21 +117,30 @@ public abstract class Abstract extends DailyTracker {
 		int today = CalendarUtils.timeToDay(System.currentTimeMillis());
 		Integer popo = getPopulation();
 		for (int day = getFirstDay(); day <= today; day++) {
-			DaySewage entry;
-			synchronized (this) {
-				entry = entries.get(day);
-			}
-			if (entry == null) {
-				continue;
-			}
+			double number;
+			if (yearlyAverage) {
+				number = 0;
+				for (int day2 = day; day2 > day - 365; day2--) {
+					DaySewage entry = getEntry(day2);
+					if (entry != null) {
+						number += entry.getSewage();
+					}
+				}
+				number /= 365.0;
+			} else {
+				DaySewage entry = getEntry(day);
+				if (entry == null) {
+					continue;
+				}
 
-			Double pop = entry.getPop();
-			if (pop != null && popo != null && pop < popo / 4.0 && day > getLastDay() - 21) {
-				break;
-			}
+				Double pop = entry.getPop();
+				if (pop != null && popo != null && pop < popo / 4.0 && day > getLastDay() - 21) {
+					break;
+				}
 
-			double number = entry.getSewage();
-			number *= getNormalizer();
+				number = entry.getSewage();
+				number *= getNormalizer();
+			}
 			if (number <= 0) {
 				number = 1E-6;
 			}
