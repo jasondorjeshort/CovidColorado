@@ -15,13 +15,15 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 
-import nwss.Nwss;
-
 public class Aliases {
 
-	private static final String ALIAS_FILE = System.getProperty("java.io.tmpdir") + "\\" + Nwss.FOLDER + "\\"
-			+ "aliases.json";
-	private static final String ALIAS_URL = "https://raw.githubusercontent.com/cov-lineages/pango-designation/master/pango_designation/alias_key.json";
+	// private static final String ALIAS_FILE =
+	// System.getProperty("java.io.tmpdir") + "\\" + Nwss.FOLDER + "\\"
+	// + "aliases.json";
+	// private static final String ALIAS_URL =
+	// "https://raw.githubusercontent.com/cov-lineages/pango-designation/master/pango_designation/alias_key.json";
+
+	private static final String ALIAS_FILE = "I:\\pango-designation\\pango_designation\\alias_key.json";
 
 	public static String simplify(String s) {
 		return s.trim().toLowerCase();
@@ -43,7 +45,8 @@ public class Aliases {
 		}
 		built = true;
 
-		File f = Nwss.ensureFileUpdated(ALIAS_FILE, ALIAS_URL, 168);
+		// File f = Nwss.ensureFileUpdated(ALIAS_FILE, ALIAS_URL, 168);
+		File f = new File(ALIAS_FILE);
 
 		try (FileReader fr = new FileReader(f); BufferedReader br = new BufferedReader(fr)) {
 			JsonElement jsonTree = JsonParser.parseReader(br);
