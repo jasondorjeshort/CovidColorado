@@ -176,7 +176,7 @@ public enum VariantEnum {
 			"jn.1.30",
 			"jn.1.31",
 			"jn.1.32",
-			
+
 			"jn.2",
 			"jn.2.5",
 			"jn.3",
@@ -196,7 +196,7 @@ public enum VariantEnum {
 			"kp.2.1",
 			"kq.1",
 			"ks.1",
-			
+
 			"xbb.1.16",
 			"xbb.1.16.1",
 			"xbb.1.16.11",
@@ -220,7 +220,7 @@ public enum VariantEnum {
 			"xbb.2.3.15",
 			"xbb.2.3.3",
 			"xbb.2.3.8",
-			
+
 			"xch",
 			"xch.1",
 			"xcr",

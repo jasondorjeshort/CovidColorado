@@ -15,6 +15,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 
+import nwss.Nwss;
+
 public class Aliases {
 
 	// private static final String ALIAS_FILE =
@@ -23,7 +25,7 @@ public class Aliases {
 	// private static final String ALIAS_URL =
 	// "https://raw.githubusercontent.com/cov-lineages/pango-designation/master/pango_designation/alias_key.json";
 
-	private static final String ALIAS_FILE = "I:\\pango-designation\\pango_designation\\alias_key.json";
+	private static final String ALIAS_FILE = Nwss.GIT_LOCATION + "\\pango_designation\\alias_key.json";
 
 	public static String simplify(String s) {
 		return s.trim().toLowerCase();

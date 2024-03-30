@@ -1,18 +1,13 @@
 package nwss;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.function.Consumer;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -22,6 +17,7 @@ import charts.Chart;
 import charts.ChartSewage;
 import covid.CalendarUtils;
 import library.ASync;
+import library.GitUpdater;
 import variants.Aliases;
 import variants.VariantEnum;
 import variants.VariantSet;
@@ -233,49 +229,14 @@ public class Nwss {
 
 	private Collection<Voc> variants;
 
-	/*
-	 * Found this code on the internet - moves strings from a stream (i.e.
-	 * process output) to a consumer (i.e. println)
-	 */
-	private static class StreamGobbler implements Runnable {
-		private InputStream inputStream;
-		private Consumer<String> consumer;
-
-		public StreamGobbler(InputStream inputStream, Consumer<String> consumer) {
-			this.inputStream = inputStream;
-			this.consumer = consumer;
-		}
-
-		@Override
-		public void run() {
-			new BufferedReader(new InputStreamReader(inputStream)).lines().forEach(consumer);
-		}
-	}
+	public static final String GIT_LOCATION = "I:\\pango-designation";
 
 	public void read() {
 
 		long time = System.currentTimeMillis();
 		ASync<Chart> build = new ASync<>();
 		build.execute(() -> {
-			Process process = null;
-			try {
-				File f = new File("I:\\pango-designation");
-				String cmd = "git.exe pull --progress -v --no-rebase \"origin\"";
-				process = Runtime.getRuntime().exec(cmd, null, f);
-
-				try (InputStream is = process.getInputStream()) {
-					StreamGobbler streamGobbler = new StreamGobbler(is,
-							s -> System.out.println("PangoLineage => " + s));
-					streamGobbler.run();
-				}
-
-				process.waitFor();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-				return;
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			new GitUpdater(GIT_LOCATION).update();
 			build.execute(() -> Aliases.build());
 		});
 
