@@ -193,6 +193,7 @@ public enum VariantEnum {
 			"kp.1",
 			"kp.1.1",
 			"kp.2",
+			"kp.2.1",
 			"kq.1",
 			"ks.1",
 			
