@@ -28,7 +28,7 @@ public class VocSewage {
 		build();
 	}
 
-	private int lastInflection = CalendarUtils.dateToDay("1-14-2024");
+	private int lastInflection = CalendarUtils.dateToDay("2-27-2024");
 
 	public int getLastInflection(Variant variant) {
 		if (variant == null) {
