@@ -59,12 +59,15 @@ public class Charts {
 	public static void saveBufferedImageAsPNG(String folder, String name, BufferedImage bufferedImage) {
 
 		new File(folder).mkdir();
+		name = name.replaceAll(":", "");
+		name = name.replaceAll("\\|", "or");
 		File file = new File(folder + "\\" + name + ".png");
 
 		try (OutputStream out = new BufferedOutputStream(new FileOutputStream(file))) {
 			EncoderUtil.writeBufferedImage(bufferedImage, ImageFormat.PNG, out);
 		} catch (IOException e) {
 			e.printStackTrace();
+			System.out.println("Fail on file '" + name + "'.");
 		}
 	}
 
