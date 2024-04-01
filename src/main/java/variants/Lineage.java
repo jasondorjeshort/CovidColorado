@@ -9,6 +9,7 @@ public class Lineage {
 	private final String full;
 	private final String alias;
 	private final Lineage parent;
+	private int ordering;
 
 	private Lineage(String full) {
 		if (full == null || full.equalsIgnoreCase("null") || full.contains("null")) {
@@ -38,6 +39,18 @@ public class Lineage {
 
 	public boolean isAncestor(Lineage descendant) {
 		return Aliases.isAncestorExclusive(full, descendant.full);
+	}
+
+	public synchronized void setOrdering(int number) {
+		this.ordering = number;
+	}
+
+	/**
+	 * Ordering number, 1 = first ~4000 = last lineage. Not perfect though and
+	 * not sure how to make it perfect.
+	 */
+	public synchronized int getOrdering() {
+		return ordering;
 	}
 
 	public static Lineage get(final String name0) {

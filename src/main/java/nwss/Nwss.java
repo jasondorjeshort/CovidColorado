@@ -19,6 +19,7 @@ import covid.CalendarUtils;
 import library.ASync;
 import library.GitUpdater;
 import variants.Aliases;
+import variants.Lineages;
 import variants.VariantEnum;
 import variants.VariantSet;
 import variants.Voc;
@@ -238,6 +239,7 @@ public class Nwss {
 		build.execute(() -> {
 			new GitUpdater(GIT_LOCATION).update();
 			build.execute(() -> Aliases.build());
+			build.execute(() -> Lineages.build());
 		});
 
 		build.execute(() -> readSewage());
