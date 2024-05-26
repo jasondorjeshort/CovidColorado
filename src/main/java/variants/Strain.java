@@ -12,7 +12,7 @@ public enum Strain {
 	BQ_1("BQ.1", "bq.1"),
 	CH_1_1("CH.1.1", "ch.1.1"),
 	XBB("XBB", "xbb", "xbl", "xcf", "xch", "xcl", "xcr", "xda", "xdc", "xcv"),
-	BA_2_86("BA.2.86", "ba.2.86", "xdd", "xdk", "xdp", "xdn", "xdr", "xdq"),
+	BA_2_86("BA.2.86", "ba.2.86", "xdd", "xdk", "xdp", "xdn", "xdr", "xdq", "xds", "xdv"),
 	OTHERS("OTHERS");
 
 	private final String name;
