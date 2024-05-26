@@ -28,7 +28,9 @@ public class VocSewage {
 		build();
 	}
 
-	private int lastInflection = CalendarUtils.dateToDay("2-27-2024");
+	private int lastInflection = CalendarUtils.dateToDay("2-25-2024");
+	// private int lastInflection = CalendarUtils.dateToDay("2-27-2024");
+	// private int lastInflection = CalendarUtils.dateToDay("3-6-2024");
 
 	public int getLastInflection(Variant variant) {
 		if (variant == null) {
@@ -100,7 +102,8 @@ public class VocSewage {
 	}
 
 	public TimeSeries makeAbsoluteCollectiveTS() {
-		TimeSeries series = new TimeSeries(String.format("Collective fit"));
+		int today = CalendarUtils.timeToDay(System.currentTimeMillis());
+		TimeSeries series = new TimeSeries(String.format("Collective fit (today=%.1f)", getCollectiveFit(today)));
 		for (int day = Math.max(getFirstDay(), lastInflection); day <= absoluteLastDay; day++) {
 			series.add(CalendarUtils.dayToDay(day), getCollectiveFit(day));
 		}
@@ -168,7 +171,7 @@ public class VocSewage {
 				numDays += prev > MINIMUM ? 1 : 0;
 			}
 
-			if (numDays < 22 || number < 0.1) {
+			if (numDays < 10 || number < 0.001) {
 				return variant;
 			}
 		}
