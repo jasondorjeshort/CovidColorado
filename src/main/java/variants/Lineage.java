@@ -57,7 +57,7 @@ public class Lineage {
 		try {
 			String name = Aliases.expand(name0);
 			if (name == null || name.equalsIgnoreCase("null")) {
-				// no idea wtf the "null" is doing here.
+				new Exception("Somehow there's a null lineage on '" + name0 + "'.").printStackTrace();
 				return null;
 			}
 
