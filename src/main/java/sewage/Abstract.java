@@ -211,7 +211,7 @@ public abstract class Abstract extends DailyTracker {
 		try {
 			int today = CalendarUtils.timeToDay(System.currentTimeMillis());
 			TimeSeries series = new TimeSeries(
-					String.format("%s (%s, today=%.0f)", "Fit", slopeToWeekly(fit), Math.exp(fit.predict(today))));
+					String.format("%s (%s, today=%.1f)", "Fit", slopeToWeekly(fit), Math.exp(fit.predict(today))));
 			series.add(CalendarUtils.dayToDay(startDay), Math.exp(fit.predict(startDay)));
 			series.add(CalendarUtils.dayToDay(today), Math.exp(fit.predict(today)));
 			return series;
