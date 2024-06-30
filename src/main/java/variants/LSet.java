@@ -1,17 +1,14 @@
 package variants;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
+import java.util.HashSet;
 
 import covid.CalendarUtils;
 
 public class LSet {
 
-	private final String[] variants;
-	private String[] variantsFull;
-	private String[] variantQueries;
-	private String[] variantDisplay;
+	private final HashSet<Lineage> lineages = new HashSet<>();
 
 	private final String startDate;
 	private final String endDate;
@@ -30,62 +27,31 @@ public class LSet {
 		this(vEnum.startDate, vEnum.endDate, vEnum.lineages);
 	}
 
-	public LSet(String startDate, String endDate, String... variants) {
+	public void addLineage(String lName) {
+		Lineage lineage = Lineage.get(lName);
+		if (lineage == null) {
+			new Exception("Can't read lineage " + lName + ".").printStackTrace();
+			return;
+		}
+
+		if (lineages.contains(lineage)) {
+			new Exception("Duplicate lineages " + lineage.getAlias()).printStackTrace();
+			return;
+		}
+		lineages.add(lineage);
+	}
+
+	public LSet(String startDate, String endDate, String... lNames) {
 		this.startDate = startDate;
 		if (endDate == null) {
 			endDate = TODAY(-10);
 		}
 		this.endDate = endDate;
-		this.variants = variants;
-		variantsFull = new String[variants.length];
-		variantQueries = new String[variants.length];
-		variantDisplay = new String[variants.length];
-
-		System.out.println("Variants: " + variants.length);
-
-		Arrays.sort(variants, (s1, s2) -> s1.compareTo(s2));
-		boolean exit = false;
-		for (int i = 0; i < variants.length; i++) {
-			variants[i] = Aliases.simplify(variants[i]);
-			if (variants[i].contains("*")) {
-				System.out.println("Illegal " + variants[i]);
-				exit = true;
-			}
-
-			variantsFull[i] = Aliases.expand(variants[i]);
-			exit |= variantsFull[i] == null;
-
-			variantQueries[i] = variants[i] + "*";
-			variantDisplay[i] = variants[i];
+		for (String lName : lNames) {
+			addLineage(lName);
 		}
 
-		if (exit) {
-			System.exit(0);
-		}
-
-		for (int i = 0; i < variants.length; i++) {
-			String parent = variantsFull[i];
-			for (int j = 0; j < variants.length; j++) {
-				if (i == j) {
-					continue;
-				}
-				if (variantsFull[i].equalsIgnoreCase(variantsFull[j])) {
-					new Exception("Duplicate variants " + i + " and " + j + " : " + variants[i] + " and " + variants[j])
-							.printStackTrace();
-				}
-				String child = variantsFull[j];
-				if (i != j && child.startsWith(parent)) {
-					variantQueries[i] += "%26!nextcladePangoLineage:" + variants[j] + "*";
-
-					if (!variantDisplay[i].contains("(")) {
-						variantDisplay[i] += " except ";
-					} else {
-						variantDisplay[i] += ",";
-					}
-					variantDisplay[i] += variants[j];
-				}
-			}
-		}
+		System.out.println("Variants: " + lineages.size());
 	}
 
 	public ArrayList<String> getCovSpectrumLink() {
@@ -93,7 +59,7 @@ public class LSet {
 		StringBuilder sb = null;
 		int n = 0;
 
-		for (int i = 0; i < variants.length; i++) {
+		for (Lineage lineage : lineages) {
 			if (sb == null) {
 				sb = new StringBuilder();
 				sb.append("https://cov-spectrum.org/explore/United%20States/AllSamples/");
@@ -107,9 +73,8 @@ public class LSet {
 			if (n > 0) {
 				sb.append(String.valueOf(n));
 			}
-			sb.append("=nextcladePangoLineage:");
-			sb.append(variants[i]);
-			sb.append("*");
+			sb.append("=");
+			sb.append(lineage.getQuery());
 			sb.append("&");
 
 			if (sb.length() > 5500) {
@@ -134,22 +99,16 @@ public class LSet {
 		return list;
 	}
 
-	public String getCovSpectrumReverseLink(boolean all) {
+	public String getCovSpectrumReverseLink() {
 		StringBuilder sb = new StringBuilder();
 		// sb.append("https://cov-spectrum.org/explore/United%20States/AllSamples/");
 		// sb.append("from=" + startDate + "%26to=" + endDate);
 		// sb.append("/variants?variantQuery=");
-		for (int i = 0; i < variants.length; i++) {
-			if (i > 0) {
-				sb.append("&");
-				// sb.append("%26");
-			}
-			sb.append("!nextcladePangoLineage:");
-			sb.append(variants[i]);
-			if (all) {
-				sb.append("*");
-				// sb.append("%2A");
-			}
+		for (Lineage lineage : lineages) {
+			sb.append("!");
+			sb.append(lineage.getQuery());
+			sb.append("&");
+			// sb.append("%26");
 		}
 
 		System.out.println(sb.toString());

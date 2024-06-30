@@ -6,8 +6,9 @@ public class Lineage {
 
 	private static HashMap<String, Lineage> lineages = new HashMap<>();
 
-	private final String full;
-	private final String alias;
+	private final String full; // potentially very long numbering
+	private final String alias; // shortest alias
+	private final String query; // cov-spectrum query text
 	private final Lineage parent;
 	private int ordering;
 
@@ -23,6 +24,7 @@ public class Lineage {
 		} else {
 			parent = get(parentLineage);
 		}
+		query = "nextcladePangoLineage:" + alias + "*";
 	}
 
 	public String getFull() {
@@ -31,6 +33,10 @@ public class Lineage {
 
 	public String getAlias() {
 		return alias;
+	}
+
+	public String getQuery() {
+		return query;
 	}
 
 	public Lineage getParent() {

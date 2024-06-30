@@ -258,8 +258,7 @@ public class Nwss {
 					// TODO: probably can't actually do anything with this.
 				}
 
-				vs.getCovSpectrumReverseLink(false);
-				vs.getCovSpectrumReverseLink(true);
+				vs.getCovSpectrumReverseLink();
 				System.out.println();
 			}
 		});
