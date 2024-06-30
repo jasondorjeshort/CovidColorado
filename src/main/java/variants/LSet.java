@@ -27,7 +27,7 @@ public class LSet {
 	}
 
 	public LSet(LEnum vEnum) {
-		this(vEnum.startDate, vEnum.endDate, vEnum.variants);
+		this(vEnum.startDate, vEnum.endDate, vEnum.lineages);
 	}
 
 	public LSet(String startDate, String endDate, String... variants) {

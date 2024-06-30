@@ -206,13 +206,13 @@ public enum LEnum {
 
 	;
 
-	public final String[] variants;
+	public final String[] lineages;
 	public final String startDate;
 	public final String endDate; // or null;
 
-	LEnum(String startDate, String endDate, String... variants) {
+	LEnum(String startDate, String endDate, String... lineages) {
 		this.startDate = startDate;
 		this.endDate = endDate;
-		this.variants = variants;
+		this.lineages = lineages;
 	}
 }
