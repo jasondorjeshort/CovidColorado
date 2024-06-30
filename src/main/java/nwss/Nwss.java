@@ -19,9 +19,9 @@ import covid.CalendarUtils;
 import library.ASync;
 import library.GitUpdater;
 import variants.Aliases;
+import variants.LEnum;
+import variants.LSet;
 import variants.Lineages;
-import variants.VariantEnum;
-import variants.VariantSet;
 import variants.Voc;
 import variants.VocSewage;
 
@@ -248,12 +248,12 @@ public class Nwss {
 		// build.execute(() -> fips = new Fips());
 		build.execute(() -> regionList.load());
 		build.execute(() -> {
-			for (VariantEnum vEnum : VariantEnum.values()) {
+			for (LEnum vEnum : LEnum.values()) {
 				System.out.println(vEnum);
-				VariantSet vs = new VariantSet(vEnum);
+				LSet vs = new LSet(vEnum);
 				vs.getCovSpectrumLink();
 
-				if (vEnum == VariantEnum.SEP_TO_NOV_2023) {
+				if (vEnum == LEnum.SEP_TO_NOV_2023) {
 					// File f = ensureFileUpdated(VOC_HTML, link, 168);
 					// TODO: probably can't actually do anything with this.
 				}

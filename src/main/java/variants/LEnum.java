@@ -1,6 +1,6 @@
 package variants;
 
-public enum VariantEnum {
+public enum LEnum {
 
 	/*
 	 * APRIL_TO_SEPTEMBER_VARIANTS( "2023-04-01", "2023-09-01", "xbb.1.5",
@@ -210,7 +210,7 @@ public enum VariantEnum {
 	public final String startDate;
 	public final String endDate; // or null;
 
-	VariantEnum(String startDate, String endDate, String... variants) {
+	LEnum(String startDate, String endDate, String... variants) {
 		this.startDate = startDate;
 		this.endDate = endDate;
 		this.variants = variants;

@@ -6,7 +6,7 @@ import java.util.Calendar;
 
 import covid.CalendarUtils;
 
-public class VariantSet {
+public class LSet {
 
 	private final String[] variants;
 	private String[] variantsFull;
@@ -26,11 +26,11 @@ public class VariantSet {
 		return TODAY(0);
 	}
 
-	public VariantSet(VariantEnum vEnum) {
+	public LSet(LEnum vEnum) {
 		this(vEnum.startDate, vEnum.endDate, vEnum.variants);
 	}
 
-	public VariantSet(String startDate, String endDate, String... variants) {
+	public LSet(String startDate, String endDate, String... variants) {
 		this.startDate = startDate;
 		if (endDate == null) {
 			endDate = TODAY(-10);
