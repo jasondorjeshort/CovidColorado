@@ -578,13 +578,19 @@ public class ChartSewage {
 	}
 
 	public static void createSewage(Abstract sewage, Integer maxChildren) {
-		// buildSewageTimeseriesChart(sewage, false);
-		buildSewageTimeseriesChart(sewage, maxChildren, true, 1);
-		buildSewageTimeseriesChart(sewage, maxChildren, false, 1);
-		buildSewageTimeseriesChart(sewage, maxChildren, false, 7);
-		buildSewageTimeseriesChart(sewage, maxChildren, false, 14);
-		buildSewageTimeseriesChart(sewage, maxChildren, false, 28);
-		buildSewageTimeseriesChart(sewage, maxChildren, false, 365);
+		try {
+			// buildSewageTimeseriesChart(sewage, false);
+			buildSewageTimeseriesChart(sewage, maxChildren, true, 1);
+			buildSewageTimeseriesChart(sewage, maxChildren, false, 1);
+			buildSewageTimeseriesChart(sewage, maxChildren, false, 7);
+			buildSewageTimeseriesChart(sewage, maxChildren, false, 14);
+			buildSewageTimeseriesChart(sewage, maxChildren, false, 28);
+			buildSewageTimeseriesChart(sewage, maxChildren, false, 365);
+		} catch (RuntimeException e) {
+			/* One bad series should not hide which one it was. */
+			System.out.println("Chart failed for " + sewage.getChartFilename() + ": " + e);
+			throw e;
+		}
 	}
 
 	public static void buildVocSewageCharts(VocSewage vocSewage, ASync<Chart> build) {
