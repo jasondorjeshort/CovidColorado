@@ -4,10 +4,12 @@ import java.io.File;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -25,6 +27,12 @@ public class Voc extends DailyTracker {
 
 	public final boolean isMerger;
 	public boolean exclusions = false;
+
+	/* Built from the LAPIS pull rather than exported CSVs. */
+	public final boolean lapis;
+
+	/* Lineages VocSewage must never fold into their parent on count alone. */
+	public final Set<Lineage> pinned;
 
 	private static File csv1(int i) {
 		return new File(CSV_NAME1 + (i == 0 ? "" : "(" + i + ")") + ".csv");
@@ -94,8 +102,28 @@ public class Voc extends DailyTracker {
 
 	public final boolean multiVariant;
 
+	/**
+	 * A Voc from variants somebody else already filled in (see Lapis). Same
+	 * build as the CSV path: subtract children from ancestors, add "others".
+	 */
+	public Voc(Collection<Variant> prebuilt, int firstDay, int lastDay, Set<Lineage> pinned) {
+		isMerger = false;
+		synchronized (nextIdLock) {
+			id = nextId++;
+		}
+		multiVariant = true;
+		lapis = true;
+		this.pinned = pinned;
+		variants.addAll(prebuilt);
+		includeDay(firstDay);
+		includeDay(lastDay);
+		build();
+	}
+
 	public Voc(List<File> files, boolean multiVariant) {
 		isMerger = false;
+		lapis = false;
+		pinned = Collections.emptySet();
 		synchronized (nextIdLock) {
 			id = nextId++;
 		}
