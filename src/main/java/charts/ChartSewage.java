@@ -151,6 +151,14 @@ public class ChartSewage {
 		if (yAxis.getLowerBound() < lowerBound) {
 			yAxis.setLowerBound(lowerBound);
 		}
+		/*
+		 * A runaway fit or a broken plant can push the range to dozens of
+		 * decades, and the log axis then builds ticks until the heap runs out.
+		 */
+		double upperBound = 1E6;
+		if (yAxis.getUpperBound() > upperBound) {
+			yAxis.setUpperBound(upperBound);
+		}
 
 		// plot.getDomainAxis().setLowerBound(CalendarUtils.dateToTime("5-1-2023"));
 
