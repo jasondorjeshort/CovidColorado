@@ -159,6 +159,10 @@ public class VocSewage {
 			if (!Double.isFinite(slope)) {
 				return variant;
 			}
+			/* Pinned in LEnum: keep it separate no matter how small it is. */
+			if (voc.pinned.contains(variant.lineage)) {
+				continue;
+			}
 
 			double number = 0, numDays = 0;
 			for (int day = Math.max(fitStartDay, getFirstDay()); day <= getLastDay(); day++) {
