@@ -33,8 +33,14 @@ public abstract class Multi extends Abstract {
 		if (getTotalSewage() <= 0) {
 			return;
 		}
-		if (getEntry(getFirstDay()).getSewage() > All.SCALE_PEAK_RENORMALIZER) {
-			while (getEntry(getFirstDay()).getSewage() > getEntry(getFirstDay() + 1).getSewage()) {
+		DaySewage first = getEntry(getFirstDay());
+		if (first != null && first.getSewage() > All.SCALE_PEAK_RENORMALIZER) {
+			while (true) {
+				DaySewage today = getEntry(getFirstDay()), tomorrow = getEntry(getFirstDay() + 1);
+				/* Sparse sampling means the next day may simply be missing. */
+				if (today == null || tomorrow == null || today.getSewage() <= tomorrow.getSewage()) {
+					break;
+				}
 				bumpFirstDay();
 			}
 		}
