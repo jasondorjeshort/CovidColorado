@@ -443,7 +443,7 @@ public class VocSewage {
 		TimeSeries series = new TimeSeries(name);
 		if (fit != null && fit.getSlope() > 0) {
 			int day = getFirstDay() - 42;
-			series.add(CalendarUtils.dayToDay(day), 100 * Math.exp(fit.predict(day)) / getCollectiveFit(day));
+			addRelative(series, day, 100 * Math.exp(fit.predict(day)) / getCollectiveFit(day));
 		}
 		for (int day = Math.max(getFirstDay(), getFirstDay()); day <= getLastDay(); day++) {
 			DaySewage entry;
@@ -462,22 +462,34 @@ public class VocSewage {
 				continue;
 			}
 
-			series.add(CalendarUtils.dayToDay(day), 100 * number / entry.getSewage());
+			addRelative(series, day, 100 * number / entry.getSewage());
 		}
 		if (fit != null) {
 			/* For relative we can go past the model last day */
 			for (int day = getLastDay() + 1; day <= last; day++) {
-				series.add(CalendarUtils.dayToDay(day), 100 * Math.exp(fit.predict(day)) / getCollectiveFit(day));
+				addRelative(series, day, 100 * Math.exp(fit.predict(day)) / getCollectiveFit(day));
 			}
 		}
 		return series;
+	}
+
+	/*
+	 * The relative chart is on a logit axis with a peak of 100: exactly 0 or
+	 * 100 (a lone lineage on a thin day, or runaway extrapolations) is
+	 * undrawable and takes the whole chart down with it.
+	 */
+	private static void addRelative(TimeSeries series, int day, double percent) {
+		if (!Double.isFinite(percent) || percent <= 100 * MINIMUM || percent >= 100) {
+			return;
+		}
+		series.add(CalendarUtils.dayToDay(day), percent);
 	}
 
 	public synchronized TimeSeries makeRelativeSeries(Strain strain, boolean doFit) {
 		TimeSeries series = new TimeSeries(strain.getName());
 		if (doFit) {
 			int day = getFirstDay() - 42;
-			series.add(CalendarUtils.dayToDay(day), 100.0 * getCollectiveFit(strain, day) / getCollectiveFit(day));
+			addRelative(series, day, 100.0 * getCollectiveFit(strain, day) / getCollectiveFit(day));
 		}
 		for (int day = Math.max(getFirstDay(), getFirstDay()); day <= getLastDay(); day++) {
 			DaySewage entry;
@@ -495,7 +507,7 @@ public class VocSewage {
 				continue;
 			}
 
-			series.add(CalendarUtils.dayToDay(day), number);
+			addRelative(series, day, number);
 		}
 		if (doFit) {
 			for (int day = getLastDay() + 1; day <= relativeLastDay; day++) {
@@ -503,7 +515,7 @@ public class VocSewage {
 				if (num < 0) {
 					new Exception("Uh oh.").printStackTrace();
 				}
-				series.add(CalendarUtils.dayToDay(day), 100.0 * num);
+				addRelative(series, day, 100.0 * num);
 			}
 		}
 		return series;

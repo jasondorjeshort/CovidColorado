@@ -51,6 +51,13 @@ public class Lapis {
 	 */
 	public static final int MIN_SEQUENCES = 20;
 
+	/*
+	 * No prevalence is emitted for a day whose smoothing window holds fewer
+	 * sequences than this. With a handful of sequences one lineage can be
+	 * 100% of the day, which is noise, and the logit axis cannot draw it.
+	 */
+	public static final int MIN_WINDOW_SEQUENCES = 20;
+
 	public static final String CACHE_FILE = System.getProperty("java.io.tmpdir") + "\\" + Nwss.FOLDER + "\\"
 			+ "lapis-usa-aggregated.json";
 
@@ -195,7 +202,7 @@ public class Lapis {
 					num += inc[i];
 					den += total[i];
 				}
-				if (num > 0 && den > 0) {
+				if (num > 0 && den >= MIN_WINDOW_SEQUENCES) {
 					variant.setPrevalence(day, (double) num / den);
 				}
 			}
