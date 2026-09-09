@@ -3,6 +3,7 @@ package variants;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -41,6 +42,14 @@ public class Lapis {
 	public static final int SMOOTH = 3;
 
 	public static final int TTL_HOURS = 24;
+
+	/*
+	 * A lineage with fewer sequences than this in the window is folded into
+	 * its parent before the Voc is built. VocSewage keeps anything with ten
+	 * smoothed days, which two sequences already give; that was fine for a
+	 * hand-picked list of candidates but not for every designated lineage.
+	 */
+	public static final int MIN_SEQUENCES = 20;
 
 	public static final String CACHE_FILE = System.getProperty("java.io.tmpdir") + "\\" + Nwss.FOLDER + "\\"
 			+ "lapis-usa-aggregated.json";
@@ -124,6 +133,32 @@ public class Lapis {
 			return vocs;
 		}
 
+		int folded = 0, dropped = 0;
+		for (Lineage lineage : deepestFirst(exact.keySet())) {
+			int[] counts = exact.get(lineage);
+			long sum = 0;
+			if (counts != null) {
+				for (int c : counts) {
+					sum += c;
+				}
+			}
+			if (sum == 0 || sum >= MIN_SEQUENCES) {
+				continue;
+			}
+			exact.remove(lineage);
+			Lineage parent = lineage.getParent();
+			if (parent == null) {
+				/* A rare recombinant; it stays in the denominator and shows up in "others". */
+				dropped++;
+				continue;
+			}
+			int[] pc = exact.computeIfAbsent(parent, l -> new int[numDays]);
+			for (int i = 0; i < numDays; i++) {
+				pc[i] += counts[i];
+			}
+			folded++;
+		}
+
 		/*
 		 * LAPIS counts are for the exact lineage. The rest of the pipeline was
 		 * built around cov-spectrum "X*" queries, where a parent includes all
@@ -170,12 +205,29 @@ public class Lapis {
 		HashSet<Lineage> pinned = pins(emitFirst);
 
 		System.out.println(String.format(
-				"LAPIS: %,d sequences, %,d lineages (+%,d ancestors), %,d sequences in %d unknown lineages %s, %s to %s, %d pinned.",
-				sequences, exact.size(), inclusive.size() - exact.size(), unknownSequences, unknown.size(), unknown,
-				CalendarUtils.dayToFullDate(emitFirst), CalendarUtils.dayToFullDate(emitLast), pinned.size()));
+				"LAPIS: %,d sequences, %,d lineages (+%,d ancestors) after folding %d rare ones into parents and dropping %d rare roots, %,d sequences in %d unknown lineages %s, %s to %s, %d pinned.",
+				sequences, exact.size(), inclusive.size() - exact.size(), folded, dropped, unknownSequences,
+				unknown.size(), unknown, CalendarUtils.dayToFullDate(emitFirst),
+				CalendarUtils.dayToFullDate(emitLast), pinned.size()));
 
 		vocs.add(new Voc(variants, emitFirst, emitLast, pinned));
 		return vocs;
+	}
+
+	/**
+	 * The given lineages plus every ancestor, deepest first, so that folding a
+	 * child into its parent happens before the parent itself is judged.
+	 */
+	private static ArrayList<Lineage> deepestFirst(Iterable<Lineage> lineages) {
+		HashSet<Lineage> all = new HashSet<>();
+		for (Lineage lineage : lineages) {
+			for (Lineage a = lineage; a != null; a = a.getParent()) {
+				all.add(a);
+			}
+		}
+		ArrayList<Lineage> order = new ArrayList<>(all);
+		order.sort((a, b) -> Integer.compare(b.getFull().length(), a.getFull().length()));
+		return order;
 	}
 
 	/**
