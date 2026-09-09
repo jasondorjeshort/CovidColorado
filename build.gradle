@@ -25,12 +25,13 @@
 plugins {
     // Apply the java-library plugin to add support for Java Library
     id 'java-library'
+    id 'application'
 }
 
 repositories {
     // Use jcenter for resolving dependencies.
     // You can declare any Maven/Ivy/file repository here.
-    jcenter()
+    mavenCentral()
 }
 
 dependencies {
@@ -53,4 +54,8 @@ dependencies {
     
     // https://search.maven.org/artifact/com.google.code.gson/gson
     implementation 'com.google.code.gson:gson:2.13.1'
+}
+
+application {
+    mainClass = 'colorado.CovidColorado'
 }
