@@ -38,8 +38,16 @@ public class GitUpdater {
 		Process process = null;
 		try {
 			File f = new File(path);
-			String cmd = "git.exe pull --progress -v --no-rebase \"origin\"";
-			process = Runtime.getRuntime().exec(cmd, null, f);
+			/*
+			 * Merge stderr into stdout: git writes progress there, and if nobody
+			 * drains it the pipe fills up and git blocks forever. Also never let
+			 * git prompt for credentials, since there is no terminal to answer.
+			 */
+			ProcessBuilder pb = new ProcessBuilder("git", "pull", "--no-progress", "--no-rebase", "origin");
+			pb.directory(f);
+			pb.redirectErrorStream(true);
+			pb.environment().put("GIT_TERMINAL_PROMPT", "0");
+			process = pb.start();
 
 			try (InputStream is = process.getInputStream()) {
 				StreamGobbler streamGobbler = new StreamGobbler(is, s -> System.out.println("PangoLineage => " + s));
