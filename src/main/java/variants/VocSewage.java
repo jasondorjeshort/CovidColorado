@@ -76,7 +76,12 @@ public class VocSewage {
 					System.out.println("Impossible variant : " + variant);
 					continue;
 				}
-				number += Math.exp(fits.get(variant).predict(day));
+				double term = Math.exp(fits.get(variant).predict(day));
+				if (!Double.isFinite(term)) {
+					System.out.println("Fit overflow on " + variant.name + " at " + CalendarUtils.dayToDate(day));
+					continue;
+				}
+				number += term;
 			}
 			collectiveFit.put(day, number);
 			return number;
@@ -166,7 +171,11 @@ public class VocSewage {
 			int fitStartDay = findFitStartDay(variant);
 			SimpleRegression fit = makeFit(variant, fitStartDay);
 			double slope = fit.getSlope();
-			if (!Double.isFinite(slope)) {
+			/*
+			 * A fit from two or three points can be steep enough that the
+			 * projection overflows; it is as unusable as no slope at all.
+			 */
+			if (!Double.isFinite(slope) || !Double.isFinite(Math.exp(fit.predict(getLastDay() + 60)))) {
 				return variant;
 			}
 			/* Pinned in LEnum: keep it separate no matter how small it is. */
