@@ -257,6 +257,7 @@ public abstract class Abstract extends DailyTracker {
 	}
 
 	public Long getLastInflection() {
+		build();
 		if (inflections.size() == 0) {
 			return null;
 		}

@@ -20,17 +20,27 @@ public class VocSewage {
 
 	private final Voc voc;
 
+	/*
+	 * Fits start at the sewage series' own latest peak or valley and search
+	 * backwards from there. Used to be a hand-updated date.
+	 */
+	private int lastInflection;
+
+	/* A fit needs some days no matter how recent the inflection is. */
+	private static final int MIN_FIT_DAYS = 28;
+
 	public VocSewage(sewage.Abstract sewage, Voc voc) {
 		this.sewage = sewage;
 		this.voc = voc;
 		this.isMerger = voc.isMerger;
 		this.vocId = voc.id;
+
+		Long inflection = sewage.getLastInflection();
+		lastInflection = inflection == null ? getFirstDay() : CalendarUtils.timeToDay(inflection);
+		lastInflection = Math.max(getFirstDay(), Math.min(lastInflection, getLastDay() - MIN_FIT_DAYS));
+
 		build();
 	}
-
-	private int lastInflection = CalendarUtils.dateToDay("2-25-2024");
-	// private int lastInflection = CalendarUtils.dateToDay("2-27-2024");
-	// private int lastInflection = CalendarUtils.dateToDay("3-6-2024");
 
 	public int getLastInflection(Variant variant) {
 		if (variant == null) {
