@@ -53,7 +53,7 @@ public class All extends Multi {
 		HashMap<Plant, Double> oldNormalizers = new HashMap<>();
 		long time = System.currentTimeMillis();
 		int i;
-		for (i = 0; i < 2000; i++) {
+		for (i = 0; i < 100; i++) {
 			oldNormalizers.clear();
 			plants.forEach(p -> oldNormalizers.put(p, p.getNormalizer()));
 
@@ -75,7 +75,9 @@ public class All extends Multi {
 				}
 			}
 
-			if (normDiff < 1E-9 || normPlant == null) {
+			System.out.println("Normalize " + i + " => " + normDiff);
+
+			if (normDiff < 1E-6 || normPlant == null) {
 				break;
 			}
 		}

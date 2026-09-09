@@ -53,6 +53,10 @@ public class Lineages {
 				// int year = Integer.valueOf(sequenceYear);
 
 				Lineage l = Lineage.get(lineage);
+				if (l == null) {
+					new Exception("Null lineage for " + lineage).printStackTrace();
+					System.exit(0);
+				}
 				if (lineages.contains(l)) {
 					continue;
 				}

@@ -597,4 +597,23 @@ public class VocSewage {
 		}
 		return series;
 	}
+
+	public void getLink() {
+		LSet lset = new LSet("2020-01-06", null);
+		for (Variant variant : variants) {
+			Lineage l = variant.lineage;
+
+			if (l == null) {
+				System.out.println("No vocSewage variant list " + variant.name);
+				continue;
+			}
+
+			lset.addLineage(l);
+		}
+
+		System.out.println("VocSewage link : " + variants.size() + " : ");
+		for (String link : lset.getCovSpectrumLink()) {
+			System.out.println(link);
+		}
+	}
 }

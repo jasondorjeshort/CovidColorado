@@ -84,7 +84,7 @@ public class ChartSewage {
 	}
 
 	public static BufferedImage buildSewageTimeseriesChart(Abstract sewage, Integer maxChildren, boolean latest,
-			boolean yearlyAverage) {
+			int daysAveraged) {
 
 		if (sewage.getTotalSewage() <= 0) {
 			return null;
@@ -95,13 +95,13 @@ public class ChartSewage {
 		DeviationRenderer renderer = new DeviationRenderer(true, false);
 		int seriesCount = 0;
 
-		collection.addSeries(sewage.makeTimeSeries(null, yearlyAverage));
+		collection.addSeries(sewage.makeTimeSeries(null, daysAveraged));
 		renderer.setSeriesStroke(seriesCount, new BasicStroke(3.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		renderer.setSeriesPaint(seriesCount, Color.BLUE);
 		renderer.setSeriesFillPaint(seriesCount, Color.BLUE.darker());
 		seriesCount++;
 
-		if (!yearlyAverage) {
+		if (daysAveraged < 30) {
 			TimeSeries series2 = sewage.makeFitSeries(28);
 			if (series2 != null) {
 				collection.addSeries(series2);
@@ -115,7 +115,7 @@ public class ChartSewage {
 
 		if (sewage instanceof sewage.Multi) {
 			for (Abstract child : ((sewage.Multi) sewage).getChildren(maxChildren)) {
-				collection.addSeries(child.makeTimeSeries(null, yearlyAverage));
+				collection.addSeries(child.makeTimeSeries(null, daysAveraged));
 				renderer.setSeriesStroke(seriesCount,
 						new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 				seriesCount++;
@@ -124,12 +124,16 @@ public class ChartSewage {
 		// dataset.addSeries("Cases", series);
 
 		String fileName = sewage.getChartFilename();
-		String title = "Covid in sewage, " + CalendarUtils.dayToDate(sewage.getLastDay()) + "\n";
+		String title = "Covid in sewage, " + CalendarUtils.dayToDate(sewage.getLastDay());
+		if (daysAveraged > 1) {
+			title += " smoothed:" + daysAveraged;
+		}
+		title += "\n";
 		title += sewage.getTitleLine();
 		title += "\nSource: CDC/NWSS";
 		fileName += "-" + (latest ? "recent" : "all");
-		if (yearlyAverage) {
-			fileName += "-yearly";
+		if (daysAveraged > 1) {
+			fileName += "-avg" + daysAveraged;
 		}
 		String verticalAxis = All.SCALE_NAME;
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(title, "Date", verticalAxis, collection);
@@ -201,7 +205,7 @@ public class ChartSewage {
 			}
 		}
 
-		series = vocSewage.sewage.makeTimeSeries("Actual sewage", false);
+		series = vocSewage.sewage.makeTimeSeries("Actual sewage", 1);
 		collection.addSeries(series);
 		renderer.setSeriesStroke(seriesCount, new BasicStroke(4.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		seriesCount++;
@@ -566,9 +570,12 @@ public class ChartSewage {
 
 	public static void createSewage(Abstract sewage, Integer maxChildren) {
 		// buildSewageTimeseriesChart(sewage, false);
-		buildSewageTimeseriesChart(sewage, maxChildren, true, false);
-		buildSewageTimeseriesChart(sewage, maxChildren, false, false);
-		buildSewageTimeseriesChart(sewage, maxChildren, false, true);
+		buildSewageTimeseriesChart(sewage, maxChildren, true, 1);
+		buildSewageTimeseriesChart(sewage, maxChildren, false, 1);
+		buildSewageTimeseriesChart(sewage, maxChildren, false, 7);
+		buildSewageTimeseriesChart(sewage, maxChildren, false, 14);
+		buildSewageTimeseriesChart(sewage, maxChildren, false, 28);
+		buildSewageTimeseriesChart(sewage, maxChildren, false, 365);
 	}
 
 	public static void buildVocSewageCharts(VocSewage vocSewage, ASync<Chart> build) {

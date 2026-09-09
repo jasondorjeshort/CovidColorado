@@ -43,6 +43,14 @@ public abstract class Abstract extends DailyTracker {
 
 	private synchronized void buildInflections() {
 		int firstDay = Math.max(getFirstDay(), CalendarUtils.dateToDay("9/1/2020")), lastDay = getLastDay();
+		while (getNormalized(firstDay) == null) {
+			System.out.println("Uh oh bumping day because null normalization.");
+			firstDay++;
+		}
+		if (getNormalized(firstDay + 1) == null) {
+			System.out.println("Uh oh skipping inflections because null normalization.");
+			return;
+		}
 		boolean rising = getNormalized(firstDay + 1) >= getNormalized(firstDay);
 
 		/*
@@ -108,7 +116,7 @@ public abstract class Abstract extends DailyTracker {
 
 	}
 
-	public synchronized TimeSeries makeTimeSeries(String name, boolean yearlyAverage) {
+	public synchronized TimeSeries makeTimeSeries(String name, int daysAveraged) {
 		build();
 		if (name == null) {
 			name = getTSName();
@@ -118,15 +126,15 @@ public abstract class Abstract extends DailyTracker {
 		Integer popo = getPopulation();
 		for (int day = getFirstDay(); day <= today; day++) {
 			double number;
-			if (yearlyAverage) {
+			if (daysAveraged > 1) {
 				number = 0;
-				for (int day2 = day; day2 > day - 365; day2--) {
+				for (int day2 = day; day2 > day - daysAveraged; day2--) {
 					DaySewage entry = getEntry(day2);
 					if (entry != null) {
 						number += entry.getSewage();
 					}
 				}
-				number /= 365.0;
+				number /= daysAveraged;
 			} else {
 				DaySewage entry = getEntry(day);
 				if (entry == null) {

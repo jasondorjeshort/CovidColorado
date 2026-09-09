@@ -47,7 +47,7 @@ public class OpenImage {
 		while (files.size() > 0) {
 			String fileName = files.pop();
 			process.clear();
-			process.add("C:\\Program Files (x86)\\IrfanView\\i_view32.exe");
+			process.add("C:\\Program Files\\IrfanView\\i_view64.exe");
 			process.add(fileName);
 			System.out.println("Opened " + fileName + ".");
 

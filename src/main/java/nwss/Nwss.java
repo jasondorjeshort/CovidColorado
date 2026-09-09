@@ -145,6 +145,7 @@ public class Nwss {
 	double scaleFactor = 1E6;
 
 	public void readSewage() {
+		System.out.println(CSV1);
 		File f = ensureFileUpdated(CSV1, URL1, 4);
 
 		double maxNumber = 0;
@@ -230,7 +231,7 @@ public class Nwss {
 
 	private Collection<Voc> variants;
 
-	public static final String GIT_LOCATION = "I:\\pango-designation";
+	public static final String GIT_LOCATION = "C:\\Users\\jdorj\\Downloads\\pango-designation";
 
 	public void read() {
 
@@ -315,20 +316,26 @@ public class Nwss {
 		ASync<Chart> build = new ASync<>();
 
 		// build.execute(() -> ChartSewage.createSewage(geo));
+		build.execute(() -> ChartSewage.createSewage(all, null));
 		if (variants != null) {
 			build.execute(() -> {
 				for (Voc voc : variants) {
-					VocSewage vocSewage = new VocSewage(all, voc);
-					ChartSewage.buildVocSewageCharts(vocSewage, build);
+					try {
+						VocSewage vocSewage = new VocSewage(all, voc);
+						ChartSewage.buildVocSewageCharts(vocSewage, build);
+						vocSewage.getLink();
 
-					if (!voc.multiVariant) {
-						sewage.State sewage = states.get("Colorado");
-						ChartSewage.buildVocSewageCharts(new VocSewage(sewage, voc), build);
+						if (!voc.multiVariant) {
+							sewage.State sewage = states.get("Colorado");
+							ChartSewage.buildVocSewageCharts(new VocSewage(sewage, voc), build);
+						}
+					} catch (Exception e) {
+						e.printStackTrace();
+						System.exit(0);
 					}
 				}
 			});
 		}
-		build.execute(() -> ChartSewage.createSewage(all, null));
 		plants.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage, null)));
 		counties.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage, null)));
 		states.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage, 5)));

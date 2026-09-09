@@ -27,18 +27,26 @@ public class LSet {
 		this(vEnum.startDate, vEnum.endDate, vEnum.lineages);
 	}
 
+	public void addLineage(Lineage lineage) {
+		if (lineage == null) {
+			new Exception("Null lineage.").printStackTrace();
+			return;
+		}
+		if (lineages.contains(lineage)) {
+			new Exception("Duplicate lineages " + lineage.getAlias()).printStackTrace();
+			return;
+		}
+		lineages.add(lineage);
+
+	}
+
 	public void addLineage(String lName) {
 		Lineage lineage = Lineage.get(lName);
 		if (lineage == null) {
 			new Exception("Can't read lineage " + lName + ".").printStackTrace();
 			return;
 		}
-
-		if (lineages.contains(lineage)) {
-			new Exception("Duplicate lineages " + lineage.getAlias()).printStackTrace();
-			return;
-		}
-		lineages.add(lineage);
+		addLineage(lineage);
 	}
 
 	public LSet(String startDate, String endDate, String... lNames) {
