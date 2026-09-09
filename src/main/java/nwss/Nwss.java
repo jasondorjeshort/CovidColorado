@@ -25,6 +25,7 @@ import library.ASync;
 import library.GitUpdater;
 import variants.Aliases;
 import variants.LEnum;
+import variants.Lapis;
 import variants.LSet;
 import variants.Lineages;
 import variants.Voc;
@@ -368,7 +369,10 @@ public class Nwss {
 		build.execute(() -> Lineages.build());
 
 		build.execute(() -> readSewage());
-		build.execute(() -> variants = Voc.create());
+		build.execute(() -> {
+			variants = Voc.create();
+			variants.addAll(Lapis.create());
+		});
 		// build.execute(() -> fips = new Fips());
 		build.execute(() -> regionList.load());
 		build.execute(() -> {
@@ -448,9 +452,11 @@ public class Nwss {
 						ChartSewage.buildVocSewageCharts(vocSewage, build);
 						vocSewage.getLink();
 
-						if (!voc.multiVariant) {
-							sewage.State sewage = states.get("Colorado");
-							ChartSewage.buildVocSewageCharts(new VocSewage(sewage, voc), build);
+						if (!voc.multiVariant || voc.lapis) {
+							sewage.State colorado = states.get("Colorado");
+							if (colorado != null) {
+								ChartSewage.buildVocSewageCharts(new VocSewage(colorado, voc), build);
+							}
 						}
 					} catch (Exception e) {
 						e.printStackTrace();
