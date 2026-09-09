@@ -69,6 +69,7 @@ public class ChartSewage {
 	public static final String VARIANTS_FOLDER = SEWAGE_FOLDER + "\\" + VARIANTS;
 
 	public static void mkdirs() {
+		new File(Charts.TOP_FOLDER).mkdir();
 		new File(Charts.FULL_FOLDER).mkdir();
 		new File(SEWAGE_FOLDER).mkdir();
 		new File(PLANT_FOLDER).mkdir();
