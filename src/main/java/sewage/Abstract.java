@@ -220,8 +220,12 @@ public abstract class Abstract extends DailyTracker {
 			int today = CalendarUtils.timeToDay(System.currentTimeMillis());
 			TimeSeries series = new TimeSeries(
 					String.format("%s (%s, today=%.1f)", "Fit", slopeToWeekly(fit), Math.exp(fit.predict(today))));
-			series.add(CalendarUtils.dayToDay(startDay), Math.exp(fit.predict(startDay)));
-			series.add(CalendarUtils.dayToDay(today), Math.exp(fit.predict(today)));
+			/*
+			 * A plant that stopped reporting years ago with a falling trend
+			 * extrapolates to exp(-huge) = 0, which the log axis refuses.
+			 */
+			series.add(CalendarUtils.dayToDay(startDay), Math.max(1E-6, Math.exp(fit.predict(startDay))));
+			series.add(CalendarUtils.dayToDay(today), Math.max(1E-6, Math.exp(fit.predict(today))));
 			return series;
 		} catch (Exception e) {
 			e.printStackTrace();
