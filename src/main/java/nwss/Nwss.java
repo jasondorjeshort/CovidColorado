@@ -200,12 +200,7 @@ public class Nwss {
 			return null;
 		}
 
-		/**
-		 * A handful of sites report a column in different units over time, so
-		 * their series spans ten decades. Real sewage levels do not: reject a
-		 * column whose 10th-90th percentile spread is more than 10,000x.
-		 */
-		private static boolean isSane(TreeMap<Integer, double[]> days) {
+		private static ArrayList<Double> positiveValues(TreeMap<Integer, double[]> days) {
 			ArrayList<Double> values = new ArrayList<>();
 			days.forEach((day, sumCount) -> {
 				double v = sumCount[0] / sumCount[1];
@@ -213,12 +208,41 @@ public class Nwss {
 					values.add(v);
 				}
 			});
+			Collections.sort(values);
+			return values;
+		}
+
+		/**
+		 * A handful of sites report a column in different units over time, so
+		 * their series spans ten decades. Real sewage levels do not: reject a
+		 * column whose 10th-90th percentile spread is more than 10,000x.
+		 */
+		private static boolean isSane(TreeMap<Integer, double[]> days) {
+			ArrayList<Double> values = positiveValues(days);
 			if (values.size() < 10) {
 				return !values.isEmpty();
 			}
-			Collections.sort(values);
 			double p10 = values.get(values.size() / 10), p90 = values.get(values.size() * 9 / 10);
 			return p90 / p10 < 1E4;
+		}
+
+		/**
+		 * Single days hundreds of times above the plant's own median are data
+		 * errors, not covid. A few dozen of them (out of 600,000 plant-days)
+		 * were each large enough to be the entire national total for that day,
+		 * which is what sets the "pandemic peak" everything is scaled to.
+		 */
+		private static final double SPIKE_CAP = 300;
+
+		static int dropSpikes(TreeMap<Integer, double[]> days) {
+			ArrayList<Double> values = positiveValues(days);
+			if (values.isEmpty()) {
+				return 0;
+			}
+			double limit = SPIKE_CAP * values.get(values.size() / 2);
+			int before = days.size();
+			days.values().removeIf(sumCount -> sumCount[0] / sumCount[1] > limit);
+			return before - days.size();
 		}
 	}
 
@@ -290,7 +314,7 @@ public class Nwss {
 			System.exit(0);
 		}
 
-		int skipped = 0;
+		int skipped = 0, spikes = 0;
 		for (Map.Entry<String, PlantRows> entry : rows.entrySet()) {
 			PlantRows plant = entry.getValue();
 			Normalization norm = plant.choose();
@@ -298,6 +322,7 @@ public class Nwss {
 				skipped++;
 				continue;
 			}
+			spikes += PlantRows.dropSpikes(plant.byNorm.get(norm));
 
 			sewage.Plant sewage = getPlantSewage(entry.getKey());
 			sewage.setSmoothing(norm.column);
@@ -317,7 +342,8 @@ public class Nwss {
 				sewage.addEntry(day, sumCount[0] / sumCount[1] / scaleFactor);
 			});
 		}
-		System.out.println("Read " + rows.size() + " plants, skipped " + skipped + " with no usable values.");
+		System.out.println("Read " + rows.size() + " plants, skipped " + skipped + " with no usable values, dropped "
+				+ spikes + " spike days.");
 	}
 
 	private Collection<Voc> variants;
