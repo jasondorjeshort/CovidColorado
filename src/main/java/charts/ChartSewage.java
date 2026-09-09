@@ -271,7 +271,8 @@ public class ChartSewage {
 			folder = VARIANTS_FOLDER;
 			String n = targetVariant.displayName;
 			n = n.replaceAll("\\*", "");
-			fileName = n + "-" + vocSewage.vocId + "-absolute" + (fit ? "-fit" : "")
+			/* The same Voc is charted against several sewages; keep the files apart. */
+			fileName = vocSewage.sewage.getName() + "-" + n + "-" + vocSewage.vocId + "-absolute" + (fit ? "-fit" : "")
 					+ (vocSewage.isMerger ? "-merger" : "");
 		}
 		fileName += strains ? "-strain" : "-variant";
