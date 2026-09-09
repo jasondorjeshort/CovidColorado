@@ -63,6 +63,8 @@ public class VocSewage {
 		return cumulativePrevalence;
 	}
 
+	private final HashSet<Variant> overflowed = new HashSet<>();
+
 	public double getCollectiveFit(int day) {
 		synchronized (collectiveFit) {
 			Double n = collectiveFit.get(day);
@@ -78,7 +80,9 @@ public class VocSewage {
 				}
 				double term = Math.exp(fits.get(variant).predict(day));
 				if (!Double.isFinite(term)) {
-					System.out.println("Fit overflow on " + variant.name + " at " + CalendarUtils.dayToDate(day));
+					if (overflowed.add(variant)) {
+						System.out.println("Fit overflow on " + variant.name + ", first at " + CalendarUtils.dayToDate(day));
+					}
 					continue;
 				}
 				number += term;
@@ -436,9 +440,12 @@ public class VocSewage {
 				fit = fits.get(variant);
 			}
 		}
+		double num = 0, lastNum = 0;
 		if (fit != null) {
-			double num = 100 * Math.exp(fit.predict(currentDay)) / getCollectiveFit(currentDay);
-			double lastNum = 100 * Math.exp(fit.predict(last)) / getCollectiveFit(last);
+			num = 100 * Math.exp(fit.predict(currentDay)) / getCollectiveFit(currentDay);
+			lastNum = 100 * Math.exp(fit.predict(last)) / getCollectiveFit(last);
+		}
+		if (fit != null && Double.isFinite(num) && Double.isFinite(lastNum)) {
 			if (num > 10 && lastNum > 10) {
 				name = String.format("%s (%.0f%%->%.0f%%)", name, num, lastNum);
 			} else if (num > 1 && lastNum > 1) {
@@ -538,7 +545,7 @@ public class VocSewage {
 			}
 		}
 		String name = variant.displayName;
-		if (fit != null) {
+		if (fit != null && Double.isFinite(Math.exp(fit.predict(currentDay)))) {
 			double num = Math.exp(fit.predict(currentDay));
 
 			if (num > 1) {
