@@ -5,3 +5,8 @@
 build
 *.png
 bin
+
+# A per-checkout convenience link to docs/skills, for agents that discover
+# skills under .agents/skills. The cards live in docs/skills and are the one
+# copy; a committed symlink does not survive every Windows checkout.
+/.agents/skills

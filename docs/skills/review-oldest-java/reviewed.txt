@@ -1,0 +1,27 @@
+# Review ledger for docs/skills/review-oldest-java/SKILL.md.
+#
+# One line per completed pass: an ISO date, a space, and the repository-relative
+# path that was reviewed. Order does not matter; append is fine. Blank lines and
+# lines starting with # are ignored. Because order does not matter, .gitattributes
+# marks this file merge=union: two passes that each appended a line rebase
+# cleanly with both lines kept, instead of conflicting.
+#
+# A path listed here is out of the queue permanently. This is one pass over
+# every file, not a rotation: find-oldest-java.ps1 removes every listed path
+# from the candidate set and orders what is left by Git touch alone. A later
+# commit to a reviewed file does not put it back.
+#
+# Without this ledger a file that needs nothing would win the queue forever,
+# since a pass that changes nothing leaves its Git date untouched - which is a
+# standing incentive to invent work. The line is what retires it.
+#
+# The date is history and is compared against nothing. It used to order the
+# queue against the Git timestamp, and that could not work: a date is a day and
+# Git's is an instant, so a pass committed after 18:00 in a UTC-6 zone fell into
+# the next UTC day and its own commit voided the line it had just written.
+#
+# A line dies only by naming a path Git no longer tracks - a deleted or renamed
+# file - or by repeating a path already recorded above it. The selector warns
+# about those so they can be swept. Leaving them costs nothing but noise.
+#
+# date       path

@@ -4,3 +4,10 @@
 # These are explicitly windows files and should use crlf
 *.bat           text eol=crlf
 
+# The review ledger is append-only and order-independent (its header says so),
+# so two passes that each appended a line are not in conflict: keep both. This
+# applies to merges and to the rebase that pull and push-one perform onto a
+# moved origin, and removes the one conflict an unattended review queue
+# generates on its own.
+docs/skills/review-oldest-java/reviewed.txt merge=union
+
