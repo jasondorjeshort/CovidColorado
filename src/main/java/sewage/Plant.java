@@ -13,9 +13,10 @@ public class Plant extends Abstract {
 	private double lat, lon;
 
 	public enum Source {
-		CDC_BIOBOT,
-		NWSS,
-		WWS;
+		STATE_TERRITORY,
+		WASTEWATERSCAN,
+		CDC_VERILY,
+		CDC_BIOBOT;
 
 		public static Source get(String plantId) {
 			for (Source source : Source.values()) {

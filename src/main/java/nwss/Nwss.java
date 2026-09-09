@@ -6,8 +6,13 @@ import java.io.FileOutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -33,13 +38,13 @@ public class Nwss {
 		new File(System.getProperty("java.io.tmpdir") + "\\" + FOLDER).mkdir();
 	}
 
-	public static final String CSV1 = System.getProperty("java.io.tmpdir") + "\\" + FOLDER + "\\"
-			+ "NWSS_Public_SARS-CoV-2_Concentration_in_Wastewater_Data.csv";
-	public static final String URL1 = "https://data.cdc.gov/api/views/g653-rqe2/rows.csv?accessType=DOWNLOAD";
-
-	public static final String CSV2 = System.getProperty("java.io.tmpdir") + "\\" + FOLDER + "\\"
-			+ "NWSS_Public_SARS-CoV-2_Wastewater_Metric_Data.csv";
-	public static final String URL2 = "https://data.cdc.gov/api/views/2ew6-ywp6/rows.csv?accessType=DOWNLOAD";
+	/*
+	 * CDC archived the old NWSS concentration + metric datasets on September
+	 * 12, 2025. Their successor is a single per-sample table.
+	 */
+	public static final String CSV = System.getProperty("java.io.tmpdir") + "\\" + FOLDER + "\\"
+			+ "CDC_Wastewater_Data_for_SARS-CoV-2.csv";
+	public static final String URL = "https://data.cdc.gov/api/views/j9g8-acpt/rows.csv?accessType=DOWNLOAD";
 
 	// public static final String VOC_HTML =
 	// System.getProperty("java.io.tmpdir") + "\\" + FOLDER + "\\" + "VOC.html";
@@ -144,89 +149,175 @@ public class Nwss {
 
 	double scaleFactor = 1E6;
 
-	public void readSewage() {
-		System.out.println(CSV1);
-		File f = ensureFileUpdated(CSV1, URL1, 4);
+	/**
+	 * Which column of the new dataset a plant's series is taken from. Each
+	 * plant must use exactly one so that its values are comparable across
+	 * days; the normalizer against the national baseline takes care of the
+	 * differing units between plants.
+	 */
+	private enum Normalization {
+		/* Concentration scaled by flow and population; the old "flow-population". */
+		FLOW_POPULATION("pcr_target_flowpop_lin"),
+		/* Concentration divided by a human fecal indicator; the old "microbial". */
+		MICROBIAL("pcr_target_mic_lin"),
+		/* Raw concentration, only when nothing normalized is available. */
+		RAW("pcr_target_avg_conc_lin");
 
-		double maxNumber = 0;
-		try (CSVParser csv = CSVParser.parse(f, CHARSET, CSVFormat.DEFAULT)) {
-			int records = 0;
-			for (CSVRecord line : csv) {
-				if (records++ == 0) {
-					continue;
-				}
+		final String column;
 
-				String plant = line.get(0);
-				String date = line.get(1);
-				int day = CalendarUtils.dateToDay(date);
-				String num = line.get(2);
-				if (num.equals("")) {
-					continue;
-				}
-				Double number = Double.valueOf(num);
-				if (number == null || number.isInfinite()) {
-					continue;
-				}
-				if (number < 0) {
-					number = 0.0;
-				}
-				if (number <= 0) {
-					/*
-					 * If using a geometric system we'd need to skip these,
-					 * easiest place is here though hackery. If using algebraic
-					 * then we do want to include the zeroes.
-					 */
-					// continue;
-				}
-				sewage.Plant sewage = getPlantSewage(plant);
-				sewage.setSmoothing(line.get(3));
-				maxNumber = Math.max(number, maxNumber);
-				sewage.addEntry(day, number / scaleFactor);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.exit(0);
+		Normalization(String column) {
+			this.column = column;
 		}
 	}
 
-	public void readLocations() {
-		File f = ensureFileUpdated(CSV2, URL2, 24);
+	/** Everything read for one plant, before deciding which column to use. */
+	private static class PlantRows {
+		final EnumMap<Normalization, TreeMap<Integer, double[]>> byNorm = new EnumMap<>(Normalization.class);
+		int metadataDay = -1;
+		String state, counties, fips, site;
+		Integer population;
 
-		try (CSVParser csv = CSVParser.parse(f, CHARSET, CSVFormat.DEFAULT)) {
-			int records = 0;
+		PlantRows() {
+			for (Normalization norm : Normalization.values()) {
+				byNorm.put(norm, new TreeMap<>());
+			}
+		}
+
+		Normalization choose() {
+			int most = 0;
+			for (Normalization norm : Normalization.values()) {
+				most = Math.max(most, byNorm.get(norm).size());
+			}
+			/*
+			 * Prefer the better normalization unless it covers noticeably fewer
+			 * days than another column does, or its values are not believable.
+			 */
+			for (Normalization norm : Normalization.values()) {
+				if (byNorm.get(norm).size() >= 0.9 * most && isSane(byNorm.get(norm))) {
+					return norm;
+				}
+			}
+			return null;
+		}
+
+		/**
+		 * A handful of sites report a column in different units over time, so
+		 * their series spans ten decades. Real sewage levels do not: reject a
+		 * column whose 10th-90th percentile spread is more than 10,000x.
+		 */
+		private static boolean isSane(TreeMap<Integer, double[]> days) {
+			ArrayList<Double> values = new ArrayList<>();
+			days.forEach((day, sumCount) -> {
+				double v = sumCount[0] / sumCount[1];
+				if (v > 0) {
+					values.add(v);
+				}
+			});
+			if (values.size() < 10) {
+				return !values.isEmpty();
+			}
+			Collections.sort(values);
+			double p10 = values.get(values.size() / 10), p90 = values.get(values.size() * 9 / 10);
+			return p90 / p10 < 1E4;
+		}
+	}
+
+	private static Double parseValue(String s) {
+		if (s == null || s.isEmpty()) {
+			return null;
+		}
+		double d;
+		try {
+			d = Double.parseDouble(s);
+		} catch (NumberFormatException e) {
+			return null;
+		}
+		if (Double.isNaN(d) || Double.isInfinite(d)) {
+			return null;
+		}
+		return Math.max(d, 0.0);
+	}
+
+	public void readSewage() {
+		System.out.println(CSV);
+		File f = ensureFileUpdated(CSV, URL, 4);
+
+		HashMap<String, PlantRows> rows = new HashMap<>();
+
+		CSVFormat format = CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).get();
+		try (CSVParser csv = CSVParser.parse(f, CHARSET, format)) {
 			for (CSVRecord line : csv) {
-				if (records++ == 0) {
-					continue;
+				String source = line.get("source").toUpperCase();
+				String state = line.get("state_territory");
+				String site = line.get("site");
+				String location = line.get("sample_location");
+				String matrix = line.get("sample_matrix");
+				/* Same shape as the old key_plot_id. */
+				String plantId = source + "_" + state + "_" + site + "_" + location + "_" + matrix;
+
+				int day = CalendarUtils.dateToDay(line.get("sample_collect_date"));
+
+				PlantRows plant = rows.computeIfAbsent(plantId, id -> new PlantRows());
+
+				for (Normalization norm : Normalization.values()) {
+					Double value = parseValue(line.get(norm.column));
+					if (value == null) {
+						continue;
+					}
+					/* Several gene targets or samples on one day get averaged. */
+					double[] sumCount = plant.byNorm.get(norm).computeIfAbsent(day, d -> new double[2]);
+					sumCount[0] += value;
+					sumCount[1]++;
 				}
 
-				String state = line.get(0);
-				String plantIdString = line.get(1);
-				String plant = line.get(5);
-				String county = line.get(6);
-				String fipsIds = line.get(7);
-				String popString = line.get(8);
-
-				sewage.Plant sewage = getPlantSewage(plant);
-				try {
-					sewage.setPlantId(Integer.valueOf(plantIdString));
-				} catch (Exception e) {
-					/* Might be unassigned I think? */
+				/* Metadata drifts over time; keep whatever is most recent. */
+				if (day > plant.metadataDay) {
+					plant.metadataDay = day;
+					plant.site = site;
+					plant.state = StateNames.get(state);
+					plant.counties = line.get("counties_served").replace(", ", ",");
+					plant.fips = line.get("county_fips").replace(", ", ",");
+					try {
+						plant.population = Integer.valueOf(line.get("population_served"));
+					} catch (NumberFormatException e) {
+						plant.population = null;
+					}
 				}
-				sewage.setState(state);
-				sewage.setCounties(county);
-				sewage.setFipsIds(fipsIds);
-				if (county.contains(",") != fipsIds.contains(",")) {
-					// System.out.println("Problem set");
-					// System.out.println(county);
-					// System.out.println(fipsIds);
-				}
-				sewage.setPopulation(Integer.valueOf(popString));
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			f.delete();
 			System.exit(0);
 		}
+
+		int skipped = 0;
+		for (Map.Entry<String, PlantRows> entry : rows.entrySet()) {
+			PlantRows plant = entry.getValue();
+			Normalization norm = plant.choose();
+			if (norm == null) {
+				skipped++;
+				continue;
+			}
+
+			sewage.Plant sewage = getPlantSewage(entry.getKey());
+			sewage.setSmoothing(norm.column);
+			try {
+				sewage.setPlantId(Integer.valueOf(plant.site));
+			} catch (NumberFormatException e) {
+				/* Site ids look numeric so far, but nothing promises it. */
+			}
+			sewage.setState(plant.state);
+			sewage.setCounties(plant.counties);
+			sewage.setFipsIds(plant.fips);
+			if (plant.population != null) {
+				sewage.setPopulation(plant.population);
+			}
+
+			plant.byNorm.get(norm).forEach((day, sumCount) -> {
+				sewage.addEntry(day, sumCount[0] / sumCount[1] / scaleFactor);
+			});
+		}
+		System.out.println("Read " + rows.size() + " plants, skipped " + skipped + " with no usable values.");
 	}
 
 	private Collection<Voc> variants;
@@ -251,7 +342,6 @@ public class Nwss {
 		build.execute(() -> Lineages.build());
 
 		build.execute(() -> readSewage());
-		build.execute(() -> readLocations());
 		build.execute(() -> variants = Voc.create());
 		// build.execute(() -> fips = new Fips());
 		build.execute(() -> regionList.load());
