@@ -236,12 +236,19 @@ public class Nwss {
 	public void read() {
 
 		long time = System.currentTimeMillis();
+
+		/*
+		 * Pull and load aliases before anything runs in parallel. Aliases.build()
+		 * is triggered lazily by the first Lineage.get(), so if the LSet loop
+		 * below won the race it would read the stale alias_key.json while
+		 * Lineages.build() read the freshly pulled lineages.csv, and any alias
+		 * new to that pull would be unknown.
+		 */
+		new GitUpdater(GIT_LOCATION).update();
+		Aliases.build();
+
 		ASync<Chart> build = new ASync<>();
-		build.execute(() -> {
-			new GitUpdater(GIT_LOCATION).update();
-			build.execute(() -> Aliases.build());
-			build.execute(() -> Lineages.build());
-		});
+		build.execute(() -> Lineages.build());
 
 		build.execute(() -> readSewage());
 		build.execute(() -> readLocations());
