@@ -1,33 +1,58 @@
 package library;
 
-import java.util.LinkedList;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+
+import nwss.Nwss;
 
 /**
+ * Collects the charts worth looking at during a run and shows them all at the
+ * end, in one IrfanView thumbnail window. Call sites queue a chart with
+ * {@link #openImage(String)} as they save it; {@link #open()} is called once
+ * when the run has finished building. IrfanView's install path is hard-coded
+ * here.
+ *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later
  * version.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
  * details.
- * 
+ *
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <https://www.gnu.org/licenses/>.
- * 
+ *
  * @author jdorje@gmail.com
  */
 public class OpenImage {
 
-	private static final LinkedList<String> files = new LinkedList<>();
+	private static final String IRFANVIEW = "C:\\Program Files\\IrfanView\\i_view64.exe";
 
-	private static int num = 0;
+	/*
+	 * Handed to IrfanView as /filelist= rather than putting the charts on the
+	 * command line, which IrfanView caps at 4096 characters. A fixed name,
+	 * overwritten each run, so nothing accumulates in the cache. It must stay
+	 * free of spaces: ProcessBuilder quotes a whole argument containing one,
+	 * and IrfanView's parsing of a quoted /filelist= argument is not something
+	 * to depend on.
+	 */
+	private static final File LIST_FILE = new File(new File(System.getProperty("java.io.tmpdir"), Nwss.FOLDER),
+			"open-charts.txt");
+
+	private static final HashSet<String> files = new HashSet<>();
 
 	/**
-	 * This just opens the given file name (with extension) in irfanview.
-	 * Irfanview must be installed at the location hard-coded here.
-	 * 
+	 * Queues a chart, by its full file name with extension, to be shown by the
+	 * next {@link #open()}. A name already queued is ignored.
+	 *
 	 * @param fileName
 	 *            File name
 	 */
@@ -35,27 +60,45 @@ public class OpenImage {
 		if (fileName == null) {
 			return;
 		}
-		if (num > 10) {
-			return;
-		}
-		num++;
 		files.add(fileName);
 	}
 
+	/**
+	 * Opens every queued chart in a single IrfanView thumbnail window and
+	 * empties the queue. Does nothing if nothing is queued.
+	 */
 	public static synchronized void open() {
-		LinkedList<String> process = new LinkedList<>();
-		while (files.size() > 0) {
-			String fileName = files.pop();
-			process.clear();
-			process.add("C:\\Program Files\\IrfanView\\i_view64.exe");
-			process.add(fileName);
-			System.out.println("Opened " + fileName + ".");
+		if (files.isEmpty()) {
+			return;
+		}
+		/*
+		 * Charts are queued from the build threads in whatever order they
+		 * finish, so sort for a grid that reads the same every run: the
+		 * national charts directly under the nwss folder ahead of the states\
+		 * and variants\ subfolders.
+		 */
+		List<String> names = new ArrayList<>(files);
+		files.clear();
+		names.sort(Comparator.<String> comparingLong(n -> n.chars().filter(c -> c == '\\').count())
+				.thenComparing(String.CASE_INSENSITIVE_ORDER).thenComparing(Comparator.naturalOrder()));
 
-			try {
-				new ProcessBuilder(process).start();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+		try {
+			/*
+			 * The cache directory is made by Nwss's static block, but Nwss.FOLDER
+			 * is a compile-time constant, so referencing it here does not run
+			 * that block.
+			 */
+			LIST_FILE.getParentFile().mkdirs();
+			/*
+			 * UTF-8 without a BOM. The chart paths are ASCII, which reads the
+			 * same whichever encoding IrfanView assumes, and a BOM could be
+			 * taken as part of the first file name.
+			 */
+			Files.write(LIST_FILE.toPath(), names);
+			new ProcessBuilder(IRFANVIEW, "/filelist=" + LIST_FILE.getAbsolutePath(), "/thumbs").start();
+			System.out.println("Opened " + names.size() + " charts from " + LIST_FILE.getAbsolutePath() + ".");
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 }

@@ -46,6 +46,11 @@ All hardcoded, all outside the checkout, all on this machine:
 - `pango-designation` checkout: `C:\Users\jdorj\Downloads\pango-designation` —
   `nwss/Nwss.java`, `GIT_LOCATION`. Every run `git pull`s it. Its
   `alias_key.json` and `lineages.csv` are read directly.
+- IrfanView: `C:\Program Files\IrfanView\i_view64.exe` — `library/OpenImage.java`,
+  `IRFANVIEW`. A run ends by opening the charts it queued in one thumbnail
+  window, through a list it writes to the download cache as `open-charts.txt`.
+  Without IrfanView the charts are still written and the launch prints a
+  stack trace.
 - Optional hand-exported cov-spectrum CSVs in `C:\Users\jdorj\Downloads`, named
   in `variants/Voc.java`. These are a fallback for the GISAID-backed data the
   open LAPIS endpoint does not carry, and a run without them is normal.

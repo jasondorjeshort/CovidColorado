@@ -182,7 +182,6 @@ public class ChartSewage {
 		if (sewage instanceof sewage.All || sewage instanceof sewage.Geo
 				|| sewage.getName().equalsIgnoreCase("Colorado")) {
 			library.OpenImage.openImage(fileName);
-			library.OpenImage.open();
 		}
 
 		// System.out.println("Created : " + sewage.id + " for " +
@@ -345,7 +344,6 @@ public class ChartSewage {
 
 		if (!vocSewage.isMerger && targetVariant == null && legend && fit) {
 			library.OpenImage.openImage(fileName);
-			library.OpenImage.open();
 		}
 
 		// System.out.println("Created : " + sewage.id + " for " +
@@ -491,7 +489,6 @@ public class ChartSewage {
 
 		if (!vocSewage.isMerger && legend && fit) {
 			library.OpenImage.openImage(fileName);
-			library.OpenImage.open();
 		}
 
 		// System.out.println("Created : " + sewage.id + " for " +
@@ -572,7 +569,6 @@ public class ChartSewage {
 
 		if (!vocSewage.isMerger) {
 			library.OpenImage.openImage(fileName);
-			library.OpenImage.open();
 		}
 
 		return image;

@@ -15,6 +15,14 @@ every chart onto an async pool: createSewage for each plant, county, state,
 region and the nation, and buildVocSewageCharts for each lineage set. Nothing
 else in the program draws.
 
+The charts worth looking at -- the conditions at the openImage calls in
+charts/ChartSewage.java decide which, today the national and Colorado ones --
+are queued in library/OpenImage.java as they are saved, and the open() at the
+end of build() shows them all in one IrfanView thumbnail window once the pool
+has drained. One window at the end replaced one window per chart as it was
+saved, which meant up to eleven windows mid-run, and which eleven depended on
+thread timing.
+
 
 THE NAMING RULE
 ---------------
