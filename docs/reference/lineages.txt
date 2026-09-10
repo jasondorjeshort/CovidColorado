@@ -84,10 +84,17 @@ their own. Those end up as near-zero residuals after the subtraction and are
 merged away later. Break this and the subtraction silently produces negative
 prevalences.
 
-Two smaller invariants hold it together. Counts stay integers until one
-division per day, so the subtraction is exact rather than producing
-rounding-noise negatives. And a Variant only acquires a Lineage if its name
-matches "nextcladePangoLineage:<alias>*" -- the regex in the Variant(String)
+Two smaller invariants hold it together. Counts stay integers until they are
+divided, one division per lineage per day by that day's total, so the
+subtraction is a/den - b/den and not exact -- what it is instead is small: the
+shared denominator keeps the residual far under VocSewage MINIMUM. Replaying one
+run's data -- a year of days, every lineage -- produces on the order of a
+thousand tiny negatives, every one below that threshold, and Variant
+subtractPrevalence drops those silently. A negative
+big enough to warn about means the inclusive-counts invariant above is broken.
+
+And a Variant only acquires a Lineage if its name matches
+"nextcladePangoLineage:<alias>*" -- the regex in the Variant(String)
 constructor -- which is exactly what Lineage.getQuery() emits. A variant with a
 null lineage is not merged, not subtracted from, and not assigned a strain.
 

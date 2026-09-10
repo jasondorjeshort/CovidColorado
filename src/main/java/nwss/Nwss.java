@@ -216,7 +216,9 @@ public class Nwss {
 		/**
 		 * A handful of sites report a column in different units over time, so
 		 * their series spans ten decades. Real sewage levels do not: reject a
-		 * column whose 10th-90th percentile spread is more than 10,000x.
+		 * column whose 10th-90th percentile spread is more than 10,000x. Fewer
+		 * than 10 positive values are too few for percentiles to mean anything,
+		 * so such a column is accepted on being non-empty and not tested.
 		 */
 		private static boolean isSane(TreeMap<Integer, double[]> days) {
 			ArrayList<Double> values = positiveValues(days);

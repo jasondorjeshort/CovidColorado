@@ -65,10 +65,16 @@ commit message, exactly. Nothing in the tree will tell the next run.
 
 ## Editing files here
 
-Git is configured with `core.autocrlf=true`, so tracked files are CRLF in the
-working tree. Use the Read/Edit/Write tools for file changes. Do not edit files
-through `sed`, `awk` or shell heredocs: the shell strips or rewrites the CRs and
-the result is a whole-file diff that hides the actual change.
+Use the Read/Edit/Write tools for file changes rather than `sed`, `awk` or shell
+heredocs. Those rewrite a whole file to make a two-line change, which is how a
+stray edit reaches a line nobody read.
+
+Line endings are mixed and it does not matter much. `core.autocrlf=true`, so the
+index is LF throughout and a fresh checkout is CRLF, but a file a tool has
+rewritten stays LF until git next touches it, so the tree ends up a mix of
+both. Git normalizes on the way in, so the diff is honest either way and the
+"LF will be replaced by CRLF" warnings on commit are noise. Do not reformat a
+file to settle its endings; that is a whole-file diff bought for nothing.
 
 ## Git and commits
 

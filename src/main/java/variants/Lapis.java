@@ -185,9 +185,12 @@ public class Lapis {
 		});
 
 		/*
-		 * Integer sums up to the single division keep the later child-minus-
-		 * parent subtraction exact instead of producing rounding-noise
-		 * negatives.
+		 * Integer sums up to the division, and the same denominator for every
+		 * lineage on a day, keep the later child-minus-parent subtraction's
+		 * residual far under VocSewage.MINIMUM. It is not exact -- the division
+		 * is per lineage, so the subtraction is a/den - b/den -- but the
+		 * negatives it does produce are small enough that
+		 * Variant.subtractPrevalence drops them without warning.
 		 */
 		LinkedList<Variant> variants = new LinkedList<>();
 		inclusive.forEach((lineage, inc) -> {

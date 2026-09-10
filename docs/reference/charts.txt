@@ -70,6 +70,8 @@ instead of per-lineage -- and then once more per lineage, one PNG each, under
 the variants folder.
 
 Those per-lineage files are named for the sewage series, the lineage, and the
-Voc's id. The id is load-bearing: the same Voc is charted against national and
-Colorado sewage in the same run, on different threads, so without it the two
-would write the same filename.
+Voc's id. The sewage name is what keeps the national and Colorado charts apart:
+nwss/Nwss.java hands the same Voc object to both VocSewages, so vocId is
+identical for the two and never separated them -- vocSewage.sewage.getName() is
+the part of the name that differs. The id separates one Voc from another within
+a run, which is the LAPIS pull from any hand-exported cov-spectrum CSV.

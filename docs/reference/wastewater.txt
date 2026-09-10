@@ -43,11 +43,13 @@ per-plant assembly the old metrics table used to hand over.
 
 A plant is identified by source, state, site, sample location and sample
 matrix, joined into one string. That is deliberately the same shape as the old
-key_plot_id, and the source is uppercased so that sewage/Plant.java's Source
-enum still matches it by prefix. State codes are two letters here and full
-names everywhere else, so they go through nwss/StateNames.java on the way in;
-src/main/resources/regions.csv and the Colorado lookup in build() both key on
-the full name.
+key_plot_id, down to the source being uppercased. sewage/Plant.java's Source
+enum parses that prefix back out, and matches the new dataset's values, but
+nothing outside Plant.java reads getSource() -- so the enum is currently
+unobserved rather than a live dependency of the id's shape. State codes are two
+letters here and full names everywhere else, so they go through
+nwss/StateNames.java on the way in; src/main/resources/regions.csv and the
+Colorado lookup in build() both key on the full name.
 
 Expect the column names to move again. They have once.
 
@@ -64,9 +66,10 @@ that no normalizer can remove.
 
 A better column is skipped when it covers noticeably fewer days than another
 one does (under 90% of the best coverage), and when it fails the sanity test:
-its 10th-to-90th-percentile spread must be under 10,000x. A handful of sites,
-in California and Rhode Island among others, changed units mid-series and span
-ten decades, which is not something sewage does.
+its 10th-to-90th-percentile spread must be under 10,000x, unless it has fewer
+than 10 positive values, in which case being non-empty is the whole test. A
+handful of sites, in California and Rhode Island among others, changed units
+mid-series and span ten decades, which is not something sewage does.
 
 Several rows on one day -- multiple gene targets, or repeat samples -- are
 averaged. Values are divided by a constant 1E6 on the way in, which is only a
