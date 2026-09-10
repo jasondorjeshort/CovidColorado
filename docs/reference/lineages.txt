@@ -103,18 +103,49 @@ MERGING DOWN TO A LEGEND
 ------------------------
 VocSewage build() repeatedly calls findLineageToRemove and folds what it
 returns into its parent's variant, manufacturing that variant if it does not
-exist, or into "Others" for a lineage with no parent. It works deepest first,
-so a subtree collapses from the leaves inward. A lineage is removed when its
-fit has a non-finite slope, when the fit's 60-day projection overflows (a
-two-point fit can be that steep, and it is as unusable as no slope), or when it
-holds under ten days of measurable prevalence or under 0.001 of cumulative
-sewage.
+exist, or into "Others" for a lineage with no parent. Each merge prints one
+line saying which rule chose it and why. A pass has two tiers.
 
-Voc.pinned holds lineages that the last two tests may not remove -- the first
-two still apply, since an unusable fit is unusable. Pins come from LEnum lists
-whose start date falls inside the emitted window; both current lists start well
-before it, so the set is empty today. The mechanism is there for the next time
-a list is added for a wave in progress.
+The floor comes first and works deepest first, so a subtree collapses from the
+leaves inward. A lineage fails it when its fit has a non-finite slope, when the
+fit's 60-day projection overflows (a two-point fit can be that steep, and it is
+as unusable as no slope), or when it holds under ten days of measurable
+prevalence or under 0.001 of cumulative sewage. The floor only asks whether
+there is anything to fit. On the 0-100 sewage scale it removes little else,
+which was fine when the input was a hand-picked list and is not when it is
+every lineage LAPIS carries: on its own it left about 105 lineages on the
+national chart and 197 on the Colorado one.
+
+When nothing fails the floor, the cheapest merge is taken. Each lineage is
+priced against its reference, the nearest ancestor still on the chart, as
+c*p/(c+p) * ds^2: c and p are the two sizes (sewage times prevalence) over the
+last 28 days of data, ds is the gap between their slopes. That is the
+leading-order change the merge makes to the projection, so a lineage growing
+like its ancestor and a tiny lineage are both cheap, and a big one diverging
+from its ancestor is dear. ds is first shrunk by two standard errors of the two
+slopes: at about one sequence a week per lineage most slope gaps are noise, and
+a gap inside the noise costs nothing. Merging continues while more than
+MAX_VARIANTS (10) remain; once ten or fewer do, it continues only while the
+cheapest merge is free.
+
+Two traps shaped this. The reference is the nearest ancestor on the chart and
+not the merge target, because the direct parent is often manufactured empty
+and anything priced against an empty variant is free, which would relabel every
+lineage upward. And a lineage with no ancestor left on the chart -- a root, or
+the top of a family whose ancestors were all folded away -- is referenced
+against Others, and is not merged at all unless it has nothing in the last 28
+days. In LAPIS data Others is nearly empty -- only the rare roots Lapis drops
+land there -- so every such lineage was free to fold, and the first run of
+this rule drew the dominant lineages of the year as "others". Every live family
+therefore keeps its top lineage on the chart, even if that leaves more than
+ten.
+
+Voc.pinned holds lineages that neither the floor's last two tests nor the cost
+tier may remove -- the first two floor tests still apply, since an unusable fit
+is unusable. Pins come from LEnum lists whose start date falls inside the
+emitted window; both current lists start well before it, so the set is empty
+today. The mechanism is there for the next time a list is added for a wave in
+progress.
 
 
 WHERE A FIT STARTS
