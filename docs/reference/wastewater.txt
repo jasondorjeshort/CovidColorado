@@ -1,0 +1,156 @@
+WASTEWATER INTAKE AND THE NATIONAL BASELINE
+===========================================
+Verified: 2026-09-09
+Code: nwss/, sewage/
+
+Roughly 2,500 sewage treatment plants report a virus concentration to the CDC
+in units that are not comparable with each other. Everything in this subsystem
+exists to turn that into one nationwide curve and a hierarchy of regional ones,
+without ever being told what any plant's units are.
+
+
+ENTRY POINTS
+------------
+colorado/CovidColorado.java main constructs an nwss/Nwss.java and calls read()
+then build(). read() does the fetching and the arithmetic; build() draws (see
+docs/reference/charts.txt). There is no other door: everything below is reached
+from read().
+
+read() does two things before anything runs in parallel. It git-pulls the
+pango-designation checkout through library/GitUpdater.java, and it calls
+variants/Aliases.java build() itself. The second is not redundant. Aliases
+builds lazily on the first Lineage.get(), so if the parallel pool won the race
+it would load the alias file that was on disk before the pull while
+variants/Lineages.java read the lineages.csv that came out of it, and any alias
+new to that pull would be unknown. Anything else added to read() must stay
+behind that line.
+
+After the pool completes, sewage/All.java build() runs the baseline (below),
+and only then is the plant-to-county-to-state-to-region-to-nation hierarchy
+wired up. That order is required: the aggregates are built from normalizers the
+baseline pass produces.
+
+
+WHERE THE NUMBERS COME FROM
+---------------------------
+CDC dataset j9g8-acpt, "CDC Wastewater Data for SARS-CoV-2", one row per
+sample, downloaded as CSV with a 4-hour staleness window so a second run in a
+day fetches nothing. Its two predecessors -- a concentration dataset and a
+metrics dataset, joined on a key -- were archived on 2025-09-12 with data
+ending 2025-09-07. Everything odd about readSewage is a consequence of that
+migration: the successor is per-sample and un-joined, so the reader does the
+per-plant assembly the old metrics table used to hand over.
+
+A plant is identified by source, state, site, sample location and sample
+matrix, joined into one string. That is deliberately the same shape as the old
+key_plot_id, and the source is uppercased so that sewage/Plant.java's Source
+enum still matches it by prefix. State codes are two letters here and full
+names everywhere else, so they go through nwss/StateNames.java on the way in;
+src/main/resources/regions.csv and the Colorado lookup in build() both key on
+the full name.
+
+Expect the column names to move again. They have once.
+
+
+CHOOSING ONE COLUMN PER PLANT
+-----------------------------
+The dataset carries three normalizations of the same measurement, and a plant
+gets exactly one of them for its whole series: flow-population, then microbial,
+then raw concentration. The preference order is quality, but the reason for
+picking one and sticking to it is that only within-plant consistency matters
+here -- the per-plant normalizer against the national baseline absorbs whatever
+the units were. Mixing two columns inside one series would put a step in it
+that no normalizer can remove.
+
+A better column is skipped when it covers noticeably fewer days than another
+one does (under 90% of the best coverage), and when it fails the sanity test:
+its 10th-to-90th-percentile spread must be under 10,000x. A handful of sites,
+in California and Rhode Island among others, changed units mid-series and span
+ten decades, which is not something sewage does.
+
+Several rows on one day -- multiple gene targets, or repeat samples -- are
+averaged. Values are divided by a constant 1E6 on the way in, which is only a
+units shift and is undone by normalization.
+
+SPIKE_CAP is 300: a single day more than 300x the plant's own median is
+dropped. This looks like over-cleaning and is not. A few hundred such days
+exist out of roughly 600,000 plant-days, and each was individually large enough
+to be the entire national total for its day; one of them set the pandemic peak
+that everything else is scaled against, which pushed the whole nationwide
+series down into the 0.01-1% band. Keep both the number and the reason.
+
+Plant metadata -- population, counties, FIPS, state -- is taken from the most
+recent row rather than the first, because it drifts. A plant with no usable
+column at all is skipped, and the count of those is printed.
+
+
+THE NATIONAL BASELINE
+---------------------
+sewage/All.java normalize() is the heart of it. Each plant gets a scalar
+normalizer, defined as (baseline total / plant total) over the days the two
+have in common, computed in sewage/Plant.java buildNormalizer. But the baseline
+is itself the population-weighted sum of the normalized plants, so this is
+circular and is solved by iteration: include everything, rebuild every
+normalizer, include again, and repeat until the largest log-change in any
+normalizer falls under 1E-6, capped at 100 rounds. The round count is printed.
+
+Each round also renormalizes so that the highest single day since 2020-09-01 is
+exactly SCALE_PEAK_RENORMALIZER, 100. That is what makes the y-axis "Percentage
+of pandemic peak" and it is why one bad spike day anywhere in the country used
+to flatten every chart -- it became the 100.
+
+The assumption underneath is stated in the source and is worth repeating: over
+a long enough window, everywhere has about the same amount of covid. That is
+approximately true and certainly not exactly true, and it is the price of not
+knowing anyone's units.
+
+
+AGGREGATION AND THE HIERARCHY
+-----------------------------
+sewage/Multi.java includeSewage adds one plant into one aggregate. The value is
+a population-weighted mean: nwss/DaySewage.java accumulates population times
+normalized sewage and divides by the accumulated population at read time.
+
+Two multipliers damp the weight at the edges of a plant's reporting. Let
+lastZero be the most recent day the plant had no entry, and nextZero the next
+one. The plant's population is scaled by
+
+  min(((day - lastZero) / 182)^2, 1)  *  min(((nextZero - day) / 14)^2, 1)
+
+so a plant that has just started or just resumed reporting enters the aggregate
+quadratically over half a year, and one whose series is about to stop fades out
+over the fortnight before the gap. The point is that a plant joining or leaving
+the pool must not put a step in the aggregate: without this, the national curve
+moves when the reporting roster changes rather than when covid does. The two
+numbers themselves carry no recorded derivation.
+
+Note that only the weighting is damped. The population a day reports is the
+undamped sum, and an aggregate's "line pop" is the largest such daily sum it
+ever saw.
+
+The hierarchy is built by inclusion, not by nesting: each plant is added
+directly into its region, its state, and each of its counties, and a plant
+serving several counties splits its population evenly among them because
+nothing in the data says how else to split it. Only the display children are
+nested. A consequence to know about: a site that reports both raw wastewater
+and primary sludge is two plants under the identity rule above, sharing one
+population, so line-pop totals are inflated -- 112M nationally where the old
+datasets gave 66M. The curve is a weighted mean and is barely affected; the
+population figure in a chart title is the thing that lies.
+
+
+INFLECTIONS AND FIT LINES
+-------------------------
+sewage/Abstract.java buildInflections walks a series from 2020-09-01 forward
+and records where it turns, counting a turn only when the new direction is
+still holding 28 days later. The result is used twice: as the markers on
+sewage charts, and as the fit-start seed for every lineage fit
+(docs/reference/lineages.txt).
+
+makeFitSeries fits a line to log(value). It starts a week after the last
+inflection, then walks backwards adding days only while doing so tightens the
+slope's confidence interval, with a floor of 28 days. So the fit covers the
+current wave and stops where extending it would stop being informative. The
+drawn line is extrapolated to wall-clock today and floored at 1E-6, because a
+plant that stopped reporting years ago on a falling trend extrapolates to
+exp(-huge) and the log axis will not accept a zero.

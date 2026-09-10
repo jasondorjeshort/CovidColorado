@@ -105,15 +105,34 @@ THE MAP
 
 reference/
 ----------
-Nothing yet. The directory exists and is being populated: a later pass writes
-the first reference docs, and each one lands with its entry added here. Until
-then the code and `git log` are the only description of any subsystem, and an
-agent working in one reads the code.
+  reference/wastewater.txt
+    Wastewater intake and the national baseline: `nwss/`, `sewage/`.
+    Where the CDC data comes from and what the 2025 dataset migration did to
+    the reader; why one normalization column is picked per plant and held;
+    the spike cap; the iterative baseline that gives every plant a normalizer
+    and makes the axis a percentage of the pandemic peak; how plants are
+    weighted into counties, states, regions and the nation.
+    Open when: touching intake, the baseline loop, or any aggregate's numbers.
 
-The subsystems that will want an entry, so the holes are visible and claimable:
-wastewater intake and the national baseline (`nwss/`, `sewage/`), lineage data
-and the LAPIS fetch (`variants/`), chart building and the JFreeChart wrappers
-(`charts/`, `myjfreechart/`), and the shared helpers under `library/`.
+  reference/lineages.txt
+    Lineage data: `variants/`.
+    The two pipelines, LAPIS and the hand-exported CSVs, and why the old one
+    is kept; what each of the LAPIS constants is protecting against; the
+    inclusive-count invariant the child subtraction depends on; how the merge
+    loop cuts hundreds of lineages down to a legend; where a fit starts.
+    Open when: changing what lineages are shown, or chasing a prevalence that
+    looks wrong.
+
+  reference/charts.txt
+    Chart building: `charts/`, `myjfreechart/`.
+    The rule that a sewage chart is named by the object it is built from, and
+    what that means for adding one; why the directory tree is made up front;
+    the axis bounds and the failures each one prevents.
+    Open when: adding or changing a chart, or a chart came out empty, broken
+    or in the wrong place.
+
+The one subsystem still without an entry, so the hole is visible and
+claimable: the shared helpers under `library/`.
 
 design/
 -------

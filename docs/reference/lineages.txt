@@ -1,0 +1,134 @@
+LINEAGE DATA
+============
+Verified: 2026-09-09
+Code: variants/
+
+Two pipelines feed the same data structure. The live one pulls per-day sequence
+counts for every US lineage from cov-spectrum's LAPIS API. The older one reads
+CSV files a human exported from cov-spectrum's web UI by hand, and survives
+because the open API does not carry the GISAID-backed data those pages showed.
+Both produce a variants/Voc.java, and everything downstream is common.
+
+
+ENTRY POINTS
+------------
+nwss/Nwss.java read() calls Voc.create() for the manual path and Lapis.create()
+for the automatic one, and concatenates them; a run with no exported CSVs
+present is the normal case. Each Voc is then paired with a sewage series in
+variants/VocSewage.java, which is where fitting and merging happen, and charted
+from there.
+
+
+THE MANUAL PATH, AND WHY IT IS STILL HERE
+-----------------------------------------
+variants/LEnum.java hand-lists lineages; variants/LSet.java turns a list into
+cov-spectrum comparison URLs and prints them; the maintainer opens those,
+exports the resulting CSV to the downloads folder, and Voc.create() reads any
+file matching the two expected names. Exports older than eight hours are
+deleted rather than used, since a stale export silently describes last week.
+
+GISAID's LAPIS is not public, so a query answered on cov-spectrum's site cannot
+be answered by variants/Lapis.java. That is the whole reason this path is kept.
+VocSewage getLink() and the LEnum loop in read() print the links; neither exits
+the program any more, so a run that nobody is going to export from just prints
+them and moves on.
+
+
+THE LAPIS PATH
+--------------
+variants/Lapis.java asks the open (GenBank) LAPIS for US samples aggregated by
+date and nextcladePangoLineage, and caches the JSON for 24 hours. Open data is
+much thinner than GISAID: on the order of 300-600 US sequences a month in 2026,
+against about 7,000 in January 2025. Most of the constants below exist because
+of that thinness, and would want revisiting if the counts ever recovered.
+
+WINDOW_DAYS = 365. One year of history is emitted.
+
+LAG_DAYS = 10. No prevalence is emitted for the last ten days. It matches what
+the manual exports did (LSet.TODAY(-10)) and is not an attempt to model the
+real reporting delay, which is longer -- around 26 days as of this writing. The
+trailing-zero trim at the top of Voc build(), which drops days on which nothing
+at all was sequenced, absorbs the remainder, so the charts show a data cutoff
+where the data actually stops rather than where this constant says.
+
+SMOOTH = 3, a half-width, giving the 7-day centered average cov-spectrum
+exported. Matching it is the point: the two paths must be comparable.
+
+MIN_SEQUENCES = 20. A lineage with fewer than twenty sequences in the whole
+window is folded into its parent before the Voc is constructed. This is input
+curation and it changes no algorithm downstream. It exists because VocSewage's
+own removal rule keeps anything with ten smoothed days, which two sequences
+three days apart already produce -- a sane threshold when the input was a
+hand-picked candidate list, and not when the input is every designated lineage.
+Unfiltered, that rule kept 530 of 754. A lineage with no parent, which means a
+rare recombinant root, is dropped instead; its sequences stay in the
+denominator and therefore surface in "others".
+
+MIN_WINDOW_SEQUENCES = 20. A day whose smoothing window holds fewer than twenty
+sequences gets no prevalence at all. With a handful of sequences one lineage is
+100% of the day, which is noise, and 100% is a value the logit axis cannot draw
+(see docs/reference/charts.txt).
+
+
+INCLUSIVE ROLL-UP: THE INVARIANT THE PIPELINE ASSUMES
+-----------------------------------------------------
+LAPIS counts are exact-lineage. The rest of the pipeline was written against
+cov-spectrum "X*" queries, where a parent's number includes all its
+descendants, and Voc build() subtracts children back out of ancestors deepest
+first, using string-prefix ancestry over expanded names
+(variants/Aliases.java isAncestorExclusive).
+
+So Lapis must hand it inclusive counts: every lineage's daily counts are added
+into every one of its ancestors, creating ancestors that had no sequences of
+their own. Those end up as near-zero residuals after the subtraction and are
+merged away later. Break this and the subtraction silently produces negative
+prevalences.
+
+Two smaller invariants hold it together. Counts stay integers until one
+division per day, so the subtraction is exact rather than producing
+rounding-noise negatives. And a Variant only acquires a Lineage if its name
+matches "nextcladePangoLineage:<alias>*" -- the regex in the Variant(String)
+constructor -- which is exactly what Lineage.getQuery() emits. A variant with a
+null lineage is not merged, not subtracted from, and not assigned a strain.
+
+
+MERGING DOWN TO A LEGEND
+------------------------
+VocSewage build() repeatedly calls findLineageToRemove and folds what it
+returns into its parent's variant, manufacturing that variant if it does not
+exist, or into "Others" for a lineage with no parent. It works deepest first,
+so a subtree collapses from the leaves inward. A lineage is removed when its
+fit has a non-finite slope, when the fit's 60-day projection overflows (a
+two-point fit can be that steep, and it is as unusable as no slope), or when it
+holds under ten days of measurable prevalence or under 0.001 of cumulative
+sewage.
+
+Voc.pinned holds lineages that the last two tests may not remove -- the first
+two still apply, since an unusable fit is unusable. Pins come from LEnum lists
+whose start date falls inside the emitted window; both current lists start well
+before it, so the set is empty today. The mechanism is there for the next time
+a list is added for a wave in progress.
+
+
+WHERE A FIT STARTS
+------------------
+Every fit is a regression of log(sewage * prevalence) against day, and the
+question is only where to start it. The seed is lastInflection: the latest peak
+or valley of the sewage series this Voc is paired with, from
+sewage/Abstract.java getLastInflection, clamped to leave at least MIN_FIT_DAYS
+(28) of data. Each variant then walks backwards from there for as long as doing
+so lowers its slope, and keeps the lowest-slope start.
+
+This used to be a hand-edited date, and by the time anyone looked it was
+2-25-2024 -- earlier than the start of the emitted window, so every fit spanned
+the entire year and every slope came out negative. Anchoring it to an
+inflection the data itself produces is the fix, and is why the sewage subsystem
+computes inflections for series nobody charts.
+
+
+STRAINS
+-------
+variants/Strain.java buckets lineages into named strains by ancestry, for the
+per-strain charts. Its buckets are hand-written and stop at BA.2.86; every
+2026-era lineage falls through to OTHERS. See docs/active/findings/ for the
+open entry on this.

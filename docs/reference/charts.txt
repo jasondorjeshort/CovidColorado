@@ -1,0 +1,75 @@
+CHART BUILDING
+==============
+Verified: 2026-09-09
+Code: charts/, myjfreechart/
+
+JFreeChart, PNGs, one folder tree on one machine. The interesting parts are the
+axis bounds, which exist because of specific failures, and the naming rule,
+which is what lets charts be added without registering them anywhere.
+
+
+ENTRY POINTS
+------------
+nwss/Nwss.java build() calls charts/ChartSewage.java mkdirs(), then queues
+every chart onto an async pool: createSewage for each plant, county, state,
+region and the nation, and buildVocSewageCharts for each lineage set. Nothing
+else in the program draws.
+
+
+THE NAMING RULE
+---------------
+Every sewage chart is built from a sewage.Abstract and named after it, by that
+object's getChartFilename(). A new kind of aggregate needs no registration
+anywhere in charts/: implement the four abstract naming methods and it charts
+itself. That is why there is no list of chart types to keep up to date, here or
+in the code.
+
+The filename may contain a subdirectory -- a plant's is under plants, a
+county's under counties and then its state -- and nothing creates those at save
+time. charts/Charts.java saveBufferedImageAsPNG mkdir's only the folder it was
+handed, and mkdir is not recursive. So the directory tree is made up front by
+mkdirs(), which for the same reason must create TOP_FOLDER before FULL_FOLDER
+before the folders under it, and by reportState(), which makes one directory
+per state under counties. A new nested filename that nobody added to mkdirs()
+fails at save time, not at startup.
+
+createSewage draws one recent chart and five all-time ones at increasing
+smoothing windows. It catches, logs the series name, and rethrows: with a few
+thousand charts on a thread pool, an unlabelled stack trace does not tell you
+which series was bad.
+
+
+AXIS BOUNDS, AND WHY
+--------------------
+Sewage charts use a logarithmic y-axis with a lower bound of 0.01 and an upper
+bound capped at 1E6. The cap is not cosmetic: a runaway fit or a broken plant
+can push the range to dozens of decades, and JFreeChart's LogarithmicAxis then
+allocates tick objects across all of them until the heap runs out. The
+per-lineage absolute charts set the same lower bound but no cap.
+
+The relative lineage charts use myjfreechart/LogitAxis.java with a peak of 100,
+because that is the axis on which competing lineage shares are readable. A
+logit axis cannot represent 0 or 100, so VocSewage addRelative drops any point
+at or beyond either end -- a lone lineage on a thin day is genuinely 100%, and
+a runaway extrapolation is genuinely off the scale, and both would otherwise
+take the whole chart down.
+
+A recent chart's x-axis runs to wall-clock now, not to the last day of data,
+and starts 180 days back or at the last inflection, whichever is earlier. This
+is a deliberate way of showing staleness: data that stopped arriving shows up
+as empty space on the right. That is how the CDC's archiving of the old
+datasets was noticed.
+
+
+LINEAGE CHARTS
+--------------
+Three shapes, from one VocSewage: absolute (log axis, sewage times prevalence),
+relative (logit axis, share of the total), and a cumulative bar chart. Each is
+drawn several ways -- with and without fits, legends, and per-strain grouping
+instead of per-lineage -- and then once more per lineage, one PNG each, under
+the variants folder.
+
+Those per-lineage files are named for the sewage series, the lineage, and the
+Voc's id. The id is load-bearing: the same Voc is charted against national and
+Colorado sewage in the same run, on different threads, so without it the two
+would write the same filename.
