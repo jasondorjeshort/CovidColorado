@@ -229,7 +229,7 @@ public class Nwss {
 
 		/**
 		 * Single days hundreds of times above the plant's own median are data
-		 * errors, not covid. A few dozen of them (out of 600,000 plant-days)
+		 * errors, not covid. A few hundred of them (out of 600,000 plant-days)
 		 * were each large enough to be the entire national total for that day,
 		 * which is what sets the "pandemic peak" everything is scaled to.
 		 */
