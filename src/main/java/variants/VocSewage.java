@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.jfree.data.time.TimeSeries;
@@ -63,7 +65,11 @@ public class VocSewage {
 		return cumulativePrevalence;
 	}
 
-	private final HashSet<Variant> overflowed = new HashSet<>();
+	/*
+	 * Both getCollectiveFit overloads report into this, and they hold different
+	 * locks, so a plain HashSet could be corrupted by two chart threads.
+	 */
+	private final Set<Variant> overflowed = ConcurrentHashMap.newKeySet();
 
 	public double getCollectiveFit(int day) {
 		synchronized (collectiveFit) {
@@ -108,11 +114,27 @@ public class VocSewage {
 			}
 			for (Variant variant : variants) {
 				Strain s = Strain.findStrain(variant.lineage);
-				if (s != null) {
-					double number = Math.exp(fits.get(variant).predict(day));
-					number += cFit.get(s);
-					cFit.put(s, number);
+				if (s == null) {
+					continue;
 				}
+				if (fits.get(variant) == null) {
+					System.out.println("Impossible variant : " + variant);
+					continue;
+				}
+				/*
+				 * Same guard as the collective total above, and it has to be
+				 * the same one: the relative strain series divides this by
+				 * that, so a term dropped from one and kept in the other turns
+				 * a ratio into +Infinity.
+				 */
+				double term = Math.exp(fits.get(variant).predict(day));
+				if (!Double.isFinite(term)) {
+					if (overflowed.add(variant)) {
+						System.out.println("Fit overflow on " + variant.name + ", first at " + CalendarUtils.dayToDate(day));
+					}
+					continue;
+				}
+				cFit.put(s, cFit.get(s) + term);
 			}
 
 			return cFit.get(strain);
@@ -501,6 +523,21 @@ public class VocSewage {
 		series.add(CalendarUtils.dayToDay(day), percent);
 	}
 
+	/*
+	 * The absolute chart's LogarithmicAxis sets a lower bound and no upper one,
+	 * so a single infinite point makes JFreeChart allocate ticks across every
+	 * decade until the heap is gone. findLineageToRemove drops a fit that
+	 * overflows at getLastDay() + 60, but that only proves the fit is finite on
+	 * that one day, and this draws to currentDay + 30, which is later whenever
+	 * the data is more than 30 days stale.
+	 */
+	private static void addAbsolute(TimeSeries series, int day, double value) {
+		if (!Double.isFinite(value) || value <= MINIMUM) {
+			return;
+		}
+		series.add(CalendarUtils.dayToDay(day), value);
+	}
+
 	public synchronized TimeSeries makeRelativeSeries(Strain strain, boolean doFit) {
 		TimeSeries series = new TimeSeries(strain.getName());
 		if (doFit) {
@@ -559,7 +596,7 @@ public class VocSewage {
 		TimeSeries series = new TimeSeries(name);
 		if (fit != null && fit.getSlope() > 0) {
 			int day = getFirstDay() - 42;
-			series.add(CalendarUtils.dayToDay(day), Math.exp(fit.predict(day)));
+			addAbsolute(series, day, Math.exp(fit.predict(day)));
 		}
 		for (int day = Math.max(getFirstDay(), getFirstDay()); day <= getLastDay(); day++) {
 			DaySewage entry;
@@ -578,11 +615,11 @@ public class VocSewage {
 				continue;
 			}
 
-			series.add(CalendarUtils.dayToDay(day), number);
+			addAbsolute(series, day, number);
 		}
 		if (fit != null) {
 			for (int day = getLastDay() + 1; day <= absoluteLastDay; day++) {
-				series.add(CalendarUtils.dayToDay(day), Math.exp(fit.predict(day)));
+				addAbsolute(series, day, Math.exp(fit.predict(day)));
 			}
 		}
 		return series;

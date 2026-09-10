@@ -34,9 +34,11 @@ per state under counties. A new nested filename that nobody added to mkdirs()
 fails at save time, not at startup.
 
 createSewage draws one recent chart and five all-time ones at increasing
-smoothing windows. It catches, logs the series name, and rethrows: with a few
-thousand charts on a thread pool, an unlabelled stack trace does not tell you
-which series was bad.
+smoothing windows. It catches Throwable, logs the series name, and rethrows:
+with a few thousand charts on a thread pool, an unlabelled stack trace does not
+tell you which series was bad. The catch is that wide on purpose -- the failure
+it exists for is the tick-allocation OutOfMemoryError below, which is an Error
+and not a RuntimeException.
 
 
 AXIS BOUNDS, AND WHY
@@ -45,7 +47,9 @@ Sewage charts use a logarithmic y-axis with a lower bound of 0.01 and an upper
 bound capped at 1E6. The cap is not cosmetic: a runaway fit or a broken plant
 can push the range to dozens of decades, and JFreeChart's LogarithmicAxis then
 allocates tick objects across all of them until the heap runs out. The
-per-lineage absolute charts set the same lower bound but no cap.
+per-lineage absolute charts set the same lower bound but no cap, so the guard
+there is on the data instead: VocSewage addAbsolute drops a point that is not
+finite before it can reach the axis.
 
 The relative lineage charts use myjfreechart/LogitAxis.java with a peak of 100,
 because that is the axis on which competing lineage shares are readable. A

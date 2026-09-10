@@ -587,8 +587,14 @@ public class ChartSewage {
 			buildSewageTimeseriesChart(sewage, maxChildren, false, 14);
 			buildSewageTimeseriesChart(sewage, maxChildren, false, 28);
 			buildSewageTimeseriesChart(sewage, maxChildren, false, 365);
-		} catch (RuntimeException e) {
-			/* One bad series should not hide which one it was. */
+		} catch (Throwable e) {
+			/*
+			 * One bad series should not hide which one it was. Deliberately
+			 * wider than RuntimeException: the failure this exists for is the
+			 * OutOfMemoryError from LogarithmicAxis allocating ticks across a
+			 * runaway range, and an Error would otherwise go past unlabelled.
+			 * Rethrown immediately, so nothing is swallowed.
+			 */
 			System.out.println("Chart failed for " + sewage.getChartFilename() + ": " + e);
 			throw e;
 		}
