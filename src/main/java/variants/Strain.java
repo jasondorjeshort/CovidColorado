@@ -2,8 +2,22 @@ package variants;
 
 import java.util.HashMap;
 
+/**
+ * The named strains of the per-strain charts, each a label and the lineages it
+ * covers, written as aliases and expanded when the enum loads. A lineage belongs
+ * to the strain that lists its most specific ancestor, by {@link Aliases}'
+ * string-prefix ancestry over expanded names, and one under no strain is
+ * {@link #OTHERS}. That ancestry gives a recombinant root no parent, so a
+ * recombinant belongs to a strain only if its root is listed by name, which is
+ * what the X* entries are.
+ * <p>
+ * The charts draw and label strains in declaration order. Were two strains to
+ * list the same ancestor, the first declared would win it.
+ */
 public enum Strain {
 
+	// Hand-maintained. Where they fall short of current data:
+	// docs/active/findings/2026-09-09-strain-buckets-end-at-ba-2-86.md
 	BA_1("BA.1", "ba.1", "ba.3"),
 	BA_2("BA.2", "ba.2"),
 	BA_5("BA.5", "ba.5", "ba.4"),
@@ -33,9 +47,17 @@ public enum Strain {
 		return name;
 	}
 
+	/* Expanded lineage name to strain, filled on first ask and kept for the run. */
 	private static final HashMap<String, Strain> backwardsMap = new HashMap<>();
 
-	public static Strain findStrain(String variant) {
+	/*
+	 * Takes an expanded name, which is all findStrain(Lineage) passes, and
+	 * expanding one again returns it unchanged: every alias in
+	 * pango-designation's alias_key.json expands to a name that begins at a
+	 * root. So the null branch cannot fire from here; were it reached, the
+	 * ancestry test below would throw on the null.
+	 */
+	private static Strain findStrain(String variant) {
 		String variantFull = Aliases.expand(variant);
 		if (variantFull == null) {
 			new Exception("Mismatched variant " + variant).printStackTrace();
@@ -76,6 +98,12 @@ public enum Strain {
 		}
 	}
 
+	/**
+	 * The strain of the variant's lineage, or null for a variant with no
+	 * lineage, such as the residual "others" variant a Voc adds. Callers skip
+	 * null, so that variant is on no strain line and is not part of
+	 * {@link #OTHERS}.
+	 */
 	public static Strain findStrain(Variant variant) {
 		if (variant.lineage != null) {
 			return findStrain(variant.lineage);
@@ -84,6 +112,13 @@ public enum Strain {
 		return null;
 	}
 
+	/**
+	 * The strain listing the most specific ancestor of the lineage, the lineage
+	 * itself included; {@link #OTHERS} when none does, after printing an
+	 * "Unknown strain" stack trace; null for a null lineage. Answers are cached
+	 * for the run, so the trace prints once per lineage. Safe to call from the
+	 * chart-building threads.
+	 */
 	public static Strain findStrain(Lineage lineage) {
 		if (lineage == null) {
 			return null;

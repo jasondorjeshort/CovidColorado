@@ -63,3 +63,4 @@
 2026-09-10 src/main/java/covid/CalendarUtils.java
 2026-09-10 src/main/java/covid/DailyTracker.java
 2026-09-10 src/main/java/variants/Variant.java
+2026-09-10 src/main/java/variants/Strain.java
