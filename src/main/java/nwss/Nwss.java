@@ -518,6 +518,9 @@ public class Nwss {
 	 * then shows the charts queued with library/OpenImage.java once all are
 	 * written. The lineage task queues its own charts on the same ASync while
 	 * it runs, and complete() waits for those too.
+	 * <p>
+	 * The inflections are built lazily by the chart tasks, so this is also where
+	 * their summary line is printed, once every series that draws has built.
 	 */
 	public void build() {
 		long time = System.currentTimeMillis();
@@ -562,6 +565,7 @@ public class Nwss {
 		states.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage, 5)));
 		regions.forEach((id, sewage) -> build.execute(() -> ChartSewage.createSewage(sewage, null)));
 		build.complete();
+		sewage.Abstract.printInflectionSummary();
 		System.out.println("Built charts " + (System.currentTimeMillis() - time) / 1000 + "s.");
 		time = System.currentTimeMillis();
 		library.OpenImage.open();

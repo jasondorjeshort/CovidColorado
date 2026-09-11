@@ -1,8 +1,8 @@
 **Nine plants in ten never get an inflection, because turns are looked for
 only between readings on consecutive days.** `sewage/Abstract.java`
-buildInflections: the return after "Uh oh skipping inflections", from
-`112320a`, and the scan's comparison of each day with the next, from `beade3a`
-(then in getMarkers; moved in `172d4d5`).
+buildInflections: the return that counts a skipped series, from `112320a`, and
+the scan's comparison of each day with the next, from `beade3a` (then in
+getMarkers; moved in `172d4d5`).
 
 buildInflections sets its starting direction from the first reading on or
 after 2020-09-01 and the reading on the next calendar day, and returns with no
@@ -20,9 +20,9 @@ since a positive normalizer changes no comparison. Of the 2,525 plants
 `sewage/All.java` keeps, 39 have a one-day range and get no inflections by
 design; 2,188 take the early return; 90 pass it and find no turn; 208 have at
 least one inflection, three for the median one. So 2,317 of 2,525 plants have
-none. `docs/active/findings/2026-09-09-inflection-building-floods-the-log.md`
-counts about 3,200 early returns a run, which suggests many aggregates take it
-too; the aggregates were not replayed.
+none. buildInflections's summary line counts about 3,200 skipped series a run,
+which suggests many aggregates take the early return too; the aggregates were
+not replayed.
 
 What a series without an inflection loses: markers on its charts;
 makeFitSeries's bound at a week after the last inflection, so its fit is
@@ -35,17 +35,18 @@ run's charts. `docs/reference/wastewater.txt`, under INFLECTIONS AND FIT
 LINES, says the method records where a series turns, and is left saying what
 was meant.
 
-That sibling finding calls skipping these series the correct handling. It is
-the correct handling of the log line; what is skipped is every inflection the
-series would have had.
+A sibling finding, since resolved by counting these skips instead of printing
+them, called skipping these series the correct handling. It is the correct
+handling of the log line; what is skipped is every inflection the series would
+have had.
 
 What it would take: compare each reading with the previous reading that
 exists, rather than with the previous calendar day, and take the starting
 direction from the first two readings. The 28-day confirmation window and the
-14-day tail are in days and can stay. Both "Uh oh" messages go with it, which
-resolves the sibling finding in the same change. Markers, fit windows and
-recent-chart ranges move on most plant charts and on the aggregates that take
-the early return. The national and Colorado series move only if they have
+14-day tail are in days and can stay. Both counters go with it, and so does
+printInflectionSummary and its call in `nwss/Nwss.java`. Markers, fit windows
+and recent-chart ranges move on most plant charts and on the aggregates that
+take the early return. The national and Colorado series move only if they have
 days without an entry, which was not checked; if they do, the lineage fits
 seeded from them move too. A run is the validation.
 

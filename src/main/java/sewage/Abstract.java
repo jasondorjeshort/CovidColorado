@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.jfree.chart.plot.ValueMarker;
@@ -59,27 +60,55 @@ public abstract class Abstract extends DailyTracker {
 	private final ArrayList<Inflection> inflections = new ArrayList<>();
 
 	/*
+	 * Counts of the two things buildInflections passes over, summed across every
+	 * series a run builds and reported once by printInflectionSummary. Neither
+	 * is an error -- a sparse series legitimately has gaps -- but they happen
+	 * thousands of times a run, so they are counted rather than printed, the way
+	 * nwss/Nwss.java readSewage counts skipped plants and dropped spike days.
+	 * Atomic because the chart tasks build their series on the code pool.
+	 */
+	private static final AtomicInteger startDaysBumped = new AtomicInteger();
+	private static final AtomicInteger seriesSkipped = new AtomicInteger();
+
+	/**
+	 * Prints one line covering every series the run built inflections for: how
+	 * many leading days with no reading were stepped over, and how many series
+	 * got no inflections at all. Call it once, after everything that draws has
+	 * built.
+	 */
+	public static void printInflectionSummary() {
+		System.out.println("Built inflections, bumped " + startDaysBumped.get()
+				+ " leading days with no reading, skipped " + seriesSkipped.get()
+				+ " series with no reading the day after their first.");
+	}
+
+	/*
 	 * The peaks and valleys, used as the chart markers, as the bound on how far
 	 * back makeFitSeries reaches, as how far back a recent chart reaches when
 	 * the last one is over 180 days old, and as VocSewage's fit seed.
 	 * docs/reference/wastewater.txt, under INFLECTIONS AND FIT LINES, has the
 	 * design.
 	 *
-	 * Both messages below print thousands of times a run; see
-	 * docs/active/findings/2026-09-09-inflection-building-floods-the-log.md.
-	 * And only readings on consecutive days are compared, so a series whose
-	 * first reading from 2020-09-01 on has no reading the next day returns at
-	 * the second message with none, which is most plants; see
+	 * Only readings on consecutive days are compared, so a series whose first
+	 * reading from 2020-09-01 on has no reading the next day returns with none,
+	 * which is most plants; see
 	 * docs/active/findings/2026-09-10-most-plants-never-get-an-inflection.md.
 	 */
 	private synchronized void buildInflections() {
 		int firstDay = Math.max(getFirstDay(), CalendarUtils.dateToDay("9/1/2020")), lastDay = getLastDay();
-		while (getNormalized(firstDay) == null) {
-			System.out.println("Uh oh bumping day because null normalization.");
+		/*
+		 * build() only promises a positive total somewhere in the day range, not
+		 * a reading on or after 2020-09-01, so a series that ended before then
+		 * would walk this loop forever without the bound on lastDay. Past the
+		 * last day getNormalized is null, so such a series takes the return
+		 * below.
+		 */
+		while (firstDay <= lastDay && getNormalized(firstDay) == null) {
+			startDaysBumped.incrementAndGet();
 			firstDay++;
 		}
 		if (getNormalized(firstDay + 1) == null) {
-			System.out.println("Uh oh skipping inflections because null normalization.");
+			seriesSkipped.incrementAndGet();
 			return;
 		}
 		boolean rising = getNormalized(firstDay + 1) >= getNormalized(firstDay);
