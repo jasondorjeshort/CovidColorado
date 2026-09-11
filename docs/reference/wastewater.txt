@@ -17,13 +17,14 @@ docs/reference/charts.txt). There is no other door: everything below is reached
 from read().
 
 read() does two things before anything runs in parallel. It git-pulls the
-pango-designation checkout through library/GitUpdater.java, and it calls
-variants/Aliases.java build() itself. The second is not redundant. Aliases
-builds lazily on the first Lineage.get(), so if the parallel pool won the race
-it would load the alias file that was on disk before the pull while
-variants/Lineages.java read the lineages.csv that came out of it, and any alias
-new to that pull would be unknown. Anything else added to read() must stay
-behind that line.
+pango-designation checkout through library/GitUpdater.java, which waits for git
+to finish, and it calls variants/Aliases.java build() itself. The pull is what
+orders things. Aliases loads lazily on the first lineage lookup, and while the
+pull ran inside the pool a lookup could load the alias file from before it
+while variants/Lineages.java read the lineages.csv from after it, leaving any
+alias new to that pull unknown. With the pull finished before the pool starts,
+the explicit build() only moves the load onto the main thread. Anything else
+added to read() that reads the checkout must stay behind the pull.
 
 After the pool completes, sewage/All.java build() runs the baseline (below),
 and only then is the plant-to-county-to-state-to-region-to-nation hierarchy

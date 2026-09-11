@@ -65,3 +65,4 @@
 2026-09-10 src/main/java/variants/Variant.java
 2026-09-10 src/main/java/variants/Strain.java
 2026-09-10 src/main/java/myjfreechart/LogitAxis.java
+2026-09-10 src/main/java/variants/Aliases.java
