@@ -41,8 +41,8 @@ All hardcoded, all outside the checkout, all on this machine:
   `TOP_FOLDER`; everything is written under its `full` subfolder.
 - Download cache: `CovidBackend` under the system temp directory (`%TEMP%`),
   created by a static block in `nwss/Nwss.java`. The CDC CSV and the LAPIS JSON
-  live there with their own staleness windows (4 h and 24 h), so a second run
-  in the same day fetches nothing.
+  live there with their own staleness windows (4 h and 24 h), so a run within
+  four hours of the last one fetches nothing.
 - `pango-designation` checkout: `C:\Users\jdorj\Downloads\pango-designation` —
   `nwss/Nwss.java`, `GIT_LOCATION`. Every run `git pull`s it. Its
   `alias_key.json` and `lineages.csv` are read directly.

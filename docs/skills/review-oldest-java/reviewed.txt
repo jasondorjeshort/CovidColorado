@@ -82,3 +82,4 @@
 2026-09-10 src/main/java/sewage/Abstract.java
 2026-09-10 src/main/java/variants/VocSewage.java
 2026-09-10 src/main/java/charts/ChartSewage.java
+2026-09-10 src/main/java/nwss/Nwss.java

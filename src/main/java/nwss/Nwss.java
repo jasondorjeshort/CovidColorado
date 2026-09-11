@@ -31,10 +31,34 @@ import variants.Lineages;
 import variants.Voc;
 import variants.VocSewage;
 
+/**
+ * The live program's wastewater intake and its driver:
+ * {@code colorado/CovidColorado.java} main makes one Nwss and calls
+ * {@link #read()}, then {@link #build()}. docs/reference/wastewater.txt owns
+ * what the reader does to the CDC data and why.
+ * <p>
+ * read() runs the downloads and parsers as tasks on the code pool, waits for
+ * them, and then, on the calling thread, runs the national baseline and wires
+ * the plants into counties, states, regions and the nation. What the tasks
+ * fill in (the plant map, through readSewage, {@code variants}, and the
+ * table in {@code regionList}) is read only after that wait, and the
+ * Future.get() inside ASync.complete() is what makes it visible. From build()
+ * on, the maps are only read, by the main thread and the chart tasks alike.
+ * <p>
+ * Also home to the download cache the other readers share: {@link #FOLDER}
+ * under the system temp directory, and {@link #ensureFileUpdated}.
+ */
 public class Nwss {
 
 	public static final String FOLDER = "CovidBackend";
 
+	/*
+	 * Makes the download cache directory when the class initializes. The
+	 * result is not checked: a directory that cannot be made shows up later as
+	 * every download failing. FOLDER is a compile-time constant, so a class
+	 * that only names it does not run this block; calling ensureFileUpdated
+	 * does.
+	 */
 	static {
 		new File(System.getProperty("java.io.tmpdir") + "\\" + FOLDER).mkdir();
 	}
@@ -46,9 +70,6 @@ public class Nwss {
 	public static final String CSV = System.getProperty("java.io.tmpdir") + "\\" + FOLDER + "\\"
 			+ "CDC_Wastewater_Data_for_SARS-CoV-2.csv";
 	public static final String URL = "https://data.cdc.gov/api/views/j9g8-acpt/rows.csv?accessType=DOWNLOAD";
-
-	// public static final String VOC_HTML =
-	// System.getProperty("java.io.tmpdir") + "\\" + FOLDER + "\\" + "VOC.html";
 
 	public static final Charset CHARSET = Charset.forName("US-ASCII");
 
@@ -62,8 +83,17 @@ public class Nwss {
 	// private Fips fips;
 	private Regions regionList = new Regions();
 
-	public static long HOUR = 60 * 60 * 1000;
+	public static final long HOUR = 60 * 60 * 1000;
 
+	/**
+	 * Copies url to file, overwriting it. Never throws: on any failure the
+	 * trace is printed and file is deleted. While the copy runs, the partial
+	 * file sits under its final name with a current mtime; see
+	 * docs/active/findings/2026-09-10-a-second-run-reads-a-half-written-download-as-a-fresh-cache.md.
+	 * No connect or read timeout is set, so a server that stops sending blocks
+	 * this, and the run, indefinitely; see
+	 * docs/active/findings/2026-09-10-a-stalled-download-hangs-the-run-for-good.md.
+	 */
 	public static void download(URL url, File file) {
 		try (BufferedInputStream in = new BufferedInputStream(url.openStream());
 				FileOutputStream fileOutputStream = new FileOutputStream(file)) {
@@ -78,6 +108,19 @@ public class Nwss {
 		}
 	}
 
+	/**
+	 * Returns the file at fileLoc, first fetching it from urlSource with
+	 * {@link #download} if it is missing or was last modified more than hours
+	 * ago. Freshness is judged by the mtime alone: the URL is not compared
+	 * (docs/active/findings/2026-09-09-lapis-cache-keyed-by-filename-not-url.md),
+	 * nor is the file checked for being complete.
+	 * <p>
+	 * A stale file is deleted before the fetch, so a failed fetch leaves no
+	 * file at all rather than the stale one, and the File returned may not
+	 * exist: the caller must check. A stale file that cannot be deleted is
+	 * returned as it is, after the line saying it is being deleted. A
+	 * urlSource that is not a URL ends the JVM with status 0.
+	 */
 	public static File ensureFileUpdated(String fileLoc, String urlSource, int hours) {
 		File f = new File(fileLoc);
 
@@ -90,6 +133,14 @@ public class Nwss {
 		if (!f.exists()) {
 			URL url = null;
 			try {
+				/*
+				 * URL(String), deprecated since Java 20, is the call behind
+				 * javac's deprecation note for this file. Its replacement,
+				 * URI.create(urlSource).toURL(), parses more strictly and throws
+				 * IllegalArgumentException, which this catch does not take, so
+				 * the swap changes how a bad URL fails. The URLs passed today
+				 * parse the same either way.
+				 */
 				url = new URL(urlSource);
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
@@ -192,6 +243,11 @@ public class Nwss {
 			/*
 			 * Prefer the better normalization unless it covers noticeably fewer
 			 * days than another column does, or its values are not believable.
+			 * The coverage bar is set by the best-covered column even when that
+			 * column fails isSane, so a plant whose only sane column is
+			 * out-covered by insane ones gets null and is counted as having no
+			 * usable values; see
+			 * docs/active/findings/2026-09-10-a-plant-whose-sane-column-is-outcovered-is-dropped.md.
 			 */
 			for (Normalization norm : Normalization.values()) {
 				if (byNorm.get(norm).size() >= 0.9 * most && isSane(byNorm.get(norm))) {
@@ -218,7 +274,7 @@ public class Nwss {
 		 * their series spans ten decades. Real sewage levels do not: reject a
 		 * column whose 10th-90th percentile spread is more than 10,000x. Fewer
 		 * than 10 positive values are too few for percentiles to mean anything,
-		 * so such a column is accepted on being non-empty and not tested.
+		 * so such a column passes if it has any positive value at all.
 		 */
 		private static boolean isSane(TreeMap<Integer, double[]> days) {
 			ArrayList<Double> values = positiveValues(days);
@@ -265,6 +321,16 @@ public class Nwss {
 		return Math.max(d, 0.0);
 	}
 
+	/**
+	 * Reads the CDC CSV, fetched first if it is missing or over 4 hours old,
+	 * into one sewage/Plant per plant id. Runs as one of read()'s pool tasks,
+	 * and is the only writer of the plant map. Any exception while parsing,
+	 * including a missing file after a failed fetch and a column the dataset
+	 * has renamed, prints a trace, deletes the CSV so the next run fetches it
+	 * again, and ends the JVM with status 0, so the run draws nothing and
+	 * reports success; see
+	 * docs/active/findings/2026-09-10-an-unreadable-cdc-download-ends-the-run-as-a-success.md.
+	 */
 	public void readSewage() {
 		System.out.println(CSV);
 		File f = ensureFileUpdated(CSV, URL, 4);
@@ -353,6 +419,13 @@ public class Nwss {
 
 	public static final String GIT_LOCATION = "C:\\Users\\jdorj\\Downloads\\pango-designation";
 
+	/**
+	 * Fetches and parses everything, then builds the baseline and the
+	 * hierarchy; the class comment describes the threading. An exception in a
+	 * pool task is printed and swallowed by the pool, so a reader that fails
+	 * without exiting the JVM itself leaves its data missing rather than
+	 * failing this call.
+	 */
 	public void read() {
 
 		long time = System.currentTimeMillis();
@@ -383,12 +456,6 @@ public class Nwss {
 				System.out.println(vEnum);
 				LSet vs = new LSet(vEnum);
 				vs.getCovSpectrumLink();
-
-				if (vEnum == LEnum.SEP_TO_NOV_2023) {
-					// File f = ensureFileUpdated(VOC_HTML, link, 168);
-					// TODO: probably can't actually do anything with this.
-				}
-
 				vs.getCovSpectrumReverseLink();
 				System.out.println();
 			}
@@ -401,7 +468,13 @@ public class Nwss {
 
 		all.build(plants.values());
 
-		// JFC this is tedious
+		/*
+		 * Each plant is included directly into its region, its state and each
+		 * of its counties; no aggregate is summed from another. A county's
+		 * plants are added as its children here, but every aggregate is added
+		 * as a child only below, after every include, because Multi.addChild
+		 * sorts by population on insertion and never again.
+		 */
 		plants.forEach((plantId, sewage) -> {
 			String state = sewage.getState();
 			if (state != null) {
@@ -410,6 +483,11 @@ public class Nwss {
 				getStateSewage(state).includeSewage(sewage, 1.0);
 				String c = sewage.getCounties();
 				if (c != null) {
+					/*
+					 * A blank counties_served splits into one empty name, which
+					 * becomes a county named ""; see
+					 * docs/active/findings/2026-09-10-a-blank-counties-served-makes-a-county-with-no-name.md.
+					 */
 					String[] countyNames = c.split(",");
 					for (String county : countyNames) {
 						sewage.County cSew = getCountySewage(county, state);
@@ -435,6 +513,12 @@ public class Nwss {
 		System.out.println("Built combos in " + (System.currentTimeMillis() - time) / 1000 + "s.");
 	}
 
+	/**
+	 * Draws every chart from what read() built, as tasks on the code pool,
+	 * then shows the charts queued with library/OpenImage.java once all are
+	 * written. The lineage task queues its own charts on the same ASync while
+	 * it runs, and complete() waits for those too.
+	 */
 	public void build() {
 		long time = System.currentTimeMillis();
 		ChartSewage.mkdirs();
@@ -462,6 +546,11 @@ public class Nwss {
 							}
 						}
 					} catch (Exception e) {
+						/*
+						 * Ends the run with status 0 while other chart tasks
+						 * are still drawing; see
+						 * docs/active/findings/2026-09-10-an-unreadable-cdc-download-ends-the-run-as-a-success.md.
+						 */
 						e.printStackTrace();
 						System.exit(0);
 					}

@@ -35,8 +35,8 @@ baseline pass produces.
 WHERE THE NUMBERS COME FROM
 ---------------------------
 CDC dataset j9g8-acpt, "CDC Wastewater Data for SARS-CoV-2", one row per
-sample, downloaded as CSV with a 4-hour staleness window so a second run in a
-day fetches nothing. Its two predecessors -- a concentration dataset and a
+sample, downloaded as CSV with a 4-hour staleness window, so a run within four
+hours of the last fetch fetches nothing. Its two predecessors -- a concentration dataset and a
 metrics dataset, joined on a key -- were archived on 2025-09-12 with data
 ending 2025-09-07. Everything odd about readSewage is a consequence of that
 migration: the successor is per-sample and un-joined, so the reader does the
@@ -68,7 +68,8 @@ that no normalizer can remove.
 A better column is skipped when it covers noticeably fewer days than another
 one does (under 90% of the best coverage), and when it fails the sanity test:
 its 10th-to-90th-percentile spread must be under 10,000x, unless it has fewer
-than 10 positive values, in which case being non-empty is the whole test. A
+than 10 positive values, in which case having any positive value at all is the
+whole test. A
 handful of sites, in California and Rhode Island among others, changed units
 mid-series and span ten decades, which is not something sewage does.
 
