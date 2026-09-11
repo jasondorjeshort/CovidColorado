@@ -83,50 +83,57 @@ public class All extends Multi {
 	 *
 	 * It stops once no normalizer moves by more than 1E-6 in log, a millionth
 	 * and far below anything a chart shows, or after 100 rounds. Hitting the cap
-	 * is not treated as a failure: the count printed at the end is 100, and the
-	 * normalizers are the last round's. Neither number has a recorded
-	 * derivation.
+	 * is not treated as a failure: the count printed at the end is the rounds
+	 * run, and the normalizers are the last round's. Neither number has a
+	 * recorded derivation.
 	 *
-	 * Today the cap always ends it. A plant buildNormalizer cannot fit keeps its
-	 * normalizer and is still renormalized, and the renormalization settles near
-	 * 0.991 rather than 1, so that plant's normalizer moves about 0.9% every
-	 * round and the test never passes; see
-	 * docs/active/findings/2026-09-10-the-baseline-loop-never-converges.md.
+	 * Only the plants buildNormalizer fitted take part: they alone are
+	 * renormalized and they alone are measured. A plant it cannot fit has no
+	 * normalizer the baseline implies, and renormalizing it anyway moves it by
+	 * the same log step every round forever -- once the fitted plants settle the
+	 * renormalization settles too, but not at 1: it was 0.991 in the download of
+	 * 2026-09-10 -- so the largest change would never fall under the test and
+	 * the loop would always run its 100 rounds.
 	 */
 	private void normalize() {
 		HashMap<Plant, Double> oldNormalizers = new HashMap<>();
+		ArrayList<Plant> fitted = new ArrayList<>();
 		long time = System.currentTimeMillis();
-		int i;
-		for (i = 0; i < 100; i++) {
+		int rounds = 0;
+		double normDiff;
+		do {
+			rounds++;
 			oldNormalizers.clear();
 			plants.forEach(p -> oldNormalizers.put(p, p.getNormalizer()));
 
 			include();
-			plants.forEach(p -> p.buildNormalizer(this));
+			fitted.clear();
+			for (Plant p : plants) {
+				if (p.buildNormalizer(this)) {
+					fitted.add(p);
+				}
+			}
 
 			include();
 			double renorm = getHighestSewage(peakStart, getLastDay()) / SCALE_PEAK_RENORMALIZER;
-			plants.forEach(p -> p.renorm(renorm));
+			fitted.forEach(p -> p.renorm(renorm));
 
-			double normDiff = 0;
+			normDiff = 0;
 
-			for (Plant p : plants) {
+			for (Plant p : fitted) {
 				double d = Math.abs(Math.log(p.getNormalizer() / oldNormalizers.get(p)));
 				if (d > normDiff) {
 					normDiff = d;
 				}
 			}
 
-			System.out.println("Normalize " + i + " => " + normDiff);
-
-			if (normDiff < 1E-6) {
-				break;
-			}
-		}
+			System.out.println("Normalize " + rounds + " => " + normDiff);
+		} while (normDiff >= 1E-6 && rounds < 100);
 
 		time = System.currentTimeMillis() - time;
 
-		System.out.println("Looped normalization " + i + " times in " + time + " ms.");
+		System.out.println("Looped normalization " + rounds + " times in " + time + " ms, leaving "
+				+ (plants.size() - fitted.size()) + " of " + plants.size() + " plants unfitted.");
 	}
 
 	/**
@@ -139,7 +146,10 @@ public class All extends Multi {
 	 * days or no population, does not add to the baseline but is still fitted
 	 * to it. A plant {@link Plant#buildNormalizer} cannot fit, which includes
 	 * every one-day plant because its sums stop short of the plant's last day,
-	 * is left with 1 divided by every round's renormalization.
+	 * keeps a normalizer of exactly 1 and is left out of the renormalization, so
+	 * its own chart is drawn in the plant's own units. That scale is not the
+	 * baseline's and says nothing about how much covid the plant saw next to
+	 * anywhere else, but it is the plant's own and it is the same on every run.
 	 * <p>
 	 * Throws NullPointerException when the baseline has no day on or after
 	 * 2020-09-01, an empty download for one: there is no peak to scale to.

@@ -138,20 +138,22 @@ public class Plant extends Abstract {
 	/**
 	 * Sets the normalizer to (baseline total / this plant's total) over the days
 	 * both have a reading, so that the plant's normalized readings sum to the
-	 * baseline's over those days. {@link All} calls it for every plant in each
-	 * round of its baseline loop, on the main thread. It writes the normalizer
-	 * without the lock the accessors take, which is safe only because nothing
-	 * else touches a plant while that loop runs.
+	 * baseline's over those days, and returns whether it did. {@link All} calls
+	 * it for every plant in each round of its baseline loop, on the main thread.
+	 * It writes the normalizer without the lock the accessors take, which is
+	 * safe only because nothing else touches a plant while that loop runs.
 	 * <p>
-	 * Two things about today's behaviour, both recorded in
-	 * docs/active/findings/2026-09-10-the-baseline-loop-never-converges.md. The
-	 * loop stops short of the plant's last day, so its last reading never
-	 * counts, and nothing records why. And when either sum is 0 the normalizer
-	 * is left as it was, which after the first round is 1 divided by every
-	 * renormalization so far; a plant with a one-day range always takes that
-	 * branch.
+	 * The sums stop short of the plant's last day, so its last reading never
+	 * counts toward either of them, and nothing records whether that is a choice
+	 * or an off-by-one.
+	 * <p>
+	 * When either sum is 0 there is nothing to fit against: the normalizer is
+	 * left as it is and false is returned. {@link All}'s loop then leaves the
+	 * plant out of its renormalization too, so the normalizer stays the 1 it
+	 * starts as. A plant with a one-day range always takes this branch, having
+	 * no day before its last.
 	 */
-	public void buildNormalizer(All baseline) {
+	public boolean buildNormalizer(All baseline) {
 		double ours = 0, base = 0;
 		int firstDay = getFirstDay(), lastDay = getLastDay();
 		for (int day = firstDay; day < lastDay; day++) {
@@ -164,7 +166,7 @@ public class Plant extends Abstract {
 		}
 
 		if (base == 0 || ours == 0) {
-			return;
+			return false;
 		}
 		normalizer = base / ours;
 		/*
@@ -176,6 +178,7 @@ public class Plant extends Abstract {
 		if (normalizer < 0 || base < 0 || ours < 0) {
 			new Exception("Uh oh big fail.").printStackTrace();
 		}
+		return true;
 	}
 
 	private double normalizer = 1;
@@ -187,8 +190,9 @@ public class Plant extends Abstract {
 
 	/**
 	 * Divides the normalizer by {@code factor}. {@link All}'s baseline loop calls
-	 * it on every plant after each round's fit, with the baseline's highest day
-	 * since 2020-09-01 divided by 100, which scales that day to 100.
+	 * it after each round's fit, on the plants that round fitted and no others,
+	 * with the baseline's highest day since 2020-09-01 divided by 100, which
+	 * scales that day to 100.
 	 */
 	public synchronized void renorm(double factor) {
 		normalizer /= factor;
