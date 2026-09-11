@@ -36,7 +36,10 @@ the UTC date and so tomorrow from 18:00 local (17:00 in winter):
 hidden now, because evening-parsed dates shift the same way (at 20:49 MDT,
 `timeToDay(now)` gave 20707 against a local epoch day of 20706). So the fix
 also wants a `CalendarUtils.today()` that returns the local date's index,
-used at those six sites.
+used at those six sites. `variants/LSet.java` TODAY already takes the local date,
+through `timeToCalendar`, so it is right in the evening and needs no change.
+The fix brings Lapis's LAG_DAYS cutoff back into step with it, which
+docs/reference/lineages.txt says it already is.
 `dateToTime`'s only caller outside `CalendarUtils` is the dead
 `colorado/Event.java`, so nothing live depends on the time of day being kept.
 Then a daytime run and an evening run should draw the same charts, which is
