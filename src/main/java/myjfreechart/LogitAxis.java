@@ -179,10 +179,9 @@ public class LogitAxis extends NumberAxis {
 	/**
 	 * Rounds an upper bound up to a tick the scale treats as round: above
 	 * peak/2, the mirror image, peak less the computeLogitFloor of its distance
-	 * from peak; above peak/10, peak/2 itself; at or below peak/10, meant to be
-	 * the power of ten at or above it, mirroring computeLogitFloor. A value at
-	 * or below zero comes back rounded up to an integer, which the axis cannot
-	 * draw.
+	 * from peak; above peak/10, peak/2 itself; at or below peak/10, the power of
+	 * ten at or above it, mirroring computeLogitFloor. A value at or below zero
+	 * comes back rounded up to an integer, which the axis cannot draw.
 	 *
 	 * @param upper
 	 *            the largest data value.
@@ -200,17 +199,7 @@ public class LogitAxis extends NumberAxis {
 		if (upper > 0.0) {
 			upper = Math.log(upper) / LOG10;
 			upper = Math.ceil(upper);
-			/*
-			 * Not the power of ten the rest of this method means: unlogit of a
-			 * log10 exponent. With a peak of 100, anything in (1, 10] comes back
-			 * as 90.9 and anything in (0.1, 1] as 50, and a lower bound of 90 or
-			 * more, which computeLogitFloor mirrors through here, comes out far
-			 * too low. LogarithmicAxis has Math.pow(10, upper). Recorded as a
-			 * finding rather than fixed, since today's charts should not reach
-			 * it: each plots about ten lineages sharing every day's 100%, so its
-			 * largest point is over 10%, and the caller replaces the lower bound.
-			 */
-			upper = unlogit(upper);
+			upper = Math.pow(10, upper);
 		} else {
 			upper = Math.ceil(upper);
 		}
@@ -220,7 +209,9 @@ public class LogitAxis extends NumberAxis {
 	/**
 	 * Rescales the axis to ensure that all data is visible, rounding each end
 	 * with computeLogitFloor and computeLogitCeil. With no data the range is 1%
-	 * to 99% of peak.
+	 * to 99% of peak. Data that is one value sitting exactly on a round bound
+	 * rounds to the same number at both ends, and is widened down to the next
+	 * round bound below.
 	 */
 	@Override
 	public void autoAdjustRange() {
@@ -245,6 +236,20 @@ public class LogitAxis extends NumberAxis {
 				lower = computeLogitFloor(lower);
 				upper = r.getUpperBound();
 				upper = computeLogitCeil(upper);
+
+				if (upper <= lower) {
+					/*
+					 * Both ends round to the same number when the data is a
+					 * single value already on a round bound -- 1, 10, 90 or 99
+					 * with a peak of 100 -- and ValueAxis.setRange throws on a
+					 * range of zero length. Widen down rather than up, by
+					 * rounding the largest value strictly below the bound: that
+					 * is the next round bound below on this scale, mirror
+					 * included, and it leaves the data drawn on the top line
+					 * rather than the bottom one.
+					 */
+					lower = computeLogitFloor(Math.nextDown(lower));
+				}
 			}
 
 			setRange(new Range(lower, upper), false, false);
