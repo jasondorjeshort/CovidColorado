@@ -54,7 +54,27 @@ import org.jfree.chart.ui.TextAnchor;
 import org.jfree.data.Range;
 
 /**
- * A numerical axis that uses a logarithmic scale.
+ * A vertical axis on the logit scale: a value v in (0, peak) is drawn at
+ * log10(v / (peak - v)), the base-10 log-odds of v as a share of peak. Both ends
+ * are stretched, so 1% and 0.1% sit as far apart as 99% and 99.9%, and a share
+ * that grows or shrinks logistically -- one lineage displacing another at a
+ * steady relative growth rate -- is a straight line.
+ * <p>
+ * The one caller is charts/ChartSewage.java buildRelative, the relative lineage
+ * charts, with a peak of 100 so values and tick labels are percentages. It lets
+ * autoAdjustRange pick the upper bound and then sets the lower bound itself.
+ * <p>
+ * The range must lie strictly inside (0, peak). logit is infinite at either end
+ * and NaN beyond them, which is why VocSewage addRelative drops any point at or
+ * outside them. Inside, refreshTicksVertical makes nine ticks per decade toward
+ * either end, a few thousand at the very worst. Past an end its tick count grows
+ * with the distance in multiples of peak, so a runaway bound allocates ticks
+ * until the heap is gone -- the failure LogarithmicAxis has on the absolute
+ * charts -- and an upper bound past about 2E9 times peak never ends the loop.
+ * <p>
+ * Adapted from JFreeChart 1.5.4's LogarithmicAxis, whose licence header this
+ * file keeps. Only the vertical ticks, the bounds and the value mapping were
+ * rewritten for logit; refreshTicksHorizontal was not.
  */
 public class LogitAxis extends NumberAxis {
 
@@ -64,20 +84,15 @@ public class LogitAxis extends NumberAxis {
 	/** Useful constant for log(10). */
 	public static final double LOG10 = Math.log(10.0);
 
-	/** Smallest arbitrarily-close-to-zero value allowed. */
-	public static final double SMALL_LOG_VALUE = 1e-100;
-
 	/**
-	 * Flag set true make axis throw exception if any values are &lt;= 0 and
-	 * 'allowNegativesFlag' is false.
+	 * Tolerance below the lower bound for keeping a tick, from LogarithmicAxis.
+	 * Lost to rounding at any lower bound above about 1E-84, so against the
+	 * bounds this program sets the comparison is exact.
 	 */
-	private boolean strictValuesFlag = true;
+	public static final double SMALL_LOG_VALUE = 1e-100;
 
 	/** Number formatter for generating numeric strings. */
 	private final NumberFormat numberFormatterObj = NumberFormat.getInstance();
-
-	/** True to make 'autoAdjustRange()' select "10^n" values. */
-	private boolean autoRangeNextLogFlag = false;
 
 	private final double peak;
 
@@ -105,6 +120,10 @@ public class LogitAxis extends NumberAxis {
 	 *
 	 * @param label
 	 *            the axis label.
+	 * @param peak
+	 *            the value the top of the scale approaches and never reaches,
+	 *            in the data's own units: 100 for percentages. Exactly 100
+	 *            also puts a "%" on the tick labels.
 	 */
 	public LogitAxis(String label, double peak) {
 		super(label);
@@ -112,108 +131,63 @@ public class LogitAxis extends NumberAxis {
 		setupNumberFmtObj(); // setup number formatter obj
 	}
 
+	/** Creates an axis for fractions, with a peak of 1. */
 	public LogitAxis(String label) {
 		this(label, 1.0);
 	}
 
 	/**
-	 * Sets the 'strictValuesFlag' flag; if true and 'allowNegativesFlag' is
-	 * false then this axis will throw a runtime exception if any of its values
-	 * are less than or equal to zero; if false then the axis will adjust for
-	 * values less than or equal to zero as needed.
-	 *
-	 * @param flgVal
-	 *            true for strict enforcement.
-	 */
-	public void setStrictValuesFlag(boolean flgVal) {
-		this.strictValuesFlag = flgVal;
-	}
-
-	/**
-	 * Returns the 'strictValuesFlag' flag; if true and 'allowNegativesFlag' is
-	 * false then this axis will throw a runtime exception if any of its values
-	 * are less than or equal to zero; if false then the axis will adjust for
-	 * values less than or equal to zero as needed.
-	 *
-	 * @return {@code true} if strict enforcement is enabled.
-	 */
-	public boolean getStrictValuesFlag() {
-		return this.strictValuesFlag;
-	}
-
-	/**
-	 * Sets the 'autoRangeNextLogFlag' flag. This determines whether or not the
-	 * 'autoAdjustRange()' method will select the next "10^n" values when
-	 * determining the upper and lower bounds. The default value is false.
-	 *
-	 * @param flag
-	 *            {@code true} to make the 'autoAdjustRange()' method select the
-	 *            next "10^n" values, {@code false} to not.
-	 */
-	public void setAutoRangeNextLogFlag(boolean flag) {
-		this.autoRangeNextLogFlag = flag;
-	}
-
-	/**
-	 * Returns the 'autoRangeNextLogFlag' flag.
-	 *
-	 * @return {@code true} if the 'autoAdjustRange()' method will select the
-	 *         next "10^n" values, {@code false} if not.
-	 */
-	public boolean getAutoRangeNextLogFlag() {
-		return this.autoRangeNextLogFlag;
-	}
-
-	/**
-	 * Sets up the number formatter object according to the 'expTickLabelsFlag'
-	 * flag.
+	 * Sets tick labels to plain decimals with at most three places, enough for
+	 * 99.9% and 0.001%.
 	 */
 	protected void setupNumberFmtObj() {
 		if (this.numberFormatterObj instanceof DecimalFormat) {
-			// setup for "1e#"-style tick labels or regular
-			// numeric tick labels, depending on flag:
 			((DecimalFormat) this.numberFormatterObj).applyPattern("0.###");
 		}
 	}
 
 	/**
-	 * Returns the largest (closest to positive infinity) double value that is
-	 * not greater than the argument, is equal to a mathematical integer and
-	 * satisfying the condition that log base 10 of the value is an integer
-	 * (i.e., the value returned will be a power of 10: 1, 10, 100, 1000, etc.).
+	 * Rounds a lower bound down to a tick the scale treats as round: at or
+	 * below peak/2, the power of ten at or below it; above peak/2, the mirror
+	 * image, peak less the computeLogitCeil of its distance from peak. The power
+	 * of ten is of the raw value, not of its share of peak; the two agree only
+	 * when peak is itself a power of ten.
+	 * <p>
+	 * A value at or below zero has no floor on this scale: it prints a stack
+	 * trace and comes back floored to an integer, which the axis cannot draw.
 	 *
 	 * @param lower
-	 *            a double value below which a floor will be calcualted.
+	 *            the smallest data value.
 	 *
-	 * @return 10<sup>N</sup> with N .. { 1 ... }
+	 * @return the rounded lower bound.
 	 */
 	protected double computeLogitFloor(double lower) {
-		// negative values not allowed
 		if (lower > peak / 2) {
 			return peak - computeLogitCeil(peak - lower);
 		}
-		if (lower > 0.0) { // parameter value is > 0
+		if (lower > 0.0) {
 			lower = Math.log(lower) / LOG10;
 			lower = Math.floor(lower);
 			lower = Math.pow(10, lower);
 		} else {
 			new Exception("Illegal floor of " + lower + " cannot be below zero.").printStackTrace();
-			// parameter value is <= 0
-			lower = Math.floor(lower); // use as-is
+			lower = Math.floor(lower);
 		}
 		return lower;
 	}
 
 	/**
-	 * Returns the smallest (closest to negative infinity) double value that is
-	 * not less than the argument, is equal to a mathematical integer and
-	 * satisfying the condition that log base 10 of the value is an integer
-	 * (i.e., the value returned will be a power of 10: 1, 10, 100, 1000, etc.).
+	 * Rounds an upper bound up to a tick the scale treats as round: above
+	 * peak/2, the mirror image, peak less the computeLogitFloor of its distance
+	 * from peak; above peak/10, peak/2 itself; at or below peak/10, meant to be
+	 * the power of ten at or above it, mirroring computeLogitFloor. A value at
+	 * or below zero comes back rounded up to an integer, which the axis cannot
+	 * draw.
 	 *
 	 * @param upper
-	 *            a double value above which a ceiling will be calcualted.
+	 *            the largest data value.
 	 *
-	 * @return 10<sup>N</sup> with N .. { 1 ... }
+	 * @return the rounded upper bound.
 	 */
 	protected double computeLogitCeil(double upper) {
 		if (upper > peak / 2) {
@@ -223,21 +197,30 @@ public class LogitAxis extends NumberAxis {
 			return peak / 2;
 		}
 
-		// negative values not allowed
 		if (upper > 0.0) {
-			// parameter value is > 0
 			upper = Math.log(upper) / LOG10;
 			upper = Math.ceil(upper);
+			/*
+			 * Not the power of ten the rest of this method means: unlogit of a
+			 * log10 exponent. With a peak of 100, anything in (1, 10] comes back
+			 * as 90.9 and anything in (0.1, 1] as 50, and a lower bound of 90 or
+			 * more, which computeLogitFloor mirrors through here, comes out far
+			 * too low. LogarithmicAxis has Math.pow(10, upper). Recorded as a
+			 * finding rather than fixed, since today's charts should not reach
+			 * it: each plots about ten lineages sharing every day's 100%, so its
+			 * largest point is over 10%, and the caller replaces the lower bound.
+			 */
 			upper = unlogit(upper);
 		} else {
-			// parameter value is <= 0
-			upper = Math.ceil(upper); // use as-is
+			upper = Math.ceil(upper);
 		}
 		return upper;
 	}
 
 	/**
-	 * Rescales the axis to ensure that all data is visible.
+	 * Rescales the axis to ensure that all data is visible, rounding each end
+	 * with computeLogitFloor and computeLogitCeil. With no data the range is 1%
+	 * to 99% of peak.
 	 */
 	@Override
 	public void autoAdjustRange() {
@@ -273,7 +256,8 @@ public class LogitAxis extends NumberAxis {
 	/**
 	 * Converts a data value to a coordinate in Java2D space, assuming that the
 	 * axis runs along one edge of the specified plotArea. Note that it is
-	 * possible for the coordinate to fall outside the plotArea.
+	 * possible for the coordinate to fall outside the plotArea, and that a
+	 * value at or outside 0 and peak comes back infinite or NaN.
 	 *
 	 * @param value
 	 *            the data value.
@@ -375,6 +359,11 @@ public class LogitAxis extends NumberAxis {
 	/**
 	 * Calculates the positions of the tick labels for the axis, storing the
 	 * results in the tick label list (ready for drawing).
+	 * <p>
+	 * Never adapted for logit: this is LogarithmicAxis's power-of-ten loop run
+	 * between logit-rounded bounds, and its ticks do not fit this scale. It is
+	 * reached only when the axis sits on a top or bottom edge, and the one
+	 * caller puts it on the left of a vertical plot.
 	 *
 	 * @param g2
 	 *            the graphics device.
@@ -479,58 +468,24 @@ public class LogitAxis extends NumberAxis {
 	private final int placeOffset = (int) (Math.pow(10, places) / 2) - 1;
 
 	/*
-	 * For kinda simplicity each line is assigned an integer. With 1 places:
-	 * 
-	 * -22 = 0.001
-	 * 
-	 * -13 = 0.01
-	 * 
-	 * -4 = 0.1
-	 * 
-	 * -3 = 0.2
-	 * 
-	 * -2 = 0.3
-	 * 
-	 * -1 = 0.4
-	 * 
-	 * 0 = 0.5
-	 * 
-	 * 1 = 0.6
-	 * 
-	 * 2 = 0.7
-	 * 
-	 * 3 = 0.8
-	 * 
-	 * 4 = 0.9
-	 * 
-	 * 5 = 0.91
-	 * 
-	 * 6 = 0.92
-	 * 
-	 * 7 = 0.93
-	 * 
-	 * 8 = 0.94
-	 * 
-	 * 9 = 0.95
-	 * 
-	 * 10 = 0.96
-	 * 
-	 * 11 = 0.97
-	 * 
-	 * 12 = 0.98
-	 * 
-	 * 13 = 0.99
-	 * 
-	 * 22 = 0.999
-	 * 
-	 * With 0 places it should just be 0.01, 0.1, 0.5, 0.9, 0.99
-	 * 
-	 * With -1 places? Skip some of those I guess.
-	 * 
-	 * With 2 places, 0.5, 0.51, 0.52...0.9, 0.901, ...
+	 * For kinda simplicity each tick line is assigned an integer, counting out
+	 * from 0 at peak/2, negative below and positive above as mirror images.
+	 * With places = 1, in fractions of peak:
+	 *
+	 * -22 = 0.001, -13 = 0.01, -12..-5 = 0.02..0.09, -4 = 0.1,
+	 *
+	 * -3..-1 = 0.2..0.4, 0 = 0.5, 1..3 = 0.6..0.8, 4 = 0.9,
+	 *
+	 * 5..12 = 0.91..0.98, 13 = 0.99, 22 = 0.999
+	 *
+	 * so nine lines per decade toward either end. doLabel labels 0 and every
+	 * ninth line out from 4 and -4: 0.5, then 0.1, 0.01, ... and 0.9, 0.99, ...
+	 *
+	 * Other values of places were sketched and are not used: 0 should give
+	 * just 0.01, 0.1, 0.5, 0.9, 0.99, and 2 should give 0.5, 0.51,
+	 * 0.52...0.9, 0.901, ...
 	 */
 	private double valueToInteger(double val) {
-		double s = val;
 		if (val > peak * 0.5) {
 			return -valueToInteger(peak - val);
 		}
@@ -547,7 +502,6 @@ public class LogitAxis extends NumberAxis {
 	}
 
 	private double integerToValue(long integer) {
-		long i = integer;
 		if (integer > 0) {
 			return peak - integerToValue(-integer);
 		}
@@ -555,7 +509,6 @@ public class LogitAxis extends NumberAxis {
 			return peak / 2.0;
 		}
 
-		// integer = -integer;
 		integer += placeOffset - places10 + 1;
 		long pow10 = integer / (places10 - 1) - 1;
 		long remainder = integer % (places10 - 1);
@@ -580,6 +533,11 @@ public class LogitAxis extends NumberAxis {
 	/**
 	 * Calculates the positions of the tick labels for the axis, storing the
 	 * results in the tick label list (ready for drawing).
+	 * <p>
+	 * With a peak of 100 the lines fall at 1, 2, ... 9, 10, 20, 30, 40, 50, 60,
+	 * ... 90, 91, ... 99, 99.1, ... and so on toward either end, and the labels
+	 * at 50 and each power of ten and its mirror: 1%, 10%, 50%, 90%, 99%.
+	 * Unlabelled lines carry a null label.
 	 *
 	 * @param g2
 	 *            the graphics device.
@@ -610,7 +568,7 @@ public class LogitAxis extends NumberAxis {
 			}
 
 			if (tickVal >= lowerBoundVal - SMALL_LOG_VALUE) {
-				// tick value not below lowest data value
+				// tick value not below the axis's lower bound
 				TextAnchor anchor;
 				TextAnchor rotationAnchor;
 				double angle = 0.0;
@@ -654,8 +612,8 @@ public class LogitAxis extends NumberAxis {
 	 */
 	protected String makeTickLabel(double val, boolean forceFmtFlag) {
 		if (forceFmtFlag) {
-			// using exponents or force-formatter flag is set
-			// (convert 'E' to lower-case 'e'):
+			// toLowerCase is left from LogarithmicAxis's "1e#" labels; "0.###"
+			// never writes an E.
 			return this.numberFormatterObj.format(val).toLowerCase();
 		}
 		return getTickUnit().valueToString(val);
