@@ -42,7 +42,15 @@ per state under counties. A new nested filename that nobody added to mkdirs()
 fails at save time, not at startup.
 
 createSewage draws one recent chart and five all-time ones at increasing
-smoothing windows. It catches Throwable, logs the series name, and rethrows:
+smoothing windows. A smoothed point is the mean of the normalized readings in
+its trailing window over the days of that window that have one, and a window
+with no reading gets no point (sewage/Abstract.java makeTimeSeries). So a plant
+sampling twice a week is drawn at its own level rather than at two sevenths of
+it, a gap wider than the window is spanned by a straight segment rather than
+dropping the line off the bottom, and a smoothed line ends where its data does,
+leaving the same empty space on the right that a recent chart's x-axis shows.
+
+It catches Throwable, logs the series name, and rethrows:
 with a few thousand charts on a thread pool, an unlabelled stack trace does not
 tell you which series was bad. The catch is that wide on purpose -- the failure
 it exists for is the tick-allocation OutOfMemoryError below, which is an Error

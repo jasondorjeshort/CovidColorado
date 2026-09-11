@@ -203,12 +203,22 @@ public abstract class Abstract extends DailyTracker {
 	 * <p>
 	 * With {@code daysAveraged} 1: a point for each day with an entry,
 	 * normalized. With more: a point for every day from the first to today (the
-	 * machine's local date, {@link covid.CalendarUtils#today}), the normalized
-	 * sum of the entries in the trailing window divided by its length. Both are
-	 * on the national scale, so a plant's smoothed line, its daily line and its
-	 * fit line share the axis. The smoothed one is still not an average of the
-	 * days with a reading; see
-	 * docs/active/findings/2026-09-10-a-smoothed-line-counts-a-day-without-a-reading-as-zero.md.
+	 * machine's local date, {@link covid.CalendarUtils#today}) whose trailing
+	 * window of that many days holds a reading, the mean of the normalized
+	 * readings in that window. A window holding none gets no point at all, so
+	 * the line ends at the last day with a reading instead of running on to
+	 * today, and a gap wider than the window is spanned by one straight segment
+	 * instead of dropping the line off the chart's bottom and back. Both kinds
+	 * of point are on the national scale, so a plant's smoothed line, its daily
+	 * line and its fit line share the axis.
+	 * <p>
+	 * The mean is over the days that have a reading, not over the window's
+	 * length: most plants sample once or twice a week, and counting their other
+	 * days as zero drew them at a fraction of their own level. The first
+	 * windows reach back before the first day and so average only the days from
+	 * it onwards -- except on an aggregate, where days trimmed off the front by
+	 * {@code sewage/Multi.java} buildBackend keep their entries and so still
+	 * feed them.
 	 */
 	public synchronized TimeSeries makeTimeSeries(String name, int daysAveraged) {
 		build();
@@ -222,14 +232,19 @@ public abstract class Abstract extends DailyTracker {
 			double number;
 			if (daysAveraged > 1) {
 				number = 0;
+				int daysRead = 0;
 				for (int day2 = day; day2 > day - daysAveraged; day2--) {
 					DaySewage entry = getEntry(day2);
 					if (entry != null) {
 						number += entry.getSewage();
+						daysRead++;
 					}
 				}
+				if (daysRead == 0) {
+					continue;
+				}
 				number *= getNormalizer();
-				number /= daysAveraged;
+				number /= daysRead;
 			} else {
 				DaySewage entry = getEntry(day);
 				if (entry == null) {
