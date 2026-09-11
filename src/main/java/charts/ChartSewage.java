@@ -594,9 +594,10 @@ public class ChartSewage {
 	 * cumulative is not positive is left off, and printed if it is negative.
 	 * Every chart saved here is queued for opening.
 	 * <p>
-	 * As it stands the title names no series, so the national and Colorado
-	 * charts look alike; see
-	 * docs/active/findings/2026-09-10-the-cumulative-chart-does-not-say-which-sewage-it-is.md.
+	 * The title says what the chart is, then names the sewage series and the
+	 * sources, as the absolute and relative charts do: several series are
+	 * charted per run and the thumbnail window shows them side by side, so a
+	 * title that named only the chart shape would not say which one this is.
 	 *
 	 * @return the image, or null, with nothing saved, when the sewage series
 	 *         has no sewage
@@ -641,8 +642,10 @@ public class ChartSewage {
 			}
 		}
 
-		JFreeChart chart = ChartFactory.createBarChart("Cumulative prevalence", null, "Combined sewage (powers of 10)",
-				dataset, PlotOrientation.HORIZONTAL, true, true, false);
+		String title = "Cumulative prevalence\n" + vocSewage.sewage.getTitleLine() + "\nSource: CDC/NWSS, Cov-Spectrum";
+
+		JFreeChart chart = ChartFactory.createBarChart(title, null, "Combined sewage (powers of 10)", dataset,
+				PlotOrientation.HORIZONTAL, true, true, false);
 
 		// createBarChart builds the plot's renderer as a BarRenderer.
 		// https://stackoverflow.com/questions/7155294/jfreechart-bar-graph-labels
