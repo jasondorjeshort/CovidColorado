@@ -10,7 +10,10 @@ which looks the full state name up in `regions.csv`:
 `vi` maps to "U.S. Virgin Islands" and `regions.csv` has no row of that name,
 so every Virgin Islands plant falls to the "Other" region. The national totals
 are unaffected -- "Other" is a real region and is charted -- but a reader of the
-regional charts will not guess that is where those plants went.
+regional charts will not guess that is where those plants went. `StateNames`
+also maps `as`, `mp` and `pr`, which have no rows either. None of the three is
+in the 2026-09-10 download, but any that appears will land in "Other" the same
+way, so they belong to the same decision.
 
 The "New York City,Northeast" row is now unreachable from the other direction:
 the dataset has no `nyc` code, so the `{"nyc", "New York City"}` entry in
