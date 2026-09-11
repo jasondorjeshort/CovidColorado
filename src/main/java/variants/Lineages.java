@@ -10,27 +10,57 @@ import org.apache.commons.csv.CSVRecord;
 
 import nwss.Nwss;
 
+/**
+ * The designated-lineage list: every lineage named in pango-designation's
+ * lineages.csv, which has one "taxon,lineage" row per designated sequence
+ * (2,672,224 rows naming 6,006 lineages on 2026-09-10). {@link #build} interns a
+ * {@link Lineage} for each and numbers them by first appearance through
+ * Lineage.setOrdering().
+ * <p>
+ * Nothing reads that number yet: Lineage.getOrdering() has no caller. So what a
+ * run gets from this class is the printed count and a warm Lineage cache,
+ * which changes nothing either, since Lineage.get() builds the same instance
+ * on demand. That is also why it can run as one of nwss/Nwss.java read()'s
+ * pool tasks while the Voc and LAPIS load and the LEnum loop call
+ * Lineage.get() on other threads: get() interns under one lock, and no reader
+ * waits on this list. A reader of the ordering added later would have to wait
+ * for the pool, since a lineage this has not reached yet reads zero.
+ */
 public class Lineages {
 
-	// private static final String ALIAS_FILE =
-	// System.getProperty("java.io.tmpdir") + "\\" + Nwss.FOLDER + "\\"
-	// + "aliases.json";
-	// private static final String ALIAS_URL =
-	// "https://raw.githubusercontent.com/cov-lineages/pango-designation/master/pango_designation/alias_key.json";
-
+	/*
+	 * In the checkout Nwss.read() git-pulls, and read only after that pull and
+	 * after Aliases.build() has loaded alias_key.json from it. A lineages.csv
+	 * newer than the loaded aliases could name an alias they lack, and build()
+	 * exits on that.
+	 */
 	private static final String LINEAGES_FILE = Nwss.GIT_LOCATION + "\\lineages.csv";
 
 	private static boolean built = false;
 
+	/**
+	 * Reads lineages.csv, once; later calls return immediately, and a second
+	 * caller during the first waits for it.
+	 * <p>
+	 * A missing or unreadable file, or a row with fewer than two fields, prints
+	 * a stack trace, keeps what was read before it and lets the run go on. A
+	 * name Lineage.get() cannot resolve instead prints a stack trace and exits
+	 * the JVM with status 0, taking every other pool task with it; see
+	 * docs/active/findings/ for the open entry on this.
+	 */
 	public static synchronized void build() {
 		if (built) {
 			return;
 		}
 		built = true;
 
+		/*
+		 * commons-csv reads a File through an InputStreamReader, which replaces
+		 * a byte outside the charset rather than throwing, so a non-ASCII taxon
+		 * cannot stop the read; the lineage column is ASCII.
+		 */
 		Charset charset = Charset.forName("US-ASCII");
 
-		// File f = Nwss.ensureFileUpdated(ALIAS_FILE, ALIAS_URL, 168);
 		File f = new File(LINEAGES_FILE);
 
 		HashSet<Lineage> lineages = new HashSet<>();
@@ -44,13 +74,6 @@ public class Lineages {
 				if (sequence.equals("taxon") && lineage.equals("lineage")) {
 					continue;
 				}
-
-				// String[] sequenceSplit = sequence.split("/");
-				// String sequenceYear = sequenceSplit[sequenceSplit.length -
-				// 1];
-				// sequenceYear = sequenceYear.split("-", 2)[0]; // "2021-12" =
-				// december
-				// int year = Integer.valueOf(sequenceYear);
 
 				Lineage l = Lineage.get(lineage);
 				if (l == null) {
@@ -66,8 +89,12 @@ public class Lineages {
 				 * Ordering can't cleanly come from this data source. The
 				 * sequence ID has a year on it, usually, but that's not enough.
 				 * The file is in chronological order, mostly, which is what we
-				 * use. But not entirely.
-				 * 
+				 * use. But not entirely: on 2026-09-10 its first data row was
+				 * XBZ, a 2023 recombinant, ahead of A; after that it ran
+				 * roughly in designation order (B.1.1.7 466th, JN.1 3,401st),
+				 * ending on the two lineages the checkout's newest commit
+				 * designated.
+				 *
 				 * We'd like to have an ordering because we'd like to prioritize
 				 * recent lineages for inclusion. Or even ignore lineages that
 				 * are too recent because the Gisaid source (cov-spectrum) won't
