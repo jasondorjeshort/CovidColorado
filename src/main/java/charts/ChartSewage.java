@@ -37,6 +37,25 @@ import variants.Variant;
 import variants.VocSewage;
 
 /**
+ * Draws every chart the live program makes: createSewage for one sewage
+ * series, buildVocSewageCharts for the lineage charts of one VocSewage.
+ * {@code nwss/Nwss.java} build() is the only caller. It runs mkdirs() and
+ * reportState() first, then queues createSewage for every series onto its
+ * build pool, and from a task on that pool calls buildVocSewageCharts for each
+ * Voc. docs/reference/charts.txt owns the naming rule and the axis bounds.
+ * <p>
+ * The builders run on that pool, many at once. The only static state here is
+ * the folder names. What the builders share is the sewage and VocSewage
+ * objects, which do their own locking -- a plant's series is read for its own
+ * charts and for its county's, possibly at the same moment -- and the queue in
+ * {@code library/OpenImage.java}, which is synchronized.
+ * <p>
+ * Each builder returns its image, or null when it saved nothing, and no caller
+ * reads it. {@code isMerger} is false for every Voc today (see
+ * {@code variants/Voc.java}), so each merger test here takes the non-merger
+ * side and no filename carries "-merger". The lineage charts are half again as
+ * tall as the sewage ones, since 2434d59, which does not say why.
+ * <p>
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later
@@ -68,6 +87,13 @@ public class ChartSewage {
 	public static final String VARIANTS = "variants";
 	public static final String VARIANTS_FOLDER = SEWAGE_FOLDER + "\\" + VARIANTS;
 
+	/**
+	 * Makes the output tree, each folder after its parent: File.mkdir is not
+	 * recursive, and {@code Charts.saveBufferedImageAsPNG} makes only the folder
+	 * it is handed, so a subfolder named in a chart's filename has to exist
+	 * before anything is saved. Must run before any chart is queued. LL is the
+	 * never-drawn Geo aggregate's.
+	 */
 	public static void mkdirs() {
 		new File(Charts.TOP_FOLDER).mkdir();
 		new File(Charts.FULL_FOLDER).mkdir();
@@ -80,10 +106,32 @@ public class ChartSewage {
 		new File(VARIANTS_FOLDER).mkdir();
 	}
 
+	/**
+	 * Makes the state's folder under counties, which its counties' chart
+	 * filenames name and nothing else creates. Nwss build() calls it after
+	 * mkdirs() for every state, and every county's state is one of them.
+	 */
 	public static void reportState(String state) {
 		new File(COUNTIES_FOLDER + "\\" + state).mkdir();
 	}
 
+	/**
+	 * Draws one sewage series, saved under SEWAGE_FOLDER as its chart filename
+	 * plus "-recent" or "-all" and, when smoothed, "-avg" and the window. The
+	 * series is the thick blue line and its fit the red one; an aggregate's
+	 * children are the thin lines, the {@code maxChildren} most populous or all
+	 * of them when that is null; the peak and valley markers are the series'
+	 * own. Queued for opening when the series is the nation's or is named
+	 * Colorado.
+	 *
+	 * @param latest
+	 *            the recent chart, whose x-axis runs from 180 days back, or from
+	 *            the last inflection if that is earlier, to now
+	 * @param daysAveraged
+	 *            1 for the daily readings, else the smoothing window in days
+	 * @return the image, or null, with nothing saved, when the series has no
+	 *         sewage
+	 */
 	public static BufferedImage buildSewageTimeseriesChart(Abstract sewage, Integer maxChildren, boolean latest,
 			int daysAveraged) {
 
@@ -102,6 +150,15 @@ public class ChartSewage {
 		renderer.setSeriesFillPaint(seriesCount, Color.BLUE.darker());
 		seriesCount++;
 
+		/*
+		 * The fit is of the daily readings whatever the window, so it is the same
+		 * line on every chart that has one. 30 only separates the 28-day chart
+		 * from the 365-day one, which 112320a kept without a fit as its yearly
+		 * flag had been. 28 is makeFitSeries's numDays, the days it takes before
+		 * the confidence interval may stop it; no commit says why 28. A zero
+		 * reading in a plant's window makes the fit NaN; see
+		 * docs/active/findings/2026-09-10-a-zero-reading-in-a-plants-fit-window-makes-its-fit-nan.md.
+		 */
 		if (daysAveraged < 30) {
 			TimeSeries series2 = sewage.makeFitSeries(28);
 			if (series2 != null) {
@@ -122,7 +179,6 @@ public class ChartSewage {
 				seriesCount++;
 			}
 		}
-		// dataset.addSeries("Cases", series);
 
 		String fileName = sewage.getChartFilename();
 		String title = "Covid in sewage, " + CalendarUtils.dayToDate(sewage.getLastDay());
@@ -147,22 +203,37 @@ public class ChartSewage {
 
 		LogarithmicAxis yAxis = new LogarithmicAxis(verticalAxis);
 		plot.setRangeAxis(yAxis);
+		/*
+		 * A floor, not a fixed bottom: 0.01% of the pandemic peak, four decades
+		 * under it, since 65259c7 made the axis a percentage of that peak (it had
+		 * been a thousandth of the chart's own top). No commit says why four. The
+		 * 1E-6 that sewage/Abstract.java draws for a zero lands below it.
+		 */
 		double lowerBound = 0.01;
 		if (yAxis.getLowerBound() < lowerBound) {
 			yAxis.setLowerBound(lowerBound);
 		}
 		/*
-		 * A runaway fit or a broken plant can push the range to dozens of
-		 * decades, and the log axis then builds ticks until the heap runs out.
+		 * Not cosmetic. A fit extrapolated far enough overflows exp() to
+		 * infinity, and LogarithmicAxis counts its ticks by casting log10 of
+		 * each bound to an int: an infinite top becomes Integer.MAX_VALUE
+		 * decades of ten ticks each, allocated until the heap runs out. A finite
+		 * range costs ten ticks a decade however wide it is.
 		 */
 		double upperBound = 1E6;
 		if (yAxis.getUpperBound() > upperBound) {
 			yAxis.setUpperBound(upperBound);
 		}
 
-		// plot.getDomainAxis().setLowerBound(CalendarUtils.dateToTime("5-1-2023"));
-
 		if (latest) {
+			/*
+			 * The y-axis was sized to the whole series when it was set on the
+			 * plot, and narrowing the x-axis does not resize it: XYPlot
+			 * reconfigures its range axes on a dataset or renderer change, not on
+			 * a domain axis change. So a recent chart keeps the all-time y range.
+			 * At least six months back since 0e276eb; before that the chart began
+			 * at the last inflection, however recent.
+			 */
 			ValueAxis xaxis = plot.getDomainAxis();
 
 			long earliest = System.currentTimeMillis() - 180l * 24 * 60 * 60 * 1000;
@@ -184,11 +255,31 @@ public class ChartSewage {
 			library.OpenImage.openImage(fileName);
 		}
 
-		// System.out.println("Created : " + sewage.id + " for " +
-		// series.getItemCount() + " => " + fileName);
 		return image;
 	}
 
+	/**
+	 * Draws a VocSewage's lineages as sewage times prevalence, on a log axis.
+	 * With {@code targetVariant} null it draws all of them, under SEWAGE_FOLDER
+	 * and named by the sewage's chart filename; given one, it draws that lineage
+	 * alone, under VARIANTS_FOLDER and named by the sewage's getName()
+	 * (docs/reference/charts.txt, LINEAGE CHARTS). With {@code strains} it draws
+	 * a line per Strain in place of the lineages, and only with a legend.
+	 * <p>
+	 * {@code fit} extends each line along its fit to the absolute last day,
+	 * adds the lineages' summed fit to a chart that is not of one lineage when
+	 * the VocSewage has more than one, and orders the legend by fit on that day
+	 * rather than by cumulative prevalence. The Fit start, Data cutoff and Today
+	 * markers are drawn either way. The all-lineage and strain charts with a fit
+	 * and a legend are queued for opening.
+	 * <p>
+	 * The lower bound is 0.01 whatever the data, where on the sewage charts it
+	 * is only a floor, and there is no cap: the guard against an infinite point
+	 * is on the data instead, in VocSewage.
+	 *
+	 * @return the image, or null, with nothing saved, for a strain chart without
+	 *         a legend or a sewage series with no sewage
+	 */
 	public static BufferedImage buildAbsolute(VocSewage vocSewage, Variant targetVariant, boolean fit, boolean legend,
 			boolean strains) {
 		if (strains && (!legend || vocSewage.isMerger)) {
@@ -220,6 +311,11 @@ public class ChartSewage {
 
 		if (strains) {
 			for (Strain strain : Strain.values()) {
+				/*
+				 * In the cumulative's units, percent of pandemic peak times share
+				 * summed over the days; 5fa85c5 set it, here and in buildRelative,
+				 * without saying why 0.1.
+				 */
 				if (vocSewage.getCumulative(strain) < 0.1) {
 					continue;
 				}
@@ -242,13 +338,6 @@ public class ChartSewage {
 				if (targetVariant != null && targetVariant != variant) {
 					continue;
 				}
-				/*
-				 * if (fit) { series = vocSewage.makeRegressionTS(variant);
-				 * collection.addSeries(series);
-				 * renderer.setSeriesStroke(seriesCount, new BasicStroke(1.0f,
-				 * BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-				 * seriesCount++; }
-				 */
 				series = vocSewage.makeAbsoluteSeries(variant, fit);
 				collection.addSeries(series);
 				renderer.setSeriesStroke(seriesCount,
@@ -257,11 +346,8 @@ public class ChartSewage {
 			}
 		}
 
-		// dataset.addSeries("Cases", series);
-
 		String folder, fileName;
 		String title = vocSewage.sewage.getTitleLine();
-		// (exact ? "-exact" : "") +
 		if (targetVariant == null) {
 			folder = SEWAGE_FOLDER;
 			fileName = vocSewage.sewage.getChartFilename() + "-" + vocSewage.vocId + "-absolute"
@@ -290,12 +376,7 @@ public class ChartSewage {
 
 		LogarithmicAxis yAxis = new LogarithmicAxis(verticalAxis);
 		plot.setRangeAxis(yAxis);
-		// yAxis.setUpperBound(1000);
 		yAxis.setLowerBound(0.01);
-		/*
-		 * double bound = yAxis.getUpperBound() / 10000.0; if
-		 * (yAxis.getLowerBound() < bound) { yAxis.setLowerBound(bound); }
-		 */
 
 		ValueAxis xAxis = plot.getDomainAxis();
 		double bound = CalendarUtils.dayToTime(vocSewage.getFirstDay());
@@ -333,6 +414,11 @@ public class ChartSewage {
 		plot.addDomainMarker(marker);
 
 		BufferedImage image = chart.createBufferedImage(Charts.WIDTH, Charts.HEIGHT * 3 / 2);
+		/*
+		 * The exit cannot fire for a failed write, which the save catches and
+		 * prints itself, so the run goes on; see
+		 * docs/active/findings/2026-09-10-a-failed-lineage-chart-write-cannot-reach-its-exit.md.
+		 */
 		try {
 			Charts.saveBufferedImageAsPNG(folder, fileName, image);
 		} catch (Exception e) {
@@ -346,11 +432,22 @@ public class ChartSewage {
 			library.OpenImage.openImage(fileName);
 		}
 
-		// System.out.println("Created : " + sewage.id + " for " +
-		// series.getItemCount() + " => " + fileName);
 		return image;
 	}
 
+	/**
+	 * Draws each lineage's share of the VocSewage's total on a logit axis, or
+	 * with {@code strains} each strain's, which is drawn only with a fit and a
+	 * legend. {@code targetVariant}, a variant's name, would draw that one alone;
+	 * every caller passes null. {@code fit} extends each line along its fit to
+	 * the relative last day and orders the legend by fit on that day; without
+	 * it the x-axis ends at the last day of data. The chart with a fit and a
+	 * legend, of lineages or of strains, is queued for opening.
+	 *
+	 * @return the image, or null, with nothing saved, for a strain chart without
+	 *         a fit or a legend, a sewage series with no sewage, or a VocSewage
+	 *         with fewer than two variants
+	 */
 	public static BufferedImage buildRelative(VocSewage vocSewage, String targetVariant, boolean fit, boolean legend,
 			boolean strains) {
 		if (strains && (!fit || !legend || vocSewage.isMerger)) {
@@ -373,6 +470,11 @@ public class ChartSewage {
 		if (fit) {
 			variants.sort((v1, v2) -> -Double.compare(vocSewage.getFit(v1, lastDay), vocSewage.getFit(v2, lastDay)));
 		} else {
+			/*
+			 * Others and every manufactured parent keep an averageDay of 0, so
+			 * they lead; see
+			 * docs/active/findings/2026-09-10-a-manufactured-parent-loses-its-star-and-leads-the-legend.md.
+			 */
 			variants.sort((v1, v2) -> Double.compare(v1.averageDay, v2.averageDay));
 		}
 
@@ -392,13 +494,6 @@ public class ChartSewage {
 				if (targetVariant != null && !targetVariant.equalsIgnoreCase(variant.name)) {
 					continue;
 				}
-				/*
-				 * if (fit) { series = vocSewage.makeRegressionTS(variant);
-				 * collection.addSeries(series);
-				 * renderer.setSeriesStroke(seriesCount, new BasicStroke(1.0f,
-				 * BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-				 * seriesCount++; }
-				 */
 				series = vocSewage.makeRelativeSeries(variant, fit);
 				collection.addSeries(series);
 				renderer.setSeriesStroke(seriesCount,
@@ -407,11 +502,8 @@ public class ChartSewage {
 			}
 		}
 
-		// dataset.addSeries("Cases", series);
-
 		String fileName = vocSewage.sewage.getChartFilename();
 		String title = vocSewage.sewage.getTitleLine();
-		// (fit ? "-fit" : "") +(exact ? "-exact" : "") +
 		fileName += (vocSewage.isMerger ? "-merger" : "") + "-" + vocSewage.vocId + "-relative";
 		fileName += (fit ? "-fit" : "-old");
 		fileName += strains ? "-strain" : "-variant";
@@ -435,14 +527,14 @@ public class ChartSewage {
 
 		LogitAxis yAxis = new LogitAxis(verticalAxis, 100.0);
 		plot.setRangeAxis(yAxis);
-		// yAxis.setUpperBound(1000);
+		/*
+		 * Set whatever the data, so a share under it runs off the bottom. 0.1%
+		 * since 49e095f, the first relative chart; dfa3d82 made it 1% when the
+		 * auto-ranged top is past 99%, and neither says why.
+		 */
 		double upper = yAxis.getUpperBound();
 		double lower = upper > 99 ? 1.0 : 0.1;
 		yAxis.setLowerBound(lower);
-		/*
-		 * double bound = yAxis.getUpperBound() / 10000.0; if
-		 * (yAxis.getLowerBound() < bound) { yAxis.setLowerBound(bound); }
-		 */
 
 		ValueAxis xAxis = plot.getDomainAxis();
 		double bound = CalendarUtils.dayToTime(vocSewage.getFirstDay());
@@ -491,11 +583,26 @@ public class ChartSewage {
 			library.OpenImage.openImage(fileName);
 		}
 
-		// System.out.println("Created : " + sewage.id + " for " +
-		// series.getItemCount() + " => " + fileName);
 		return image;
 	}
 
+	/**
+	 * Draws each lineage's cumulative prevalence, or with {@code strains} each
+	 * strain's, as a horizontal bar of its log10: sewage as a percentage of the
+	 * pandemic peak times the share, summed over the VocSewage's days. Lineages
+	 * come largest first, each labelled with its fit's weekly growth. One whose
+	 * cumulative is not positive is left off, and printed if it is negative.
+	 * Every chart saved here is queued for opening.
+	 * <p>
+	 * As it stands the title names no series, so the national and Colorado
+	 * charts look alike, and a cumulative under 1 draws its bar leftward from
+	 * zero; see
+	 * docs/active/findings/2026-09-10-the-cumulative-chart-does-not-say-which-sewage-it-is.md
+	 * and docs/active/findings/2026-09-10-a-cumulative-under-one-draws-its-bar-backwards.md.
+	 *
+	 * @return the image, or null, with nothing saved, when the sewage series
+	 *         has no sewage
+	 */
 	public static BufferedImage buildSewageCumulativeChart(VocSewage vocSewage, boolean strains) {
 		if (vocSewage.sewage.getTotalSewage() <= 0) {
 			return null;
@@ -523,6 +630,10 @@ public class ChartSewage {
 				double prevalence = prev.get(variant);
 				if (prevalence <= 0) {
 					if (prevalence < 0) {
+						/*
+						 * Prints an object address, since Variant has no toString; see
+						 * docs/active/findings/2026-09-09-voc-build-logs-an-object-address-and-a-wrong-count.md.
+						 */
 						System.out.println("Prevalence " + prevalence + " for " + variant);
 					}
 					continue;
@@ -537,16 +648,7 @@ public class ChartSewage {
 				dataset, PlotOrientation.HORIZONTAL, true, true, false);
 
 		// https://stackoverflow.com/questions/7155294/jfreechart-bar-graph-labels
-		/*
-		 * StackedBarRenderer renderer = new StackedBarRenderer(false);
-		 * renderer.setBaseItemLabelGenerator(new
-		 * StandardCategoryItemLabelGenerator());
-		 * renderer.setBaseItemLabelsVisible(true);
-		 * chart.getCategoryPlot().setRenderer(renderer);`
-		 */
 		CategoryItemRenderer renderer = chart.getCategoryPlot().getRenderer();
-		// CategoryItemLabelGenerator labelGenerator =
-		// renderer.getDefaultItemLabelGenerator();
 
 		if (false) {
 			CategoryItemLabelGenerator generator = new StandardCategoryItemLabelGenerator("{2}",
@@ -574,9 +676,14 @@ public class ChartSewage {
 		return image;
 	}
 
+	/**
+	 * Draws a sewage series' charts, the recent one and then the all-time ones
+	 * at each smoothing window; 112320a added the 7, 14 and 28-day windows and
+	 * made the yearly chart a 365-day one, and does not say why those. A
+	 * failure abandons the series' charts not yet drawn.
+	 */
 	public static void createSewage(Abstract sewage, Integer maxChildren) {
 		try {
-			// buildSewageTimeseriesChart(sewage, false);
 			buildSewageTimeseriesChart(sewage, maxChildren, true, 1);
 			buildSewageTimeseriesChart(sewage, maxChildren, false, 1);
 			buildSewageTimeseriesChart(sewage, maxChildren, false, 7);
@@ -587,15 +694,26 @@ public class ChartSewage {
 			/*
 			 * One bad series should not hide which one it was. Deliberately
 			 * wider than RuntimeException: the failure this exists for is the
-			 * OutOfMemoryError from LogarithmicAxis allocating ticks across a
-			 * runaway range, and an Error would otherwise go past unlabelled.
-			 * Rethrown immediately, so nothing is swallowed.
+			 * OutOfMemoryError from LogarithmicAxis allocating ticks across an
+			 * infinite range, and an Error would otherwise go past unlabelled.
+			 * Rethrown, so this catch swallows nothing, but the pool does:
+			 * MyExecutor prints and drops an Exception, and an Error comes back
+			 * through ASync.complete() as an ExecutionException that is printed
+			 * and dropped too. Either way the run goes on.
 			 */
 			System.out.println("Chart failed for " + sewage.getChartFilename() + ": " + e);
 			throw e;
 		}
 	}
 
+	/**
+	 * Queues a VocSewage's lineage charts onto {@code build} and returns
+	 * without waiting for them: the absolute and relative charts with and
+	 * without a fit, a legend and strains (three of the relative calls are
+	 * combinations buildRelative refuses, and return at once), one absolute
+	 * chart per variant, and the two cumulative ones. Nwss build() calls it from
+	 * a task already on that pool, which ASync allows.
+	 */
 	public static void buildVocSewageCharts(VocSewage vocSewage, ASync<Chart> build) {
 		long time = System.currentTimeMillis();
 		build.execute(() -> ChartSewage.buildAbsolute(vocSewage, null, true, true, true));
@@ -619,7 +737,7 @@ public class ChartSewage {
 		build.execute(() -> ChartSewage.buildSewageCumulativeChart(vocSewage, true));
 		build.execute(() -> ChartSewage.buildSewageCumulativeChart(vocSewage, false));
 		time = System.currentTimeMillis() - time;
-		System.out.println("Built voc in " + time + " ms.");
+		System.out.println("Queued voc charts in " + time + " ms.");
 	}
 
 }

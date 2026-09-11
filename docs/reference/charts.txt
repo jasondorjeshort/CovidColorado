@@ -46,18 +46,24 @@ smoothing windows. It catches Throwable, logs the series name, and rethrows:
 with a few thousand charts on a thread pool, an unlabelled stack trace does not
 tell you which series was bad. The catch is that wide on purpose -- the failure
 it exists for is the tick-allocation OutOfMemoryError below, which is an Error
-and not a RuntimeException.
+and not a RuntimeException. Rethrowing labels the failure and does not stop the
+run: the code pool prints and drops an Exception, and an Error comes back
+through ASync's wait as an ExecutionException that is printed and dropped too.
+The series loses only those of its six charts not yet drawn.
 
 
 AXIS BOUNDS, AND WHY
 --------------------
-Sewage charts use a logarithmic y-axis with a lower bound of 0.01 and an upper
-bound capped at 1E6. The cap is not cosmetic: a runaway fit or a broken plant
-can push the range to dozens of decades, and JFreeChart's LogarithmicAxis then
-allocates tick objects across all of them until the heap runs out. The
-per-lineage absolute charts set the same lower bound but no cap, so the guard
-there is on the data instead: VocSewage addAbsolute drops a point that is not
-finite before it can reach the axis.
+Sewage charts use a logarithmic y-axis floored at 0.01 and capped at 1E6. The
+cap is not cosmetic. A fit extrapolated far enough overflows exp() to infinity,
+and JFreeChart's LogarithmicAxis counts its ticks by casting log10 of each
+bound to an int, so an infinite top becomes Integer.MAX_VALUE decades of ten
+ticks each, allocated until the heap runs out; a finite range, however wide,
+costs ten ticks a decade. The lineage absolute charts start at 0.01 whatever
+the data and set no cap, so the guard there is on the data instead: VocSewage
+addAbsolute drops a lineage point that is not finite before it can reach the
+axis, and both getCollectiveFit overloads skip an overflowing term, which
+covers the summed and strain lines.
 
 The relative lineage charts use myjfreechart/LogitAxis.java with a peak of 100,
 because that is the axis on which competing lineage shares are readable. A
@@ -70,16 +76,19 @@ A recent chart's x-axis runs to wall-clock now, not to the last day of data,
 and starts 180 days back or at the last inflection, whichever is earlier. This
 is a deliberate way of showing staleness: data that stopped arriving shows up
 as empty space on the right. That is how the CDC's archiving of the old
-datasets was noticed.
+datasets was noticed. Its y-axis is not narrowed with it: the range axis is
+sized to the whole series when it is set on the plot, before the x-axis is
+narrowed, and a domain-axis change does not resize it.
 
 
 LINEAGE CHARTS
 --------------
 Three shapes, from one VocSewage: absolute (log axis, sewage times prevalence),
-relative (logit axis, share of the total), and a cumulative bar chart. Each is
-drawn several ways -- with and without fits, legends, and per-strain grouping
-instead of per-lineage -- and then once more per lineage, one PNG each, under
-the variants folder.
+relative (logit axis, share of the total), and a cumulative bar chart. The
+first two are drawn several ways -- with and without fits and legends, and
+grouped by strain instead of by lineage -- and the cumulative one by strain and
+by lineage. The absolute chart, with fit and legend, is then drawn once more
+for each lineage alone, one PNG each, under the variants folder.
 
 Those per-lineage files are named for the sewage series, the lineage, and the
 Voc's id. The sewage name is what keeps the national and Colorado charts apart:
