@@ -12,7 +12,7 @@ pinning live API as it goes:
   and `getExecutions` only by `colorado/ChartMaker.java`.
 - `charts/Charts.java`: `setDelay`, `useMedian`, `valueDesc`, `value` and
   `getTodayMarker` have no callers outside `colorado/`; `getIncompleteMarker`
-  has none live.
+  and `ratio` have no callers at all.
 - `covid/CalendarUtils.java`: `YEAR` is used only in `colorado/`, and
   `dayToJavaDate` only there and in `getTodayMarker` above.
 - `charts/Chart.java`: only `colorado/` constructs one. `nwss/Nwss.java` and

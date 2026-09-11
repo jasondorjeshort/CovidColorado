@@ -22,6 +22,16 @@ import covid.CalendarUtils;
 import covid.DailyTracker;
 
 /**
+ * What every chart shares: the stroke and font for marker lines and their
+ * labels, the pixel size, the output folders, and the method every live chart
+ * is written to disk through.
+ * <p>
+ * The rest is the first life's. {@code getTodayMarker}, {@code valueDesc},
+ * {@code value}, {@code useMedian} and {@code setDelay} are called only from the
+ * dead {@code colorado} package, and {@code getIncompleteMarker} and
+ * {@code ratio} from nowhere; see
+ * docs/ideas/2026-09-10-the-dead-colorado-package-holds-live-api-in-place.md.
+ * <p>
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later
@@ -39,11 +49,20 @@ import covid.DailyTracker;
  */
 public class Charts {
 	public static final BasicStroke stroke = new BasicStroke(2);
+	/*
+	 * "normal" names no font, so Java substitutes Dialog. The size was 12 until
+	 * the peak and valley markers, whose labels use it, were added.
+	 */
 	public static final Font font = new Font("normal", 0, 16);
 
 	public static final int WIDTH = 1024, HEIGHT = 800;
 
-	public static String TOP_FOLDER = "C:\\Users\\jdorj\\Downloads\\CovidCoCharts";
+	/*
+	 * FULL_FOLDER and the folders in ChartSewage are derived from this once, at
+	 * class initialization, which is why it is final: an assignment would move
+	 * only the folders computed after it.
+	 */
+	public static final String TOP_FOLDER = "C:\\Users\\jdorj\\Downloads\\CovidCoCharts";
 	public static final String FULL_FOLDER = TOP_FOLDER + "\\full";
 
 	public static ValueMarker getTodayMarker(int dayOfData) {
@@ -56,6 +75,28 @@ public class Charts {
 		return marker;
 	}
 
+	/**
+	 * Writes {@code bufferedImage} to {@code folder\name.png}, replacing any file
+	 * already there. The build pool's threads call it concurrently, which is
+	 * safe because it keeps no state.
+	 * <p>
+	 * {@code name} may carry backslash-separated subfolders, as a sewage chart's
+	 * filename does. Only {@code folder} itself is created here, and not
+	 * recursively, so those subfolders must already exist; ChartSewage mkdirs()
+	 * and reportState() make them before anything is saved.
+	 * <p>
+	 * Two characters in {@code name} are cleaned, both for variant names: '|'
+	 * becomes "or", and ':' is dropped. NTFS does not reject a ':': it writes
+	 * the image to an alternate data stream of a file named for the part before
+	 * it, which no folder listing shows. Every other character Windows
+	 * rejects fails the write, which is why the caller that puts a lineage name
+	 * in the file name strips its '*' first. The caller's own copy of the name
+	 * is not cleaned, so a path rebuilt from it names no file if it held either
+	 * character.
+	 * <p>
+	 * A failed write prints a stack trace and the name, and the caller is not
+	 * told: an I/O failure is caught here and nothing is returned.
+	 */
 	public static void saveBufferedImageAsPNG(String folder, String name, BufferedImage bufferedImage) {
 
 		new File(folder).mkdir();
