@@ -32,3 +32,4 @@
 2026-09-10 src/main/java/colorado/CountyStats.java
 2026-09-10 src/main/java/colorado/CovidColorado.java
 2026-09-10 src/main/java/colorado/FinalNumbers.java
+2026-09-10 src/main/java/colorado/Flag.java
