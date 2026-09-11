@@ -8,8 +8,9 @@ Two defects in the same dozen lines, both confirmed by reading the code:
 no `toString`. So the line that is meant to be a paste-able cov-spectrum
 exclusion query -- `!(nextcladePangoLineage:XFG*)&!(...)` -- comes out as
 `!(variants.Variant@1a2b3c)&!(...)` and is useless for the manual fallback it
-exists to serve. `variant.name` is what the neighbouring `sb2` loop uses and is
-what this one wants.
+exists to serve. `variant.name` is what this one wants; the neighbouring `sb2`
+loop prints `displayName`, which drops the `nextcladePangoLineage:` prefix a
+query needs.
 
 `System.out.println(String.format("%,d total variants", variants.size() - 1))`
 runs before the "others" variant is added, and subtracts one on top of that.

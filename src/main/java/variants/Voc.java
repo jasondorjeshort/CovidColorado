@@ -19,13 +19,42 @@ import covid.CalendarUtils;
 import covid.DailyTracker;
 import nwss.Nwss;
 
+/**
+ * One lineage-prevalence dataset: a set of {@link Variant}s over a range of
+ * days, from either the LAPIS pull ({@link Lapis#create()}) or cov-spectrum
+ * CSVs exported by hand ({@link #create()}). docs/reference/lineages.txt owns
+ * the two pipelines.
+ * <p>
+ * Prevalence arrives inclusive of descendants, and each constructor finishes
+ * by running {@code build()}, which trims trailing days no variant has any
+ * prevalence on, subtracts every child out of its ancestors so that each
+ * variant is exclusive, sets each variant's cumulativePrevalence and
+ * averageDay, and, when there is more than one variant, adds an "others"
+ * variant holding the rest of each day. Nothing changes a Voc after that:
+ * VocSewage merges duplicates of its variants, not the variants themselves.
+ */
 public class Voc extends DailyTracker {
 
+	/*
+	 * The two cov-spectrum exports: a comparison plot, one row per variant per
+	 * day, and a single-variant plot. A second export of the same plot is read
+	 * as <name>(1).csv, then (2), with no space, up to the first number
+	 * missing.
+	 */
 	private static final String CSV_NAME1 = "C:\\Users\\jdorj\\Downloads\\" + "VariantComparisonTimeDistributionPlot";
 	private static final String CSV_NAME2 = "C:\\Users\\jdorj\\Downloads\\" + "VariantTimeDistributionPlot";
 	private static final Charset CHARSET = Charset.forName("US-ASCII");
 
+	/*
+	 * Always false: the merger Voc that set it went in cdfdd0f. VocSewage
+	 * copies it, so every test of it in ChartSewage takes the non-merger side.
+	 */
 	public final boolean isMerger;
+
+	/*
+	 * Set by build() once any child is subtracted from an ancestor. Its only
+	 * readers are the commented-out "-exc" filename tags in ChartSewage.
+	 */
 	public boolean exclusions = false;
 
 	/* Built from the LAPIS pull rather than exported CSVs. */
@@ -42,6 +71,13 @@ public class Voc extends DailyTracker {
 		return new File(CSV_NAME2 + (i == 0 ? "" : "(" + i + ")") + ".csv");
 	}
 
+	/**
+	 * A Voc for each export name present in the downloads folder; an empty
+	 * list is the normal case. Each name's unnumbered file and its numbered
+	 * copies make one Voc, and the unnumbered file's age decides for all of
+	 * them: past eight hours they are deleted instead of read. A numbered copy
+	 * with no unnumbered file beside it is neither read nor deleted.
+	 */
 	public static LinkedList<Voc> create() {
 		LinkedList<Voc> vocs = new LinkedList<>();
 		File f;
@@ -100,11 +136,17 @@ public class Voc extends DailyTracker {
 	private static int nextId = 1;
 	private static final Object nextIdLock = new Object();
 
+	/*
+	 * False only for single-variant exports. Nwss.build() adds Colorado
+	 * charts only for a single-variant export or the LAPIS Voc.
+	 */
 	public final boolean multiVariant;
 
 	/**
 	 * A Voc from variants somebody else already filled in (see Lapis). Same
 	 * build as the CSV path: subtract children from ancestors, add "others".
+	 * The variants are taken, not copied, and build() mutates them. The range
+	 * is firstDay to lastDay less the trailing days build() trims.
 	 */
 	public Voc(Collection<Variant> prebuilt, int firstDay, int lastDay, Set<Lineage> pinned) {
 		isMerger = false;
@@ -120,6 +162,21 @@ public class Voc extends DailyTracker {
 		build();
 	}
 
+	/**
+	 * A Voc from one export name's files, read in order. The first row of each
+	 * is a header and is skipped. Column 0 is the date, in either shape
+	 * CalendarUtils.dateToDay parses; column 1 the proportion, a row reading
+	 * "null" there being skipped without its day joining the range; and in a
+	 * comparison export column 4 the variant's query, which a later file's row
+	 * for the same query and day overwrites. A single-variant export's variant
+	 * is named "Variant N" by the file's position, so it has no lineage and
+	 * takes no part in the child subtraction.
+	 * <p>
+	 * Anything that fails in the read -- a short row, an empty proportion, a
+	 * date that does not parse -- prints a stack trace and exits the program
+	 * with status 0; see
+	 * docs/active/findings/2026-09-10-an-unreadable-cov-spectrum-export-ends-the-run-as-a-success.md.
+	 */
 	public Voc(List<File> files, boolean multiVariant) {
 		isMerger = false;
 		lapis = false;
@@ -181,9 +238,13 @@ public class Voc extends DailyTracker {
 		built = true;
 
 		/*
-		 * This is specifically for single-variant graphs. If there aren't any
-		 * sequences for days near the end of the query, we want to ignore those
-		 * days and show the data cutoff sooner.
+		 * Trim trailing days on which no variant has any prevalence, so the
+		 * charts show the data cutoff where the data stops. Written for
+		 * single-variant exports, whose query can run past the last sequences;
+		 * for LAPIS it drops the tail whose smoothing windows fell under
+		 * Lapis.MIN_WINDOW_SEQUENCES, which LAG_DAYS does not reach. Only the
+		 * tail: a day like that inside the range stays, and "others" below
+		 * takes all of it.
 		 */
 		while (true) {
 			int last = getLastDay();
@@ -201,6 +262,12 @@ public class Voc extends DailyTracker {
 			dropLastDay();
 		}
 
+		/*
+		 * Off since 0ad0a3d. What the TODO asks for is what VocSewage build()
+		 * now does: its floor folds a lineage with under ten days of
+		 * prevalence since its fit start into its parent, after the
+		 * subtraction below.
+		 */
 		if (false) {
 			/*
 			 * Remove variants without enough prevalence.
@@ -220,7 +287,13 @@ public class Voc extends DailyTracker {
 		}
 
 		/*
-		 * If lineages are known, lets subtract off child from parent.
+		 * Subtract each child out of every ancestor, making every variant with
+		 * a lineage exclusive. Ancestry is a strict prefix of the expanded
+		 * name, so walking from the longest name down reaches every descendant
+		 * before its ancestors, and a variant is already net of its own
+		 * descendants when it is taken out of its ancestors. Each ancestor
+		 * therefore loses each descendant once: a grandchild comes out of its
+		 * grandparent directly, and the child comes out already net of it.
 		 */
 		ArrayList<Variant> myList = new ArrayList<>(variants.size());
 		for (Variant v : variants) {
@@ -229,20 +302,12 @@ public class Voc extends DailyTracker {
 			}
 		}
 		myList.sort((v1, v2) -> Integer.compare(v1.lineage.getFull().length(), v2.lineage.getFull().length()));
-		// for (Variant v : myList) {
-		// System.out.println(" ==> " + v.lineage.getFull() + " -> " +
-		// v.lineage.getAlias());
-		// }
 		for (int i = myList.size() - 1; i >= 0; i--) {
 			Variant child = myList.get(i);
 
 			for (int j = 0; j < i; j++) {
 				Variant parent = myList.get(j);
 				if (!parent.isAncestor(child)) {
-
-					// System.out.println("NO Child: " +
-					// child.lineage.getAlias() + " <-> " +
-					// parent.lineage.getAlias());
 					continue;
 				}
 
@@ -295,6 +360,12 @@ public class Voc extends DailyTracker {
 		System.out.println(sb.toString());
 		System.out.println(sb2.toString());
 
+		/*
+		 * With the variants exclusive, 1 less their sum is the share of the day
+		 * no variant names. Every day of the range gets one, so a day no
+		 * variant covers is all "others"; see
+		 * docs/active/findings/2026-09-10-a-day-no-variant-covers-is-all-others.md.
+		 */
 		if (variants.size() > 1) {
 			Variant others = new Variant("others");
 			for (int day = getFirstDay(); day <= getLastDay(); day++) {
@@ -307,6 +378,10 @@ public class Voc extends DailyTracker {
 		}
 	}
 
+	/**
+	 * The live set, with "others" if build() added it. Duplicate a variant
+	 * before changing it.
+	 */
 	public Collection<Variant> getVariants() {
 		return variants;
 	}

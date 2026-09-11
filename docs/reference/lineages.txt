@@ -47,8 +47,9 @@ WINDOW_DAYS = 365. One year of history is emitted.
 LAG_DAYS = 10. No prevalence is emitted for the last ten days. It matches what
 the manual exports did (LSet.TODAY(-10)) and is not an attempt to model the
 real reporting delay, which is longer -- around 26 days as of this writing. The
-trailing-zero trim at the top of Voc build(), which drops days on which nothing
-at all was sequenced, absorbs the remainder, so the charts show a data cutoff
+trailing-zero trim at the top of Voc build(), which drops trailing days on
+which no lineage has any prevalence -- for LAPIS, days whose smoothing window
+holds fewer than MIN_WINDOW_SEQUENCES sequences -- absorbs the remainder, so the charts show a data cutoff
 where the data actually stops rather than where this constant says.
 
 SMOOTH = 3, a half-width, giving the 7-day centered average cov-spectrum
