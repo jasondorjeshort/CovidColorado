@@ -39,3 +39,4 @@
 2026-09-10 src/main/java/colorado/NumbersType.java
 2026-09-10 src/main/java/colorado/TypesTimingChart.java
 2026-09-10 src/main/java/colorado/Rate.java
+2026-09-10 src/main/java/colorado/Smoothing.java
