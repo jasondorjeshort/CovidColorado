@@ -334,17 +334,24 @@ public class Voc extends DailyTracker {
 		}
 
 		/*
-		 * Output (display)
+		 * Output (display). The count is taken before the "others" bucket is
+		 * added below, so it is the named variants only; sb is the cov-spectrum
+		 * query for everything outside them, in the same !A*&!B* form as
+		 * LSet.getCovSpectrumReverseLink(), and sb2 a quoted list of labels.
 		 */
-		System.out.println(String.format("%,d total variants", variants.size() - 1));
+		System.out.println(String.format("%,d named variants", variants.size()));
 		StringBuilder sb = new StringBuilder();
 		StringBuilder sb2 = new StringBuilder();
 		for (Variant variant : variants) {
 			if (sb.length() > 0) {
 				sb.append("&");
 			}
+			/*
+			 * The name, not displayName: a query needs the
+			 * nextcladePangoLineage: prefix that displayName strips.
+			 */
 			sb.append("!(");
-			sb.append(variant);
+			sb.append(variant.name);
 			sb.append(")");
 
 			if (sb2.length() > 0) {

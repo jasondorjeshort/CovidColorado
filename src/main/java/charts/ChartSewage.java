@@ -630,10 +630,6 @@ public class ChartSewage {
 				double prevalence = prev.get(variant);
 				if (prevalence <= 0) {
 					if (prevalence < 0) {
-						/*
-						 * Prints an object address, since Variant has no toString; see
-						 * docs/active/findings/2026-09-09-voc-build-logs-an-object-address-and-a-wrong-count.md.
-						 */
 						System.out.println("Prevalence " + prevalence + " for " + variant);
 					}
 					continue;

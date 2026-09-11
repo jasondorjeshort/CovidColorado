@@ -113,6 +113,12 @@ public class Variant {
 		return name.replaceAll("nextcladePangoLineage:", "");
 	}
 
+	/** The name: several log lines print a variant by concatenating it. */
+	@Override
+	public String toString() {
+		return name;
+	}
+
 	/**
 	 * A variant named by query text. It gets a lineage only when the whole name
 	 * is {@code nextcladePangoLineage:<alias>*}, the form Lineage.getQuery()
