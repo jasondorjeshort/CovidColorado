@@ -13,6 +13,8 @@ pinning live API as it goes:
 - `charts/Charts.java`: `setDelay`, `useMedian`, `valueDesc`, `value` and
   `getTodayMarker` have no callers outside `colorado/`; `getIncompleteMarker`
   has none live.
+- `covid/CalendarUtils.java`: `YEAR` is used only in `colorado/`, and
+  `dayToJavaDate` only there and in `getTodayMarker` above.
 - `charts/Chart.java`: only `colorado/` constructs one. `nwss/Nwss.java` and
   `charts/ChartSewage.java` name it only as the type argument of
   `ASync<Chart>`, and would take `ASync<Void>` just as well.
