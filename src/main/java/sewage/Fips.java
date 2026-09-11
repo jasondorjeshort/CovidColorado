@@ -9,6 +9,16 @@ import org.apache.commons.csv.CSVRecord;
 
 import nwss.Nwss;
 
+/**
+ * County FIPS code to name, latitude and longitude, read from a third-party
+ * CSV of US counties.
+ * <p>
+ * Nothing in the program uses this class. Its one construction site, in
+ * {@code nwss.Nwss.read()}, was commented out in 2024 and is still there as a
+ * comment, and nothing has ever called {@link #getCounty}. It came in with
+ * {@link Geo} and the FIPS ids stored on {@link Plant}, in a 2023 commit whose
+ * message calls that geographic aggregation undecided.
+ */
 public class Fips {
 
 	public static class County {
@@ -40,10 +50,6 @@ public class Fips {
 					county.lon = Double.valueOf(line.get(2));
 					county.lat = Double.valueOf(line.get(3));
 					fips.put(county.fipsId, county);
-
-					// System.out.println(String.format("Read %d as %s with
-					// %f,%f", county.fips, county.name, county.lat,
-					// county.lon));
 				} catch (Exception e) {
 					// continue
 				}
