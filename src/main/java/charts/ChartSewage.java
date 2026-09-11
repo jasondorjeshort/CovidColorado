@@ -20,7 +20,7 @@ import org.jfree.chart.labels.StandardCategoryItemLabelGenerator;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.renderer.category.CategoryItemRenderer;
+import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.chart.renderer.xy.DeviationRenderer;
 import org.jfree.chart.ui.TextAnchor;
 import org.jfree.data.category.DefaultCategoryDataset;
@@ -595,10 +595,8 @@ public class ChartSewage {
 	 * Every chart saved here is queued for opening.
 	 * <p>
 	 * As it stands the title names no series, so the national and Colorado
-	 * charts look alike, and a cumulative under 1 draws its bar leftward from
-	 * zero; see
-	 * docs/active/findings/2026-09-10-the-cumulative-chart-does-not-say-which-sewage-it-is.md
-	 * and docs/active/findings/2026-09-10-a-cumulative-under-one-draws-its-bar-backwards.md.
+	 * charts look alike; see
+	 * docs/active/findings/2026-09-10-the-cumulative-chart-does-not-say-which-sewage-it-is.md.
 	 *
 	 * @return the image, or null, with nothing saved, when the sewage series
 	 *         has no sewage
@@ -609,6 +607,7 @@ public class ChartSewage {
 		}
 		ArrayList<Variant> variants = new ArrayList<>();
 		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+		double minLog = Double.POSITIVE_INFINITY;
 
 		if (strains) {
 			for (Strain strain : Strain.values()) {
@@ -620,6 +619,7 @@ public class ChartSewage {
 					continue;
 				}
 				double logPrevalence = Math.log(prevalence) / Math.log(10);
+				minLog = Math.min(minLog, logPrevalence);
 				String name = String.format("%s", strain.getName());
 				dataset.addValue(logPrevalence, name, "Prevalence");
 			}
@@ -635,6 +635,7 @@ public class ChartSewage {
 					continue;
 				}
 				double logPrevalence = Math.log(prevalence) / Math.log(10);
+				minLog = Math.min(minLog, logPrevalence);
 				String name = String.format("%s (%+.0f%%/w)", variant.displayName, vocSewage.getGrowth(variant));
 				dataset.addValue(logPrevalence, name, "Prevalence");
 			}
@@ -643,8 +644,25 @@ public class ChartSewage {
 		JFreeChart chart = ChartFactory.createBarChart("Cumulative prevalence", null, "Combined sewage (powers of 10)",
 				dataset, PlotOrientation.HORIZONTAL, true, true, false);
 
+		// createBarChart builds the plot's renderer as a BarRenderer.
 		// https://stackoverflow.com/questions/7155294/jfreechart-bar-graph-labels
-		CategoryItemRenderer renderer = chart.getCategoryPlot().getRenderer();
+		BarRenderer renderer = (BarRenderer) chart.getCategoryPlot().getRenderer();
+
+		/*
+		 * Each bar is a log10, so a cumulative under 1 is negative and from the
+		 * default base of zero would draw leftward and get longer the smaller
+		 * it is, which is the opposite of what a bar length means; a cumulative
+		 * of exactly 1 would get no bar at all. Basing them at the largest
+		 * whole power of ten strictly below the smallest value makes every bar
+		 * grow rightward from one floor, so a longer bar means a larger
+		 * cumulative again. The base is included in the range axis (BarRenderer's
+		 * includeBaseInRange, on by default), so the axis starts there too.
+		 * With no positive cumulative nothing was added and the default base
+		 * stands over an empty chart.
+		 */
+		if (Double.isFinite(minLog)) {
+			renderer.setBase(Math.ceil(minLog) - 1);
+		}
 
 		if (false) {
 			CategoryItemLabelGenerator generator = new StandardCategoryItemLabelGenerator("{2}",
