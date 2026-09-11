@@ -235,22 +235,26 @@ public class Nwss {
 			}
 		}
 
+		/**
+		 * The best-quality column whose values are believable and which covers
+		 * at least 90% of the days the best sane column does, or null when no
+		 * column is believable at all. The coverage bar is taken over the sane
+		 * columns only: a column isSane rejects is out of the running, so it
+		 * must not set a bar that a believable column is then measured against.
+		 */
 		Normalization choose() {
+			EnumMap<Normalization, TreeMap<Integer, double[]>> sane = new EnumMap<>(Normalization.class);
 			int most = 0;
 			for (Normalization norm : Normalization.values()) {
-				most = Math.max(most, byNorm.get(norm).size());
+				TreeMap<Integer, double[]> days = byNorm.get(norm);
+				if (isSane(days)) {
+					sane.put(norm, days);
+					most = Math.max(most, days.size());
+				}
 			}
-			/*
-			 * Prefer the better normalization unless it covers noticeably fewer
-			 * days than another column does, or its values are not believable.
-			 * The coverage bar is set by the best-covered column even when that
-			 * column fails isSane, so a plant whose only sane column is
-			 * out-covered by insane ones gets null and is counted as having no
-			 * usable values; see
-			 * docs/active/findings/2026-09-10-a-plant-whose-sane-column-is-outcovered-is-dropped.md.
-			 */
 			for (Normalization norm : Normalization.values()) {
-				if (byNorm.get(norm).size() >= 0.9 * most && isSane(byNorm.get(norm))) {
+				TreeMap<Integer, double[]> days = sane.get(norm);
+				if (days != null && days.size() >= 0.9 * most) {
 					return norm;
 				}
 			}
