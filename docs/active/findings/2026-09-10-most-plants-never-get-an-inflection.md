@@ -10,8 +10,8 @@ inflections when there is none on that day. Before `112320a` that case threw
 NullPointerException out of the unboxing. Past it, the scan compares each day
 only with the next and skips a pair with either missing, so a turn can be
 found only where a series has readings on two consecutive days. Most plants
-sample every few days (131 of 2,525 sample daily, per
-`docs/active/findings/2026-09-10-every-gap-between-samples-restarts-a-plants-fade-in.md`).
+sample every few days: on the cached download of 2026-09-10, 131 of 2,525
+plants sample daily and most of the rest every two to seven days.
 
 How verified: a throwaway Python probe replayed `nwss/Nwss.java` readSewage on
 the cached j9g8-acpt CSV of 2026-09-10 (plant key, parseValue, column choice,

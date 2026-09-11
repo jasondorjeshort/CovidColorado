@@ -135,11 +135,16 @@ sewage/Multi.java includeSewage adds one plant into one aggregate. The value is
 a population-weighted mean: nwss/DaySewage.java accumulates population times
 normalized sewage and divides by the accumulated population at read time.
 
-Two multipliers damp the weight at the edges of a plant's reporting. Let
-lastZero be the most recent day the plant had no entry, and nextZero the next
-one. The plant's population is scaled by
+Two multipliers damp the weight at the edges of a plant's reporting. An edge is
+a stop in reporting, which is a run of more than 30 days with no entry
+(sewage/Abstract.java, REPORTING_GAP_DAYS). Plants sample every one to seven
+days, a few every two weeks, so a fixed bound well past any routine sampling
+interval separates a pause in reporting from the plant's own cadence; a month is
+that bound, and it is a choice with no derivation beyond that. Let lastGapEnd be
+the last day of the most recent such stop before the day, and nextGapStart the
+first day of the next one. The plant's population is scaled by
 
-  min(((day - lastZero) / 182)^2, 1)  *  min(((nextZero - day) / 14)^2, 1)
+  min(((day - lastGapEnd) / 182)^2, 1) * min(((nextGapStart - day) / 14)^2, 1)
 
 so a plant that has just started or just resumed reporting enters the aggregate
 quadratically over half a year, and one whose series is about to stop fades out
@@ -148,12 +153,18 @@ the pool must not put a step in the aggregate: without this, the national curve
 moves when the reporting roster changes rather than when covid does. The two
 numbers themselves carry no recorded derivation.
 
-A reading of zero is not an edge. It is a non-detect, the lowest reading a plant
-has, and it is averaged into the mean at the weight its day carries like any
-other value; only a day with no entry ends a run. In the download of 2026-09-10
-only the microbial column carried zeros, 5.3% of the plant-days on it, so
-weighting them out instead read high on exactly the days an aggregate should
-read lowest.
+A routine gap between samples is not an edge: a plant that samples weekly has
+neither started nor stopped between two of them. Counting every day with no
+entry, as this did until the 30-day rule, put most plant-days at (1/182)^2 *
+(1/14)^2, about 1.5E-7, so every aggregate was in effect the mean of the few
+plants that sample daily -- a Kish effective count of about two plants on the
+national curve, against 304 plants reporting on the median day.
+
+A reading of zero is not an edge either. It is a non-detect, the lowest reading a
+plant has, and it is averaged into the mean at the weight its day carries like
+any other value. In the download of 2026-09-10 only the microbial column carried
+zeros, 5.3% of the plant-days on it, so weighting them out instead read high on
+exactly the days an aggregate should read lowest.
 
 Note that only the weighting is damped. The population a day reports is the
 undamped sum, and an aggregate's "line pop" is the largest such daily sum it

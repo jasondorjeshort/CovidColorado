@@ -494,18 +494,34 @@ public abstract class Abstract extends DailyTracker {
 		this.population = population;
 	}
 
-	/**
-	 * The first day from {@code startDay} on with no entry, or the last day + 1
-	 * when there is none. Multi takes it as the end of a plant's run for its
-	 * fade-out. The name is historic: a reading of zero is a reading like any
-	 * other and does not end the run. Every gap between samples does, see
-	 * docs/active/findings/2026-09-10-every-gap-between-samples-restarts-a-plants-fade-in.md.
+	/*
+	 * What counts as a stop in reporting: a run of more than this many days with
+	 * no entry. Plants sample every one to seven days, a few every two weeks, so
+	 * a fixed bound well past any routine sampling interval separates a pause in
+	 * reporting from the plant's own cadence; a month is that bound, and it is a
+	 * choice with no derivation beyond that.
+	 *
+	 * A reading of zero is a reading like any other and does not end a run; only
+	 * a gap this long does.
 	 */
-	public synchronized int getNextZero(int startDay) {
+	public static final int REPORTING_GAP_DAYS = 30;
+
+	/**
+	 * The first day from {@code startDay} on that begins a run of more than
+	 * {@link #REPORTING_GAP_DAYS} days with no entry, or the last day + 1 when
+	 * there is none. Multi takes it as the day this series stops reporting, and
+	 * fades the plant out over the fortnight before it.
+	 */
+	public synchronized int getNextReportingGap(int startDay) {
 		int lastDay = getLastDay();
+		int gapStart = -1;
 		for (int day = startDay; day <= lastDay; day++) {
-			if (entries.get(day) == null) {
-				return day;
+			if (entries.get(day) != null) {
+				gapStart = -1;
+			} else if (gapStart < 0) {
+				gapStart = day;
+			} else if (day - gapStart + 1 > REPORTING_GAP_DAYS) {
+				return gapStart;
 			}
 		}
 		return lastDay + 1;

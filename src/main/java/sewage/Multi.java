@@ -116,14 +116,24 @@ public abstract class Multi extends Abstract {
 			numPlants++;
 		}
 		int sFirstDay = sewage.getFirstDay(), sLastDay = sewage.getLastDay();
-		int lastZero = sFirstDay - 1, nextZero = sewage.getNextZero(sFirstDay);
+		int lastGapEnd = sFirstDay - 1, nextGapStart = sewage.getNextReportingGap(sFirstDay);
+		int missingDays = 0;
 		double norm = sewage.getNormalizer();
 		for (int day = sFirstDay; day <= sLastDay; day++) {
 			DaySewage ds1 = sewage.getEntry(day);
 			if (ds1 == null) {
-				lastZero = day;
+				/*
+				 * Once the run of missing days is long enough to count as a stop
+				 * in reporting, every further missing day is the latest end of
+				 * it, so the day the plant comes back reads the gap that just
+				 * ended.
+				 */
+				if (++missingDays > Abstract.REPORTING_GAP_DAYS) {
+					lastGapEnd = day;
+				}
 				continue;
 			}
+			missingDays = 0;
 
 			/*
 			 * A reading of zero is averaged in at the weight its day carries,
@@ -135,23 +145,25 @@ public abstract class Multi extends Abstract {
 			 */
 			DaySewage ds2 = getOrCreateMultiEntry(day);
 
-			if (day > nextZero) {
-				nextZero = sewage.getNextZero(day);
+			if (day > nextGapStart) {
+				nextGapStart = sewage.getNextReportingGap(day);
 			}
 			/*
-			 * The fade-in over 182 days, half a year, since lastZero, the last
-			 * day without an entry; the fade-out over the 14 days before
-			 * nextZero. a38c69e added both with a 21-day fade-out, 765e7c0 cut
-			 * it to 14, and neither says why, nor why the square.
+			 * The fade-in over 182 days, half a year, since lastGapEnd, the last
+			 * day of the most recent stop in reporting; the fade-out over the 14
+			 * days before nextGapStart, where the next one begins. a38c69e added
+			 * both with a 21-day fade-out, 765e7c0 cut it to 14, and neither says
+			 * why, nor why the square.
 			 *
-			 * Every day without an entry counts, and most plants sample once or
-			 * a few times a week, so most plant-days get (1/182)^2 * (1/14)^2,
-			 * about 1.5E-7, and only plants sampling daily for months come near
-			 * full weight; see
-			 * docs/active/findings/2026-09-10-every-gap-between-samples-restarts-a-plants-fade-in.md.
+			 * A stop is a gap of more than Abstract.REPORTING_GAP_DAYS days, not
+			 * any day without an entry: a plant that samples weekly has not
+			 * stopped reporting between two samples, and counting every gap put
+			 * most plant-days at (1/182)^2 * (1/14)^2, about 1.5E-7, so the
+			 * aggregates were a weighted mean of the handful of plants that
+			 * sample daily.
 			 */
-			double startMultiplier = Math.min(Math.pow((day - lastZero) / 182.0, 2.0), 1.0);
-			double endMultiplier = Math.min(Math.pow((nextZero - day) / 14.0, 2.0), 1.0);
+			double startMultiplier = Math.min(Math.pow((day - lastGapEnd) / 182.0, 2.0), 1.0);
+			double endMultiplier = Math.min(Math.pow((nextGapStart - day) / 14.0, 2.0), 1.0);
 			ds2.addDay(ds1, norm, pop * popMultiplier, startMultiplier * endMultiplier);
 
 			int dayPop = (int) Math.round(ds2.getPop());
