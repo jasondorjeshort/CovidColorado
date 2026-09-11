@@ -50,6 +50,14 @@ fetch in progress that another run would read as fresh and parse as far as it
 had got. The same helper and the same rule carry the LAPIS JSON of
 docs/reference/lineages.txt.
 
+That fetch is bounded by a connect and a read timeout of 60 seconds each. The
+read timeout bounds a silence between reads, not the whole transfer, so a slow
+but live download of the 269 MB CSV runs as long as it needs; what it stops is a
+server that accepts the connection and then goes quiet, which with no timeout
+holds the pool thread, and the run's wait on it, forever. A fetch cut off this
+way fails like any other: the .part file goes and nothing lands under the cached
+name, so the readers see a missing file.
+
 A plant is identified by source, state, site, sample location and sample
 matrix, joined into one string. That is deliberately the same shape as the old
 key_plot_id, down to the source being uppercased. sewage/Plant.java's Source

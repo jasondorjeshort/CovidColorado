@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -87,6 +88,18 @@ public class Nwss {
 
 	public static final long HOUR = 60 * 60 * 1000;
 
+	/*
+	 * Connect and read timeout for every fetch download() makes. A read
+	 * timeout bounds a silence between reads rather than the whole transfer, so
+	 * this is a stall bound and not a deadline: a slow but live download of the
+	 * 269 MB CDC file is unaffected however long it takes. Both endpoints sent
+	 * their first bytes in under a second when timed, so a minute of silence is
+	 * a dead connection rather than a busy server. 60 s is also the stall bound
+	 * library/GitUpdater.java applies to the pango-designation pull, for the
+	 * same reason.
+	 */
+	private static final int TIMEOUT_MS = 60 * 1000;
+
 	/**
 	 * Copies url to file, overwriting it. Never throws: on any failure the trace
 	 * is printed and file is left exactly as it was, which for a fetch of a
@@ -101,18 +114,25 @@ public class Nwss {
 	 * one volume, which is what makes ATOMIC_MOVE work; a failed download deletes
 	 * it.
 	 * <p>
-	 * No connect or read timeout is set, so a server that stops sending blocks
-	 * this, and the run, indefinitely; see
-	 * docs/active/findings/2026-09-10-a-stalled-download-hangs-the-run-for-good.md.
+	 * A connect and a read timeout of {@link #TIMEOUT_MS} bound the fetch, so a
+	 * server that accepts the connection and then stops sending fails this
+	 * download rather than blocking it, and the run, forever. A timeout takes
+	 * the same failure path as any other error here: the part file goes and
+	 * nothing lands under the final name.
 	 */
 	public static void download(URL url, File file) {
 		File part = new File(file.getPath() + ".part");
-		try (BufferedInputStream in = new BufferedInputStream(url.openStream());
-				FileOutputStream fileOutputStream = new FileOutputStream(part)) {
-			byte dataBuffer[] = new byte[1024];
-			int bytesRead;
-			while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {
-				fileOutputStream.write(dataBuffer, 0, bytesRead);
+		try {
+			URLConnection connection = url.openConnection();
+			connection.setConnectTimeout(TIMEOUT_MS);
+			connection.setReadTimeout(TIMEOUT_MS);
+			try (BufferedInputStream in = new BufferedInputStream(connection.getInputStream());
+					FileOutputStream fileOutputStream = new FileOutputStream(part)) {
+				byte dataBuffer[] = new byte[1024];
+				int bytesRead;
+				while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {
+					fileOutputStream.write(dataBuffer, 0, bytesRead);
+				}
 			}
 		} catch (Exception e) {
 			part.delete();
