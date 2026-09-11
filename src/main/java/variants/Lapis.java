@@ -87,7 +87,7 @@ public class Lapis {
 	public static LinkedList<Voc> create() {
 		LinkedList<Voc> vocs = new LinkedList<>();
 
-		int today = CalendarUtils.timeToDay(System.currentTimeMillis());
+		int today = CalendarUtils.today();
 		/* Fetch a little extra history so the first emitted day has a full window. */
 		int fetchFirst = today - WINDOW_DAYS - SMOOTH;
 		int emitFirst = today - WINDOW_DAYS;

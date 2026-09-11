@@ -203,9 +203,9 @@ public abstract class Abstract extends DailyTracker {
 	 * <p>
 	 * With {@code daysAveraged} 1: a point for each day with an entry,
 	 * normalized. With more: a point for every day from the first to today (the
-	 * UTC date, as makeFitSeries says), the sum of the raw entries in the
-	 * trailing window divided by its length. That is neither normalized nor an
-	 * average of the days with a reading; see
+	 * machine's local date, {@link covid.CalendarUtils#today}), the sum of the
+	 * raw entries in the trailing window divided by its length. That is neither
+	 * normalized nor an average of the days with a reading; see
 	 * docs/active/findings/2026-09-10-a-plants-smoothed-lines-and-peak-labels-are-in-its-own-units.md
 	 * and
 	 * docs/active/findings/2026-09-10-a-smoothed-line-counts-a-day-without-a-reading-as-zero.md.
@@ -216,7 +216,7 @@ public abstract class Abstract extends DailyTracker {
 			name = getTSName();
 		}
 		TimeSeries series = new TimeSeries(name);
-		int today = CalendarUtils.timeToDay(System.currentTimeMillis());
+		int today = CalendarUtils.today();
 		Integer popo = getPopulation();
 		for (int day = getFirstDay(); day <= today; day++) {
 			double number;
@@ -312,9 +312,8 @@ public abstract class Abstract extends DailyTracker {
 	 * for today. SimpleRegression gives a NaN interval below three readings and
 	 * a NaN line below two, and a zero reading makes the fit NaN; see
 	 * docs/active/findings/2026-09-10-a-zero-reading-in-a-plants-fit-window-makes-its-fit-nan.md.
-	 * Today here is the UTC date, a day ahead in the evening, as in
-	 * makeTimeSeries; see
-	 * docs/active/findings/2026-09-10-a-date-parsed-in-the-evening-lands-on-the-wrong-day.md.
+	 * Today here is the machine's local date, {@link covid.CalendarUtils#today},
+	 * as in makeTimeSeries.
 	 */
 	public synchronized TimeSeries makeFitSeries(int numDays) {
 		build();
@@ -353,7 +352,7 @@ public abstract class Abstract extends DailyTracker {
 		}
 
 		try {
-			int today = CalendarUtils.timeToDay(System.currentTimeMillis());
+			int today = CalendarUtils.today();
 			TimeSeries series = new TimeSeries(
 					String.format("%s (%s, today=%.1f)", "Fit", slopeToWeekly(fit), Math.exp(fit.predict(today))));
 			/*

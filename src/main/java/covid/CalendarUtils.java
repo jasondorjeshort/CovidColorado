@@ -1,6 +1,7 @@
 package covid;
 
 import java.util.Calendar;
+import java.util.TimeZone;
 
 import org.jfree.data.time.Day;
 
@@ -26,14 +27,18 @@ import org.jfree.data.time.Day;
  * counts days from 1970-01-01, the Java epoch, not from 2020: 2020-01-01 is day
  * 18262.
  *
- * The two directions are not symmetric. A day becomes a moment at noon UTC
- * ({@link #dayToTime}), and the methods that render a day read that moment in
- * the machine's zone, which gives the day's own date in any zone less than
- * twelve hours ahead of UTC. A moment becomes a day by truncating its UTC
- * milliseconds ({@link #timeToDay}), so what it gives is the UTC date. That,
- * with {@link #dateToCalendar} keeping the time of day of the call, is why a
- * date string parsed in the evening lands a day late; see
- * docs/active/findings/2026-09-10-a-date-parsed-in-the-evening-lands-on-the-wrong-day.md.
+ * A day index and a date string convert exactly, in both directions and at any
+ * hour: {@link #dateToCalendar} gives UTC midnight of the parsed date, and
+ * {@link #timeToDay} truncates UTC milliseconds, so the pair round-trips. A day
+ * becomes a moment at noon UTC ({@link #dayToTime}), half a day from either
+ * edge, and the methods that render a day read that moment in the machine's
+ * zone, which gives the day's own date in any zone less than twelve hours ahead
+ * of UTC.
+ *
+ * The one asymmetry left is the current moment. {@link #timeToDay} on
+ * {@code System.currentTimeMillis()} gives the UTC date, which on this machine
+ * is tomorrow's local date from 17:00 in winter and 18:00 in summer; what the
+ * program means by today is the local date, and {@link #today} is that.
  *
  * Every method builds its own {@link Calendar}, so the class holds no state and
  * any thread may call it.
@@ -50,12 +55,13 @@ public class CalendarUtils {
 	 * padded or not; which shape it is comes from whether the first or the third
 	 * field is four characters long.
 	 *
-	 * The calendar is lenient, so an out-of-range field rolls over instead of
-	 * failing: 2025-02-30 is 2025-03-02 and month 13 is the next January.
+	 * The result is UTC midnight of that date, so {@link #timeToDay} on it is
+	 * exact and does not depend on the hour the call was made.
 	 *
-	 * As it stands, the result is in the machine's zone at the time of day of
-	 * the call, not at midnight; see the evening finding named in the class
-	 * Javadoc.
+	 * The calendar is lenient, so an out-of-range field rolls over instead of
+	 * failing: 2025-02-30 is 2025-03-02 and month 13 is the next January. A
+	 * cleared calendar is still lenient, so clearing it to reach midnight costs
+	 * none of that.
 	 *
 	 * @throws RuntimeException if there are not three fields, or neither the
 	 *                          first nor the third is four characters long (a
@@ -86,8 +92,22 @@ public class CalendarUtils {
 			throw new RuntimeException("Fail date: " + date);
 		}
 
-		Calendar cal = Calendar.getInstance();
-		cal.set(year, month - 1, dayOfMonth);
+		return utcMidnight(year, month - 1, dayOfMonth);
+	}
+
+	/**
+	 * UTC midnight of a calendar date, with {@code month} zero-based as
+	 * {@link Calendar} numbers it. Lenient, so an out-of-range field rolls over.
+	 */
+	private static Calendar utcMidnight(int year, int month, int dayOfMonth) {
+		Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+		/*
+		 * Without this the fields the set below does not touch keep the hour,
+		 * minute and second of the call, which put the parsed date on either
+		 * side of midnight UTC depending on when the program ran.
+		 */
+		cal.clear();
+		cal.set(year, month, dayOfMonth);
 		return cal;
 	}
 
@@ -95,8 +115,7 @@ public class CalendarUtils {
 
 	/**
 	 * Day index of a date string, parsed and failing as
-	 * {@link #dateToCalendar}. As it stands, the index depends on the time of
-	 * day of the call; see the evening finding named in the class Javadoc.
+	 * {@link #dateToCalendar}. The same string always gives the same index.
 	 */
 	public static int dateToDay(String date) {
 		return timeToDay(dateToTime(date));
@@ -109,12 +128,28 @@ public class CalendarUtils {
 
 	/**
 	 * Day index of the UTC date containing a moment, and the exact inverse of
-	 * {@link #dayToTime} on whole days. Given the current moment it gives the UTC
-	 * date, which on this machine is tomorrow's local date from 17:00 in winter
-	 * and 18:00 in summer.
+	 * {@link #dayToTime} on whole days. For the current moment use
+	 * {@link #today} instead: this gives the UTC date, which on this machine is
+	 * tomorrow's local date from 17:00 in winter and 18:00 in summer.
 	 */
 	public static int timeToDay(long time) {
 		return (int) ((time) / MILLIS_PER_DAY);
+	}
+
+	/**
+	 * Day index of the machine's local date, the day it is here and now. This is
+	 * what the program means by today: the last day a chart runs to, and the day
+	 * a fit is extrapolated to.
+	 *
+	 * {@code timeToDay(System.currentTimeMillis())} is not the same thing. That
+	 * is the UTC date, so from 18:00 local in summer and 17:00 in winter it is
+	 * already tomorrow, and a chart built in the evening ran a day further than
+	 * the same chart built that morning.
+	 */
+	public static int today() {
+		Calendar local = Calendar.getInstance();
+		return timeToDay(utcMidnight(local.get(Calendar.YEAR), local.get(Calendar.MONTH),
+				local.get(Calendar.DAY_OF_MONTH)).getTimeInMillis());
 	}
 
 	/**

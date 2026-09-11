@@ -184,7 +184,7 @@ public class VocSewage {
 	}
 
 	public TimeSeries makeAbsoluteCollectiveTS() {
-		int today = CalendarUtils.timeToDay(System.currentTimeMillis());
+		int today = CalendarUtils.today();
 		TimeSeries series = new TimeSeries(String.format("Collective fit (today=%.1f)", getCollectiveFit(today)));
 		for (int day = Math.max(getFirstDay(), lastInflection); day <= absoluteLastDay; day++) {
 			series.add(CalendarUtils.dayToDay(day), getCollectiveFit(day));
@@ -580,10 +580,8 @@ public class VocSewage {
 		 * day the collective fit stays at or under the pandemic peak,
 		 * All.SCALE_PEAK_RENORMALIZER (since 4c33f48), but never short of the
 		 * day after today. The relative projection always runs the full 30.
-		 * "Today" is the UTC date, a day ahead in the evening; see
-		 * docs/active/findings/2026-09-10-a-date-parsed-in-the-evening-lands-on-the-wrong-day.md.
 		 */
-		currentDay = CalendarUtils.timeToDay(System.currentTimeMillis());
+		currentDay = CalendarUtils.today();
 		absoluteLastDay = relativeLastDay = currentDay + 30;
 		while (absoluteLastDay > currentDay + 1 && getCollectiveFit(absoluteLastDay) > All.SCALE_PEAK_RENORMALIZER) {
 			absoluteLastDay--;
@@ -657,7 +655,7 @@ public class VocSewage {
 		}
 		TimeSeries series = new TimeSeries(String.format("%s %s", variant.displayName, slopeToWeekly(fit)));
 		int f = getFirstDay();
-		int l = CalendarUtils.timeToDay(System.currentTimeMillis()) + 30;
+		int l = CalendarUtils.today() + 30;
 		series.add(CalendarUtils.dayToDay(f), Math.exp(fit.predict(f)));
 		series.add(CalendarUtils.dayToDay(l), Math.exp(fit.predict(l)));
 		return series;

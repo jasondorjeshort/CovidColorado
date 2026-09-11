@@ -27,8 +27,8 @@ public class LSet {
 
 	/**
 	 * The machine's local date, offset by whole days, as YYYY-MM-DD. Being the
-	 * local date it does not roll over at 18:00 the way
-	 * CalendarUtils.timeToDay(now), a UTC day, does.
+	 * local date it is the same day CalendarUtils.today() gives, rather than the
+	 * UTC day CalendarUtils.timeToDay(now) rolls over to at 18:00.
 	 */
 	public static final String TODAY(int offset) {
 		Calendar cal = CalendarUtils.timeToCalendar(System.currentTimeMillis() + offset * 24l * 60l * 60l * 1000l);
