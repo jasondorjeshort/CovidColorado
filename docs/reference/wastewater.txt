@@ -183,7 +183,10 @@ days it keeps adding days only while doing so does not widen the slope's
 confidence interval. So the fit covers the current wave and stops where
 extending it would stop being informative. The 28 days give way to the
 inflection bound: an inflection can be as late as 14 days before the last day,
-which leaves eight days to fit. The drawn line is extrapolated to wall-clock
-today and floored at 1E-6, because a plant that stopped reporting years ago on
-a falling trend extrapolates to exp(-huge) and the log axis will not accept a
-zero.
+which leaves eight days to fit. A reading that is not positive is skipped
+rather than fitted: log(0) is -Infinity, and commons-math's SimpleRegression
+carries one of those into every point added after it, so one zero day in the
+window would make the whole fit -- slope, interval and prediction -- NaN. The
+drawn line is extrapolated to wall-clock today and floored at 1E-6, because a
+plant that stopped reporting years ago on a falling trend extrapolates to
+exp(-huge) and the log axis will not accept a zero.

@@ -320,16 +320,15 @@ public abstract class Abstract extends DailyTracker {
 	 * week after the last inflection. Every reading from {@code numDays} before
 	 * the last day onwards is kept, and the first one before that; each earlier
 	 * reading is kept only while it does not widen the slope's confidence
-	 * interval, and the walk stops at the first that does. The inflection bound
-	 * wins over {@code numDays}: an inflection can be as late as 14 days before
-	 * the last day, which leaves eight days to fit.
+	 * interval, and the walk stops at the first that does. A reading that is
+	 * not positive is left out of the fit altogether, log(0) being -Infinity.
+	 * The inflection bound wins over {@code numDays}: an inflection can be as
+	 * late as 14 days before the last day, which leaves eight days to fit.
 	 * <p>
 	 * The legend gives the interval as weekly growth and the value predicted
 	 * for today. SimpleRegression gives a NaN interval below three readings and
-	 * a NaN line below two, and a zero reading makes the fit NaN; see
-	 * docs/active/findings/2026-09-10-a-zero-reading-in-a-plants-fit-window-makes-its-fit-nan.md.
-	 * Today here is the machine's local date, {@link covid.CalendarUtils#today},
-	 * as in makeTimeSeries.
+	 * a NaN line below two. Today here is the machine's local date,
+	 * {@link covid.CalendarUtils#today}, as in makeTimeSeries.
 	 */
 	public synchronized TimeSeries makeFitSeries(int numDays) {
 		build();
@@ -353,6 +352,18 @@ public abstract class Abstract extends DailyTracker {
 
 			double number = entry.getSewage();
 			number *= getNormalizer();
+			/*
+			 * A plant's own readings can be zero, and log(0) is -Infinity.
+			 * commons-math's SimpleRegression keeps a running ybar, so one
+			 * -Infinity poisons every point added after it and the slope, the
+			 * confidence interval and predict() all come back NaN. The day is
+			 * left out of the fit entirely, as makeTimeSeries floors it to 1E-6
+			 * for drawing; the confidence walk below never sees it, so a skipped
+			 * day does not count against numDays or move startDay.
+			 */
+			if (number <= 0) {
+				continue;
+			}
 			double val = Math.log(number);
 			fit.addData(day, val);
 

@@ -33,15 +33,17 @@ defines nextZero as the next day with no entry and says the fade exists so a
 plant joining or leaving the pool does not put a step in the aggregate. A
 non-detect is neither, so the doc is left saying what was meant.
 
-The fix is to make getNextZero stop only at a missing day, and it has two
-consequences to handle in the same change. An aggregate day whose
+The fix is to make getNextZero stop only at a missing day, and it has one
+consequence left to handle in the same change: an aggregate day whose
 contributors all read zero would then be exactly 0 with nonzero weight, which
-DaySewage's placeholder does not cover, and `sewage/Abstract.java`
-makeFitSeries takes the log of every day. (`variants/VocSewage.java` divides
-by getSewage too, but a zero reading makes its numerator zero and the MINIMUM
-test skips the day first.) And the baseline in `sewage/All.java` would move, so
-every normalizer and chart moves with it. The comment on that placeholder in
-DaySewage's getSewage names this file, so it changes with the fix.
+DaySewage's placeholder does not cover. `sewage/Abstract.java` makeFitSeries
+no longer takes the log of every day -- it skips a reading that is not
+positive -- so a 0 reaching a fit is no longer one of these consequences.
+(`variants/VocSewage.java` divides by getSewage too, but a zero reading makes
+its numerator zero and the MINIMUM test skips the day first.) And the baseline
+in `sewage/All.java` would move, so every normalizer and chart moves with it.
+The comment on that placeholder in DaySewage's getSewage names this file, so it
+changes with the fix.
 
 Not fixed in the review of DaySewage that found it: the fix lives in two other
 files, and it changes every aggregate curve. Only a full run, compared against

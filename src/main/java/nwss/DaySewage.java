@@ -90,8 +90,9 @@ public class DaySewage {
 			// or read exactly zero, which Multi weights out because getNextZero
 			// counts a zero as the series' end (see
 			// docs/active/findings/2026-09-10-a-zero-reading-is-weighted-out-of-every-aggregate.md).
-			// The result must be positive, not 0: makeFitSeries takes its log
-			// (VocSewage's division by it skips a zero reading first), and every
+			// makeFitSeries skips a reading that is not positive, so it no
+			// longer needs this placeholder to be one (VocSewage's division by
+			// it skips a zero reading first), and every
 			// other accumulator day is positive
 			// since only positive readings carry weight. The 1 has no recorded
 			// derivation; on All's renormalized axis (peak 100) it is 1% of the

@@ -155,9 +155,7 @@ public class ChartSewage {
 		 * line on every chart that has one. 30 only separates the 28-day chart
 		 * from the 365-day one, which 112320a kept without a fit as its yearly
 		 * flag had been. 28 is makeFitSeries's numDays, the days it takes before
-		 * the confidence interval may stop it; no commit says why 28. A zero
-		 * reading in a plant's window makes the fit NaN; see
-		 * docs/active/findings/2026-09-10-a-zero-reading-in-a-plants-fit-window-makes-its-fit-nan.md.
+		 * the confidence interval may stop it; no commit says why 28.
 		 */
 		if (daysAveraged < 30) {
 			TimeSeries series2 = sewage.makeFitSeries(28);
