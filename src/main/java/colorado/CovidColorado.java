@@ -49,19 +49,30 @@ public class CovidColorado {
 	public static void main(String[] args) {
 		long time = System.currentTimeMillis();
 
-		Nwss nwss = new Nwss();
-		nwss.read();
-		nwss.build();
+		try {
+			Nwss nwss = new Nwss();
+			nwss.read();
+			nwss.build();
+		} finally {
+			/*
+			 * The pool threads are non-daemon, so the JVM cannot exit until the
+			 * pools are shut down; awaitTermination shuts them down first, then
+			 * waits. On a run that got here normally both of Nwss's ASyncs have
+			 * completed, so the pools are idle and this returns at once; the
+			 * one-day timeout only means "no limit".
+			 *
+			 * The finally is what makes the other path terminate. An unchecked
+			 * exception thrown on this thread after the first task was queued
+			 * would otherwise skip the shutdown entirely, and the idle pool
+			 * threads would hold the JVM up forever: the run would hang instead
+			 * of failing. Shutting down here lets work already in flight finish
+			 * and then lets the exception out of main.
+			 */
+			MyExecutor.awaitTermination(1, TimeUnit.DAYS);
+		}
 
-		/*
-		 * The pool threads are non-daemon, so the JVM cannot exit until the
-		 * pools are shut down; awaitTermination shuts them down first, then
-		 * waits. Both of Nwss's ASyncs have completed by now, so the pools are
-		 * idle and this returns at once; the one-day timeout only means "no
-		 * limit".
-		 */
-		MyExecutor.awaitTermination(1, TimeUnit.DAYS);
-
+		// After the finally, not inside it: the line reports a run that
+		// finished, and on the throwing path the stack trace is the outcome.
 		System.out.println("Exiting in " + (System.currentTimeMillis() - time) / 1000.0 + " s.");
 	}
 }

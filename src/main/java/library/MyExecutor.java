@@ -13,10 +13,10 @@ import java.util.concurrent.TimeUnit;
  * {@code threads} threads, and a single-thread scheduler.
  *
  * The live program uses only the code pool, through {@link ASync}, plus
- * {@link #awaitTermination} and {@link #shutdown}, which
- * {@code CovidColorado.main} calls at the end of a run. Nothing calls the web
- * pool, the scheduler, {@code executeCode} or the web and schedule methods;
- * they date from a web-server experiment (commit 3fe8992).
+ * {@link #awaitTermination}, which {@code CovidColorado.main} calls to end a run
+ * and which calls {@link #shutdown} itself. Nothing calls the web pool, the
+ * scheduler, {@code executeCode} or the web and schedule methods; they date from
+ * a web-server experiment (commit 3fe8992).
  *
  * The code pool does run blocking IO: {@code Nwss.read()} puts the CDC and
  * LAPIS downloads on it, which only makes other tasks queue. The trap is that a
@@ -32,8 +32,9 @@ import java.util.concurrent.TimeUnit;
  * for an {@code Exception}. An {@code Error} is not caught.
  *
  * The pool threads are non-daemon (the JDK default thread factory), so once a
- * task has run the JVM does not exit until the pools are shut down. That is
- * why {@code main} ends with {@link #awaitTermination}.
+ * task has run the JVM does not exit until the pools are shut down. That is why
+ * {@code main} calls {@link #awaitTermination} in a {@code finally}: a run that
+ * throws after queuing its first task would otherwise never terminate.
  *
  * @author jdorje@gmail.com
  */
