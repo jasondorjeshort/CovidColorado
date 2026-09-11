@@ -148,6 +148,13 @@ the pool must not put a step in the aggregate: without this, the national curve
 moves when the reporting roster changes rather than when covid does. The two
 numbers themselves carry no recorded derivation.
 
+A reading of zero is not an edge. It is a non-detect, the lowest reading a plant
+has, and it is averaged into the mean at the weight its day carries like any
+other value; only a day with no entry ends a run. In the download of 2026-09-10
+only the microbial column carried zeros, 5.3% of the plant-days on it, so
+weighting them out instead read high on exactly the days an aggregate should
+read lowest.
+
 Note that only the weighting is damped. The population a day reports is the
 undamped sum, and an aggregate's "line pop" is the largest such daily sum it
 ever saw.

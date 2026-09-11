@@ -86,17 +86,16 @@ public class DaySewage {
 	 */
 	public double getSewage() {
 		synchronized (this) {
-			// Zero total weight: every plant contributing that day had population 0
-			// or read exactly zero, which Multi weights out because getNextZero
-			// counts a zero as the series' end (see
-			// docs/active/findings/2026-09-10-a-zero-reading-is-weighted-out-of-every-aggregate.md).
-			// makeFitSeries skips a reading that is not positive, so it no
-			// longer needs this placeholder to be one (VocSewage's division by
-			// it skips a zero reading first), and every
-			// other accumulator day is positive
-			// since only positive readings carry weight. The 1 has no recorded
-			// derivation; on All's renormalized axis (peak 100) it is 1% of the
-			// pandemic peak. It replaced a return of 0 that never ran: from
+			// Zero total weight: every plant contributing that day had population
+			// 0, the only way a weight is zero now that a reading of zero carries
+			// its plant's weight like any other. A day whose contributors all read
+			// zero is instead exactly 0 at nonzero weight, which is the arithmetic
+			// mean it should be, and the readers of it cope: sewage/Abstract.java
+			// makeFitSeries leaves a non-positive reading out of the fit,
+			// makeTimeSeries floors it to 1E-6 for drawing, and
+			// variants/VocSewage.java skips it on the MINIMUM test. The 1 has no
+			// recorded derivation; on All's renormalized axis (peak 100) it is 1%
+			// of the pandemic peak. It replaced a return of 0 that never ran: from
 			// 6c3d500 to a38c69e the check compared a Double with Integer 0, so
 			// these days were NaN.
 			if (Objects.equals(effPop, 0.0)) {

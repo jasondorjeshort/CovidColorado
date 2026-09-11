@@ -495,18 +495,16 @@ public abstract class Abstract extends DailyTracker {
 	}
 
 	/**
-	 * The first day from {@code startDay} on with no entry or a raw reading of
-	 * zero or less, or the last day + 1 when there is none. Multi takes it as
-	 * the end of a plant's run for its fade-out. A zero reading counts, see
-	 * docs/active/findings/2026-09-10-a-zero-reading-is-weighted-out-of-every-aggregate.md,
-	 * and so does every gap between samples, see
+	 * The first day from {@code startDay} on with no entry, or the last day + 1
+	 * when there is none. Multi takes it as the end of a plant's run for its
+	 * fade-out. The name is historic: a reading of zero is a reading like any
+	 * other and does not end the run. Every gap between samples does, see
 	 * docs/active/findings/2026-09-10-every-gap-between-samples-restarts-a-plants-fade-in.md.
 	 */
 	public synchronized int getNextZero(int startDay) {
 		int lastDay = getLastDay();
 		for (int day = startDay; day <= lastDay; day++) {
-			DaySewage ds = entries.get(day);
-			if (ds == null || ds.getSewage() <= 0) {
+			if (entries.get(day) == null) {
 				return day;
 			}
 		}

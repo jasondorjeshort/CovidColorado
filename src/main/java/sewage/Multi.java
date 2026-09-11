@@ -126,15 +126,13 @@ public abstract class Multi extends Abstract {
 			}
 
 			/*
-			 * a38c69e restarted the fade-in at a zero reading as at a gap, and
-			 * ffc5cc6 disabled that the same day. getNextZero still counts a
-			 * zero as a gap, so the fade-out below weights a zero day out and
-			 * discounts the fortnight before it; see
-			 * docs/active/findings/2026-09-10-a-zero-reading-is-weighted-out-of-every-aggregate.md.
+			 * A reading of zero is averaged in at the weight its day carries,
+			 * like any other value: this is an arithmetic mean, and a non-detect
+			 * is the plant's lowest reading rather than a missing one. The two
+			 * multipliers below are for a plant joining or leaving the pool,
+			 * which a zero day is neither of. a38c69e restarted the fade-in at a
+			 * zero as at a gap; ffc5cc6 disabled that the same day.
 			 */
-			if (ds1.getSewage() == 0.0) {
-				// lastZero = day;
-			}
 			DaySewage ds2 = getOrCreateMultiEntry(day);
 
 			if (day > nextZero) {

@@ -32,9 +32,9 @@ both neighbouring days.
 
 What it would take: decide what counts as a stop in reporting, for instance a
 gap longer than the plant's own sampling interval or than a fixed number of
-days, and have both lastZero and getNextZero use it. That meets
-`docs/active/findings/2026-09-10-a-zero-reading-is-weighted-out-of-every-aggregate.md`
-at getNextZero, and the two fixes want to be designed together. Every
+days, and have both lastZero and getNextZero use it. getNextZero now stops only
+at a day with no entry -- a zero reading is averaged in like any other value --
+so what is left here is what a stop in reporting is. Every
 aggregate and the baseline move, so every normalizer and chart does; a run
 compared against the charts from before is the validation, and the printed
 round count of the baseline loop is worth watching too.
