@@ -30,7 +30,8 @@ import nwss.Nwss;
  * prevalence on, subtracts every child out of its ancestors so that each
  * variant is exclusive, sets each variant's cumulativePrevalence and
  * averageDay, and, when there is more than one variant, adds an "others"
- * variant holding the rest of each day. Nothing changes a Voc after that:
+ * variant holding the rest of each day some variant has prevalence on, and
+ * nothing at all on a day none does. Nothing changes a Voc after that:
  * VocSewage merges duplicates of its variants, not the variants themselves.
  */
 public class Voc extends DailyTracker {
@@ -243,8 +244,9 @@ public class Voc extends DailyTracker {
 		 * single-variant exports, whose query can run past the last sequences;
 		 * for LAPIS it drops the tail whose smoothing windows fell under
 		 * Lapis.MIN_WINDOW_SEQUENCES, which LAG_DAYS does not reach. Only the
-		 * tail: a day like that inside the range stays, and "others" below
-		 * takes all of it.
+		 * tail: a day like that inside the range keeps its place, and the
+		 * "others" block below leaves it unset as well, so it reads as missing
+		 * for every variant rather than shortening the range.
 		 */
 		while (true) {
 			int last = getLastDay();
@@ -369,13 +371,27 @@ public class Voc extends DailyTracker {
 
 		/*
 		 * With the variants exclusive, 1 less their sum is the share of the day
-		 * no variant names. Every day of the range gets one, so a day no
-		 * variant covers is all "others"; see
-		 * docs/active/findings/2026-09-10-a-day-no-variant-covers-is-all-others.md.
+		 * no variant names. A day no variant has any prevalence on -- the same
+		 * test the trim above makes, and for LAPIS a smoothing window under
+		 * Lapis.MIN_WINDOW_SEQUENCES -- carries no data rather than 100%
+		 * unnamed, so "others" is given no value there, as every lineage
+		 * already has none.
+		 * Downstream reads an unset day through Variant.getPrevalence as zero
+		 * and drops it: the absolute and cumulative charts leave the day out
+		 * entirely, and VocSewage addRelative was already dropping the 100%
+		 * point.
 		 */
 		if (variants.size() > 1) {
 			Variant others = new Variant("others");
 			for (int day = getFirstDay(); day <= getLastDay(); day++) {
+				double prev = 0.0;
+				for (Variant variant : variants) {
+					prev += variant.getPrevalence(day);
+				}
+				if (prev <= 0.0) {
+					continue;
+				}
+
 				others.setPrevalence(day, 1.0);
 				for (Variant variant : variants) {
 					others.subtractPrevalence(day, variant.getPrevalence(day));

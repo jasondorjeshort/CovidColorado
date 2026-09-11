@@ -75,7 +75,9 @@ built as their ancestor.
 MIN_WINDOW_SEQUENCES = 20. A day whose smoothing window holds fewer than twenty
 sequences gets no prevalence at all. With a handful of sequences one lineage is
 100% of the day, which is noise, and 100% is a value the logit axis cannot draw
-(see docs/reference/charts.txt).
+(see docs/reference/charts.txt). "Others" gets none either: Voc build() gives it
+a value only on a day some variant has prevalence on, so a thin day inside the
+range is missing everywhere rather than drawn as 100% unnamed.
 
 
 INCLUSIVE ROLL-UP: THE INVARIANT THE PIPELINE ASSUMES
