@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.jfree.chart.plot.ValueMarker;
@@ -60,26 +59,16 @@ public abstract class Abstract extends DailyTracker {
 	private final ArrayList<Inflection> inflections = new ArrayList<>();
 
 	/*
-	 * Counts of the two things buildInflections passes over, summed across every
-	 * series a run builds and reported once by printInflectionSummary. Neither
-	 * is an error -- a sparse series legitimately has gaps -- but they happen
-	 * thousands of times a run, so they are counted rather than printed, the way
-	 * nwss/Nwss.java readSewage counts skipped plants and dropped spike days.
-	 * Atomic because the chart tasks build their series on the code pool.
+	 * The first day after day, and no later than lastDay, that has a reading,
+	 * or -1 when there is none.
 	 */
-	private static final AtomicInteger startDaysBumped = new AtomicInteger();
-	private static final AtomicInteger seriesSkipped = new AtomicInteger();
-
-	/**
-	 * Prints one line covering every series the run built inflections for: how
-	 * many leading days with no reading were stepped over, and how many series
-	 * got no inflections at all. Call it once, after everything that draws has
-	 * built.
-	 */
-	public static void printInflectionSummary() {
-		System.out.println("Built inflections, bumped " + startDaysBumped.get()
-				+ " leading days with no reading, skipped " + seriesSkipped.get()
-				+ " series with no reading the day after their first.");
+	private int nextReadingDay(int day, int lastDay) {
+		for (int next = day + 1; next <= lastDay; next++) {
+			if (getNormalized(next) != null) {
+				return next;
+			}
+		}
+		return -1;
 	}
 
 	/*
@@ -89,82 +78,92 @@ public abstract class Abstract extends DailyTracker {
 	 * docs/reference/wastewater.txt, under INFLECTIONS AND FIT LINES, has the
 	 * design.
 	 *
-	 * Only readings on consecutive days are compared, so a series whose first
-	 * reading from 2020-09-01 on has no reading the next day returns with none,
-	 * which is most plants; see
-	 * docs/active/findings/2026-09-10-most-plants-never-get-an-inflection.md.
+	 * Readings are compared with each other, not with the calendar day before
+	 * them: a plant reporting every few days has its turns found the same way a
+	 * daily one does. Comparing consecutive calendar days instead left nine
+	 * plants in ten with no inflection at all, since most never report two days
+	 * running.
 	 */
 	private synchronized void buildInflections() {
 		int firstDay = Math.max(getFirstDay(), CalendarUtils.dateToDay("9/1/2020")), lastDay = getLastDay();
-		/*
-		 * build() only promises a positive total somewhere in the day range, not
-		 * a reading on or after 2020-09-01, so a series that ended before then
-		 * would walk this loop forever without the bound on lastDay. Past the
-		 * last day getNormalized is null, so such a series takes the return
-		 * below.
-		 */
-		while (firstDay <= lastDay && getNormalized(firstDay) == null) {
-			startDaysBumped.incrementAndGet();
-			firstDay++;
-		}
-		if (getNormalized(firstDay + 1) == null) {
-			seriesSkipped.incrementAndGet();
-			return;
-		}
-		boolean rising = getNormalized(firstDay + 1) >= getNormalized(firstDay);
 
 		/*
-		 * A turn is a day whose next day's reading goes against the current
+		 * build() only promises a positive total somewhere in the day range,
+		 * not two readings on or after 2020-09-01, so a series that ended
+		 * before then, or that reported on one day only, has no direction to
+		 * start from and gets no inflections.
+		 */
+		int turnDay = nextReadingDay(firstDay - 1, lastDay);
+		if (turnDay < 0) {
+			return;
+		}
+		int day = nextReadingDay(turnDay, lastDay);
+		if (day < 0) {
+			return;
+		}
+		boolean rising = getNormalized(day) >= getNormalized(turnDay);
+
+		/*
+		 * A turn is a reading whose next reading goes against the current
 		 * direction, ties counting as rising. It is kept only if no reading in
-		 * the four weeks after it, day + 2 through day + 27 and not past the
-		 * last day, is back on the old side of that next day's reading;
-		 * otherwise the scan resumes after the reading that went back. The
-		 * inflection is the turn day itself, the peak or valley. The window is
-		 * what spreads the markers out: it was 30 days, then 21 ("3 week gap
-		 * between inflections I guess?"), then 28 ("Go back to 4 week min
-		 * interval between inflections", c135ff9). It is not a hard minimum,
-		 * since the next turn is sought from the day after.
+		 * the four weeks after it, up to 27 days past it and not past the last
+		 * day, is back on the old side of that next reading; otherwise the scan
+		 * resumes after the reading that went back. The inflection is the turn
+		 * day itself, the peak or valley. The window is what spreads the markers
+		 * out: it was 30 days, then 21 ("3 week gap between inflections I
+		 * guess?"), then 28 ("Go back to 4 week min interval between
+		 * inflections", c135ff9). It is not a hard minimum, since the next turn
+		 * is sought from the next reading on.
 		 *
 		 * No turn is sought in the last 14 days, so each is confirmed over at
 		 * least 13 days, and none is within two weeks of the last day. The 14
 		 * came with the first version and has no recorded reason.
+		 *
+		 * Both windows are counted in days rather than in readings so that a
+		 * plant reporting every few days confirms a turn over the same four
+		 * weeks, and keeps clear of the same last two weeks, as a daily plant
+		 * does. Counted in readings, a weekly plant's confirmation window would
+		 * run for half a year.
 		 */
-		for (int day = firstDay + 1; day <= lastDay - 14; day++) {
-			Double val = getNormalized(day);
-			Double val2 = getNormalized(day + 1);
-			if (val == null || val2 == null) {
-				continue;
-			}
-			boolean stillRising = val2 >= val;
+		while (turnDay <= lastDay - 14) {
+			double val2 = getNormalized(day);
+			boolean stillRising = val2 >= getNormalized(turnDay);
 
-			if (stillRising == rising) {
-				continue;
-			}
+			if (stillRising != rising) {
+				int windowEnd = Math.min(lastDay, turnDay + 27);
+				int flipDay = -1;
+				for (int d = nextReadingDay(day, windowEnd); d >= 0; d = nextReadingDay(d, windowEnd)) {
+					if ((getNormalized(d) >= val2) == rising) {
+						flipDay = d;
+						break;
+					}
+				}
 
-			double baseVal = val2;
-			for (int flipDay = day + 2; flipDay < day + 28 && flipDay <= lastDay; flipDay++) {
-				val2 = getNormalized(flipDay);
-				if (val2 == null) {
+				if (flipDay < 0) {
+					Inflection inflection = new Inflection();
+					inflection.day = turnDay;
+					inflection.peak = rising;
+					inflections.add(inflection);
+
+					rising = !rising;
+				} else {
+					turnDay = nextReadingDay(flipDay, lastDay);
+					if (turnDay < 0) {
+						return;
+					}
+					day = nextReadingDay(turnDay, lastDay);
+					if (day < 0) {
+						return;
+					}
 					continue;
 				}
-				stillRising = val2 >= baseVal;
-				if (stillRising == rising) {
-					day = flipDay;
-
-					break;
-				}
 			}
 
-			if (stillRising == rising) {
-				continue;
+			turnDay = day;
+			day = nextReadingDay(day, lastDay);
+			if (day < 0) {
+				return;
 			}
-
-			Inflection inflection = new Inflection();
-			inflection.day = day;
-			inflection.peak = rising;
-			inflections.add(inflection);
-
-			rising = !rising;
 		}
 	}
 

@@ -189,11 +189,17 @@ weeks after it goes back past the first reading of the new direction, and
 looking for none in the last 14 days. The inflections are drawn as markers on
 sewage charts; the last one bounds the fit below, sets how far back a recent
 chart reaches when it is over 180 days old (docs/reference/charts.txt), and
-seeds every lineage fit (docs/reference/lineages.txt). A series with no reading
-the day after its first gets no inflections at all; that and the leading days
-with no reading are counted over the whole run and printed as one line when the
-charts are done, since they run to thousands and the console is the only output
-this program has.
+seeds every lineage fit (docs/reference/lineages.txt).
+
+The walk compares each reading with the previous reading that exists, not with
+the previous calendar day, which is what makes it work on a plant at all: most
+plants sample every two to seven days, and a scan over consecutive calendar
+days found no turn on nine in ten of them. The two windows stay in days rather
+than in readings, so that a plant reporting every few days confirms a turn over
+the same four weeks, and keeps clear of the same last two weeks, as a daily
+plant does; counted in readings, a weekly plant's confirmation window would run
+for half a year. A series with fewer than two readings from 2020-09-01 on has
+no direction to start from and gets none.
 
 makeFitSeries fits a line to log(value). It walks backwards from the last day,
 never further back than a week after the last inflection; past the last 28
