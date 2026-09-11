@@ -8,7 +8,8 @@ dropped on the way in. The mismatch is one step later, in `nwss/Regions.java`,
 which looks the full state name up in `regions.csv`:
 
 `vi` maps to "U.S. Virgin Islands" and `regions.csv` has no row of that name,
-so every Virgin Islands plant falls to the "Other" region. The national totals
+so every Virgin Islands plant falls to the "Other" region; in the 2026-09-10
+download that is 3 plants and 66 rows. The national totals
 are unaffected -- "Other" is a real region and is charted -- but a reader of the
 regional charts will not guess that is where those plants went. `StateNames`
 also maps `as`, `mp` and `pr`, which have no rows either. None of the three is
