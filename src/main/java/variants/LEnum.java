@@ -1,21 +1,45 @@
 package variants;
 
+/**
+ * Hand-picked lineage lists, each with the date window it was picked for: the
+ * lineages the maintainer wanted drawn as lines of their own. A list may name
+ * both an ancestor and its descendants, because each name is queried
+ * inclusively ("X*") and Voc build() subtracts the listed descendants back out,
+ * so an ancestor's line is what is left of it.
+ * <p>
+ * Two things read these, and a new constant reaches both with no registration.
+ * nwss/Nwss.java read() turns every constant into a variants/LSet and prints
+ * its cov-spectrum links, from which the maintainer exports the CSVs Voc
+ * create() reads; that is console output only. And variants/Lapis.java pins()
+ * pins every lineage of a list whose start date is inside the emitted LAPIS
+ * window, which VocSewage then never merges away on size or cost, and that
+ * does change the charts. Neither list below starts inside the window, so
+ * today nothing drawn depends on this file. A list added for a wave in
+ * progress would pin its lineages until its start date aged out of the
+ * window, which happens by itself.
+ * <p>
+ * Names are not checked against lineages.csv. One whose letters are neither an
+ * alias nor a root is refused with a stack trace and skipped; a
+ * well-formed name nobody designated becomes a lineage with no sequences,
+ * silently. Both lists were last edited in June 2024 and do not cover the
+ * lineages circulating in 2026; see
+ * docs/active/findings/2026-09-10-the-lineage-lists-miss-most-of-todays-sequences.md.
+ */
 public enum LEnum {
 
-	/*
-	 * APRIL_TO_SEPTEMBER_VARIANTS( "2023-04-01", "2023-09-01", "xbb.1.5",
-	 * "xbb.1.16", "xbb.1.16.6", "eg.5.1", "eg.5.1.1", "xbb.1.16.1", "xbb.1.22",
-	 * "fl.1.5.1", "gj.1.2", "xbb.2.3", "xbb.1.5.10", "xbb.1.5.72", "fu.1",
-	 * "xbb.1.16.11", "eg.6.1", "xbb.1.9.1", "eg.5.1.3", "ge.1", "xbb.2.3.2",
-	 * "eg.5.1.4", "xbb.1.5.49", "xbb.1.42.2", "xbb.1.9.2", "eg.1", "hf.1",
-	 * "hv.1", "fd.1.1", "fu.2.1", "HH.1", "fu.2", "fe.1.2", "he.1", "eg.5.2",
-	 * "eg.5.1.6", "xbb.1.16.2", "fl.15", "xbb.1.5.77", "hz.1", "xbb.2.3.8",
-	 * "bq.1", "xbb.1", "fk.1.1", "ch.1.1"),
+	/**
+	 * The running list for the wave that began in autumn 2023: named in
+	 * November 2023, extended through JN.1 and its descendants, and last
+	 * edited in June 2024.
 	 */
-
 	SEP_TO_NOV_2023(
 			"2023-09-15",
 			null,
+			/*
+			 * xbb and ba.2.75 were added when 101 of their descendants were cut
+			 * from this list in June 2024, so those sequences still land on a
+			 * named line rather than in "others".
+			 */
 			"xbb",
 			"ba.2.75",
 			"ba.2.86",
@@ -179,18 +203,9 @@ public enum LEnum {
 			"xdr",
 			"xds",
 			"xdv",
-			"xdv.1"
+			"xdv.1"),
 
-	// "ge.1.2.1"
-
-	// watch list:
-	//
-	// HK.2 (16, +15%)
-	//
-	// Next removal:
-	// HN.2
-	),
-
+	/** One line per family, over the whole pandemic. */
 	ALL_TIME_VARIANTS(
 			"2020-01-06",
 			null,
@@ -200,15 +215,22 @@ public enum LEnum {
 			"ba.2", // w' ba.2.12.1, ba.2.10, etc
 			"ba.2.75", // ch.1.1
 			"xbb", // huge diversity
-			"ba", // 4 and 5
+			"ba", // B.1.1.529: BA.4 and BA.5 once the rest are out
 			"bq.1",
 			"ba.2.86"),
 
 	;
 
+	/** Pango names in alias form, any case; order means nothing. */
 	public final String[] lineages;
+
+	/*
+	 * Both dates are YYYY-MM-DD: LSet pastes them into the cov-spectrum URL as
+	 * they are, and Lapis parses startDate for the pin test. A null endDate is
+	 * ten days before today, which LSet substitutes.
+	 */
 	public final String startDate;
-	public final String endDate; // or null;
+	public final String endDate;
 
 	LEnum(String startDate, String endDate, String... lineages) {
 		this.startDate = startDate;
