@@ -6,6 +6,8 @@ import java.io.FileOutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -86,24 +88,46 @@ public class Nwss {
 	public static final long HOUR = 60 * 60 * 1000;
 
 	/**
-	 * Copies url to file, overwriting it. Never throws: on any failure the
-	 * trace is printed and file is deleted. While the copy runs, the partial
-	 * file sits under its final name with a current mtime; see
-	 * docs/active/findings/2026-09-10-a-second-run-reads-a-half-written-download-as-a-fresh-cache.md.
+	 * Copies url to file, overwriting it. Never throws: on any failure the trace
+	 * is printed and file is left exactly as it was, which for a fetch of a
+	 * missing file means still missing.
+	 * <p>
+	 * The bytes go to a sibling {@code <file>.part} and are moved over file only
+	 * once the stream has closed cleanly, so nothing ever reads a half-written
+	 * file under the final name. That matters because freshness is judged by
+	 * mtime alone ({@link #ensureFileUpdated}), so a second run starting while
+	 * this one downloads would otherwise find a young file and parse however much
+	 * of it had arrived. The part file is a sibling so that the move stays within
+	 * one volume, which is what makes ATOMIC_MOVE work; a failed download deletes
+	 * it.
+	 * <p>
 	 * No connect or read timeout is set, so a server that stops sending blocks
 	 * this, and the run, indefinitely; see
 	 * docs/active/findings/2026-09-10-a-stalled-download-hangs-the-run-for-good.md.
 	 */
 	public static void download(URL url, File file) {
+		File part = new File(file.getPath() + ".part");
 		try (BufferedInputStream in = new BufferedInputStream(url.openStream());
-				FileOutputStream fileOutputStream = new FileOutputStream(file)) {
+				FileOutputStream fileOutputStream = new FileOutputStream(part)) {
 			byte dataBuffer[] = new byte[1024];
 			int bytesRead;
 			while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {
 				fileOutputStream.write(dataBuffer, 0, bytesRead);
 			}
 		} catch (Exception e) {
-			file.delete();
+			part.delete();
+			e.printStackTrace();
+			return;
+		}
+		/*
+		 * Only reached after the try-with-resources closed the stream, so the
+		 * part file is complete and flushed.
+		 */
+		try {
+			Files.move(part.toPath(), file.toPath(), StandardCopyOption.ATOMIC_MOVE,
+					StandardCopyOption.REPLACE_EXISTING);
+		} catch (Exception e) {
+			part.delete();
 			e.printStackTrace();
 		}
 	}
@@ -113,7 +137,9 @@ public class Nwss {
 	 * {@link #download} if it is missing or was last modified more than hours
 	 * ago. Freshness is judged by the mtime alone: the URL is not compared
 	 * (docs/active/findings/2026-09-09-lapis-cache-keyed-by-filename-not-url.md),
-	 * nor is the file checked for being complete.
+	 * nor is the file checked for being complete. It does not need to be:
+	 * {@link #download} moves a finished file into place rather than writing to
+	 * this path, so a file here is whole even if another run is fetching it now.
 	 * <p>
 	 * A stale file is deleted before the fetch, so a failed fetch leaves no
 	 * file at all rather than the stale one, and the File returned may not

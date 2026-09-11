@@ -42,6 +42,14 @@ ending 2025-09-07. Everything odd about readSewage is a consequence of that
 migration: the successor is per-sample and un-joined, so the reader does the
 per-plant assembly the old metrics table used to hand over.
 
+The staleness window is the cached file's mtime and nothing else, so a download
+must never appear under the cached name before it is finished. nwss/Nwss.java
+download() writes to a sibling .part file and moves it over the target once the
+stream has closed, which makes a cached file either whole or absent -- not a
+fetch in progress that another run would read as fresh and parse as far as it
+had got. The same helper and the same rule carry the LAPIS JSON of
+docs/reference/lineages.txt.
+
 A plant is identified by source, state, site, sample location and sample
 matrix, joined into one string. That is deliberately the same shape as the old
 key_plot_id, down to the source being uppercased. sewage/Plant.java's Source

@@ -13,8 +13,9 @@ and a missing file fails `CSVParser.parse` with `NoSuchFileException`. Both
 land in the catch.
 
 A missing file is what a failed fetch leaves. `ensureFileUpdated` deletes a
-stale file before it fetches, and `download` deletes what it wrote when it
-fails. So a run made offline more than four hours after the last fetch throws
+stale file before it fetches, and `download` writes to a sibling `.part` file
+it deletes when it fails, so nothing arrives under the final name at all. So a
+run made offline more than four hours after the last fetch throws
 away a usable file, then exits with status 0 and no charts, and the next run
 has nothing to fall back on either. A renamed column, which CLAUDE.md expects
 sooner or later, costs a 269 MB fetch on every run until the reader is fixed,
@@ -32,9 +33,10 @@ and
 `docs/active/findings/2026-09-10-an-unresolvable-name-in-lineages-csv-ends-the-run-as-a-success.md`:
 exit with a non-zero status, or, in build(), skip the lineage and carry on.
 Keeping the stale CSV until a new one has arrived would let an offline run
-draw from the last good file. That belongs with the rename-into-place fix in
-`docs/active/findings/2026-09-10-a-second-run-reads-a-half-written-download-as-a-fresh-cache.md`,
-provided the delete before the fetch moves with it. Not fixed in the review of
+draw from the last good file. The rename-into-place fix that half of it waited
+on has landed in `nwss/Nwss.java` `download()`, so the final name now only ever
+holds a complete file; all that is left is for `ensureFileUpdated`'s delete
+before the fetch to move after the download. Not fixed in the review of
 `nwss/Nwss.java` that found it, because each choice changes what a failed run
 does, which no normal run shows, and which failures should stop the run is the
 maintainer's call.
