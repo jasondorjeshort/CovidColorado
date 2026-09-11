@@ -6,6 +6,14 @@ import library.MyExecutor;
 import nwss.Nwss;
 
 /**
+ * The program's entry point: {@code build.gradle} names this class as
+ * {@code mainClass}, and {@link #main} is the whole of the live program's
+ * control flow. It sits in {@code colorado/} only because that is where the
+ * program started; the live code is under {@code nwss/}.
+ *
+ * {@link #old} is the entry point of the program's first life, the Colorado
+ * case charts that make up the rest of this package. Nothing calls it.
+ *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later
@@ -45,8 +53,14 @@ public class CovidColorado {
 		nwss.read();
 		nwss.build();
 
+		/*
+		 * The pool threads are non-daemon, so the JVM cannot exit until the
+		 * pools are shut down; awaitTermination shuts them down first, then
+		 * waits. Both of Nwss's ASyncs have completed by now, so the pools are
+		 * idle and this returns at once; the one-day timeout only means "no
+		 * limit".
+		 */
 		MyExecutor.awaitTermination(1, TimeUnit.DAYS);
-		MyExecutor.shutdown();
 
 		System.out.println("Exiting in " + (System.currentTimeMillis() - time) / 1000.0 + " s.");
 	}
