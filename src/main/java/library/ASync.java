@@ -5,8 +5,18 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 /**
- * Run some things asynchronously, then wait on them.
- * 
+ * Queues tasks on {@link MyExecutor}'s code pool, then waits for all of them
+ * with {@link #complete()}.
+ *
+ * MyExecutor prints and swallows any Exception a task throws, so that task's
+ * Future holds null; nothing here throws for a failed task.
+ *
+ * Thread-safe, and a running task may add more tasks to the same instance:
+ * {@code buildVocSewageCharts} in {@code charts/ChartSewage.java} calls
+ * {@link #execute} on the ASync that {@code build()} in {@code nwss/Nwss.java}
+ * is running it from. Do not call {@link #complete()} from a task running on the
+ * code pool; see {@link MyExecutor} for why that can deadlock.
+ *
  * @author jdorje@gmail.com
  */
 public class ASync<V> {
@@ -15,10 +25,12 @@ public class ASync<V> {
 	private int executions = 0;
 
 	/**
-	 * Start executing the given code immediately.
-	 * 
+	 * Queues the given code on the code pool and returns at once; it starts
+	 * when a pool thread is free.
+	 *
 	 * @param func
 	 *            The code.
+	 * @return The task's Future; its value is null if the task threw.
 	 */
 	public Future<V> submit(Callable<V> func) {
 		Future<V> future = MyExecutor.submitCode(func);
@@ -30,8 +42,11 @@ public class ASync<V> {
 	}
 
 	/**
-	 * Start executing the given code immediately.
-	 * 
+	 * Queues the given code on the code pool and returns at once; it starts
+	 * when a pool thread is free. This is {@link #submit} for a Runnable: its
+	 * Future's value is always null, and {@link #complete()} waits for it like
+	 * any other.
+	 *
 	 * @param func
 	 *            The code.
 	 */
@@ -44,7 +59,8 @@ public class ASync<V> {
 	}
 
 	/**
-	 * @return The number of executions done.
+	 * @return The number of tasks ever added by submit or execute, including
+	 *         ones still queued or running; not a count of completed tasks.
 	 */
 	public int getExecutions() {
 		synchronized (this) {
@@ -53,7 +69,16 @@ public class ASync<V> {
 	}
 
 	/**
-	 * Waits until all code that has been executed is completed.
+	 * Waits for the added tasks in FIFO order until none are left. A task's
+	 * Future completes only after the task returns, so anything a waited-on task
+	 * added before returning is waited for too; {@code nwss/Nwss.java}
+	 * {@code build()} depends on this. A task added from another thread after
+	 * this has found the list empty is not waited for. The instance may be
+	 * reused afterwards.
+	 *
+	 * Never throws: a failed wait is printed and skipped. Trap: if the waiting
+	 * thread is interrupted, the task it was waiting on is dropped unwaited and
+	 * the thread's interrupt status is lost.
 	 */
 	public void complete() {
 		while (true) {
@@ -72,32 +97,6 @@ public class ASync<V> {
 				e.printStackTrace();
 			}
 		}
-	}
-
-	/**
-	 * Waits until the next item completes, and returns it in FIFO order.
-	 * Returns null if there is nothing pending.
-	 */
-	public V get() {
-		Future<V> future;
-		synchronized (this) {
-			future = exec.poll();
-		}
-		if (future == null) {
-			return null;
-		}
-
-		V value;
-		try {
-			value = future.get();
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
-		if (value == null) {
-			return get();
-		}
-		return value;
 	}
 
 }
