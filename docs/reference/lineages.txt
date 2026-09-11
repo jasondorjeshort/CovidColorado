@@ -115,8 +115,11 @@ MERGING DOWN TO A LEGEND
 ------------------------
 VocSewage build() repeatedly calls findLineageToRemove and folds what it
 returns into its parent's variant, manufacturing that variant if it does not
-exist, or into "Others" for a lineage with no parent. Each merge prints one
-line saying which rule chose it and why. A pass has two tiers.
+exist, or into "Others" for a lineage with no parent. A manufactured variant is
+built from the parent's Lineage.getQuery() text, so it is named, labelled and
+duplicated exactly like one Lapis supplied -- an "xfg*" on the legend, not an
+"xfg". Each merge prints one line saying which rule chose it and why. A pass
+has two tiers.
 
 The floor comes first and works deepest first, so a subtree collapses from the
 leaves inward. A lineage fails it when its fit has a non-finite slope, when the
@@ -161,6 +164,13 @@ emitted window; both current lists start well before it, so the set is empty
 today. The mechanism is there for the next time a list is added for a wave in
 progress. Lapis's own MIN_SEQUENCES fold runs before the pins are taken and
 ignores them; see docs/active/findings/ for the open entry on this.
+
+What survives is the legend, and the non-fit relative chart orders it by each
+variant's prevalence-weighted mean day, oldest first. Merging moves prevalence
+between variants and manufactures new ones, so Voc build()'s per-variant mean
+describes the wrong thing by the time the chart is drawn: VocSewage build()
+recomputes it, and the cumulative prevalence weighting it, for every variant
+once it stops merging.
 
 
 WHERE A FIT STARTS

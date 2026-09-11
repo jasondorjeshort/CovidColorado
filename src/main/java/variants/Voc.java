@@ -322,17 +322,12 @@ public class Voc extends DailyTracker {
 
 		/*
 		 * Build the variant data directly: cumulative prevalence and average
-		 * time
+		 * time. The "others" bucket added below misses this pass; VocSewage
+		 * build() recomputes both for every variant it holds, so the bucket it
+		 * charts has them.
 		 */
 		for (Variant variant : variants) {
-			variant.cumulativePrevalence = 0;
-			double totalDay = 0;
-			for (int day = getFirstDay(); day <= getLastDay(); day++) {
-				double prev = variant.getPrevalence(day);
-				variant.cumulativePrevalence += prev;
-				totalDay += day * prev;
-			}
-			variant.averageDay = totalDay / variant.cumulativePrevalence;
+			variant.computeTotals(getFirstDay(), getLastDay());
 		}
 
 		/*

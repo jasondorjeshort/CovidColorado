@@ -35,11 +35,11 @@ public class Variant {
 	public static final String OTHERS = "Others";
 
 	/**
-	 * What the variant was built from: the query text for a LAPIS variant
-	 * ("nextcladePangoLineage:JN.1*"), the variant column of a multi-variant
-	 * export, the expanded lineage for one built from a {@link Lineage}, or a
-	 * bare label ("others", "Variant 1"). Identifies the Others bucket, and is
-	 * what {@link #duplicate()} re-parses.
+	 * What the variant was built from: the query text for a LAPIS variant or for
+	 * a parent VocSewage build() manufactures ("nextcladePangoLineage:JN.1*"),
+	 * the variant column of a multi-variant export, or a bare label ("others",
+	 * "Variant 1"). Identifies the Others bucket, and is what
+	 * {@link #duplicate()} re-parses.
 	 */
 	public final String name;
 
@@ -57,17 +57,17 @@ public class Variant {
 	public final Lineage lineage;
 
 	/**
-	 * Sum of the daily prevalence over the Voc's days, set by Voc build() after
-	 * the child subtraction and used only to weight averageDay. Not
-	 * sewage-weighted; VocSewage keeps its own totals.
+	 * Sum of the daily prevalence over the day range {@link #computeTotals} was
+	 * last given, and used only to weight averageDay. Not sewage-weighted;
+	 * VocSewage keeps its own totals.
 	 */
 	public double cumulativePrevalence;
 
 	/**
-	 * Prevalence-weighted mean day, set once by Voc build() and NaN for a
-	 * variant with no prevalence. Nothing maintains it afterwards: {@link #add}
-	 * leaves it stale, and a variant created later -- an Others bucket, a
-	 * manufactured parent -- keeps 0. It orders the non-fit relative chart.
+	 * Prevalence-weighted mean day, from {@link #computeTotals}, and NaN for a
+	 * variant with no prevalence in the range. It orders the non-fit relative
+	 * chart, which is why VocSewage build() recomputes it once merging has
+	 * moved prevalence around rather than leaving Voc build()'s value.
 	 */
 	public double averageDay;
 
@@ -109,6 +109,27 @@ public class Variant {
 		daily.put(day, num);
 	}
 
+	/**
+	 * Sets {@link #cumulativePrevalence} and {@link #averageDay} from the
+	 * prevalence this variant holds over [firstDay, lastDay]. Voc build() calls
+	 * it once the child subtraction has made every variant exclusive, and
+	 * VocSewage build() again once its merge loop has moved prevalence between
+	 * variants: that second pass is what gives a merge target, a manufactured
+	 * parent and the Others bucket a real averageDay to be sorted by. A variant
+	 * with nothing in the range gets a cumulativePrevalence of 0 and an
+	 * averageDay of NaN.
+	 */
+	public void computeTotals(int firstDay, int lastDay) {
+		cumulativePrevalence = 0;
+		double totalDay = 0;
+		for (int day = firstDay; day <= lastDay; day++) {
+			double prev = getPrevalence(day);
+			cumulativePrevalence += prev;
+			totalDay += day * prev;
+		}
+		averageDay = totalDay / cumulativePrevalence;
+	}
+
 	public static String displayName(String name) {
 		return name.replaceAll("nextcladePangoLineage:", "");
 	}
@@ -141,19 +162,6 @@ public class Variant {
 		// lineage.getAlias()));
 	}
 
-	/**
-	 * An empty variant for a lineage with none on the chart, which is how
-	 * VocSewage build() manufactures a merge target. Unlike the query-named variants
-	 * beside it, its name is the expanded lineage and its label the alias with
-	 * no star; and since its name is not a query, {@link #duplicate()} would
-	 * lose its lineage.
-	 */
-	public Variant(Lineage lineage) {
-		this.lineage = lineage;
-		this.name = lineage.getFull();
-		this.displayName = lineage.getAlias();
-	}
-
 	/** Strict ancestry by expanded name. Both variants must have a lineage. */
 	public boolean isAncestor(Variant descendant) {
 		return lineage.isAncestor(descendant.lineage);
@@ -172,7 +180,9 @@ public class Variant {
 	 * descendant, which the caller then drops. This must be the descendant's
 	 * ancestor or the Others bucket; anything else prints a stack trace and
 	 * merges anyway. A descendant with no lineage can only go to Others.
-	 * Neither variant's cumulativePrevalence or averageDay is updated.
+	 * Neither variant's cumulativePrevalence or averageDay is updated here;
+	 * VocSewage build() recomputes both with {@link #computeTotals} once it has
+	 * stopped merging.
 	 */
 	public void add(Variant descendant) {
 		if (!name.equalsIgnoreCase(OTHERS) && (lineage == null || !lineage.isAncestor(descendant.lineage))) {
@@ -192,9 +202,9 @@ public class Variant {
 	/**
 	 * An independent copy, daily prevalence and totals included, for a
 	 * VocSewage to merge without disturbing the Voc it came from. The copy's
-	 * lineage is re-parsed from the name, so this is faithful only for a
-	 * variant built from its name, which every Voc variant is; the check below
-	 * reports any other.
+	 * lineage is re-parsed from the name, which is faithful because the name is
+	 * all any variant is built from; the check below reports a name that stops
+	 * resolving to the same lineage.
 	 */
 	public Variant duplicate() {
 		try {

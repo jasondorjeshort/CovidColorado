@@ -526,8 +526,14 @@ public class VocSewage {
 			} else {
 				Variant pv = lineageMap.get(p);
 				if (pv == null) {
-					pv = new Variant(p);
-					System.out.println("Manufacturing " + p.getAlias());
+					/*
+					 * From the query, not the lineage: that is the one name
+					 * Variant(String) resolves back to a lineage, so the
+					 * manufactured parent is named, labelled and duplicated like
+					 * every variant Lapis supplied.
+					 */
+					pv = new Variant(p.getQuery());
+					System.out.println("Manufacturing " + pv.name);
 					lineageMap.put(p, pv);
 					variants.add(pv);
 				}
@@ -539,6 +545,16 @@ public class VocSewage {
 			lineageMap.remove(l);
 
 			System.out.println("Merged variant " + deletion.name + " into " + merge.name + ": " + removalReason);
+		}
+
+		/*
+		 * Merging moved prevalence between variants and created some, so Voc
+		 * build()'s per-variant totals no longer describe what is charted here.
+		 * Redone over this pairing's own day range, before the charts sort the
+		 * non-fit relative legend by averageDay.
+		 */
+		for (Variant variant : variants) {
+			variant.computeTotals(getFirstDay(), getLastDay());
 		}
 
 		/*

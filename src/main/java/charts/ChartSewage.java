@@ -471,9 +471,11 @@ public class ChartSewage {
 			variants.sort((v1, v2) -> -Double.compare(vocSewage.getFit(v1, lastDay), vocSewage.getFit(v2, lastDay)));
 		} else {
 			/*
-			 * Others and every manufactured parent keep an averageDay of 0, so
-			 * they lead; see
-			 * docs/active/findings/2026-09-10-a-manufactured-parent-loses-its-star-and-leads-the-legend.md.
+			 * Oldest first, so the legend reads roughly in the order the
+			 * lineages appeared. VocSewage build() recomputes averageDay after
+			 * merging, so Others and every manufactured parent carry the mean
+			 * day of what they actually hold; a variant left with no prevalence
+			 * has NaN, which Double.compare sorts last.
 			 */
 			variants.sort((v1, v2) -> Double.compare(v1.averageDay, v2.averageDay));
 		}
