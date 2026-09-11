@@ -11,8 +11,8 @@ import covid.CalendarUtils;
  * manual export path (docs/reference/lineages.txt, THE MANUAL PATH): the
  * maintainer opens a link, exports its CSV to the downloads folder, and Voc
  * create() reads it. Its output is console only. Its two callers, Nwss read()
- * for each LEnum and VocSewage getLink(), keep nothing it returns except to
- * print it.
+ * for each LEnum and VocSewage getLink(), use nothing it returns beyond what it
+ * prints.
  * <p>
  * Each lineage is queried as Lineage.getQuery(), inclusive of its descendants:
  * the form Variant(String) resolves back to a lineage, and the one Voc

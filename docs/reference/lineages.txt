@@ -119,8 +119,9 @@ line saying which rule chose it and why. A pass has two tiers.
 The floor comes first and works deepest first, so a subtree collapses from the
 leaves inward. A lineage fails it when its fit has a non-finite slope, when the
 fit's 60-day projection overflows (a two-point fit can be that steep, and it is
-as unusable as no slope), or when it holds under ten days of measurable
-prevalence or under 0.001 of cumulative sewage. The floor only asks whether
+as unusable as no slope), or when, counted from its own fit start, it holds
+under ten days of measurable prevalence or under 0.001 of sewage times
+prevalence. The floor only asks whether
 there is anything to fit. On the 0-100 sewage scale it removes little else,
 which was fine when the input was a hand-picked list and is not when it is
 every lineage LAPIS carries: on its own it left about 105 lineages on the
@@ -166,8 +167,12 @@ Every fit is a regression of log(sewage * prevalence) against day, and the
 question is only where to start it. The seed is lastInflection: the latest peak
 or valley of the sewage series this Voc is paired with, from
 sewage/Abstract.java getLastInflection, clamped to leave at least MIN_FIT_DAYS
-(28) of data. Each variant then walks backwards from there for as long as doing
-so lowers its slope, and keeps the lowest-slope start.
+(28) of data. Each variant then tries every earlier start back to the first day
+and keeps the one giving the lowest slope; it does not stop at the first rise.
+A lineage with under two points from the seed on keeps the seed and fails the
+floor for having no finite slope. Once merging is done, the Fit start marker on
+the all-lineage charts and the collective fit's first day are the latest of
+the variants' starts, not the seed; a per-lineage chart marks its own.
 
 This used to be a hand-edited date, and by the time anyone looked it was
 2-25-2024 -- earlier than the start of the emitted window, so every fit spanned

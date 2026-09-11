@@ -80,3 +80,4 @@
 2026-09-10 src/main/java/library/OpenImage.java
 2026-09-10 src/main/java/variants/Lapis.java
 2026-09-10 src/main/java/sewage/Abstract.java
+2026-09-10 src/main/java/variants/VocSewage.java

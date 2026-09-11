@@ -37,8 +37,9 @@ The fix is to make getNextZero stop only at a missing day, and it has two
 consequences to handle in the same change. An aggregate day whose
 contributors all read zero would then be exactly 0 with nonzero weight, which
 DaySewage's placeholder does not cover, and `sewage/Abstract.java`
-makeFitSeries takes the log of every day while `variants/VocSewage.java`
-divides by getSewage. And the baseline in `sewage/All.java` would move, so
+makeFitSeries takes the log of every day. (`variants/VocSewage.java` divides
+by getSewage too, but a zero reading makes its numerator zero and the MINIMUM
+test skips the day first.) And the baseline in `sewage/All.java` would move, so
 every normalizer and chart moves with it. The comment on that placeholder in
 DaySewage's getSewage names this file, so it changes with the fix.
 

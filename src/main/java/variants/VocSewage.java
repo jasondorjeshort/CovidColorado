@@ -14,6 +14,25 @@ import covid.CalendarUtils;
 import nwss.DaySewage;
 import sewage.All;
 
+/**
+ * One {@link Voc} against one sewage series: the Voc's variants merged down to
+ * a legend, a fit of log(sewage times prevalence) for each, and the series the
+ * lineage charts in charts/ChartSewage.java draw from them.
+ * docs/reference/lineages.txt owns the merge rules and where a fit starts.
+ * <p>
+ * nwss/Nwss.java build() makes one per Voc on the national series, and a second
+ * on the Colorado state series for the LAPIS Voc or a single-variant export.
+ * Both are aggregates, whose normalizer is 1, and the relative series rely on
+ * that: they divide sewage times normalizer times prevalence by the raw reading
+ * to get the prevalence back.
+ * <p>
+ * The constructor does all the work, on duplicates of the Voc's variants, so
+ * one Voc can back several of these. After it returns, the only state that
+ * changes is the two collective-fit caches, each under its own lock, and the
+ * overflowed set, which is concurrent; everything else is only read, which is
+ * what lets the chart tasks share an instance. Those tasks are queued after
+ * the constructor returns, and the executor hand-off publishes its writes.
+ */
 public class VocSewage {
 
 	public final sewage.Abstract sewage;
@@ -23,8 +42,12 @@ public class VocSewage {
 	private final Voc voc;
 
 	/*
-	 * Fits start at the sewage series' own latest peak or valley and search
-	 * backwards from there. Used to be a hand-updated date.
+	 * The seed each variant's fit start searches back from: the sewage series'
+	 * own latest peak or valley, clamped by the constructor to leave
+	 * MIN_FIT_DAYS. Used to be a hand-updated date. The last thing build()
+	 * does is overwrite it with the latest of the variants' own fit starts,
+	 * which is what getLastInflection(null) returns and where the collective
+	 * fit is drawn from.
 	 */
 	private int lastInflection;
 
@@ -44,6 +67,12 @@ public class VocSewage {
 		build();
 	}
 
+	/**
+	 * Where a fit starts, for the charts' "Fit start" marker: the variant's own
+	 * start, or for null the latest of every variant's. Despite the name this
+	 * is the sewage series' inflection only where a fit kept its seed. The
+	 * variant must come from {@link #getVariants()}.
+	 */
 	public int getLastInflection(Variant variant) {
 		if (variant == null) {
 			return lastInflection;
@@ -59,6 +88,11 @@ public class VocSewage {
 		return Math.min(sewage.getLastDay(), voc.getLastDay());
 	}
 
+	/**
+	 * Appends every variant to variantList, sorts that list by cumulative
+	 * sewage-weighted prevalence, largest first, and returns the map of those
+	 * totals itself, not a copy.
+	 */
 	public HashMap<Variant, Double> getCumulativePrevalence(ArrayList<Variant> variantList) {
 		variantList.addAll(variants);
 		variantList.sort((v1, v2) -> -Double.compare(cumulativePrevalence.get(v1), cumulativePrevalence.get(v2)));
@@ -84,6 +118,13 @@ public class VocSewage {
 					System.out.println("Impossible variant : " + variant);
 					continue;
 				}
+				/*
+				 * Not finite: a projection that overflows, or NaN from a fit of
+				 * under two points. Only a variant with no lineage, such as
+				 * Others, can have the second, since the floor removes every
+				 * lineage whose slope is not finite; the message calls both an
+				 * overflow.
+				 */
 				double term = Math.exp(fits.get(variant).predict(day));
 				if (!Double.isFinite(term)) {
 					if (overflowed.add(variant)) {
@@ -186,11 +227,14 @@ public class VocSewage {
 	private String removalReason;
 
 	/*
-	 * rounding error of subtractions can cause "0" to show as really low.
-	 * Usually like E-16 but nothing lower than about E-4 should be possible
-	 * given sequencing counts. Actually the lowest in the US for any reasonable
-	 * lineage is 0.0025. Anything zero needs to be ignored for both graphing or
-	 * regression, since they'll bork an exponential fit or graph.
+	 * The line between a value and rounding residue, applied to prevalence and
+	 * to sewage times prevalence alike; Variant uses it too. The child
+	 * subtraction leaves residues around 1E-16 where a prevalence should be 0,
+	 * while a real prevalence is at least one sequence in a smoothing window's
+	 * total, which even a window of ten thousand sequences puts at 1E-4. 1E-8
+	 * sits well clear of both, and a sewage factor within a few orders of 1
+	 * leaves each on its side. A value at or under it is kept out of every fit
+	 * and series: log(0) wrecks a fit, and 0 is undrawable on either axis.
 	 */
 	static final double MINIMUM = 1E-8;
 
@@ -200,8 +244,9 @@ public class VocSewage {
 	 * carries every lineage with at least 20 US sequences, and the floor alone
 	 * leaves 100 to 200 of them on a chart, which is more colours than a
 	 * reader can tell apart; ten is about the most a legend can carry
-	 * distinctly. A target, not a guarantee: a live lineage with no ancestor
-	 * left on the chart is never merged to reach it.
+	 * distinctly. A target, not a guarantee: the cost tier never merges a
+	 * pinned lineage, or one with anything in the last RECENT_DAYS and no
+	 * ancestor left on the chart, to reach it.
 	 */
 	private static final int MAX_VARIANTS = 10;
 
@@ -223,9 +268,10 @@ public class VocSewage {
 
 	/*
 	 * The next variant for build() to fold away, or null when the chart is
-	 * done. A variant failing the floor goes first, deepest lineage first; only
-	 * when none does is the cheapest merge by forecast change taken, and then
-	 * only while there are more than MAX_VARIANTS or the merge is free.
+	 * done. A variant failing the floor goes first, deepest lineage first -- by
+	 * expanded-name length, which puts every descendant before its ancestors;
+	 * only when none does is the cheapest merge by forecast change taken, and
+	 * then only while there are more than MAX_VARIANTS or the merge is free.
 	 */
 	private Variant findLineageToRemove() {
 		if (variants.size() <= 1) {
@@ -265,6 +311,13 @@ public class VocSewage {
 				numDays += prev > MINIMUM ? 1 : 0;
 			}
 
+			/*
+			 * Both counted from this variant's fit start, not over the whole
+			 * window. Ten days is what two sequences three days apart make
+			 * under the 7-day smoothing, as the disabled pre-filter in Voc
+			 * build() notes. 77c991c lowered both from 22 and 0.1 and recorded
+			 * no reason.
+			 */
 			if (numDays < 10) {
 				removalReason = String.format("present on only %.0f days", numDays);
 				return variant;
@@ -323,7 +376,11 @@ public class VocSewage {
 			double excess = Double.isFinite(noise) ? Math.max(0, Math.abs(fc.getSlope() - fp.getSlope()) - noise) : 0;
 			double cost = c + p == 0 ? 0 : c * p / (c + p) * excess * excess;
 
-			/* Strictly less, so a tie goes to the deeper lineage seen first. */
+			/*
+			 * Strictly less, so a tie goes to the deeper lineage seen first.
+			 * Between names of equal length it goes to the HashSet's order,
+			 * which follows identity hashes and not the data.
+			 */
 			if (!Double.isFinite(cost) || cost >= bestCost) {
 				continue;
 			}
@@ -378,7 +435,12 @@ public class VocSewage {
 		int fitStartDay = lastInflection;
 
 		/*
-		 * Continue to go backwards SO LONG AS it makes the slope lower.
+		 * Walks back over every day to the first and keeps whichever start
+		 * gave the lowest slope. It does not stop at the first rise: the
+		 * preliminary fd65897 did, and 26a93fc replaced it with this. A
+		 * variant with under two points from the seed on starts from a NaN
+		 * slope that no comparison beats, so it keeps the seed, and a lineage
+		 * in that state fails the floor's first test.
 		 */
 		for (int day = lastInflection - 1; day >= getFirstDay(); day--) {
 			DaySewage entry;
@@ -514,7 +576,12 @@ public class VocSewage {
 		}
 
 		/*
-		 * Build (part of) collective fit
+		 * The absolute projection runs 30 days past today, cut back to the last
+		 * day the collective fit stays at or under the pandemic peak,
+		 * All.SCALE_PEAK_RENORMALIZER (since 4c33f48), but never short of the
+		 * day after today. The relative projection always runs the full 30.
+		 * "Today" is the UTC date, a day ahead in the evening; see
+		 * docs/active/findings/2026-09-10-a-date-parsed-in-the-evening-lands-on-the-wrong-day.md.
 		 */
 		currentDay = CalendarUtils.timeToDay(System.currentTimeMillis());
 		absoluteLastDay = relativeLastDay = currentDay + 30;
@@ -643,6 +710,11 @@ public class VocSewage {
 				continue;
 			}
 
+			/*
+			 * With the normalizer 1 (see the class comment) this is 100 times
+			 * the prevalence. A zero reading never gets here: it makes number
+			 * zero, which the test above skips.
+			 */
 			addRelative(series, day, 100 * number / entry.getSewage());
 		}
 		if (fit != null) {
@@ -820,6 +892,12 @@ public class VocSewage {
 		return series;
 	}
 
+	/**
+	 * Prints cov-spectrum comparison links for the lineages left on this chart,
+	 * for the manual export path. A variant with no lineage, Others included,
+	 * is named and left out. The LSet is built empty, so its constructor's
+	 * "Variants: 0" line comes first.
+	 */
 	public void getLink() {
 		LSet lset = new LSet("2020-01-06", null);
 		for (Variant variant : variants) {
@@ -833,9 +911,8 @@ public class VocSewage {
 			lset.addLineage(l);
 		}
 
+		/* getCovSpectrumLink prints the links itself. */
 		System.out.println("VocSewage link : " + variants.size() + " : ");
-		for (String link : lset.getCovSpectrumLink()) {
-			System.out.println(link);
-		}
+		lset.getCovSpectrumLink();
 	}
 }
