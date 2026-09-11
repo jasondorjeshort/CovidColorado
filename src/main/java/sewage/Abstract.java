@@ -203,11 +203,11 @@ public abstract class Abstract extends DailyTracker {
 	 * <p>
 	 * With {@code daysAveraged} 1: a point for each day with an entry,
 	 * normalized. With more: a point for every day from the first to today (the
-	 * machine's local date, {@link covid.CalendarUtils#today}), the sum of the
-	 * raw entries in the trailing window divided by its length. That is neither
-	 * normalized nor an average of the days with a reading; see
-	 * docs/active/findings/2026-09-10-a-plants-smoothed-lines-and-peak-labels-are-in-its-own-units.md
-	 * and
+	 * machine's local date, {@link covid.CalendarUtils#today}), the normalized
+	 * sum of the entries in the trailing window divided by its length. Both are
+	 * on the national scale, so a plant's smoothed line, its daily line and its
+	 * fit line share the axis. The smoothed one is still not an average of the
+	 * days with a reading; see
 	 * docs/active/findings/2026-09-10-a-smoothed-line-counts-a-day-without-a-reading-as-zero.md.
 	 */
 	public synchronized TimeSeries makeTimeSeries(String name, int daysAveraged) {
@@ -228,6 +228,7 @@ public abstract class Abstract extends DailyTracker {
 						number += entry.getSewage();
 					}
 				}
+				number *= getNormalizer();
 				number /= daysAveraged;
 			} else {
 				DaySewage entry = getEntry(day);
@@ -371,9 +372,8 @@ public abstract class Abstract extends DailyTracker {
 
 	/**
 	 * A domain marker per inflection: red for a peak, labelled with its date
-	 * and value, green for a valley. The value is the entry's raw one, which
-	 * for a plant is in its own units, not the axis's; see
-	 * docs/active/findings/2026-09-10-a-plants-smoothed-lines-and-peak-labels-are-in-its-own-units.md.
+	 * and its {@link #getNormalized} value, green for a valley. The label is on
+	 * the axis's scale, as the inflections themselves are.
 	 */
 	public synchronized LinkedList<ValueMarker> getMarkers() {
 		build();
@@ -385,7 +385,7 @@ public abstract class Abstract extends DailyTracker {
 			ValueMarker marker = new ValueMarker(time);
 			marker.setPaint(inflection.peak ? Color.red : Color.green);
 			if (inflection.peak) {
-				double val = entries.get(inflection.day).getSewage();
+				double val = getNormalized(inflection.day);
 				marker.setLabel(String.format("%s %.1f", CalendarUtils.dayToDate(inflection.day), val));
 			}
 			marker.setStroke(Charts.stroke);

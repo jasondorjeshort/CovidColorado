@@ -33,10 +33,10 @@ and add no point for a window with none, which also ends the line at the last
 day. The first windows would then average only the days since the first; the
 Javadoc on buildBackend in `sewage/Multi.java` notes that an aggregate's
 trimmed first days still feed them, which the fix should keep in view. The
-same branch skips the normalizer,
-`docs/active/findings/2026-09-10-a-plants-smoothed-lines-and-peak-labels-are-in-its-own-units.md`,
-and the two want fixing together. Every smoothed chart changes; a run,
-compared with the daily charts of the same series, shows it.
+same branch also skipped the normalizer, which is fixed: the window sum is
+now multiplied by it before the divide, and what is left wrong is what this
+entry describes. Every smoothed chart changes; a run, compared with the daily
+charts of the same series, shows it.
 
 Not fixed in the review of `sewage/Abstract.java` that found it: it changes
 what every smoothed chart draws, and only a run can show it.
