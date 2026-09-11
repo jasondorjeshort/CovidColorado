@@ -146,15 +146,20 @@ population figure in a chart title is the thing that lies.
 INFLECTIONS AND FIT LINES
 -------------------------
 sewage/Abstract.java buildInflections walks a series from 2020-09-01 forward
-and records where it turns, counting a turn only when the new direction is
-still holding 28 days later. The result is used twice: as the markers on
-sewage charts, and as the fit-start seed for every lineage fit
-(docs/reference/lineages.txt).
+and records where it turns, counting a turn only when no reading in the four
+weeks after it goes back past the first reading of the new direction, and
+looking for none in the last 14 days. The inflections are drawn as markers on
+sewage charts; the last one bounds the fit below, sets how far back a recent
+chart reaches when it is over 180 days old (docs/reference/charts.txt), and
+seeds every lineage fit (docs/reference/lineages.txt).
 
-makeFitSeries fits a line to log(value). It starts a week after the last
-inflection, then walks backwards adding days only while doing so tightens the
-slope's confidence interval, with a floor of 28 days. So the fit covers the
-current wave and stops where extending it would stop being informative. The
-drawn line is extrapolated to wall-clock today and floored at 1E-6, because a
-plant that stopped reporting years ago on a falling trend extrapolates to
-exp(-huge) and the log axis will not accept a zero.
+makeFitSeries fits a line to log(value). It walks backwards from the last day,
+never further back than a week after the last inflection; past the last 28
+days it keeps adding days only while doing so does not widen the slope's
+confidence interval. So the fit covers the current wave and stops where
+extending it would stop being informative. The 28 days give way to the
+inflection bound: an inflection can be as late as 14 days before the last day,
+which leaves eight days to fit. The drawn line is extrapolated to wall-clock
+today and floored at 1E-6, because a plant that stopped reporting years ago on
+a falling trend extrapolates to exp(-huge) and the log axis will not accept a
+zero.
