@@ -17,24 +17,31 @@ import nwss.Nwss;
 
 /**
  * Pulls exact per-day sequence counts for every US lineage from cov-spectrum's
- * LAPIS API and turns them into the same kind of Voc the hand-exported
- * cov-spectrum CSVs used to provide: one variant per lineage, prevalence
- * inclusive of descendants, 7-day smoothed. Everything downstream (child
- * subtraction in Voc.build, parent merging in VocSewage.build) is unchanged.
- *
+ * LAPIS API and turns them into the same kind of Voc a hand-exported
+ * cov-spectrum comparison CSV gives: variants named by "X*" query, prevalence
+ * inclusive of descendants, 7-day smoothed. That is what lets Voc build() and
+ * VocSewage treat the two paths alike. docs/reference/lineages.txt owns the
+ * constants below and the inclusive-count invariant.
+ * <p>
  * This is the open (GenBank) dataset. It is thinner than the GISAID-backed
- * pages the manual exports came from; the printed cov-spectrum links still
- * work for that fallback.
+ * pages the manual exports came from, which is why that path is kept.
  */
 public class Lapis {
 
 	public static final String BASE_URL = "https://lapis.cov-spectrum.org/open/v2/sample/aggregated";
 
+	/*
+	 * The first emitted day is this many days before today. With SMOOTH it
+	 * also sets the request's dateFrom, which the cache does not notice; see
+	 * CACHE_FILE.
+	 */
 	public static final int WINDOW_DAYS = 365;
 
 	/*
-	 * Sequences take a couple of weeks to show up, and the manual exports also
-	 * stopped 10 days short of today.
+	 * The last emitted day is this many days before today, to match the manual
+	 * exports (LSet.TODAY(-10)). It is not the sequencing delay, which is
+	 * longer: Voc build() trims the trailing days no lineage has prevalence
+	 * on, and that trim, not this, is where the LAPIS charts end.
 	 */
 	public static final int LAG_DAYS = 10;
 
@@ -44,10 +51,13 @@ public class Lapis {
 	public static final int TTL_HOURS = 24;
 
 	/*
-	 * A lineage with fewer sequences than this in the window is folded into
-	 * its parent before the Voc is built. VocSewage keeps anything with ten
-	 * smoothed days, which two sequences already give; that was fine for a
-	 * hand-picked list of candidates but not for every designated lineage.
+	 * A lineage with fewer sequences than this over the fetched days is folded
+	 * into its parent before the Voc is built. The count is its own, not
+	 * inclusive, plus whatever was folded into it first, so a sparse chain
+	 * folds upward until the leftovers reach this. VocSewage's floor keeps
+	 * anything with ten smoothed days, which two sequences three days apart
+	 * already give; that was fine for a hand-picked list of candidates but not
+	 * for every designated lineage.
 	 */
 	public static final int MIN_SEQUENCES = 20;
 
@@ -58,9 +68,22 @@ public class Lapis {
 	 */
 	public static final int MIN_WINDOW_SEQUENCES = 20;
 
+	/*
+	 * Reused for TTL_HOURS whatever URL create() builds, so a change to what it
+	 * asks for is not fetched until the file expires; see
+	 * docs/active/findings/2026-09-09-lapis-cache-keyed-by-filename-not-url.md.
+	 */
 	public static final String CACHE_FILE = System.getProperty("java.io.tmpdir") + "\\" + Nwss.FOLDER + "\\"
 			+ "lapis-usa-aggregated.json";
 
+	/**
+	 * Zero or one Voc, from WINDOW_DAYS before today to LAG_DAYS before it,
+	 * less the trailing days Voc build() trims. Empty, with a line printed,
+	 * when the download fails or the file cannot be read; an unreadable file
+	 * is deleted so the next run fetches it again. A sequence whose lineage is
+	 * missing or does not resolve still counts in its day's total, so it ends
+	 * up in "others".
+	 */
 	public static LinkedList<Voc> create() {
 		LinkedList<Voc> vocs = new LinkedList<>();
 
@@ -155,7 +178,13 @@ public class Lapis {
 			exact.remove(lineage);
 			Lineage parent = lineage.getParent();
 			if (parent == null) {
-				/* A rare recombinant; it stays in the denominator and shows up in "others". */
+				/*
+				 * A root has nowhere to fold, so its own sequences are left to
+				 * the denominator and show up in "others". Few of its own does
+				 * not make the family rare, and a root whose descendants survive
+				 * is still built below as their ancestor: on 2026-09-10's data
+				 * XDV was dropped with 2 of its own under a family of 2,050.
+				 */
 				dropped++;
 				continue;
 			}
@@ -241,10 +270,16 @@ public class Lapis {
 	}
 
 	/**
-	 * Lineages from LEnum lists that start inside the fetch window are never
-	 * merged into their parent on count alone. The older lists stay as
-	 * documentation and as link generators for the manual export, but pinning
-	 * a couple hundred 2023 lineages would only clutter the charts.
+	 * Every lineage of an LEnum list whose start date is on or after the first
+	 * emitted day, for Voc.pinned, which VocSewage never merges away on size
+	 * or cost. The start-date test keeps a list picked for a past wave from
+	 * pinning its lineages, which would clutter every chart; a list for a wave
+	 * in progress pins until its start date ages out of the window.
+	 * <p>
+	 * The MIN_SEQUENCES fold in create() runs first and does not consult this
+	 * set, so a pinned lineage under that count is folded into its parent
+	 * before VocSewage can keep it; see
+	 * docs/active/findings/2026-09-10-a-pinned-lineage-is-folded-before-its-pin-applies.md.
 	 */
 	private static HashSet<Lineage> pins(int emitFirst) {
 		HashSet<Lineage> pinned = new HashSet<>();

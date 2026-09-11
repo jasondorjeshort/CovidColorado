@@ -38,9 +38,11 @@ THE LAPIS PATH
 --------------
 variants/Lapis.java asks the open (GenBank) LAPIS for US samples aggregated by
 date and nextcladePangoLineage, and caches the JSON for 24 hours. Open data is
-much thinner than GISAID: on the order of 300-600 US sequences a month in 2026,
-against about 7,000 in January 2025. Most of the constants below exist because
-of that thinness, and would want revisiting if the counts ever recovered.
+much thinner than GISAID, and thinning: 2,696 US sequences in January 2026 and
+268-586 a month from April to July, against 7,737 in January 2025 (LAPIS,
+2026-09-10; recent months still fill in). Most of the constants below exist
+because of that thinness, and would want revisiting if the counts ever
+recovered.
 
 WINDOW_DAYS = 365. One year of history is emitted.
 
@@ -49,21 +51,26 @@ the manual exports did (LSet.TODAY(-10)) and is not an attempt to model the
 real reporting delay, which is longer -- around 26 days as of this writing. The
 trailing-zero trim at the top of Voc build(), which drops trailing days on
 which no lineage has any prevalence -- for LAPIS, days whose smoothing window
-holds fewer than MIN_WINDOW_SEQUENCES sequences -- absorbs the remainder, so the charts show a data cutoff
-where the data actually stops rather than where this constant says.
+holds fewer than MIN_WINDOW_SEQUENCES sequences -- absorbs the remainder, so
+the charts show a data cutoff where the data actually stops rather than where
+this constant says.
 
 SMOOTH = 3, a half-width, giving the 7-day centered average cov-spectrum
 exported. Matching it is the point: the two paths must be comparable.
 
-MIN_SEQUENCES = 20. A lineage with fewer than twenty sequences in the whole
-window is folded into its parent before the Voc is constructed. This is input
+MIN_SEQUENCES = 20. A lineage with fewer than twenty sequences of its own over
+the fetched days -- exact counts, plus whatever was already folded into it --
+is folded into its parent before the Voc is constructed. This is input
 curation and it changes no algorithm downstream. It exists because VocSewage's
 own removal rule keeps anything with ten smoothed days, which two sequences
 three days apart already produce -- a sane threshold when the input was a
 hand-picked candidate list, and not when the input is every designated lineage.
-Unfiltered, that rule kept 530 of 754. A lineage with no parent, which means a
-rare recombinant root, is dropped instead; its sequences stay in the
-denominator and therefore surface in "others".
+Unfiltered, that rule kept 530 of 754. A lineage with no parent, a root, is
+dropped instead; its sequences stay in the denominator and therefore surface in
+"others". Few of its own does not make the family rare: on the data of
+2026-09-10 the 22 roots dropped held 130 sequences, one of them XDV with 2 of
+its own under a family of 2,050, and a root whose descendants survive is still
+built as their ancestor.
 
 MIN_WINDOW_SEQUENCES = 20. A day whose smoothing window holds fewer than twenty
 sequences gets no prevalence at all. With a handful of sequences one lineage is
@@ -137,8 +144,9 @@ and anything priced against an empty variant is free, which would relabel every
 lineage upward. And a lineage with no ancestor left on the chart -- a root, or
 the top of a family whose ancestors were all folded away -- is referenced
 against Others, and is not merged at all unless it has nothing in the last 28
-days. In LAPIS data Others is nearly empty -- only the rare roots Lapis drops
-land there -- so every such lineage was free to fold, and the first run of
+days. In LAPIS data Others is nearly empty -- only the root sequences Lapis
+drops, and any lineage name the pango checkout cannot resolve, land there -- so
+every such lineage was free to fold, and the first run of
 this rule drew the dominant lineages of the year as "others". Every live family
 therefore keeps its top lineage on the chart, even if that leaves more than
 ten.
@@ -148,7 +156,8 @@ tier may remove -- the first two floor tests still apply, since an unusable fit
 is unusable. Pins come from LEnum lists whose start date falls inside the
 emitted window; both current lists start well before it, so the set is empty
 today. The mechanism is there for the next time a list is added for a wave in
-progress.
+progress. Lapis's own MIN_SEQUENCES fold runs before the pins are taken and
+ignores them; see docs/active/findings/ for the open entry on this.
 
 
 WHERE A FIT STARTS
