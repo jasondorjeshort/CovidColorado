@@ -12,6 +12,20 @@ import org.jfree.chart.encoders.EncoderUtil;
 import org.jfree.chart.encoders.ImageFormat;
 
 /**
+ * A rendered chart image, the file paths it is saved under, and the day it
+ * depicts. It belongs to the program's first life: the only code that makes
+ * one is in the dead {@code colorado/} package, where one image could be saved
+ * under both a dated and a stable name and the last 21 days of images fed a
+ * GIF.
+ *
+ * The live program uses none of its behaviour. {@code nwss/Nwss.java} and
+ * {@code charts/ChartSewage.java} name it only as the type argument of
+ * {@code ASync<Chart>}, and every task they queue goes through
+ * {@code execute(Runnable)}, so no Chart is ever made; live charts are written
+ * by {@code saveBufferedImageAsPNG} in {@code charts/Charts.java}. That type
+ * argument is why the class moved from {@code colorado/} to {@code charts/}
+ * in e240358. New chart code should not use it.
+ *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later
