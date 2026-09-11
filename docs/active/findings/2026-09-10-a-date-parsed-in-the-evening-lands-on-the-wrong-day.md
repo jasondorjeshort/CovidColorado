@@ -27,6 +27,16 @@ parses gets the two regimes mixed within one run. The run that wrote
 
 What it would take: in `dateToCalendar`, use a UTC calendar and `clear()` it
 before `set`, so a date always means UTC midnight and `timeToDay` is exact.
+That alone would leave "today" a day ahead in the evening. Six live sites
+take it as `CalendarUtils.timeToDay(System.currentTimeMillis())`, which is
+the UTC date and so tomorrow from 18:00 local (17:00 in winter):
+`variants/Lapis.java` in `create`, `sewage/Abstract.java` in
+`makeTimeSeries` and `makeFitSeries`, and `variants/VocSewage.java` in
+`makeAbsoluteCollectiveTS`, `build` and `makeRegressionTS`. It is largely
+hidden now, because evening-parsed dates shift the same way (at 20:49 MDT,
+`timeToDay(now)` gave 20707 against a local epoch day of 20706). So the fix
+also wants a `CalendarUtils.today()` that returns the local date's index,
+used at those six sites.
 `dateToTime`'s only caller outside `CalendarUtils` is the dead
 `colorado/Event.java`, so nothing live depends on the time of day being kept.
 Then a daytime run and an evening run should draw the same charts, which is
