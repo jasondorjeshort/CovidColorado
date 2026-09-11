@@ -22,3 +22,6 @@ is the only place the dataset's provider vocabulary is written down, and a
 per-source chart or a WASTEWATERSCAN-only filter is a plausible next use of it
 -- and `CLAUDE.md` says not to delete dead code on your own initiative. The
 call is the maintainer's: delete the three members, or give the enum a reader.
+Deleting it also removes what actually stops a null id: the constructor's null
+check only prints, and it is `Source.get`'s NullPointerException that aborts,
+as the comment at that check now says; a deletion should make the check throw.

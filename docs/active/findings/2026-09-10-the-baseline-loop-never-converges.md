@@ -37,7 +37,9 @@ decide what normalizer an unfitted plant should carry: 1, left out of the
 renormalization, or no chart at all. Separately, `day < lastDay` drops every
 plant's last day from its sums with no comment saying why; if that is an
 off-by-one rather than a choice, `<=` fits the one-day plants as well, and
-moves every normalizer slightly. The same change must correct the count
+moves every normalizer slightly -- not every one slightly: a plant with two
+readings is fitted on its first alone, and 35 of the plants kept on 2026-09-10
+have exactly two. The same change must correct the count
 normalize() prints at the end, which after a break is the index of the round
 that passed, one less than the rounds run, and the comment on normalize() that
 says the cap always ends the loop. Expected effect: about 52 rounds; fitted
