@@ -25,3 +25,4 @@
 # about those so they can be swept. Leaving them costs nothing but noise.
 #
 # date       path
+2026-09-10 src/main/java/library/GifMaker.java
