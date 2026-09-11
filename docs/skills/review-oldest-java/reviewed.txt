@@ -36,3 +36,4 @@
 2026-09-10 src/main/java/colorado/IncompleteNumbers.java
 2026-09-10 src/main/java/colorado/Numbers.java
 2026-09-10 src/main/java/colorado/NumbersTiming.java
+2026-09-10 src/main/java/colorado/NumbersType.java
