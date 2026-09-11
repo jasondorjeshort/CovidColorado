@@ -17,6 +17,12 @@ The printed number is therefore two less than the count the run goes on to use,
 and one less than the count at the moment it is printed. There is no
 compensating "others" in the set at that point for the `- 1` to be excluding.
 
+The same missing `toString` reaches three more log lines: both
+`getCollectiveFit` overloads in `variants/VocSewage.java` ("Impossible variant
+: " + variant) and `buildSewageCumulativeChart` in `charts/ChartSewage.java`
+("Prevalence ... for " + variant). A `toString()` on `variants/Variant.java`
+returning `name` would fix all of them along with this one.
+
 Not fixed here: this pass was doc-only, and the second one wants a decision
 about which count the line is meant to report before the arithmetic is changed.
 Both are log-only; nothing computed depends on either.

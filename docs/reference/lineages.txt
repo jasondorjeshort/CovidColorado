@@ -96,7 +96,9 @@ big enough to warn about means the inclusive-counts invariant above is broken.
 And a Variant only acquires a Lineage if its name matches
 "nextcladePangoLineage:<alias>*" -- the regex in the Variant(String)
 constructor -- which is exactly what Lineage.getQuery() emits. A variant with a
-null lineage is not merged, not subtracted from, and not assigned a strain.
+null lineage is never merged away, not subtracted from, and not assigned a
+strain; "Others" is one, and it is the merge target for lineages with no
+parent.
 
 
 MERGING DOWN TO A LEGEND
